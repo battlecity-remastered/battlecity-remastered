@@ -22,6 +22,7 @@ var hasBuiltClient = fs.existsSync(CLIENT_INDEX_FILE);
 var citySpawns = require('../shared/citySpawns.json');
 var UserStore = require('./src/users/UserStore');
 var ScoreService = require('./src/users/ScoreService');
+var DiscordNotifier = require('./src/integrations/DiscordNotifier');
 
 const parseClientIds = (value) => {
     if (!value || typeof value !== 'string') {
@@ -285,7 +286,11 @@ const verifyGoogleToken = async (credential) => {
 };
 
 const scoreService = new ScoreService({ userStore });
-const playerFactory = new PlayerFactory(game, { userStore, scoreService });
+const discordNotifier = new DiscordNotifier();
+discordNotifier.start().catch((error) => {
+    console.warn('[discord] failed to initialise notifier:', error && error.message ? error.message : error);
+});
+const playerFactory = new PlayerFactory(game, { userStore, scoreService, notifier: discordNotifier });
 playerFactory.listen(io);
 const bulletFactory = new BulletFactory(game, playerFactory);
 bulletFactory.listen(io);
@@ -310,8 +315,10 @@ const orbManager = new OrbManager({
     hazardManager,
     defenseManager,
     iconDropManager,
+    notifier: discordNotifier,
 });
 orbManager.setIo(io);
+orbManager.setNotifier(discordNotifier);
 const fakeCityManager = new FakeCityManager({
     game,
     buildingFactory,
@@ -331,6 +338,9 @@ chatManager.listen(io);
 playerFactory.setChatManager(chatManager);
 if (typeof playerFactory.setScoreService === 'function') {
     playerFactory.setScoreService(scoreService);
+}
+if (typeof playerFactory.setNotifier === 'function') {
+    playerFactory.setNotifier(discordNotifier);
 }
 
 app.post('/api/users/register', (req, res) => {

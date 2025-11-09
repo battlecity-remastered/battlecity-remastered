@@ -97,6 +97,7 @@ class PlayerFactory {
         this.chatManager = null;
         this.userStore = options.userStore || null;
         this.scoreService = options.scoreService || null;
+        this.notifier = options.notifier || null;
     }
 
     listen(io) {
@@ -209,6 +210,7 @@ class PlayerFactory {
                 socket.emit('players:snapshot', JSON.stringify(this.serializePlayers(socket.id)));
                 io.emit('enter_game', JSON.stringify(newPlayer));
                 io.emit('player', JSON.stringify(newPlayer));
+                this.notifyPlayerJoined(newPlayer);
             });
 
             socket.on('player', (player) => {
@@ -329,6 +331,7 @@ class PlayerFactory {
                 delete this.game.players[socket.id];
                 this.callsigns.release(socket.id);
                 io.emit('player:removed', JSON.stringify({id: removedPlayer.id}));
+                this.notifyPlayerLeft(removedPlayer);
             });
         });
     }
@@ -339,6 +342,105 @@ class PlayerFactory {
 
     setScoreService(scoreService) {
         this.scoreService = scoreService || null;
+    }
+
+    setNotifier(notifier) {
+        this.notifier = notifier || null;
+    }
+
+    notifyPlayerJoined(player) {
+        if (!player) {
+            return;
+        }
+        if (!this.notifier || typeof this.notifier.notifyPlayerJoined !== 'function') {
+            return;
+        }
+        const payload = {
+            playerId: player.id,
+            userId: player.userId || null,
+            callsign: player.callsign || null,
+            displayName: this.getPlayerDisplayName(player),
+            cityId: Number.isFinite(player.city) ? Math.floor(player.city) : null,
+            cityName: this.getCityDisplayName(player.city),
+            isMayor: !!player.isMayor,
+            isFake: !!player.isFake,
+        };
+        this.invokeNotifier(() => this.notifier.notifyPlayerJoined(payload));
+    }
+
+    notifyPlayerLeft(player) {
+        if (!player) {
+            return;
+        }
+        if (!this.notifier || typeof this.notifier.notifyPlayerLeft !== 'function') {
+            return;
+        }
+        const payload = {
+            playerId: player.id,
+            userId: player.userId || null,
+            callsign: player.callsign || null,
+            displayName: this.getPlayerDisplayName(player),
+            cityId: Number.isFinite(player.city) ? Math.floor(player.city) : null,
+            cityName: this.getCityDisplayName(player.city),
+            isMayor: !!player.isMayor,
+            isFake: !!player.isFake,
+        };
+        this.invokeNotifier(() => this.notifier.notifyPlayerLeft(payload));
+    }
+
+    invokeNotifier(callback) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+        try {
+            const result = callback();
+            if (result && typeof result.then === 'function') {
+                result.catch((error) => {
+                    debug('Notifier error: %s', error && error.message ? error.message : error);
+                });
+            }
+        } catch (error) {
+            debug('Notifier error: %s', error && error.message ? error.message : error);
+        }
+    }
+
+    getPlayerDisplayName(player) {
+        if (!player) {
+            return 'Unknown Player';
+        }
+        const callsign = typeof player.callsign === 'string' ? player.callsign.trim() : '';
+        if (callsign.length) {
+            return callsign;
+        }
+        const name = typeof player.name === 'string' ? player.name.trim() : '';
+        if (name.length) {
+            return name;
+        }
+        const shortened = shortenId(player.id);
+        return shortened || 'Unknown Player';
+    }
+
+    getCityDisplayName(cityId) {
+        const id = normaliseCityIdValue(cityId, null);
+        if (id === null) {
+            return null;
+        }
+        if (this.game && Array.isArray(this.game.cities) && this.game.cities[id]) {
+            const city = this.game.cities[id];
+            if (city.nameOverride && city.nameOverride.trim().length) {
+                return city.nameOverride.trim();
+            }
+            if (city.name && city.name.trim().length) {
+                return city.name.trim();
+            }
+        }
+        if (this.citySpawns) {
+            const spawn = this.citySpawns[String(id)];
+            if (spawn && typeof spawn.name === 'string' && spawn.name.trim().length) {
+                return spawn.name.trim();
+            }
+        }
+        return `City ${id + 1}`;
     }
 
     getPlayerTeam(socketId) {
@@ -498,28 +600,7 @@ class PlayerFactory {
         } else if (details && Number.isFinite(details.teamId)) {
             cityId = Math.max(0, Math.floor(details.teamId));
         }
-        const resolveCityName = () => {
-            if (cityId === null) {
-                return null;
-            }
-            if (this.game && Array.isArray(this.game.cities) && this.game.cities[cityId]) {
-                const city = this.game.cities[cityId];
-                if (city.nameOverride && city.nameOverride.trim().length) {
-                    return city.nameOverride.trim();
-                }
-                if (city.name && city.name.trim().length) {
-                    return city.name.trim();
-                }
-            }
-            if (this.citySpawns) {
-                const spawn = this.citySpawns[String(cityId)];
-                if (spawn && spawn.name) {
-                    return spawn.name;
-                }
-            }
-            return `City ${cityId + 1}`;
-        };
-        const cityName = resolveCityName();
+        const cityName = this.getCityDisplayName(cityId);
 
         if (sourceType) {
             switch (sourceType) {

@@ -27,6 +27,25 @@ Multiplayer will not run without a server running and js changed
 - npm start  # Express + Socket.IO on http://localhost:8021
 - npm run dev  # optional: auto-restart with nodemon
 
+### Discord activity feed (optional)
+
+The server can announce joins, leaves, and orb detonations to a Discord channel when a bot is configured:
+
+1. Visit the [Discord Developer Portal](https://discord.com/developers/applications), create an application, and add a **Bot** user. Copy the generated **token**.
+2. Invite the bot to your server with permissions to read messages and send messages in the target channel. The simplest option is to select the **Send Messages** and **Embed Links** scopes when generating the OAuth invite link.
+3. In Discord, enable **Developer Mode** (User Settings → Advanced) so you can right click the channel and copy its **Channel ID**. If you want the bot to post into an existing thread, copy the **Thread ID** as well.
+4. Before starting the BattleCity server, export the following environment variables so the notifier can authenticate:
+
+   ```bash
+   export DISCORD_BOT_TOKEN="<bot token>"
+   export DISCORD_CHANNEL_ID="<channel id>"
+   # optional extras
+   export DISCORD_THREAD_ID="<thread id>"
+   export DISCORD_BOT_ACTIVITY="Monitoring the battlefield"
+   ```
+
+When the variables are set and `discord.js` is installed, the server will connect the bot on startup and stream notifications to the configured channel.
+
 ## Google login / registration setup
 
 1. Create a Google Cloud project (or reuse an existing one) and add an **OAuth 2.0 Client ID** for a web application via the [Google Identity Services](https://console.cloud.google.com/apis/credentials). Authorize the JavaScript origins you will use for the client (e.g. `http://localhost:8020`).

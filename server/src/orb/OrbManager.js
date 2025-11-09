@@ -1,6 +1,7 @@
 "use strict";
 
 const citySpawns = require('../../../shared/citySpawns.json');
+const debug = require('debug')('BattleCity:OrbManager');
 const {
     TILE_SIZE,
     COMMAND_CENTER_WIDTH_TILES,
@@ -24,7 +25,7 @@ const toNumber = (value, fallback = null) => {
 };
 
 class OrbManager {
-    constructor({ game, cityManager, playerFactory, buildingFactory, hazardManager, defenseManager, iconDropManager = null }) {
+    constructor({ game, cityManager, playerFactory, buildingFactory, hazardManager, defenseManager, iconDropManager = null, notifier = null }) {
         this.game = game;
         this.cityManager = cityManager;
         this.playerFactory = playerFactory;
@@ -33,10 +34,15 @@ class OrbManager {
         this.defenseManager = defenseManager;
         this.iconDropManager = iconDropManager;
         this.io = null;
+        this.notifier = notifier || null;
     }
 
     setIo(io) {
         this.io = io;
+    }
+
+    setNotifier(notifier) {
+        this.notifier = notifier || null;
     }
 
     parsePayload(payload) {
@@ -153,6 +159,17 @@ class OrbManager {
             this.io.emit(CITY_ORBED_EVENT, broadcastPayload);
         }
 
+        this.notifyOrbDetonated({
+            attackerCity: playerCity,
+            attackerCityName: this.describeCity(playerCity),
+            attackerId: player.id,
+            attackerCallsign: player.callsign || null,
+            attackerDisplayName: this.describePlayer(player),
+            targetCity,
+            targetCityName: this.describeCity(targetCity),
+            points
+        });
+
         this.emitDropResult(socket, {
             status: 'detonated',
             targetCity,
@@ -165,6 +182,58 @@ class OrbManager {
             return;
         }
         socket.emit(ORB_RESULT_EVENT, payload);
+    }
+
+    notifyOrbDetonated(payload) {
+        if (!payload || !this.notifier || typeof this.notifier.notifyOrbDetonated !== 'function') {
+            return;
+        }
+        this.invokeNotifier(() => this.notifier.notifyOrbDetonated(payload));
+    }
+
+    invokeNotifier(callback) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+        try {
+            const result = callback();
+            if (result && typeof result.then === 'function') {
+                result.catch((error) => {
+                    debug('Notifier error: %s', error && error.message ? error.message : error);
+                });
+            }
+        } catch (error) {
+            debug('Notifier error: %s', error && error.message ? error.message : error);
+        }
+    }
+
+    describeCity(cityId) {
+        if (this.playerFactory && typeof this.playerFactory.getCityDisplayName === 'function') {
+            return this.playerFactory.getCityDisplayName(cityId);
+        }
+        if (Number.isFinite(cityId)) {
+            return `City ${Math.floor(cityId) + 1}`;
+        }
+        return null;
+    }
+
+    describePlayer(player) {
+        if (this.playerFactory && typeof this.playerFactory.getPlayerDisplayName === 'function') {
+            return this.playerFactory.getPlayerDisplayName(player);
+        }
+        if (!player) {
+            return 'Unknown Player';
+        }
+        if (typeof player.callsign === 'string' && player.callsign.trim().length) {
+            return player.callsign.trim();
+        }
+        if (typeof player.id === 'string' && player.id.length) {
+            if (player.id.length <= 8) {
+                return player.id;
+            }
+            return `${player.id.slice(0, 4)}...${player.id.slice(-2)}`;
+        }
+        return 'Unknown Player';
     }
 
     getPlayer(socketId) {
