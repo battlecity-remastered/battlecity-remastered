@@ -1,4 +1,4 @@
-import { ITEM_TYPE_BOMB, ITEM_TYPE_LIMITS } from "../constants";
+import { ITEM_TYPE_BOMB, ITEM_TYPE_LIMITS } from "../constants.js";
 
 class IconFactory {
     constructor(game) {
@@ -308,7 +308,10 @@ class IconFactory {
             return null;
         }
 
-        const quantity = selectedIcon.quantity ?? 1;
+        const quantity = Number.isFinite(selectedIcon.quantity)
+            ? selectedIcon.quantity
+            : parseInt(selectedIcon.quantity, 10) || 1;
+        const safeQuantity = Math.max(1, quantity);
         const dropInfo = {
             type: selectedIcon.type,
             armed: !!selectedIcon.armed,
@@ -318,18 +321,61 @@ class IconFactory {
             quantity: 1,
         };
 
-        if (quantity > 1) {
-            selectedIcon.quantity = quantity - 1;
+        if (safeQuantity > 1) {
+            selectedIcon.quantity = safeQuantity - 1;
             selectedIcon.selected = true;
         } else {
             this.deleteIcon(selectedIcon);
         }
 
         if (dropInfo.type === ITEM_TYPE_BOMB) {
-            if (quantity > 1) {
+            if (safeQuantity > 1) {
                 selectedIcon.armed = dropInfo.armed;
                 this.game.player.bombsArmed = selectedIcon.armed;
             } else {
+                this.game.player.bombsArmed = false;
+            }
+        }
+
+        this.game.forceDraw = true;
+        return dropInfo;
+    }
+
+    dropBombFromInventory() {
+        const ownerId = this.game?.player?.id;
+        if (ownerId === null || ownerId === undefined) {
+            return null;
+        }
+        const bombIcon = this.findOwnedIconByType(ownerId, ITEM_TYPE_BOMB);
+        if (!bombIcon) {
+            return null;
+        }
+
+        const quantityRaw = Number.isFinite(bombIcon.quantity)
+            ? bombIcon.quantity
+            : parseInt(bombIcon.quantity, 10) || 1;
+        const quantity = Math.max(1, quantityRaw);
+        const dropInfo = {
+            type: ITEM_TYPE_BOMB,
+            armed: true,
+            owner: ownerId,
+            city: this.game.player?.city ?? null,
+            teamId: this.game.player?.city ?? null,
+            quantity: 1,
+        };
+
+        if (quantity > 1) {
+            bombIcon.quantity = quantity - 1;
+            if (bombIcon.selected) {
+                bombIcon.armed = true;
+                if (this.game?.player) {
+                    this.game.player.bombsArmed = true;
+                }
+            }
+        } else {
+            const wasSelected = !!bombIcon.selected;
+            this.deleteIcon(bombIcon);
+            if (wasSelected && this.game?.player) {
                 this.game.player.bombsArmed = false;
             }
         }

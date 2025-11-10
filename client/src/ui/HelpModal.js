@@ -189,7 +189,7 @@ class HelpModal {
             { key: 'Shift', desc: 'Fire equipped weapon (laser or Cougar rockets; rockets need you to be stationary).' },
             { key: 'Ctrl', desc: 'Fire the Flare Gun spread behind you when you own an Orb icon.' },
             { key: 'D', desc: 'Drop the currently selected icon/item at your marker; press again to adjust the placement.' },
-            { key: 'B', desc: 'Arm/disarm your bombs whenever the selected icon is a bomb stack.' },
+            { key: 'B', desc: 'Instantly arm and drop a bomb from your inventory, even when another icon is selected.' },
             { key: 'H', desc: 'Use a MedKit to instantly restore your health when you have one in inventory.' },
             { key: 'C', desc: 'Activate a 5-second cloak as long as you own the Cloak icon.' },
             { key: 'F', desc: 'Toggle fullscreen on supported browsers.' }
