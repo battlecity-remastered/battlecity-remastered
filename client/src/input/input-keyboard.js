@@ -189,6 +189,7 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         d = keyboard(68),
         s = keyboard(83),
         b = keyboard(66),
+        o = keyboard(79),
         h = keyboard(72),
         c = keyboard(67),
         f = keyboard(70);
@@ -249,6 +250,20 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         const dropInfo = game.iconFactory.dropBombFromInventory();
         if (!dropInfo) {
             console.log("No bombs available to deploy.");
+            return;
+        }
+
+        dropInventoryItem(game, dropInfo);
+    };
+
+    o.press = function () {
+        if (!game.iconFactory || typeof game.iconFactory.dropOrbFromInventory !== 'function') {
+            return;
+        }
+
+        const dropInfo = game.iconFactory.dropOrbFromInventory();
+        if (!dropInfo) {
+            console.log("No orbs available to deploy.");
             return;
         }
 
