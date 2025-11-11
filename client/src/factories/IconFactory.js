@@ -1,4 +1,4 @@
-import { ITEM_TYPE_BOMB, ITEM_TYPE_LIMITS } from "../constants.js";
+import { ITEM_TYPE_BOMB, ITEM_TYPE_LIMITS, ITEM_TYPE_ORB } from "../constants.js";
 
 class IconFactory {
     constructor(game) {
@@ -378,6 +378,40 @@ class IconFactory {
             if (wasSelected && this.game?.player) {
                 this.game.player.bombsArmed = false;
             }
+        }
+
+        this.game.forceDraw = true;
+        return dropInfo;
+    }
+
+    dropOrbFromInventory() {
+        const ownerId = this.game?.player?.id;
+        if (ownerId === null || ownerId === undefined) {
+            return null;
+        }
+
+        const orbIcon = this.findOwnedIconByType(ownerId, ITEM_TYPE_ORB);
+        if (!orbIcon) {
+            return null;
+        }
+
+        const quantityRaw = Number.isFinite(orbIcon.quantity)
+            ? orbIcon.quantity
+            : parseInt(orbIcon.quantity, 10) || 1;
+        const quantity = Math.max(1, quantityRaw);
+
+        const dropInfo = {
+            type: ITEM_TYPE_ORB,
+            owner: ownerId,
+            city: this.game.player?.city ?? null,
+            teamId: this.game.player?.city ?? null,
+            quantity: 1,
+        };
+
+        if (quantity > 1) {
+            orbIcon.quantity = quantity - 1;
+        } else {
+            this.deleteIcon(orbIcon);
         }
 
         this.game.forceDraw = true;
