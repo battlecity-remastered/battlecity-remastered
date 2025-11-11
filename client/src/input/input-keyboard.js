@@ -2,7 +2,6 @@ import {
     TIMER_SHOOT_LASER,
     TIMER_SHOOT_ROCKET,
     TIMER_SHOOT_FLARE,
-    ITEM_TYPE_BOMB,
     ITEM_TYPE_LASER,
     ITEM_TYPE_ROCKET,
     ITEM_TYPE_FLARE,
@@ -22,6 +21,64 @@ const DIRECT_DROP_TYPES = new Set([
     ITEM_TYPE_WALL,
     ITEM_TYPE_SLEEPER,
 ]);
+
+const computeDropPosition = (game, dropInfo) => {
+    if (!game || !game.player || !dropInfo) {
+        return { x: game?.player?.offset?.x ?? 0, y: game?.player?.offset?.y ?? 0 };
+    }
+
+    if (DIRECT_DROP_TYPES.has(dropInfo.type)) {
+        return {
+            x: game.player.offset.x + 12,
+            y: game.player.offset.y + 24,
+        };
+    }
+
+    const angle = -game.player.direction;
+    const x = (Math.sin((angle / 16) * 3.14) * -1);
+    const y = (Math.cos((angle / 16) * 3.14) * -1);
+
+    return {
+        x: (game.player.offset.x) + (x * 20),
+        y: (game.player.offset.y + 20) + (y * 20),
+    };
+};
+
+const dropInventoryItem = (game, dropInfo) => {
+    if (!dropInfo || !game) {
+        return false;
+    }
+
+    const { x, y } = computeDropPosition(game, dropInfo);
+    const item = game.itemFactory?.newItem?.(dropInfo, x, y, dropInfo.type);
+    if (item) {
+        game.player.offset.x += 30;
+        game.player.offset.x += 30;
+    }
+
+    if (!item) {
+        const icon = game.iconFactory?.newIcon?.(null, parseInt(x, 10), parseInt(y, 10), dropInfo.type, {
+            skipProductionUpdate: true,
+            teamId: game.player?.city ?? null,
+            city: game.player?.city ?? null,
+            isSharedDrop: true,
+            synced: false,
+        });
+        if (icon && game.socketListener && typeof game.socketListener.dropIcon === 'function') {
+            game.socketListener.dropIcon({
+                id: icon.id,
+                type: icon.type,
+                x: icon.x,
+                y: icon.y,
+                cityId: icon.city ?? null,
+                teamId: icon.teamId ?? null,
+                quantity: icon.quantity ?? 1,
+            });
+        }
+    }
+
+    return true;
+};
 
 var lastShot = 0;
 
@@ -178,72 +235,24 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
     d.press = function () {
 
         var dropInfo = game.iconFactory.dropSelectedIcon();
-
-        var x2;
-        var y2;
-
-        var angle = -game.player.direction;
-        var x = (Math.sin((angle / 16) * 3.14) * -1);
-        var y = (Math.cos((angle / 16) * 3.14) * -1);
-        if (dropInfo && DIRECT_DROP_TYPES.has(dropInfo.type)) {
-            x2 = game.player.offset.x + 12;
-            y2 = game.player.offset.y + 24;
-        } else {
-            var angle = -game.player.direction;
-            var x = (Math.sin((angle / 16) * 3.14) * -1);
-            var y = (Math.cos((angle / 16) * 3.14) * -1);
-
-            x2 = (game.player.offset.x) + (x * 20);
-            y2 = (game.player.offset.y + 20) + (y * 20);
-        }
-
         if (dropInfo) {
-            var item = game.itemFactory.newItem(dropInfo, x2, y2, dropInfo.type);
-            if (item) {
-                game.player.offset.x += 30;
-                game.player.offset.x += 30;
-            }
-            // It's not been converted to an item and so is able to be picked up again
-            if (!item) {
-                const icon = game.iconFactory.newIcon(null, parseInt(x2), parseInt(y2), dropInfo.type, {
-                    skipProductionUpdate: true,
-                    teamId: game.player.city ?? null,
-                    city: game.player.city ?? null,
-                    isSharedDrop: true,
-                    synced: false,
-                });
-                if (icon && game.socketListener && typeof game.socketListener.dropIcon === 'function') {
-                    game.socketListener.dropIcon({
-                        id: icon.id,
-                        type: icon.type,
-                        x: icon.x,
-                        y: icon.y,
-                        cityId: icon.city ?? null,
-                        teamId: icon.teamId ?? null,
-                        quantity: icon.quantity ?? 1,
-                    });
-                }
-            }
+            dropInventoryItem(game, dropInfo);
         }
 
     };
 
     b.press = function () {
-        if (game.iconFactory && typeof game.iconFactory.getSelectedIcon === 'function') {
-            const selectedIcon = game.iconFactory.getSelectedIcon(game.player.id);
-            if (selectedIcon && selectedIcon.type === ITEM_TYPE_BOMB) {
-                selectedIcon.armed = !selectedIcon.armed;
-                if (!selectedIcon.selected) {
-                    selectedIcon.selected = true;
-                }
-                game.player.bombsArmed = selectedIcon.armed;
-                game.forceDraw = true;
-                console.log(`Bombs ${selectedIcon.armed ? 'activated' : 'deactivated'}`);
-                return;
-            }
+        if (!game.iconFactory || typeof game.iconFactory.dropBombFromInventory !== 'function') {
+            return;
         }
-        game.player.bombsArmed = !game.player.bombsArmed;
-        console.log(`Bombs ${game.player.bombsArmed ? 'activated' : 'deactivated'}`);
+
+        const dropInfo = game.iconFactory.dropBombFromInventory();
+        if (!dropInfo) {
+            console.log("No bombs available to deploy.");
+            return;
+        }
+
+        dropInventoryItem(game, dropInfo);
     };
 
     h.press = function () {
