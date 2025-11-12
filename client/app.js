@@ -1128,17 +1128,36 @@ game.toggleBuildMenuFromPanel = () => {
 };
 
 game.requestExitToLobby = () => {
-    if (game.lobby && typeof game.lobby.show === 'function') {
+    if (game.socketListener && typeof game.socketListener.leaveGame === 'function') {
+        game.socketListener.leaveGame({ reason: 'manual_exit' });
+    }
+
+    if (game.player) {
+        game.player.isMayor = false;
+        game.player.city = null;
+        game.player.health = MAX_HEALTH;
+        if (game.player.offset && game.player.defaultOffset) {
+            game.player.offset.x = game.player.defaultOffset.x;
+            game.player.offset.y = game.player.defaultOffset.y;
+        }
+    }
+
+    if (game.lobby && typeof game.lobby.handleManualExit === 'function') {
+        game.lobby.handleManualExit();
+    } else if (game.lobby && typeof game.lobby.show === 'function') {
         game.lobby.show();
         game.lobby.setStatus('Lobby opened. Choose a city slot or wait for the next match.', { type: 'info' });
     }
+
     if (game.notify) {
         game.notify({
             title: 'Exit to Lobby',
-            message: 'The lobby overlay is open. Session hand-off will improve in a future build.',
-            variant: 'warn'
+            message: 'You left your city. Select a new slot from the lobby to rejoin the battle.',
+            variant: 'info'
         });
     }
+
+    game.forceDraw = true;
 };
 
 game.clearPanelMessage();

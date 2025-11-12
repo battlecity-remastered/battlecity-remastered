@@ -38,6 +38,7 @@ class LobbyManager {
         this.onSocketConnected = () => this.handleConnected();
         this.onSocketDisconnected = (reason) => this.handleDisconnected(reason);
         this.onLobbyEvicted = (payload) => this.handleEviction(payload);
+        this.onLobbyReleased = (payload) => this.handleRelease(payload);
 
         this.injectStyles();
         this.createOverlay();
@@ -600,6 +601,7 @@ class LobbyManager {
             this.socketListener.off('connected', this.onSocketConnected);
             this.socketListener.off('disconnected', this.onSocketDisconnected);
             this.socketListener.off('lobby:evicted', this.onLobbyEvicted);
+            this.socketListener.off('lobby:released', this.onLobbyReleased);
         }
         this.socketListener = socketListener;
         socketListener.on('lobby:snapshot', this.onLobbySnapshot);
@@ -609,6 +611,7 @@ class LobbyManager {
         socketListener.on('connected', this.onSocketConnected);
         socketListener.on('disconnected', this.onSocketDisconnected);
         socketListener.on('lobby:evicted', this.onLobbyEvicted);
+        socketListener.on('lobby:released', this.onLobbyReleased);
     }
 
     attachIdentityManager(identityManager) {
@@ -1276,6 +1279,41 @@ class LobbyManager {
         this.setStatus('Assignment confirmed. Entering city...', { type: 'success' });
         this.renderCityList();
         this.hide();
+    }
+
+    handleManualExit(details = {}) {
+        this.completeReturnToLobby(details);
+    }
+
+    handleRelease(details = {}) {
+        this.completeReturnToLobby(details);
+    }
+
+    completeReturnToLobby(details = {}) {
+        const payload = (details && typeof details === 'object') ? details : {};
+        this.waiting = false;
+        this.waitingCity = null;
+        this.waitingRole = null;
+        this.inGame = false;
+        this.show();
+
+        const cityId = Number.isFinite(payload.city) ? payload.city : null;
+        const wasMayor = payload.role === 'mayor' || payload.wasMayor === true;
+        let message = null;
+        if (typeof payload.message === 'string' && payload.message.trim().length) {
+            message = payload.message.trim();
+        } else if (cityId !== null) {
+            const cityName = getCityDisplayName(cityId);
+            message = wasMayor
+                ? `You stepped down as mayor of ${cityName}. Choose a new assignment.`
+                : `You left ${cityName}. Choose a new assignment.`;
+        } else {
+            message = 'Returned to the lobby. Choose a city to enter.';
+        }
+        const type = typeof payload.type === 'string' ? payload.type : 'info';
+        this.setStatus(message, { type });
+        this.renderCityList();
+        this.requestSnapshot();
     }
 
     handleEviction(details) {

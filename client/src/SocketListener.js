@@ -139,6 +139,11 @@ class SocketListener extends EventEmitter2 {
             this.emit('lobby:denied', data);
         });
 
+        this.io.on('lobby:released', (payload) => {
+            const data = this.safeParse(payload);
+            this.emit('lobby:released', data);
+        });
+
         this.io.on("enter_game", (player) => {
             const normalised = this.normalisePlayerPayload(player);
             if (!normalised) {
@@ -531,6 +536,27 @@ class SocketListener extends EventEmitter2 {
             return this.io.id;
         }
         return null;
+    }
+
+    leaveGame(options = {}) {
+        if (!this.io || this.io.disconnected) {
+            return;
+        }
+        const payload = {};
+        if (options && typeof options === 'object') {
+            if (typeof options.reason === 'string' && options.reason.trim().length) {
+                payload.reason = options.reason.trim();
+            }
+        }
+        this.sequenceCounter = 0;
+        this.lastServerSequence = 0;
+        if (this.game && this.game.player) {
+            this.game.player.sequence = 0;
+        }
+        if (this.localShotCache && typeof this.localShotCache.clear === 'function') {
+            this.localShotCache.clear();
+        }
+        this.io.emit('lobby:leave', JSON.stringify(payload));
     }
 
     requestLobbySnapshot() {

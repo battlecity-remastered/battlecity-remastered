@@ -312,6 +312,54 @@ class PlayerFactory {
                 this.handleItemUse(socket, payload);
             });
 
+            socket.on('lobby:leave', (payload) => {
+                const request = this.safeParse(payload);
+                const player = this.game.players[socket.id];
+                if (!player) {
+                    socket.emit('lobby:released', JSON.stringify({
+                        status: 'ok',
+                        reason: typeof request?.reason === 'string' ? request.reason : 'manual_exit'
+                    }));
+                    return;
+                }
+
+                if (this.game.buildingFactory && this.game.buildingFactory.cityManager) {
+                    this.game.buildingFactory.cityManager.releasePlayerInventory(socket.id);
+                }
+                if (this.game.buildingFactory &&
+                    this.game.buildingFactory.cityManager &&
+                    typeof this.game.buildingFactory.cityManager.releaseOrbHolder === 'function') {
+                    this.game.buildingFactory.cityManager.releaseOrbHolder(socket.id, { consume: true });
+                }
+
+                const cityId = Number.isFinite(player.city) ? Math.max(0, Math.floor(player.city)) : null;
+                const wasMayor = !!player.isMayor;
+
+                this.releaseSlot(player);
+                delete this.game.players[socket.id];
+                this.callsigns.release(socket.id);
+
+                if (this.io) {
+                    this.io.emit('player:removed', JSON.stringify({ id: player.id }));
+                }
+
+                const response = {
+                    status: 'ok',
+                    city: cityId,
+                    role: wasMayor ? 'mayor' : 'recruit',
+                    wasMayor: wasMayor
+                };
+
+                if (request && typeof request.reason === 'string') {
+                    const trimmedReason = request.reason.trim();
+                    if (trimmedReason.length) {
+                        response.reason = trimmedReason;
+                    }
+                }
+
+                socket.emit('lobby:released', JSON.stringify(response));
+            });
+
             socket.on('disconnect', () => {
                 var removedPlayer = this.game.players[socket.id];
                 if (!removedPlayer) {
