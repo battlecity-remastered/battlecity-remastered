@@ -490,6 +490,30 @@ class SocketListener extends EventEmitter2 {
         });
     }
 
+    disconnectSocket() {
+        if (!this.io) {
+            return;
+        }
+        console.log('[socket] disconnecting existing socket');
+        try {
+            if (typeof this.io.removeAllListeners === 'function') {
+                this.io.removeAllListeners();
+            }
+        } catch (error) {
+            console.warn('Failed to clear socket listeners during disconnect', error);
+        }
+        if (typeof this.io.disconnect === 'function') {
+            this.io.disconnect();
+        }
+        this.io = null;
+    }
+
+    reconnect() {
+        console.log('[socket] reconnecting to server');
+        this.disconnectSocket();
+        this.listen();
+    }
+
     sendNewBuilding(building) {
         if (this.io && !this.io.disconnected) {
             this.io.emit("new_building", JSON.stringify(building));
@@ -540,6 +564,7 @@ class SocketListener extends EventEmitter2 {
 
     leaveGame(options = {}) {
         if (!this.io || this.io.disconnected) {
+            console.warn('[socket] leaveGame aborted because socket is disconnected');
             return;
         }
         const payload = {};
@@ -556,6 +581,7 @@ class SocketListener extends EventEmitter2 {
         if (this.localShotCache && typeof this.localShotCache.clear === 'function') {
             this.localShotCache.clear();
         }
+        console.log('[socket] emitting lobby:leave', payload);
         this.io.emit('lobby:leave', JSON.stringify(payload));
     }
 

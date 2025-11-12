@@ -510,6 +510,29 @@ class IconFactory {
         return null;
     }
 
+    removeOwnedIcons(ownerId) {
+        if (ownerId === null || ownerId === undefined) {
+            return 0;
+        }
+        let removed = 0;
+        let icon = this.getHead();
+        while (icon) {
+            if (icon.owner === ownerId) {
+                icon = this.deleteIcon(icon);
+                removed += 1;
+                continue;
+            }
+            icon = icon.next;
+        }
+        if (removed > 0 && this.game?.player && this.game.player.id === ownerId) {
+            this.game.player.bombsArmed = false;
+        }
+        if (removed > 0) {
+            this.game.forceDraw = true;
+        }
+        return removed;
+    }
+
     deleteIcon(icon) {
         var returnIcon = icon.next;
 

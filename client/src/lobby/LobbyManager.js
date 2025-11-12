@@ -11,6 +11,7 @@ class LobbyManager {
         this.visible = false;
         this.inGame = false;
         this.identityManager = null;
+        this.snapshotRetryHandle = null;
         this.identityBusy = false;
         this.identityFormVisible = false;
         this.identityInput = null;
@@ -1314,6 +1315,7 @@ class LobbyManager {
         this.setStatus(message, { type });
         this.renderCityList();
         this.requestSnapshot();
+        this.scheduleSnapshotRefresh();
     }
 
     handleEviction(details) {
@@ -1352,6 +1354,7 @@ class LobbyManager {
         this.setStatus(fragments.join(' '), { type: 'error' });
         this.renderCityList();
         this.requestSnapshot();
+        this.scheduleSnapshotRefresh();
     }
 
     handleDenial(details) {
@@ -1371,6 +1374,7 @@ class LobbyManager {
         this.setStatus(message, { type });
         this.renderCityList();
         this.requestSnapshot();
+        this.scheduleSnapshotRefresh();
     }
 
     handleConnected() {
@@ -1383,6 +1387,7 @@ class LobbyManager {
         }
         this.setStatus('Connected. Choose a city to enter.', { type: 'info' });
         this.requestSnapshot();
+        this.scheduleSnapshotRefresh();
     }
 
     handleDisconnected(reason) {
@@ -1401,6 +1406,21 @@ class LobbyManager {
         if (this.socketListener && typeof this.socketListener.requestLobbySnapshot === 'function') {
             this.socketListener.requestLobbySnapshot();
         }
+    }
+
+    scheduleSnapshotRefresh(delay = 600) {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        if (this.snapshotRetryHandle) {
+            window.clearTimeout(this.snapshotRetryHandle);
+            this.snapshotRetryHandle = null;
+        }
+        const interval = Number.isFinite(delay) ? Math.max(100, delay) : 600;
+        this.snapshotRetryHandle = window.setTimeout(() => {
+            this.snapshotRetryHandle = null;
+            this.requestSnapshot();
+        }, interval);
     }
 }
 
