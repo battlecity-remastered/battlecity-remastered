@@ -315,18 +315,23 @@ class BuildingFactory {
         }
 
         if (building.owner === null || building.owner === this.game.player.id) {
+            const playerCityIndex = Number(this.game?.player?.city);
+            const playerCity = Number.isFinite(playerCityIndex)
+                ? this.game.cities?.[playerCityIndex]
+                : null;
 
-            Object.keys(this.game.cities[this.game.player.city].canBuild).forEach((id) => {
-
-                var tempId = LABELS[id].TYPE;
-                console.log(tempId + " " + this.game.isBuilding);
-                if (parseInt(tempId) == building.type) {
-
-                    if (tempId != CAN_BUILD_HOUSE) {
-                        this.game.cities[this.game.player.city].canBuild[id] = CAN_BUILD;
+            if (playerCity && playerCity.canBuild && typeof playerCity.canBuild === 'object') {
+                Object.keys(playerCity.canBuild).forEach((id) => {
+                    const label = LABELS[id];
+                    if (!label) {
+                        return;
                     }
-                }
-            });
+                    const tempId = label.TYPE;
+                    if (Number.parseInt(tempId, 10) === building.type && tempId !== CAN_BUILD_HOUSE) {
+                        playerCity.canBuild[id] = CAN_BUILD;
+                    }
+                });
+            }
         }
 
 
