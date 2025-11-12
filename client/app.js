@@ -35,7 +35,7 @@ import NotificationManager from "./src/ui/NotificationManager";
 import CallsignRegistry from "./src/utils/callsigns";
 import ChatManager from "./src/ui/ChatManager";
 import IdentityManager from "./src/identity/IdentityManager";
-import AudioManager from './src/audio/AudioManager';
+import AudioManager, { SOUND_IDS } from './src/audio/AudioManager';
 import MusicManager from './src/audio/MusicManager';
 import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
@@ -1127,18 +1127,70 @@ game.toggleBuildMenuFromPanel = () => {
     game.forceDraw = true;
 };
 
+game.resetForLobby = () => {
+    const player = game.player;
+    if (!player) {
+        return;
+    }
+    const ownerId = player.id ?? null;
+    player.isMayor = false;
+    player.city = null;
+    player.isCloaked = false;
+    player.cloakExpiresAt = 0;
+    player.isFrozen = false;
+    player.frozenUntil = 0;
+    player.frozenBy = null;
+    player.health = MAX_HEALTH;
+    player.collidedItem = null;
+    player.bombsArmed = false;
+    player.isMoving = 0;
+    player.isTurning = 0;
+    player.sequence = 0;
+    if (player.offset && player.defaultOffset) {
+        player.offset.x = player.defaultOffset.x;
+        player.offset.y = player.defaultOffset.y;
+    }
+    if (player.offset && player.lastSafeOffset) {
+        player.lastSafeOffset.x = player.offset.x;
+        player.lastSafeOffset.y = player.offset.y;
+    }
+    if (ownerId !== null && game.iconFactory && typeof game.iconFactory.removeOwnedIcons === 'function') {
+        game.iconFactory.removeOwnedIcons(ownerId);
+    }
+    if (player.engineLoopActive) {
+        player.engineLoopActive = false;
+        if (game.audio) {
+            game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+        }
+    }
+    game.forceDraw = true;
+};
+
 game.requestExitToLobby = () => {
-    if (game.lobby && typeof game.lobby.show === 'function') {
+    console.log('[lobby] requestExitToLobby triggered');
+    if (game.socketListener && typeof game.socketListener.leaveGame === 'function') {
+        game.socketListener.leaveGame({ reason: 'manual_exit' });
+    }
+
+    game.resetForLobby();
+    console.log('[lobby] player reset for lobby, reconnecting socket');
+
+    if (game.lobby && typeof game.lobby.handleManualExit === 'function') {
+        game.lobby.handleManualExit();
+    } else if (game.lobby && typeof game.lobby.show === 'function') {
         game.lobby.show();
         game.lobby.setStatus('Lobby opened. Choose a city slot or wait for the next match.', { type: 'info' });
     }
+
     if (game.notify) {
         game.notify({
             title: 'Exit to Lobby',
-            message: 'The lobby overlay is open. Session hand-off will improve in a future build.',
-            variant: 'warn'
+            message: 'You left your city. Select a new slot from the lobby to rejoin the battle.',
+            variant: 'info'
         });
     }
+
+    game.forceDraw = true;
 };
 
 game.clearPanelMessage();
@@ -1635,10 +1687,7 @@ function setup() {
         game.forceDraw = true;
     });
     game.socketListener.on('lobby:evicted', (payload) => {
-        if (game.player) {
-            game.player.city = null;
-            game.player.isMayor = false;
-        }
+        game.resetForLobby();
         let details = payload;
         if (typeof payload === 'string') {
             try {
@@ -1677,6 +1726,14 @@ function setup() {
         }
         if (game.lobby && typeof game.lobby.handleEviction === 'function') {
             game.lobby.handleEviction(payload);
+        }
+        game.forceDraw = true;
+    });
+    game.socketListener.on('lobby:released', () => {
+        console.log('[lobby] received lobby:released');
+        game.resetForLobby();
+        if (game.socketListener && typeof game.socketListener.reconnect === 'function') {
+            game.socketListener.reconnect();
         }
         game.forceDraw = true;
     });

@@ -139,6 +139,11 @@ class SocketListener extends EventEmitter2 {
             this.emit('lobby:denied', data);
         });
 
+        this.io.on('lobby:released', (payload) => {
+            const data = this.safeParse(payload);
+            this.emit('lobby:released', data);
+        });
+
         this.io.on("enter_game", (player) => {
             const normalised = this.normalisePlayerPayload(player);
             if (!normalised) {
@@ -485,6 +490,30 @@ class SocketListener extends EventEmitter2 {
         });
     }
 
+    disconnectSocket() {
+        if (!this.io) {
+            return;
+        }
+        console.log('[socket] disconnecting existing socket');
+        try {
+            if (typeof this.io.removeAllListeners === 'function') {
+                this.io.removeAllListeners();
+            }
+        } catch (error) {
+            console.warn('Failed to clear socket listeners during disconnect', error);
+        }
+        if (typeof this.io.disconnect === 'function') {
+            this.io.disconnect();
+        }
+        this.io = null;
+    }
+
+    reconnect() {
+        console.log('[socket] reconnecting to server');
+        this.disconnectSocket();
+        this.listen();
+    }
+
     sendNewBuilding(building) {
         if (this.io && !this.io.disconnected) {
             this.io.emit("new_building", JSON.stringify(building));
@@ -531,6 +560,29 @@ class SocketListener extends EventEmitter2 {
             return this.io.id;
         }
         return null;
+    }
+
+    leaveGame(options = {}) {
+        if (!this.io || this.io.disconnected) {
+            console.warn('[socket] leaveGame aborted because socket is disconnected');
+            return;
+        }
+        const payload = {};
+        if (options && typeof options === 'object') {
+            if (typeof options.reason === 'string' && options.reason.trim().length) {
+                payload.reason = options.reason.trim();
+            }
+        }
+        this.sequenceCounter = 0;
+        this.lastServerSequence = 0;
+        if (this.game && this.game.player) {
+            this.game.player.sequence = 0;
+        }
+        if (this.localShotCache && typeof this.localShotCache.clear === 'function') {
+            this.localShotCache.clear();
+        }
+        console.log('[socket] emitting lobby:leave', payload);
+        this.io.emit('lobby:leave', JSON.stringify(payload));
     }
 
     requestLobbySnapshot() {

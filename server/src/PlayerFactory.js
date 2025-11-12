@@ -113,14 +113,16 @@ class PlayerFactory {
             });
 
             socket.on('enter_game', (player) => {
+                console.log('enter_game handler triggered')
                 debug("Player entered game " + socket.id);
                 const existing = this.game.players[socket.id];
                 if (existing) {
                     if (this.game.buildingFactory && this.game.buildingFactory.cityManager) {
                         this.game.buildingFactory.cityManager.releasePlayerInventory(socket.id);
                     }
-                    this.releaseSlot(existing);
+                    this.releaseSlot(existing, { emitSnapshot: false });
                     delete this.game.players[socket.id];
+                    this.emitLobbySnapshot();
                 }
 
                 const parsedPlayer = this.safeParse(player);
@@ -312,6 +314,57 @@ class PlayerFactory {
                 this.handleItemUse(socket, payload);
             });
 
+            socket.on('lobby:leave', (payload) => {
+                const request = this.safeParse(payload);
+                console.log(`[server] lobby:leave from ${socket.id}`, request);
+                const player = this.game.players[socket.id];
+                if (!player) {
+                    socket.emit('lobby:released', JSON.stringify({
+                        status: 'ok',
+                        reason: typeof request?.reason === 'string' ? request.reason : 'manual_exit'
+                    }));
+                    return;
+                }
+
+                if (this.game.buildingFactory && this.game.buildingFactory.cityManager) {
+                    this.game.buildingFactory.cityManager.releasePlayerInventory(socket.id);
+                }
+                if (this.game.buildingFactory &&
+                    this.game.buildingFactory.cityManager &&
+                    typeof this.game.buildingFactory.cityManager.releaseOrbHolder === 'function') {
+                    this.game.buildingFactory.cityManager.releaseOrbHolder(socket.id, { consume: true });
+                }
+
+                const cityId = Number.isFinite(player.city) ? Math.max(0, Math.floor(player.city)) : null;
+                const wasMayor = !!player.isMayor;
+
+                this.releaseSlot(player, { emitSnapshot: false });
+                delete this.game.players[socket.id];
+                this.callsigns.release(socket.id);
+                this.emitLobbySnapshot();
+
+                if (this.io) {
+                    this.io.emit('player:removed', JSON.stringify({ id: player.id }));
+                }
+
+                const response = {
+                    status: 'ok',
+                    city: cityId,
+                    role: wasMayor ? 'mayor' : 'recruit',
+                    wasMayor: wasMayor
+                };
+
+                if (request && typeof request.reason === 'string') {
+                    const trimmedReason = request.reason.trim();
+                    if (trimmedReason.length) {
+                        response.reason = trimmedReason;
+                    }
+                }
+
+                console.log(`[server] lobby:released to ${socket.id}`, response);
+                socket.emit('lobby:released', JSON.stringify(response));
+            });
+
             socket.on('disconnect', () => {
                 var removedPlayer = this.game.players[socket.id];
                 if (!removedPlayer) {
@@ -325,10 +378,11 @@ class PlayerFactory {
                     typeof this.game.buildingFactory.cityManager.releaseOrbHolder === 'function') {
                     this.game.buildingFactory.cityManager.releaseOrbHolder(socket.id, { consume: true });
                 }
-                this.releaseSlot(removedPlayer);
+                this.releaseSlot(removedPlayer, { emitSnapshot: false });
                 delete this.game.players[socket.id];
                 this.callsigns.release(socket.id);
                 io.emit('player:removed', JSON.stringify({id: removedPlayer.id}));
+                this.emitLobbySnapshot();
             });
         });
     }
@@ -770,12 +824,16 @@ class PlayerFactory {
             if (this.game.buildingFactory && this.game.buildingFactory.cityManager) {
                 this.game.buildingFactory.cityManager.releasePlayerInventory(socketId);
             }
-            this.releaseSlot(player);
+            this.releaseSlot(player, { emitSnapshot: false });
             delete this.game.players[socketId];
             if (this.io) {
                 this.io.emit('player:removed', JSON.stringify({ id: player.id }));
             }
         });
+
+        if (toEvict.length > 0) {
+            this.emitLobbySnapshot();
+        }
 
         return toEvict.length;
     }
@@ -957,7 +1015,7 @@ class PlayerFactory {
         const playerCityId = Number.isFinite(playerCityNumeric) ? Math.floor(playerCityNumeric) : null;
 
         if (!player.isSystemControlled) {
-            this.releaseSlot(player);
+            this.releaseSlot(player, { emitSnapshot: false });
         }
         if (this.game.buildingFactory && this.game.buildingFactory.cityManager) {
             this.game.buildingFactory.cityManager.releasePlayerInventory(socketId);
@@ -967,6 +1025,8 @@ class PlayerFactory {
         if (this.io) {
             this.io.emit('player:removed', JSON.stringify({ id: player.id }));
         }
+
+        this.emitLobbySnapshot();
 
         if (socket && !player.isSystemControlled) {
             socket.emit('lobby:evicted', JSON.stringify({
@@ -1542,13 +1602,15 @@ class PlayerFactory {
         this.emitLobbySnapshot();
     }
 
-    releaseSlot(player) {
+    releaseSlot(player, options = {}) {
         if (!player) {
             return;
         }
         if (player.isSystemControlled) {
             return;
         }
+
+        const emitSnapshot = !options || options.emitSnapshot !== false;
 
         const roster = this.cityRosters.get(player.city);
         if (!roster) {
@@ -1571,7 +1633,9 @@ class PlayerFactory {
         } else {
             roster.recruits = roster.recruits.filter((id) => id !== player.id);
         }
-        this.emitLobbySnapshot();
+        if (emitSnapshot) {
+            this.emitLobbySnapshot();
+        }
     }
 }
 

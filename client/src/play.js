@@ -458,6 +458,16 @@ var killPlayer = (game) => {
 };
 
 export const play = (game) => {
+    const lobby = game?.lobby;
+    const inLobby = lobby && typeof lobby.isInGame === 'function' ? lobby.isInGame() : true;
+    if (!inLobby) {
+        if (game.player?.engineLoopActive && game.audio) {
+            game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+            game.player.engineLoopActive = false;
+        }
+        return;
+    }
+
     const now = game.tick || Date.now();
 
     if (game.player.isCloaked && game.player.cloakExpiresAt && now >= game.player.cloakExpiresAt) {

@@ -20,8 +20,6 @@ var getIconsWithinRange = function (iconFactory, player) {
         icon = icon.next;
     }
 
-    console.log(foundIcons);
-
     return foundIcons
 };
 
@@ -37,7 +35,6 @@ export const drawIcons = (game, iconTiles) => {
 
         var foundItems = getIconsWithinRange(game.iconFactory, game.player);
         foundItems.forEach((icon) => {
-            console.log(game.player.offset.x - icon.x);
             var tmpText = new PIXI.Texture(
                 game.textures['imageItems'].baseTexture,
                 new PIXI.Rectangle(icon.type * 32, 0, 32, 32)
