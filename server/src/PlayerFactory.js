@@ -11,6 +11,7 @@ var { isHospitalBuilding, getHospitalDriveableRect } = require('./utils/building
 var citySpawns = require('../../shared/citySpawns.json');
 var CallsignRegistry = require('./utils/callsigns');
 const { ITEM_TYPES } = require('./items');
+const { MAP_SIZE: MAP_SIZE_TILES } = require('./utils/mapLoader');
 
 const HALF_TILE = TILE_SIZE / 2;
 const COMMAND_CENTER_WIDTH_TILES = 3;
@@ -22,6 +23,61 @@ const PLAYER_SPAWN_ADJUST_X = 6.5;
 const PLAYER_SPAWN_ADJUST_Y = 5.5;
 const HOSPITAL_HEAL_INTERVAL = 150;
 const HOSPITAL_HEAL_AMOUNT = 2;
+const MAP_PIXEL_SIZE = MAP_SIZE_TILES * TILE_SIZE;
+const MAP_MAX_COORD = MAP_PIXEL_SIZE - TILE_SIZE;
+const BLOCKING_TILE_VALUES = new Set([1, 2, 3]);
+const BUILDING_HITBOX_PADDING = TILE_SIZE * 0.2;
+const MAX_SPAWN_SEARCH_RADIUS_TILES = 8;
+
+const isBlockingTileValue = (value) => {
+    if (value === null || value === undefined) {
+        return false;
+    }
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return false;
+    }
+    return BLOCKING_TILE_VALUES.has(numeric);
+};
+
+const clamp = (value, min, max) => {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+    if (value < min) {
+        return min;
+    }
+    if (value > max) {
+        return max;
+    }
+    return value;
+};
+
+const createPlayerRectAt = (x, y) => {
+    return getPlayerRect({ offset: { x, y } });
+};
+
+const spawnOffsetCache = new Map();
+
+const getSpawnOffsets = (radiusTiles) => {
+    const radius = Math.max(0, Math.floor(Number.isFinite(radiusTiles) ? radiusTiles : 0));
+    if (spawnOffsetCache.has(radius)) {
+        return spawnOffsetCache.get(radius);
+    }
+    const offsets = [{ dx: 0, dy: 0 }];
+    for (let distance = 1; distance <= radius; distance += 1) {
+        for (let dy = -distance; dy <= distance; dy += 1) {
+            for (let dx = -distance; dx <= distance; dx += 1) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) !== distance) {
+                    continue;
+                }
+                offsets.push({ dx: dx * TILE_SIZE, dy: dy * TILE_SIZE });
+            }
+        }
+    }
+    spawnOffsetCache.set(radius, offsets);
+    return offsets;
+};
 
 const toFiniteNumber = (value, fallback = null) => {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -1219,7 +1275,7 @@ class PlayerFactory {
         };
 
         if (!Number.isFinite(numeric)) {
-            return computeFallbackSpawn(null);
+            return this.ensureSpawnIsClear(computeFallbackSpawn(null));
         }
 
         const key = String(Math.max(0, Math.floor(numeric)));
@@ -1235,11 +1291,11 @@ class PlayerFactory {
             const hasTileY = Number.isFinite(tileY);
 
             if (hasPixelX && hasPixelY) {
-                return {
+                return this.ensureSpawnIsClear({
                     x: pixelX,
                     y: pixelY,
                     name: entry.name || null
-                };
+                });
             }
 
             if (hasTileX && hasTileY) {
@@ -1247,17 +1303,145 @@ class PlayerFactory {
                 const baseY = tileY * TILE_SIZE;
                 const centerX = baseX + (COMMAND_CENTER_WIDTH_TILES * TILE_SIZE) / 2;
                 const centerY = baseY + (COMMAND_CENTER_HEIGHT_TILES * TILE_SIZE) + COMMAND_CENTER_FRONT_OFFSET;
-                return {
+                return this.ensureSpawnIsClear({
                     x: centerX - PLAYER_SPRITE_HALF - PLAYER_SPAWN_ADJUST_X,
                     y: centerY - PLAYER_SPRITE_HALF - PLAYER_SPAWN_ADJUST_Y,
                     name: entry.name || null
-                };
+                });
             }
 
-            return computeFallbackSpawn(entry.name || null);
+            return this.ensureSpawnIsClear(computeFallbackSpawn(entry.name || null));
         }
 
-        return computeFallbackSpawn(null);
+        return this.ensureSpawnIsClear(computeFallbackSpawn(null));
+    }
+
+    getMapValue(tileX, tileY) {
+        const map = this.game?.map;
+        if (!Array.isArray(map) || !Array.isArray(map[0])) {
+            return 0;
+        }
+        if (tileX < 0 || tileY < 0 || tileX >= MAP_SIZE_TILES || tileY >= MAP_SIZE_TILES) {
+            return 0;
+        }
+        const column = map[tileX];
+        if (!Array.isArray(column)) {
+            return 0;
+        }
+        const value = column[tileY];
+        if (value === undefined || value === null) {
+            return 0;
+        }
+        return value;
+    }
+
+    hitsEdges(rect) {
+        if (!rect) {
+            return true;
+        }
+        if (rect.x < 0 || rect.y < 0) {
+            return true;
+        }
+        if ((rect.x + rect.w) > MAP_PIXEL_SIZE) {
+            return true;
+        }
+        if ((rect.y + rect.h) > MAP_PIXEL_SIZE) {
+            return true;
+        }
+        return false;
+    }
+
+    hitsBlockingTile(rect) {
+        if (!rect) {
+            return false;
+        }
+        const minTileX = clamp(Math.floor(rect.x / TILE_SIZE), 0, MAP_SIZE_TILES - 1);
+        const maxTileX = clamp(Math.floor((rect.x + rect.w) / TILE_SIZE), 0, MAP_SIZE_TILES - 1);
+        const minTileY = clamp(Math.floor(rect.y / TILE_SIZE), 0, MAP_SIZE_TILES - 1);
+        const maxTileY = clamp(Math.floor((rect.y + rect.h) / TILE_SIZE), 0, MAP_SIZE_TILES - 1);
+        for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
+            for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
+                const value = this.getMapValue(tileX, tileY);
+                if (isBlockingTileValue(value)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    hitsBuildings(rect) {
+        if (!rect) {
+            return false;
+        }
+        const factory = this.game?.buildingFactory;
+        const buildings = factory?.buildings;
+        if (!buildings || typeof buildings.values !== 'function') {
+            return false;
+        }
+        for (const building of buildings.values()) {
+            if (!building) {
+                continue;
+            }
+            const tileX = Number.isFinite(building.x) ? Math.floor(building.x) : null;
+            const tileY = Number.isFinite(building.y) ? Math.floor(building.y) : null;
+            if (tileX === null || tileY === null) {
+                continue;
+            }
+            const footprint = typeof factory.getBuildingFootprint === 'function'
+                ? factory.getBuildingFootprint(building)
+                : { width: COMMAND_CENTER_WIDTH_TILES, height: COMMAND_CENTER_HEIGHT_TILES };
+            const width = Math.max(1, Number.isFinite(footprint?.width) ? footprint.width : 1);
+            const height = Math.max(1, Number.isFinite(footprint?.height) ? footprint.height : 1);
+            const buildingRect = {
+                x: (tileX * TILE_SIZE) + BUILDING_HITBOX_PADDING,
+                y: (tileY * TILE_SIZE) + BUILDING_HITBOX_PADDING,
+                w: Math.max(TILE_SIZE * width - (BUILDING_HITBOX_PADDING * 2), TILE_SIZE * 0.5),
+                h: Math.max(TILE_SIZE * height - (BUILDING_HITBOX_PADDING * 2), TILE_SIZE * 0.5)
+            };
+            if (rectangleCollision(rect, buildingRect)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isSpawnBlocked(x, y) {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return true;
+        }
+        const rect = createPlayerRectAt(x, y);
+        if (this.hitsEdges(rect)) {
+            return true;
+        }
+        if (this.hitsBlockingTile(rect)) {
+            return true;
+        }
+        if (this.hitsBuildings(rect)) {
+            return true;
+        }
+        return false;
+    }
+
+    ensureSpawnIsClear(spawn, options = {}) {
+        if (!spawn || !Number.isFinite(spawn.x) || !Number.isFinite(spawn.y)) {
+            return spawn;
+        }
+        const radius = Number.isFinite(options.radiusTiles)
+            ? Math.max(0, Math.floor(options.radiusTiles))
+            : MAX_SPAWN_SEARCH_RADIUS_TILES;
+        const offsets = getSpawnOffsets(radius);
+        for (const offset of offsets) {
+            const candidateX = clamp(spawn.x + offset.dx, 0, MAP_MAX_COORD);
+            const candidateY = clamp(spawn.y + offset.dy, 0, MAP_MAX_COORD);
+            if (!this.isSpawnBlocked(candidateX, candidateY)) {
+                if (offset.dx === 0 && offset.dy === 0) {
+                    return spawn;
+                }
+                return Object.assign({}, spawn, { x: candidateX, y: candidateY });
+            }
+        }
+        return spawn;
     }
 
     extractAssignmentPreferences(payload) {
