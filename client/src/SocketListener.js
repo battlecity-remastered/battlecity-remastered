@@ -713,6 +713,14 @@ class SocketListener extends EventEmitter2 {
         this.io.emit('icon:pickup', payload);
     }
 
+    reportOrbLoss(data) {
+        if (!this.io || this.io.disconnected || !data) {
+            return;
+        }
+        const payload = (typeof data === 'string') ? data : JSON.stringify(data);
+        this.io.emit('orb:lost', payload);
+    }
+
     sendOrbDrop(drop) {
         if (!this.io || this.io.disconnected || drop === null || drop === undefined) {
             return;

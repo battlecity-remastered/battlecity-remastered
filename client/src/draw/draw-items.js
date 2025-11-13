@@ -7,6 +7,8 @@ import {ITEM_TYPE_SLEEPER} from "../constants";
 import {ITEM_TYPE_MINE} from "../constants";
 import {ITEM_TYPE_BOMB} from "../constants";
 import {ITEM_TYPE_DFG} from "../constants";
+import {ITEM_TYPE_ORB} from "../constants";
+import { getOrbAnimationFrame } from '../utils/orbAnimation';
 
 var drawTick = 0;
 const textureCache = new Map();
@@ -232,6 +234,30 @@ const drawGenericItem = (game, itemTiles, item, offTileX, offTileY) => {
     itemTiles.addFrame(texture, drawX, drawY);
 };
 
+const ORB_WORLD_OFFSET_X = 4;
+
+const drawOrb = (game, itemTiles, item, offTileX, offTileY) => {
+    const baseTexture = game.textures['imageItems']?.baseTexture;
+    if (!baseTexture) {
+        return;
+    }
+    const frame = getOrbAnimationFrame(game);
+    const texture = getItemTexture(
+        baseTexture,
+        `orb:${frame}`,
+        ITEM_TYPE_ORB * 48,
+        42 + (frame * 48),
+        48,
+        48
+    );
+    if (!texture) {
+        return;
+    }
+    const drawX = item.x - game.player.offset.x + offTileX + ORB_WORLD_OFFSET_X;
+    const drawY = item.y - game.player.offset.y + offTileY;
+    itemTiles.addFrame(texture, drawX, drawY);
+};
+
 const rendererMap = {
     [ITEM_TYPE_TURRET]: drawTurret,
     [ITEM_TYPE_PLASMA]: drawTurret,
@@ -240,6 +266,7 @@ const rendererMap = {
     [ITEM_TYPE_MINE]: drawMine,
     [ITEM_TYPE_DFG]: drawDFG,
     [ITEM_TYPE_BOMB]: drawBomb,
+    [ITEM_TYPE_ORB]: drawOrb,
 };
 
 export const drawItems = (game, itemTiles) => {

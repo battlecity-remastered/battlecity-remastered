@@ -7,6 +7,7 @@ import {COLLISION_MINE} from "../constants.js";
 import {COLLISION_DFG} from "../constants.js";
 import {ITEM_TYPE_MINE} from "../constants.js";
 import {ITEM_TYPE_DFG} from "../constants.js";
+import {ITEM_TYPE_ORB} from "../constants.js";
 
 export const rectangleCollision = (rect1, rect2) => {
     if (!rect1 || !rect2) {
@@ -78,6 +79,10 @@ export const checkItems = (game, rect) => {
                     game.player.collidedItem = item;
                     return COLLISION_DFG;
                 }
+            } else if (item.type === ITEM_TYPE_ORB) {
+                // Orbs should not block movement so players can recover them or finish a drop.
+                // Keep collidedItem handy for any contextual logic that needs to know about overlap.
+                game.player.collidedItem = item;
             } else if (item.active !== false && item.type !== ITEM_TYPE_DFG) {
                 return COLLISION_BLOCKING;
             }

@@ -23,6 +23,7 @@ import {
     RADAR_OFFSET_ADJUST_X,
     RADAR_OFFSET_ADJUST_Y
 } from "../constants";
+import { getOrbAnimationFrame } from '../utils/orbAnimation';
 
 const TILE_SIZE = 48;
 const HALF_TILE = TILE_SIZE / 2;
@@ -664,7 +665,11 @@ var drawItems = (game, stage) => {
 
             let frameX = icon.type * 32;
             let frameY = 0;
-            if (icon.type === ITEM_TYPE_BOMB && icon.armed) {
+            if (icon.type === ITEM_TYPE_ORB) {
+                const frame = getOrbAnimationFrame(game);
+                frameX = 250;
+                frameY = 41 + (frame * 48);
+            } else if (icon.type === ITEM_TYPE_BOMB && icon.armed) {
                 frameX = 152;
                 frameY = 89;
             }
@@ -688,7 +693,7 @@ var drawItems = (game, stage) => {
                 stage.addChild(selected);
             }
 
-            iconSprite.x = x;
+            iconSprite.x = x + (icon.type === ITEM_TYPE_ORB ? 2 : 0);
             iconSprite.y = y;
 
             iconSprite.interactive = true;
@@ -703,6 +708,15 @@ var drawItems = (game, stage) => {
                 game.forceDraw = true;
             });
             stage.addChild(iconSprite);
+
+            if (icon.type === ITEM_TYPE_ORB) {
+                iconSprite.__isOrbPanelIcon = true;
+                iconSprite.__orbBaseX = 250;
+                iconSprite.__orbBaseY = 41;
+                iconSprite.__orbFrameWidth = 32;
+                iconSprite.__orbFrameHeight = 32;
+                iconSprite.__orbFrameSpacing = 48;
+            }
 
             const quantity = icon.quantity ?? 1;
             if (quantity > 1) {
@@ -797,6 +811,39 @@ const drawPanelMessages = (game, stage) => {
     }
 };
 
+const updateOrbPanelIcons = (game, container) => {
+    if (!game || !container) {
+        return;
+    }
+    const frame = getOrbAnimationFrame(game);
+    const visit = (node) => {
+        if (!node) {
+            return;
+        }
+        if (node.__isOrbPanelIcon && node.texture) {
+            const nextY = (node.__orbBaseY ?? 41) + (frame * (node.__orbFrameSpacing ?? 48));
+            const nextX = node.__orbBaseX ?? 250;
+            const width = node.__orbFrameWidth ?? 32;
+            const height = node.__orbFrameHeight ?? 32;
+            const texture = node.texture;
+            const currentFrame = texture.frame;
+            const needsUpdate = !currentFrame ||
+                currentFrame.x !== nextX ||
+                currentFrame.y !== nextY ||
+                currentFrame.width !== width ||
+                currentFrame.height !== height;
+            if (needsUpdate) {
+                texture.frame = new PIXI.Rectangle(nextX, nextY, width, height);
+                texture.updateUvs();
+            }
+        }
+        if (node.children && node.children.length) {
+            node.children.forEach(visit);
+        }
+    };
+    visit(container);
+};
+
 var drawHealth = (game, stage) => {
 
     const percent = Math.max(0, Math.min(1, game.player.health / MAX_HEALTH));
@@ -841,4 +888,5 @@ export const drawPanelInterface = (game, panelContainer) => {
     const radarState = ensureRadarState(game, panelContainer);
     updateRadar(game, radarState);
     updateHomeArrow(game, panelContainer);
+    updateOrbPanelIcons(game, panelContainer);
 };
