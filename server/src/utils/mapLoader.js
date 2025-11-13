@@ -43,8 +43,8 @@ const decodeMapBuffer = (buffer) => {
     }
     for (let x = 0; x < MAP_SIZE; x += 1) {
         for (let y = 0; y < MAP_SIZE; y += 1) {
-            const sourceX = (MAP_SIZE - 1) - x;
-            const sourceY = (MAP_SIZE - 1) - y;
+            const sourceX = (MAP_SIZE - 1) - y;
+            const sourceY = (MAP_SIZE - 1) - x;
             const index = sourceX + (sourceY * MAP_SIZE);
             map[x][y] = view[index] ?? 0;
         }

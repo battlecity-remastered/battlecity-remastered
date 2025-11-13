@@ -1,66 +1,322 @@
 {
-  "0": { "name": "Balkh", "tileX": 415, "tileY": 479 },
-  "1": { "name": "Iqaluit", "tileX": 351, "tileY": 479 },
-  "2": { "name": "Reykjavik", "tileX": 287, "tileY": 479 },
-  "3": { "name": "Jumarity", "tileX": 223, "tileY": 479 },
-  "4": { "name": "Helsinki", "tileX": 159, "tileY": 479 },
-  "5": { "name": "Copenhagen", "tileX": 95, "tileY": 479 },
-  "6": { "name": "Kiev", "tileX": 31, "tileY": 479 },
-  "7": { "name": "Barentsburg", "tileX": 479, "tileY": 478 },
-  "8": { "name": "Nunivak", "tileX": 415, "tileY": 415 },
-  "9": { "name": "Algiers", "tileX": 351, "tileY": 415 },
-  "10": { "name": "Paga Pago", "tileX": 287, "tileY": 415 },
-  "11": { "name": "St. Johns", "tileX": 223, "tileY": 415 },
-  "12": { "name": "Parana", "tileX": 159, "tileY": 415 },
-  "13": { "name": "San Salvador de Jujuy", "tileX": 95, "tileY": 415 },
-  "14": { "name": "Tallinn", "tileX": 31, "tileY": 415 },
-  "15": { "name": "Bergen", "tileX": 479, "tileY": 414 },
-  "16": { "name": "Bangui", "tileX": 415, "tileY": 351 },
-  "17": { "name": "Annaba", "tileX": 351, "tileY": 351 },
-  "18": { "name": "Andorra-la-Vella", "tileX": 287, "tileY": 351 },
-  "19": { "name": "Bahia Blanca", "tileX": 223, "tileY": 351 },
-  "20": { "name": "Posadas", "tileX": 159, "tileY": 351 },
-  "21": { "name": "Santa Fe", "tileX": 95, "tileY": 351 },
-  "22": { "name": "Buckland", "tileX": 31, "tileY": 351 },
-  "23": { "name": "Kabul", "tileX": 479, "tileY": 350 },
-  "24": { "name": "Lahij", "tileX": 415, "tileY": 287 },
-  "25": { "name": "Banta", "tileX": 351, "tileY": 287 },
-  "26": { "name": "Benguela", "tileX": 287, "tileY": 287 },
-  "27": { "name": "Buenos Aires", "tileX": 223, "tileY": 287 },
-  "28": { "name": "Resistencia", "tileX": 159, "tileY": 287 },
-  "29": { "name": "Santiago del Estero", "tileX": 95, "tileY": 287 },
-  "30": { "name": "Armidale", "tileX": 31, "tileY": 287 },
-  "31": { "name": "Harbin", "tileX": 479, "tileY": 286 },
-  "32": { "name": "Fajardo", "tileX": 415, "tileY": 223 },
-  "33": { "name": "Blida", "tileX": 351, "tileY": 223 },
-  "34": { "name": "Huambo", "tileX": 287, "tileY": 223 },
-  "35": { "name": "Cordoba", "tileX": 223, "tileY": 223 },
-  "36": { "name": "Rio Cuarto", "tileX": 159, "tileY": 223 },
-  "37": { "name": "Kumayari", "tileX": 95, "tileY": 223 },
-  "38": { "name": "Kuala Lumpur", "tileX": 31, "tileY": 223 },
-  "39": { "name": "Mango", "tileX": 479, "tileY": 222 },
-  "40": { "name": "Arequipa", "tileX": 415, "tileY": 159 },
-  "41": { "name": "Constantine", "tileX": 351, "tileY": 159 },
-  "42": { "name": "Luanda", "tileX": 287, "tileY": 159 },
-  "43": { "name": "Corrientes", "tileX": 223, "tileY": 159 },
-  "44": { "name": "Rosario", "tileX": 159, "tileY": 159 },
-  "45": { "name": "Kirovakan", "tileX": 95, "tileY": 159 },
-  "46": { "name": "Jakarta", "tileX": 31, "tileY": 159 },
-  "47": { "name": "Skopje", "tileX": 479, "tileY": 158 },
-  "48": { "name": "Bogota", "tileX": 415, "tileY": 95 },
-  "49": { "name": "Canberra", "tileX": 351, "tileY": 95 },
-  "50": { "name": "Pretoria", "tileX": 287, "tileY": 95 },
-  "51": { "name": "Maracay", "tileX": 223, "tileY": 95 },
-  "52": { "name": "Cambridge", "tileX": 159, "tileY": 95 },
-  "53": { "name": "Laketown", "tileX": 95, "tileY": 95 },
-  "54": { "name": "Hanoi", "tileX": 31, "tileY": 95 },
-  "55": { "name": "Bishkek", "tileX": 479, "tileY": 94 },
-  "56": { "name": "Tirana", "tileX": 479, "tileY": 31 },
-  "57": { "name": "Dakar", "tileX": 415, "tileY": 31 },
-  "58": { "name": "Aquin", "tileX": 351, "tileY": 31 },
-  "59": { "name": "Bismarck", "tileX": 287, "tileY": 31 },
-  "60": { "name": "Albany", "tileX": 223, "tileY": 31 },
-  "61": { "name": "Manukau", "tileX": 159, "tileY": 31 },
-  "62": { "name": "Utrecht", "tileX": 95, "tileY": 31 },
-  "63": { "name": "Admin Inn", "tileX": 31, "tileY": 31 }
+  "0": {
+    "name": "Balkh",
+    "tileX": 479,
+    "tileY": 415
+  },
+  "1": {
+    "name": "Iqaluit",
+    "tileX": 479,
+    "tileY": 351
+  },
+  "2": {
+    "name": "Reykjavik",
+    "tileX": 479,
+    "tileY": 287
+  },
+  "3": {
+    "name": "Jumarity",
+    "tileX": 479,
+    "tileY": 223
+  },
+  "4": {
+    "name": "Helsinki",
+    "tileX": 479,
+    "tileY": 159
+  },
+  "5": {
+    "name": "Copenhagen",
+    "tileX": 479,
+    "tileY": 95
+  },
+  "6": {
+    "name": "Kiev",
+    "tileX": 479,
+    "tileY": 31
+  },
+  "7": {
+    "name": "Barentsburg",
+    "tileX": 478,
+    "tileY": 479
+  },
+  "8": {
+    "name": "Nunivak",
+    "tileX": 415,
+    "tileY": 415
+  },
+  "9": {
+    "name": "Algiers",
+    "tileX": 415,
+    "tileY": 351
+  },
+  "10": {
+    "name": "Paga Pago",
+    "tileX": 415,
+    "tileY": 287
+  },
+  "11": {
+    "name": "St. Johns",
+    "tileX": 415,
+    "tileY": 223
+  },
+  "12": {
+    "name": "Parana",
+    "tileX": 415,
+    "tileY": 159
+  },
+  "13": {
+    "name": "San Salvador de Jujuy",
+    "tileX": 415,
+    "tileY": 95
+  },
+  "14": {
+    "name": "Tallinn",
+    "tileX": 415,
+    "tileY": 31
+  },
+  "15": {
+    "name": "Bergen",
+    "tileX": 414,
+    "tileY": 479
+  },
+  "16": {
+    "name": "Bangui",
+    "tileX": 351,
+    "tileY": 415
+  },
+  "17": {
+    "name": "Annaba",
+    "tileX": 351,
+    "tileY": 351
+  },
+  "18": {
+    "name": "Andorra-la-Vella",
+    "tileX": 351,
+    "tileY": 287
+  },
+  "19": {
+    "name": "Bahia Blanca",
+    "tileX": 351,
+    "tileY": 223
+  },
+  "20": {
+    "name": "Posadas",
+    "tileX": 351,
+    "tileY": 159
+  },
+  "21": {
+    "name": "Santa Fe",
+    "tileX": 351,
+    "tileY": 95
+  },
+  "22": {
+    "name": "Buckland",
+    "tileX": 351,
+    "tileY": 31
+  },
+  "23": {
+    "name": "Kabul",
+    "tileX": 350,
+    "tileY": 479
+  },
+  "24": {
+    "name": "Lahij",
+    "tileX": 287,
+    "tileY": 415
+  },
+  "25": {
+    "name": "Banta",
+    "tileX": 287,
+    "tileY": 351
+  },
+  "26": {
+    "name": "Benguela",
+    "tileX": 287,
+    "tileY": 287
+  },
+  "27": {
+    "name": "Buenos Aires",
+    "tileX": 287,
+    "tileY": 223
+  },
+  "28": {
+    "name": "Resistencia",
+    "tileX": 287,
+    "tileY": 159
+  },
+  "29": {
+    "name": "Santiago del Estero",
+    "tileX": 287,
+    "tileY": 95
+  },
+  "30": {
+    "name": "Armidale",
+    "tileX": 287,
+    "tileY": 31
+  },
+  "31": {
+    "name": "Harbin",
+    "tileX": 286,
+    "tileY": 479
+  },
+  "32": {
+    "name": "Fajardo",
+    "tileX": 223,
+    "tileY": 415
+  },
+  "33": {
+    "name": "Blida",
+    "tileX": 223,
+    "tileY": 351
+  },
+  "34": {
+    "name": "Huambo",
+    "tileX": 223,
+    "tileY": 287
+  },
+  "35": {
+    "name": "Cordoba",
+    "tileX": 223,
+    "tileY": 223
+  },
+  "36": {
+    "name": "Rio Cuarto",
+    "tileX": 223,
+    "tileY": 159
+  },
+  "37": {
+    "name": "Kumayari",
+    "tileX": 223,
+    "tileY": 95
+  },
+  "38": {
+    "name": "Kuala Lumpur",
+    "tileX": 223,
+    "tileY": 31
+  },
+  "39": {
+    "name": "Mango",
+    "tileX": 222,
+    "tileY": 479
+  },
+  "40": {
+    "name": "Arequipa",
+    "tileX": 159,
+    "tileY": 415
+  },
+  "41": {
+    "name": "Constantine",
+    "tileX": 159,
+    "tileY": 351
+  },
+  "42": {
+    "name": "Luanda",
+    "tileX": 159,
+    "tileY": 287
+  },
+  "43": {
+    "name": "Corrientes",
+    "tileX": 159,
+    "tileY": 223
+  },
+  "44": {
+    "name": "Rosario",
+    "tileX": 159,
+    "tileY": 159
+  },
+  "45": {
+    "name": "Kirovakan",
+    "tileX": 159,
+    "tileY": 95
+  },
+  "46": {
+    "name": "Jakarta",
+    "tileX": 159,
+    "tileY": 31
+  },
+  "47": {
+    "name": "Skopje",
+    "tileX": 158,
+    "tileY": 479
+  },
+  "48": {
+    "name": "Bogota",
+    "tileX": 95,
+    "tileY": 415
+  },
+  "49": {
+    "name": "Canberra",
+    "tileX": 95,
+    "tileY": 351
+  },
+  "50": {
+    "name": "Pretoria",
+    "tileX": 95,
+    "tileY": 287
+  },
+  "51": {
+    "name": "Maracay",
+    "tileX": 95,
+    "tileY": 223
+  },
+  "52": {
+    "name": "Cambridge",
+    "tileX": 95,
+    "tileY": 159
+  },
+  "53": {
+    "name": "Laketown",
+    "tileX": 95,
+    "tileY": 95
+  },
+  "54": {
+    "name": "Hanoi",
+    "tileX": 95,
+    "tileY": 31
+  },
+  "55": {
+    "name": "Bishkek",
+    "tileX": 94,
+    "tileY": 479
+  },
+  "56": {
+    "name": "Tirana",
+    "tileX": 31,
+    "tileY": 479
+  },
+  "57": {
+    "name": "Dakar",
+    "tileX": 31,
+    "tileY": 415
+  },
+  "58": {
+    "name": "Aquin",
+    "tileX": 31,
+    "tileY": 351
+  },
+  "59": {
+    "name": "Bismarck",
+    "tileX": 31,
+    "tileY": 287
+  },
+  "60": {
+    "name": "Albany",
+    "tileX": 31,
+    "tileY": 223
+  },
+  "61": {
+    "name": "Manukau",
+    "tileX": 31,
+    "tileY": 159
+  },
+  "62": {
+    "name": "Utrecht",
+    "tileX": 31,
+    "tileY": 95
+  },
+  "63": {
+    "name": "Admin Inn",
+    "tileX": 31,
+    "tileY": 31
+  }
 }

@@ -47,8 +47,8 @@ function populateTiles(game, mapData) {
 
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
-            const sourceX = (size - 1) - i;
-            const sourceY = (size - 1) - j;
+            const sourceX = (size - 1) - j;
+            const sourceY = (size - 1) - i;
             game.map[i][j] = view[sourceX + (sourceY * size)];
         }
     }
