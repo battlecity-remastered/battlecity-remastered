@@ -720,6 +720,9 @@ class ItemFactory {
             return null;
         }
         const notifyServer = options.notifyServer !== false;
+        const removalReason = (typeof options.reason === 'string' && options.reason.trim().length)
+            ? options.reason.trim()
+            : null;
         const returnItem = item.next;
         if (Array.isArray(this.pendingOrbItems)) {
             const index = this.pendingOrbItems.indexOf(item);
@@ -746,7 +749,82 @@ class ItemFactory {
         if (this.pendingDefenseIds) {
             this.pendingDefenseIds.delete(item.id);
         }
+        if (item.type === ITEM_TYPE_ORB) {
+            const skipNotification = removalReason === 'orb_detonated' || removalReason === 'picked_up';
+            if (!skipNotification) {
+                this.notifyOrbDestroyed(item, { reason: removalReason || 'destroyed' });
+            }
+        }
         return returnItem;
+    }
+
+    pickupOrbItem() {
+        const player = this.game?.player;
+        if (!player || !player.id) {
+            return false;
+        }
+        const orbItem = player.collidedItem;
+        if (!orbItem || orbItem.type !== ITEM_TYPE_ORB) {
+            return false;
+        }
+        const iconFactory = this.game.iconFactory;
+        if (!iconFactory || typeof iconFactory.getAllowedQuantity !== 'function') {
+            return false;
+        }
+        const playerTeam = player.city ?? null;
+        const itemTeam = this.resolveItemTeam(orbItem, null);
+        if (itemTeam !== null && playerTeam !== null && itemTeam !== playerTeam) {
+            return false;
+        }
+        const allowed = iconFactory.getAllowedQuantity(player.id, ITEM_TYPE_ORB, 1);
+        if (allowed <= 0) {
+            return false;
+        }
+        let icon = iconFactory.findOwnedIconByType(player.id, ITEM_TYPE_ORB);
+        if (icon) {
+            const limit = (typeof iconFactory.getLimitForType === 'function')
+                ? iconFactory.getLimitForType(ITEM_TYPE_ORB)
+                : Infinity;
+            const current = Number.isFinite(icon.quantity)
+                ? icon.quantity
+                : parseInt(icon.quantity, 10) || 1;
+            const incremented = Math.max(1, current + 1);
+            icon.quantity = Number.isFinite(limit)
+                ? Math.min(limit, incremented)
+                : incremented;
+            icon.selected = true;
+        } else if (typeof iconFactory.newIcon === 'function') {
+            icon = iconFactory.newIcon(player.id, player.offset?.x ?? 0, player.offset?.y ?? 0, ITEM_TYPE_ORB, {
+                quantity: 1,
+                selected: true,
+                skipProductionUpdate: true,
+                synced: true,
+                city: playerTeam,
+                teamId: playerTeam
+            });
+        }
+        if (!icon) {
+            return false;
+        }
+        if (typeof iconFactory.getHead === 'function') {
+            let node = iconFactory.getHead();
+            while (node) {
+                if (node !== icon && node.owner === player.id) {
+                    node.selected = false;
+                    if (node.type === ITEM_TYPE_BOMB) {
+                        node.armed = false;
+                    }
+                }
+                node = node.next;
+            }
+        }
+        if (player && this.game?.player === player) {
+            player.bombsArmed = false;
+        }
+        this.deleteItem(orbItem, { notifyServer: false, reason: 'picked_up' });
+        player.collidedItem = null;
+        this.game.forceDraw = true;
+        return true;
     }
 
     processBombs() {
@@ -922,8 +1000,26 @@ class ItemFactory {
         }
 
         this.spawnExplosion(item.x, item.y);
-        this.deleteItem(item, { notifyServer: false });
+        this.deleteItem(item, { notifyServer: false, reason: 'orb_detonated' });
         this.game.forceDraw = true;
+    }
+
+    notifyOrbDestroyed(item, meta = {}) {
+        if (!item || item._orbDestroyedNotified) {
+            return;
+        }
+        item._orbDestroyedNotified = true;
+        const socketListener = this.game?.socketListener;
+        if (!socketListener || typeof socketListener.reportOrbLoss !== 'function') {
+            return;
+        }
+        const payload = {
+            itemId: item.id ?? null,
+            ownerId: item.ownerId ?? item.owner ?? null,
+            cityId: this.resolveItemTeam(item, null),
+            reason: meta.reason || 'destroyed'
+        };
+        socketListener.reportOrbLoss(payload);
     }
 
     applyHazardState(item, hazard) {

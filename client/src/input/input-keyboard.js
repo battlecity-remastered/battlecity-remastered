@@ -225,7 +225,15 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
     };
 
     u.press = function () {
-        game.iconFactory.pickupIcon();
+        if (game?.itemFactory && typeof game.itemFactory.pickupOrbItem === 'function') {
+            const handled = game.itemFactory.pickupOrbItem();
+            if (handled) {
+                return;
+            }
+        }
+        if (game?.iconFactory && typeof game.iconFactory.pickupIcon === 'function') {
+            game.iconFactory.pickupIcon();
+        }
     };
 
     s.press = function () {

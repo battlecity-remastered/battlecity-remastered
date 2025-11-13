@@ -160,6 +160,49 @@ class OrbManager {
         });
     }
 
+    handleOrbLost(socket, payload) {
+        if (!socket || !this.cityManager) {
+            return;
+        }
+        const data = this.parsePayload(payload);
+        if (!data) {
+            return;
+        }
+        const ownerId = (typeof data.ownerId === 'string' && data.ownerId.trim().length)
+            ? data.ownerId.trim()
+            : socket.id;
+        if (ownerId !== socket.id) {
+            return;
+        }
+        let playerCity = null;
+        const player = this.getPlayer(socket.id);
+        if (player) {
+            playerCity = toNumber(player.city, null);
+        }
+        let cityId = toNumber(data.cityId, null);
+        if (!Number.isFinite(cityId)) {
+            cityId = playerCity;
+        }
+        const releasedCityId = (typeof this.cityManager.releaseOrbHolder === 'function')
+            ? this.cityManager.releaseOrbHolder(ownerId, { consume: false })
+            : null;
+        if (!Number.isFinite(cityId)) {
+            cityId = releasedCityId;
+        }
+        if (!Number.isFinite(cityId)) {
+            return;
+        }
+        if (typeof this.cityManager.getActiveOrbCount === 'function') {
+            const activeOrbs = this.cityManager.getActiveOrbCount(cityId);
+            if (!activeOrbs || activeOrbs <= 0) {
+                return;
+            }
+        }
+        if (typeof this.cityManager.consumeOrb === 'function') {
+            this.cityManager.consumeOrb(cityId);
+        }
+    }
+
     emitDropResult(socket, payload) {
         if (!socket) {
             return;

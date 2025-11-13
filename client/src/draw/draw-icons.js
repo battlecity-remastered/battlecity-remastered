@@ -1,4 +1,6 @@
 import PIXI from '../pixi';
+import { ITEM_TYPE_ORB } from "../constants";
+import { getOrbAnimationFrame } from '../utils/orbAnimation';
 
 var getIconsWithinRange = function (iconFactory, player) {
 
@@ -23,6 +25,8 @@ var getIconsWithinRange = function (iconFactory, player) {
     return foundIcons
 };
 
+let lastOrbIconFrame = null;
+
 export const drawIcons = (game, iconTiles) => {
 
 
@@ -30,16 +34,37 @@ export const drawIcons = (game, iconTiles) => {
     var offTileY = Math.floor(game.player.offset.y % 32);
 
 
-    if (game.forceDraw) {
+    const orbFrame = getOrbAnimationFrame(game);
+    const needsUpdate = game.forceDraw || (lastOrbIconFrame === null) || (orbFrame !== lastOrbIconFrame);
+
+    if (needsUpdate) {
+        lastOrbIconFrame = orbFrame;
         iconTiles.clear();
 
         var foundItems = getIconsWithinRange(game.iconFactory, game.player);
         foundItems.forEach((icon) => {
+            const baseTexture = game.textures['imageItems'].baseTexture;
+            if (!baseTexture) {
+                return;
+            }
+            let frameX = icon.type * 32;
+            let frameY = 0;
+            let frameWidth = 32;
+            let frameHeight = 32;
+            let drawX = icon.x - game.player.offset.x + offTileX;
+            const drawY = icon.y - game.player.offset.y + offTileY;
+            if (icon.type === ITEM_TYPE_ORB) {
+                frameX = 250;
+                frameY = 41 + (orbFrame * 48);
+                frameWidth = 32;
+                frameHeight = 32;
+                drawX += 2;
+            }
             var tmpText = new PIXI.Texture(
-                game.textures['imageItems'].baseTexture,
-                new PIXI.Rectangle(icon.type * 32, 0, 32, 32)
+                baseTexture,
+                new PIXI.Rectangle(frameX, frameY, frameWidth, frameHeight)
             );
-            iconTiles.addFrame(tmpText, icon.x - game.player.offset.x + offTileX, icon.y - game.player.offset.y + offTileY);
+            iconTiles.addFrame(tmpText, drawX, drawY);
         });
 
         iconTiles.position.set(game.player.defaultOffset.x + game.player.offset.x - offTileX, game.player.defaultOffset.y + game.player.offset.y - offTileY);

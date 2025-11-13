@@ -660,6 +660,9 @@ io.on('connection', (socket) => {
     socket.on('orb:drop', (payload) => {
         orbManager.handleDrop(socket, payload);
     });
+    socket.on('orb:lost', (payload) => {
+        orbManager.handleOrbLost(socket, payload);
+    });
     socket.on('icon:drop', (payload) => {
         iconDropManager.handleDrop(socket, payload);
     });
