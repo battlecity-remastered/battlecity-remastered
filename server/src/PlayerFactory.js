@@ -336,6 +336,11 @@ class PlayerFactory {
                     return;
                 }
 
+                const blockedByWorld = this.enforceWorldMovement(existingPlayer, validation.sanitized);
+                if (blockedByWorld) {
+                    validation.flags.push('movement_world_blocked');
+                }
+
                 existingPlayer.update(validation.sanitized, validation.timestamp);
                 io.emit('player', JSON.stringify(existingPlayer));
             });
@@ -1442,6 +1447,30 @@ class PlayerFactory {
             }
         }
         return spawn;
+    }
+
+    enforceWorldMovement(player, sanitizedState) {
+        if (!player || !sanitizedState) {
+            return false;
+        }
+        const previousOffset = player.offset || { x: 0, y: 0 };
+        if (!sanitizedState.offset || typeof sanitizedState.offset !== 'object') {
+            sanitizedState.offset = { x: previousOffset.x, y: previousOffset.y };
+            return true;
+        }
+        const nextX = Number(sanitizedState.offset.x);
+        const nextY = Number(sanitizedState.offset.y);
+        if (!Number.isFinite(nextX) || !Number.isFinite(nextY)) {
+            sanitizedState.offset = { x: previousOffset.x, y: previousOffset.y };
+            return true;
+        }
+        const nextRect = createPlayerRectAt(nextX, nextY);
+        if (this.hitsEdges(nextRect) || this.hitsBlockingTile(nextRect) || this.hitsBuildings(nextRect)) {
+            sanitizedState.offset = { x: previousOffset.x, y: previousOffset.y };
+            return true;
+        }
+        sanitizedState.offset = { x: nextX, y: nextY };
+        return false;
     }
 
     extractAssignmentPreferences(payload) {
