@@ -101,7 +101,6 @@ class MapModal {
         this.canvas = null;
         this.legendContainer = null;
         this.playerIndicator = null;
-        this.playerIndicator = null;
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.palette = {
             ground: TERRAIN_PALETTE.ground,
@@ -329,11 +328,8 @@ class MapModal {
 
         const legend = document.createElement('div');
         legend.className = 'battlecity-map-legend';
-        const playerIndicator = document.createElement('div');
-        playerIndicator.className = 'battlecity-map-player-indicator';
 
         canvasWrapper.appendChild(canvas);
-        canvasWrapper.appendChild(playerIndicator);
 
         const content = document.createElement('div');
         content.className = 'battlecity-map-content';
@@ -348,7 +344,6 @@ class MapModal {
         this.panel = panel;
         this.canvas = canvas;
         this.legendContainer = legend;
-        this.playerIndicator = playerIndicator;
     }
 
     open() {
