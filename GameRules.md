@@ -136,6 +136,14 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - **Sleeper Turret** – Sleeper turrets reuse the autonomous firing logic but stay hidden unless they have a target or belong to your city. (client/src/factories/ItemFactory.js:33, client/src/draw/draw-items.js:116)
 - **Plasma Turret** – Plasma turrets share the automated targeting loop, providing the higher-tier factory defense once population is available. (client/src/factories/ItemFactory.js:33, client/src/draw/draw-items.js:20)
 
+## Defense Durability
+- Players can deliver two baseline projectile types: lasers (default SHIFT fire) and Cougar Missiles/Bazookas (stand still + SHIFT). Lasers carry `DAMAGE_LASER = 5` while bazooka rounds bump to `DAMAGE_ROCKET = 8`; automated defenses also use the laser profile unless explicitly overridden. (client/src/constants.js:39-41, client/src/factories/BulletFactory.js:7, client/src/factories/BulletFactory.js:26, client/src/factories/ItemFactory.js:467)
+- Defense items load their base hit points from `ITEM_INITIAL_LIFE`, letting us map life totals directly to the number of laser hits required (ceiling applied to cover partial health remaining). (client/src/constants.js:120, client/src/factories/ItemFactory.js:383)
+- `Wall` – 40 life → 8 laser hits or 5 bazooka hits; walls ignite once they slip below the 20-life burn threshold but still need the full count to crumble. (client/src/constants.js:121, client/src/constants.js:128)
+- `Turret` – 32 life → 7 laser hits or 4 bazooka hits, with visual burning kicking in below the 8-life mark even though the barrel keeps tracking until it explodes. (client/src/constants.js:122, client/src/constants.js:129)
+- `Sleeper Turret` – 16 life → 4 laser hits or 2 bazooka hits; sleepers stay hidden until they fire, but their durability matches the legacy fast-falloff configuration. (client/src/constants.js:123, client/src/constants.js:130)
+- `Plasma Turret` – 40 life → 8 laser hits or 5 bazooka hits; these inherit the same sturdiness as walls and don’t get a special armor bonus beyond the higher burn threshold. (client/src/constants.js:124, client/src/constants.js:131)
+
 ## Networking
 - Socket.IO server runs on port 8021 and rebroadcasts player, bullet, and building updates it receives from clients.
 - Client emits `player`, `bullet_shot`, and `new_building` events when local state changes; listeners reconcile remote entities under `game.otherPlayers`.

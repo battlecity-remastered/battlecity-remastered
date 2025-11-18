@@ -207,6 +207,17 @@ class SocketListener extends EventEmitter2 {
             if (!data) {
                 return;
             }
+            const shooterId = (typeof data.shooter === 'string' && data.shooter.length)
+                ? data.shooter
+                : null;
+            const localPlayerId = (typeof this.game?.player?.id === 'string' && this.game.player.id.length)
+                ? this.game.player.id
+                : null;
+            const hasStructureSource = (typeof data.sourceType === 'string' && data.sourceType.length > 0)
+                || (typeof data.sourceId === 'string' && data.sourceId.length > 0);
+            if (localPlayerId && shooterId && shooterId === localPlayerId && !hasStructureSource) {
+                return;
+            }
             const options = {
                 sourceId: data.sourceId ?? null,
                 sourceType: data.sourceType ?? null,
