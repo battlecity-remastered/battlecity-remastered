@@ -199,25 +199,6 @@ class MapModal {
                 box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
                 display: block;
             }
-            .battlecity-map-player-indicator {
-                position: absolute;
-                width: 24px;
-                height: 24px;
-                clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-                background: linear-gradient(145deg, #ffffff 0%, #f6f9ff 50%, #cfe0ff 100%);
-                border: 1px solid rgba(255, 255, 255, 0.95);
-                box-shadow:
-                    0 0 12px rgba(255, 255, 255, 0.7),
-                    0 0 24px rgba(64, 164, 255, 0.65),
-                    0 0 40px rgba(64, 164, 255, 0.35);
-                animation: battlecity-player-pulse 1200ms ease-in-out infinite;
-                z-index: 20;
-                pointer-events: none;
-                transform-origin: center;
-                will-change: transform, opacity, box-shadow;
-                mix-blend-mode: screen;
-                display: none;
-            }
             .battlecity-map-legend {
                 display: flex;
                 flex-wrap: wrap;
@@ -268,32 +249,6 @@ class MapModal {
                 font-size: 12px;
                 letter-spacing: 0.2px;
                 color: rgba(226, 233, 255, 0.88);
-            }
-            @keyframes battlecity-player-pulse {
-                0% {
-                    transform: scale(0.9);
-                    opacity: 0.35;
-                    box-shadow:
-                        0 0 8px rgba(255, 255, 255, 0.35),
-                        0 0 18px rgba(64, 164, 255, 0.25),
-                        0 0 22px rgba(64, 164, 255, 0.15);
-                }
-                50% {
-                    transform: scale(1.35);
-                    opacity: 1;
-                    box-shadow:
-                        0 0 14px rgba(255, 255, 255, 0.85),
-                        0 0 34px rgba(64, 164, 255, 0.7),
-                        0 0 46px rgba(64, 164, 255, 0.45);
-                }
-                100% {
-                    transform: scale(0.9);
-                    opacity: 0.35;
-                    box-shadow:
-                        0 0 8px rgba(255, 255, 255, 0.35),
-                        0 0 18px rgba(64, 164, 255, 0.25),
-                        0 0 22px rgba(64, 164, 255, 0.15);
-                }
             }
         `;
         document.head.appendChild(style);

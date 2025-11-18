@@ -7,6 +7,8 @@ const {
     COMMAND_CENTER_HEIGHT_TILES,
 } = require('../gameplay/constants');
 
+const ORB_DETECTION_MARGIN_TILES = 0.15;
+
 const ORB_RESULT_EVENT = 'orb:result';
 const CITY_ORBED_EVENT = 'city:orbed';
 
@@ -235,7 +237,7 @@ class OrbManager {
             if (!rect) {
                 return;
             }
-            const margin = TILE_SIZE * 0.75;
+            const margin = TILE_SIZE * ORB_DETECTION_MARGIN_TILES;
             const expanded = {
                 x: rect.x - margin,
                 y: rect.y - margin,
@@ -269,11 +271,16 @@ class OrbManager {
         if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
             return null;
         }
+        const baseX = tileX * TILE_SIZE;
+        const baseY = tileY * TILE_SIZE;
+        const footprintHeight = (COMMAND_CENTER_HEIGHT_TILES + 1) * TILE_SIZE;
+        const detectionHeight = TILE_SIZE; // bottom row (NO PARKING zone)
+        const detectionY = baseY + footprintHeight - detectionHeight;
         return {
-            x: tileX * TILE_SIZE,
-            y: tileY * TILE_SIZE,
+            x: baseX,
+            y: detectionY,
             width: COMMAND_CENTER_WIDTH_TILES * TILE_SIZE,
-            height: COMMAND_CENTER_HEIGHT_TILES * TILE_SIZE,
+            height: detectionHeight,
         };
     }
 
