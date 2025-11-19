@@ -732,7 +732,8 @@ class ItemFactory {
         }
         if (notifyServer && this.isHazardType(item.type) && this.game.socketListener && typeof this.game.socketListener.removeHazard === 'function') {
             try {
-                this.game.socketListener.removeHazard(item.id);
+                const hazardPayload = removalReason ? { id: item.id, reason: removalReason } : item.id;
+                this.game.socketListener.removeHazard(hazardPayload);
             } catch (error) {
                 console.debug("Failed to notify server about hazard removal", error);
             }
@@ -822,6 +823,78 @@ class ItemFactory {
             player.bombsArmed = false;
         }
         this.deleteItem(orbItem, { notifyServer: false, reason: 'picked_up' });
+        player.collidedItem = null;
+        this.game.forceDraw = true;
+        return true;
+    }
+
+    pickupFriendlyMine() {
+        const player = this.game?.player;
+        if (!player || !player.id) {
+            return false;
+        }
+        const mine = player.collidedItem;
+        if (!mine || mine.type !== ITEM_TYPE_MINE) {
+            return false;
+        }
+        const playerTeam = player.city ?? null;
+        const mineTeam = this.resolveItemTeam(mine, null);
+        if (mineTeam !== null && playerTeam !== null && mineTeam !== playerTeam) {
+            return false;
+        }
+
+        const iconFactory = this.game?.iconFactory;
+        if (!iconFactory || typeof iconFactory.getAllowedQuantity !== 'function') {
+            return false;
+        }
+        const allowed = iconFactory.getAllowedQuantity(player.id, ITEM_TYPE_MINE, 1);
+        if (allowed <= 0) {
+            return false;
+        }
+
+        let icon = iconFactory.findOwnedIconByType(player.id, ITEM_TYPE_MINE);
+        if (icon) {
+            const limit = (typeof iconFactory.getLimitForType === 'function')
+                ? iconFactory.getLimitForType(ITEM_TYPE_MINE)
+                : Infinity;
+            const current = Number.isFinite(icon.quantity)
+                ? icon.quantity
+                : parseInt(icon.quantity, 10) || 1;
+            const incremented = Math.max(1, current + 1);
+            icon.quantity = Number.isFinite(limit)
+                ? Math.min(limit, incremented)
+                : incremented;
+            icon.selected = true;
+        } else if (typeof iconFactory.newIcon === 'function') {
+            icon = iconFactory.newIcon(player.id, player.offset?.x ?? 0, player.offset?.y ?? 0, ITEM_TYPE_MINE, {
+                quantity: 1,
+                selected: true,
+                skipProductionUpdate: true,
+                synced: true,
+                city: playerTeam,
+                teamId: playerTeam
+            });
+        }
+
+        if (!icon) {
+            return false;
+        }
+
+        if (typeof iconFactory.getHead === 'function') {
+            let node = iconFactory.getHead();
+            while (node) {
+                if (node !== icon && node.owner === player.id) {
+                    node.selected = false;
+                    if (node.type === ITEM_TYPE_BOMB) {
+                        node.armed = false;
+                    }
+                }
+                node = node.next;
+            }
+        }
+
+        player.bombsArmed = false;
+        this.deleteItem(mine, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
         return true;
