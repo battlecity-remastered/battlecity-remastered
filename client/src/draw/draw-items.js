@@ -269,6 +269,17 @@ const rendererMap = {
     [ITEM_TYPE_ORB]: drawOrb,
 };
 
+const ITEM_RENDER_PRIORITY = {
+    [ITEM_TYPE_MINE]: 0,
+    // Always render walls after mines so allied players see walls covering traps.
+    [ITEM_TYPE_WALL]: 1,
+};
+
+const getItemRenderPriority = (item) => {
+    const priority = item ? ITEM_RENDER_PRIORITY[item.type] : null;
+    return Number.isFinite(priority) ? priority : 0;
+};
+
 export const drawItems = (game, itemTiles) => {
 
 
@@ -281,6 +292,14 @@ export const drawItems = (game, itemTiles) => {
         itemTiles.clear();
 
         var foundItems = getItemsWithingRange(game.itemFactory, game.player);
+
+        foundItems.sort((a, b) => {
+            const priorityDelta = getItemRenderPriority(a) - getItemRenderPriority(b);
+            if (priorityDelta !== 0) {
+                return priorityDelta;
+            }
+            return 0;
+        });
 
         foundItems.forEach((item) => {
             switch (item.type) {
