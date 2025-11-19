@@ -167,7 +167,7 @@ class HelpModal {
         section.appendChild(title);
 
         const body = document.createElement('p');
-        body.textContent = 'Use the arrow keys for every movement input: Up/Down for forward and reverse, Left/Right to spin the turret. WASD support is still under development, so stick with the arrows.';
+        body.textContent = 'Use the arrow keys for every movement input: Up/Down for forward and reverse, Left/Right to spin the turret.';
         section.appendChild(body);
 
         const extra = document.createElement('p');
@@ -188,9 +188,9 @@ class HelpModal {
         const shortcuts = [
             { key: 'Shift', desc: 'Fire equipped weapon (laser or Cougar rockets; rockets need you to be stationary).' },
             { key: 'Ctrl', desc: 'Fire the Flare Gun spread behind you when you own an Orb icon.' },
-            { key: 'D', desc: 'Drop the currently selected icon/item at your marker; press again to adjust the placement.' },
-            { key: 'U', desc: 'Pick up an item when you are on top of the loot marker to add it to your inventory.' },
-            { key: 'O', desc: 'Drop an Orb from your inventory to mark a target city and start the capture countdown.' },
+            { key: 'D', desc: 'Drop the currently selected icon/item at your marker.' },
+            { key: 'U', desc: 'Pick up an item when you are on top of it to add it to your inventory.' },
+            { key: 'O', desc: 'Drop an Orb from your inventory on an enemy command center to destroy it and earn maximum points.' },
             { key: 'B', desc: 'Instantly arm and drop a bomb from your inventory, even when another icon is selected.' },
             { key: 'H', desc: 'Use a MedKit to instantly restore your health when you have one in inventory.' },
             { key: 'C', desc: 'Activate a 5-second cloak as long as you own the Cloak icon.' },
