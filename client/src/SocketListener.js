@@ -674,11 +674,15 @@ class SocketListener extends EventEmitter2 {
         this.io.emit('hazard:arm', JSON.stringify(hazard));
     }
 
-    removeHazard(id) {
-        if (!this.io || this.io.disconnected || !id) {
+    removeHazard(hazard) {
+        if (!this.io || this.io.disconnected || !hazard) {
             return;
         }
-        this.io.emit('hazard:remove', JSON.stringify({ id }));
+        const payload = (typeof hazard === 'object') ? hazard : { id: hazard };
+        if (!payload.id) {
+            return;
+        }
+        this.io.emit('hazard:remove', JSON.stringify(payload));
     }
 
     spawnDefense(defense) {

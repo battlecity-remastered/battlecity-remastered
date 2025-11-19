@@ -72,7 +72,8 @@ export const checkItems = (game, rect) => {
                     game.player.collidedItem = item;
                     return COLLISION_MINE;
                 }
-                // Friendly mines are intangible to the owner and teammates.
+                // Friendly mines are intangible to the owner and teammates but should remain selectable for pickup.
+                game.player.collidedItem = item;
             } else if (item.type === ITEM_TYPE_DFG && item.active !== false) {
                 const dfgTeam = item.teamId ?? item.city ?? null;
                 if (dfgTeam === null || dfgTeam !== playerTeam) {

@@ -259,10 +259,28 @@ class HazardManager {
             return;
         }
         const hazard = this.hazards.get(payload.id);
-        if (!hazard || hazard.ownerId !== socket.id) {
+        if (!hazard) {
             return;
         }
-        this.removeHazard(payload.id, "owner_removed");
+
+        const hazardTeam = toCityId(hazard.teamId);
+        const playerTeam = this.playerFactory?.getPlayerTeam(socket.id) ?? null;
+        const isOwner = hazard.ownerId === socket.id;
+        const isFriendlyMine = hazard.type === HAZARD_TYPES.MINE && hazardTeam !== null && hazardTeam === playerTeam;
+
+        if (!isOwner && !isFriendlyMine) {
+            return;
+        }
+
+        if (isFriendlyMine) {
+            this.recordInventoryPickup(socket.id, hazard);
+        }
+
+        const reason = (typeof payload.reason === "string" && payload.reason.trim().length > 0)
+            ? payload.reason.trim()
+            : (isFriendlyMine ? "picked_up" : "owner_removed");
+
+        this.removeHazard(payload.id, reason);
     }
 
     onDisconnect(socketId) {
@@ -297,6 +315,22 @@ class HazardManager {
         }
         const ownerId = socketId || (typeof hazard.ownerId === "string" ? hazard.ownerId : null);
         this.game.buildingFactory.cityManager.recordInventoryConsumption(ownerId, cityId, itemType, 1);
+    }
+
+    recordInventoryPickup(socketId, hazard) {
+        if (!hazard || !this.game || !this.game.buildingFactory || !this.game.buildingFactory.cityManager) {
+            return;
+        }
+        const itemType = HAZARD_TYPE_TO_ITEM.get(hazard.type);
+        if (itemType === undefined) {
+            return;
+        }
+        const cityId = toCityId(hazard.teamId);
+        if (cityId === null) {
+            return;
+        }
+        const ownerId = socketId || (typeof hazard.ownerId === "string" ? hazard.ownerId : null);
+        this.game.buildingFactory.cityManager.recordInventoryPickup(ownerId, cityId, itemType, 1);
     }
 
     removeHazardsByCityAndItem(cityId, itemType, reason = "factory_destroyed") {

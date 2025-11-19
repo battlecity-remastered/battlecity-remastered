@@ -9,6 +9,7 @@ const {
     DAMAGE_MINE,
     TIMER_DFG
 } = require("../src/gameplay/constants");
+const { ITEM_TYPES } = require("../src/items");
 
 const HAZARD_REVEAL_DURATION_MS = 750;
 
@@ -41,9 +42,13 @@ const createMockFn = () => {
 
 const setupManager = ({
     teamMap = {},
-    players = {}
+    players = {},
+    cityManager = null
 } = {}) => {
     const game = { players: { ...players } };
+    if (cityManager) {
+        game.buildingFactory = { cityManager };
+    }
     const playerFactory = {
         getPlayerTeam: createMockFn(),
         applyDamage: createMockFn(),
@@ -182,6 +187,47 @@ test("mines ignore friendly players that overlap the tile", () => {
     } finally {
         Date.now = originalNow;
     }
+});
+
+test("friendly players can pick up mines to refund city inventory", () => {
+    const friendlySocket = "friend_socket";
+    const cityManager = {
+        recordInventoryPickup: createMockFn(),
+    };
+    const { manager, io } = setupManager({
+        teamMap: {
+            owner_socket: 1,
+            [friendlySocket]: 1
+        },
+        players: {
+            [friendlySocket]: {
+                id: "friendly_player",
+                offset: { x: 0, y: 0 }
+            }
+        },
+        cityManager
+    });
+
+    const hazard = placeHazard(manager, {
+        id: "mine_pickup",
+        type: "mine"
+    });
+
+    const socket = { id: friendlySocket };
+    manager.handleRemove(socket, { id: hazard.id, reason: "picked_up" });
+
+    assert.equal(manager.hazards.has(hazard.id), false, "mine should be removed when picked up by a teammate");
+    const removeCalls = io.emit.calls.filter(([event]) => event === "hazard:remove");
+    assert.equal(removeCalls.length, 1, "pickup should broadcast hazard removal");
+    const removePayload = JSON.parse(removeCalls[0][1]);
+    assert.equal(removePayload.reason, "picked_up");
+
+    assert.equal(cityManager.recordInventoryPickup.calls.length, 1, "pickup should restore city inventory");
+    const [socketId, cityId, itemType, quantity] = cityManager.recordInventoryPickup.calls[0];
+    assert.equal(socketId, friendlySocket);
+    assert.equal(cityId, 1);
+    assert.equal(itemType, ITEM_TYPES.MINE);
+    assert.equal(quantity, 1);
 });
 
 test("dfgs freeze enemy players and share reveal metadata", () => {
