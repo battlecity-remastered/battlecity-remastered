@@ -386,24 +386,38 @@ class ScoreService {
             penaltyApplied = shouldPenalize;
         }
 
-        if (penaltyApplied && Array.isArray(killerUserIds) && killerUserIds.length) {
-            const unique = Array.from(new Set(killerUserIds.map((value) => String(value))));
-            unique.forEach((userId) => {
-                const isKiller = killerUserId && String(killerUserId) === userId;
-                const update = this.updateUser(userId, (profile) => {
-                    profile.points = clampToNonNegativeInt(profile.points) + 2;
-                    if (isKiller) {
-                        profile.kills = clampToNonNegativeInt(profile.kills) + 1;
-                    }
-                });
-                if (update && update.changed) {
-                    changed = true;
-                    if (update.promotion) {
-                        promotions.push(update.promotion);
-                    }
-                }
+        const killerId = killerUserId ? String(killerUserId) : null;
+        const uniqueKillers = new Set();
+
+        if (Array.isArray(killerUserIds)) {
+            killerUserIds.forEach((value) => {
+                uniqueKillers.add(String(value));
             });
         }
+        if (killerId) {
+            uniqueKillers.add(killerId);
+        }
+
+        uniqueKillers.forEach((userId) => {
+            const isKiller = killerId !== null && killerId === userId;
+            const shouldReward = isKiller || penaltyApplied;
+            if (!shouldReward) {
+                return;
+            }
+
+            const update = this.updateUser(userId, (profile) => {
+                profile.points = clampToNonNegativeInt(profile.points) + 2;
+                if (isKiller) {
+                    profile.kills = clampToNonNegativeInt(profile.kills) + 1;
+                }
+            });
+            if (update && update.changed) {
+                changed = true;
+                if (update.promotion) {
+                    promotions.push(update.promotion);
+                }
+            }
+        });
 
         return { changed, promotions };
     }
