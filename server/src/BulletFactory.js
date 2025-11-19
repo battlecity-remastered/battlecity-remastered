@@ -397,7 +397,7 @@ class BulletFactory {
                 break;
             }
 
-            if (this.hitsBuilding(rect)) {
+            if (this.hitsBuilding(rect, bullet)) {
                 bullet.x = prevX;
                 bullet.y = prevY;
                 bullet._destroy = true;
@@ -613,7 +613,21 @@ class BulletFactory {
         return hitboxes;
     }
 
-    hitsBuilding(rect) {
+    shouldDestroyBuildingOnHit(building, bullet) {
+        if (!building || !bullet) {
+            return false;
+        }
+
+        const population = Number.isFinite(building.population) ? building.population : 0;
+        if (population > 0) {
+            return false;
+        }
+
+        // Only lasers (type 0) and rockets (type 1) should destroy empty structures
+        return bullet.type === 0 || bullet.type === 1;
+    }
+
+    hitsBuilding(rect, bullet = null) {
         if (!rect) {
             return false;
         }
@@ -628,6 +642,9 @@ class BulletFactory {
             const hitboxes = this.createBuildingHitboxes(building);
             for (const hitbox of hitboxes) {
                 if (rectangleCollision(rect, hitbox)) {
+                    if (this.shouldDestroyBuildingOnHit(building, bullet)) {
+                        factory.removeBuilding(building.id, true);
+                    }
                     return true;
                 }
             }
@@ -663,7 +680,7 @@ class BulletFactory {
 
     checkStructureCollision(bullet) {
         const rect = this.clampRectToMap(this.getMutableBulletRect(bullet));
-        return this.hitsBuilding(rect);
+        return this.hitsBuilding(rect, bullet);
     }
 
     registerSourceShot(sourceId, now) {
