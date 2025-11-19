@@ -319,10 +319,21 @@ var drawBullets = (game, stage) => {
 
     while (bullet) {
 
-        var tmpText = game.textures['bulletTexture'].clone();
+        var bulletTexture = game.textures['bulletTexture'];
+        if (!bulletTexture) {
+            return;
+        }
+        var tmpText = bulletTexture.clone();
         var spriteRow = bullet && Number.isFinite(bullet.type) ? bullet.type : 0;
         if (spriteRow < 0) {
             spriteRow = 0;
+        }
+        var spriteRows = 1;
+        if (bulletTexture.baseTexture && Number.isFinite(bulletTexture.baseTexture.height)) {
+            spriteRows = Math.max(1, Math.floor(bulletTexture.baseTexture.height / 8));
+        }
+        if (spriteRow >= spriteRows) {
+            spriteRow = spriteRows - 1;
         }
         var bulletRect = new PIXI.Rectangle(bullet.animation * 8, spriteRow * 8, 8, 8);
         tmpText.frame = bulletRect;

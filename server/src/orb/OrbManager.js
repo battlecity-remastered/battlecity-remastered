@@ -274,13 +274,11 @@ class OrbManager {
         const baseX = tileX * TILE_SIZE;
         const baseY = tileY * TILE_SIZE;
         const footprintHeight = (COMMAND_CENTER_HEIGHT_TILES + 1) * TILE_SIZE;
-        const detectionHeight = TILE_SIZE; // bottom row (NO PARKING zone)
-        const detectionY = baseY + footprintHeight - detectionHeight;
         return {
             x: baseX,
-            y: detectionY,
+            y: baseY,
             width: COMMAND_CENTER_WIDTH_TILES * TILE_SIZE,
-            height: detectionHeight,
+            height: footprintHeight,
         };
     }
 
