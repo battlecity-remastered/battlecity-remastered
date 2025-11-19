@@ -114,3 +114,33 @@ test("death penalties reward opposing city when victim has 100+ points", (t) => 
     assert.strictEqual(allyProfile.points, 2, "other city members gain assists");
     assert.strictEqual(allyProfile.kills, 0);
 });
+
+test("direct killer gains points even when no penalty applies", (t) => {
+    const { service, cleanup } = createScoreHarness({
+        slayer: { provider: "google", name: "Slayer" },
+        target: { provider: "google", name: "Target" },
+        bystander: { provider: "google", name: "Bystander" }
+    });
+    t.after(() => cleanup());
+
+    const deathResult = service.recordDeath({
+        victimUserId: "target",
+        killerUserIds: ["bystander"],
+        killerUserId: "slayer"
+    });
+
+    const slayerProfile = service.getProfile("slayer");
+    const targetProfile = service.getProfile("target");
+    const bystanderProfile = service.getProfile("bystander");
+
+    assert.strictEqual(deathResult.changed, true, "profiles should reflect scoring updates");
+    assert.ok(slayerProfile && targetProfile, "killer and victim profiles should exist after a kill");
+
+    assert.strictEqual(targetProfile.points, 0, "victim with few points should not be penalized");
+    assert.strictEqual(targetProfile.deaths, 1, "victim death should be recorded");
+
+    assert.strictEqual(slayerProfile.points, 2, "killer gains two points per kill");
+    assert.strictEqual(slayerProfile.kills, 1, "killer kill count increments");
+
+    assert.strictEqual(bystanderProfile, null, "bystanders are not scored when no penalty applies");
+});
