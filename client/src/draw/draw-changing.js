@@ -1,6 +1,7 @@
 import PIXI from '../pixi';
 import { getCityDisplayName } from '../utils/citySpawns';
 import { scheduleDestroy } from '../utils/pixiPerformance';
+import { MAX_HEALTH } from '../constants';
 
 const EXPLOSION_VARIANTS = {
     small: {
@@ -33,6 +34,7 @@ const NAME_LABEL_COLORS = Object.freeze({
     rogue: 0xFF7A7A,
     neutral: 0xFFFFFF
 });
+const MIN_ENEMY_NAME_ALPHA = 0.35;
 const LABEL_CACHE_TTL_MS = 15000;
 
 const toFiniteCityId = (value) => {
@@ -98,6 +100,31 @@ const determineLabelColor = (entity, referenceCity, options = {}) => {
     return NAME_LABEL_COLORS.enemy;
 };
 
+const isEnemyEntity = (entity, referenceCity, options = {}) => {
+    if (options.isRogue) {
+        return true;
+    }
+    const entityCity = toFiniteCityId(entity?.city);
+    const refCity = toFiniteCityId(referenceCity);
+    if (entityCity === null || refCity === null) {
+        return false;
+    }
+    return entityCity !== refCity;
+};
+
+const resolveHealthEmphasis = (entity, referenceCity, options = {}) => {
+    if (!entity || !isEnemyEntity(entity, referenceCity, options)) {
+        return 1;
+    }
+    const maxHealth = Number.isFinite(options.maxHealthOverride) ? options.maxHealthOverride : MAX_HEALTH;
+    const entityHealth = Number.isFinite(entity.health) ? Math.max(0, entity.health) : null;
+    if (!Number.isFinite(maxHealth) || maxHealth <= 0 || entityHealth === null) {
+        return 1;
+    }
+    const normalized = Math.max(0, Math.min(1, entityHealth / maxHealth));
+    return MIN_ENEMY_NAME_ALPHA + normalized * (1 - MIN_ENEMY_NAME_ALPHA);
+};
+
 const ensureNameLabelCache = (game) => {
     if (!game) {
         return null;
@@ -135,6 +162,7 @@ const createNameLabel = (game, entity, options = {}) => {
         return null;
     }
     const fillColor = determineLabelColor(entity, options.referenceCity, options);
+    const alpha = resolveHealthEmphasis(entity, options.referenceCity, options);
     let record = cache.get(cacheKey);
     if (!record) {
         const label = new PIXI.Text(text, {
@@ -147,10 +175,12 @@ const createNameLabel = (game, entity, options = {}) => {
             strokeThickness: 3
         });
         label.anchor.set(0.5, 1);
+        label.alpha = alpha;
         record = {
             label,
             text,
             fillColor,
+            alpha,
         };
         cache.set(cacheKey, record);
     } else {
@@ -162,6 +192,10 @@ const createNameLabel = (game, entity, options = {}) => {
             record.label.style.fill = fillColor;
             record.fillColor = fillColor;
             record.label.dirty = true;
+        }
+        if (record.alpha !== alpha) {
+            record.label.alpha = alpha;
+            record.alpha = alpha;
         }
     }
     record.lastUsedTick = game.tick || Date.now();
