@@ -48,6 +48,7 @@
 
 ## Linting & Automation
 - Run `npm run lint` from the repository root before committing. The ESLint flat config (`eslint.config.js`) enforces 4-space indentation across the repo—expect large diffs if you introduce inconsistent indenting and use `npm run lint -- --fix` to realign files when needed.
+- All code should be written in a lint-clean state; fix lint violations as you go instead of leaving them for later.
 - GitLab CI now runs the same command in the `lint` stage using Node 20 (`.gitlab-ci.yml`). Ensure the command passes locally to keep pipelines green.
 - When shipping a new feature, add automated tests alongside it whenever feasible so coverage improves over time.
 
