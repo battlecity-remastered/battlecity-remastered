@@ -1,4 +1,4 @@
-import {MOVEMENT_SPEED_BULLET, MOVEMENT_SPEED_FLARE} from "../constants";
+import {BULLET_RANGE_DEFAULT, BULLET_RANGE_FLARE, MOVEMENT_SPEED_BULLET, MOVEMENT_SPEED_FLARE} from "../constants";
 import {BULLET_ALIVE} from "../constants";
 import {BULLET_DEAD} from "../constants";
 import {DAMAGE_LASER} from "../constants";
@@ -23,6 +23,10 @@ const BULLET_SPEED_BY_TYPE = {
     3: MOVEMENT_SPEED_FLARE,
 };
 
+const BULLET_RANGE_BY_TYPE = {
+    3: BULLET_RANGE_FLARE,
+};
+
 const getBulletDamage = (type) => {
     if (Object.prototype.hasOwnProperty.call(BULLET_DAMAGE_BY_TYPE, type)) {
         return BULLET_DAMAGE_BY_TYPE[type];
@@ -35,6 +39,13 @@ const getBulletSpeed = (type) => {
         return BULLET_SPEED_BY_TYPE[type];
     }
     return MOVEMENT_SPEED_BULLET;
+};
+
+const getBulletRange = (type) => {
+    if (Object.prototype.hasOwnProperty.call(BULLET_RANGE_BY_TYPE, type)) {
+        return BULLET_RANGE_BY_TYPE[type];
+    }
+    return BULLET_RANGE_DEFAULT;
 };
 
 class BulletFactory {
@@ -52,11 +63,21 @@ class BulletFactory {
 
             const speed = bullet.speed ?? getBulletSpeed(bullet.type);
 
+            const initialX = bullet.x;
+            const initialY = bullet.y;
             var x = (Math.sin((fDir / 16) * 3.14) * -1 ) * this.game.timePassed * speed;
             var y = (Math.cos((fDir / 16) * 3.14) * -1) * this.game.timePassed * speed;
 
             bullet.x += x;
             bullet.y += y;
+
+            if (Number.isFinite(bullet.maxRange)) {
+                const stepDistance = Math.hypot(bullet.x - initialX, bullet.y - initialY);
+                bullet.travelled = (bullet.travelled ?? 0) + stepDistance;
+                if (bullet.travelled >= bullet.maxRange) {
+                    bullet.life = BULLET_DEAD;
+                }
+            }
 
             // Offscreen
             if (bullet.x < 0 || bullet.x > 24576 || bullet.y < 0 || bullet.y > 24576) {
@@ -124,6 +145,9 @@ class BulletFactory {
         const resolvedDamage = Number.isFinite(metadata.damage)
             ? metadata.damage
             : getBulletDamage(bulletType);
+        const resolvedRange = Number.isFinite(metadata.maxRange)
+            ? metadata.maxRange
+            : getBulletRange(bulletType);
 
         var bullet = {
             "shooter": shooter,
@@ -136,6 +160,8 @@ class BulletFactory {
             "angle": angle,
             "team": team,
             "speed": getBulletSpeed(bulletType),
+            "maxRange": resolvedRange,
+            "travelled": 0,
             "sourceId": metadata.sourceId ?? null,
             "sourceType": metadata.sourceType ?? null,
             "targetId": metadata.targetId ?? null,

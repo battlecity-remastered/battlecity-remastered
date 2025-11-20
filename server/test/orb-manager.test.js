@@ -100,3 +100,34 @@ test("orb detonation consumes active orb count and frees production slot", () =>
     assert.strictEqual(payload.status, "detonated");
     assert.strictEqual(payload.targetCity, targetCityId);
 });
+
+test("orb drop detection only matches the command center front strip", () => {
+    const orbManager = new OrbManager({
+        game: {},
+        cityManager: null,
+        playerFactory: null,
+        buildingFactory: null,
+        hazardManager: null,
+        defenseManager: null
+    });
+
+    const cityId = 0;
+    const rect = orbManager.getCommandCenterRect(cityId);
+    assert.ok(rect, "command center rect should be available for city 0");
+
+    // Center a tile inside the detection strip.
+    const insideDropX = rect.x + (rect.width / 2) - (TILE_SIZE / 2);
+    const insideDropY = rect.y + (rect.height / 2) - (TILE_SIZE / 2);
+    const matchedCity = orbManager.resolveTargetCity(insideDropX, insideDropY, null);
+    assert.strictEqual(matchedCity, cityId, "drop centered in the front strip should match the city");
+
+    // Tile centered a full tile above the strip should not match (well outside the margin).
+    const highDropY = rect.y - TILE_SIZE;
+    const noMatchAbove = orbManager.resolveTargetCity(insideDropX, highDropY, null);
+    assert.strictEqual(noMatchAbove, null, "drop above the strip should not match");
+
+    // Tile centered well below the strip should not match either.
+    const lowDropY = rect.y + rect.height + TILE_SIZE;
+    const noMatchBelow = orbManager.resolveTargetCity(insideDropX, lowDropY, null);
+    assert.strictEqual(noMatchBelow, null, "drop below the strip should not match");
+});

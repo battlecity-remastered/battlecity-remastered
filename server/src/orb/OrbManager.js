@@ -8,6 +8,7 @@ const {
 } = require('../gameplay/constants');
 
 const ORB_DETECTION_MARGIN_TILES = 0.15;
+const COMMAND_CENTER_FRONT_OFFSET = TILE_SIZE / 2;
 
 const ORB_RESULT_EVENT = 'orb:result';
 const CITY_ORBED_EVENT = 'city:orbed';
@@ -273,12 +274,13 @@ class OrbManager {
         }
         const baseX = tileX * TILE_SIZE;
         const baseY = tileY * TILE_SIZE;
-        const footprintHeight = (COMMAND_CENTER_HEIGHT_TILES + 1) * TILE_SIZE;
+        const detectionY = baseY + (COMMAND_CENTER_HEIGHT_TILES * TILE_SIZE);
+        const detectionHeight = TILE_SIZE + COMMAND_CENTER_FRONT_OFFSET;
         return {
             x: baseX,
-            y: baseY,
+            y: detectionY,
             width: COMMAND_CENTER_WIDTH_TILES * TILE_SIZE,
-            height: footprintHeight,
+            height: detectionHeight,
         };
     }
 

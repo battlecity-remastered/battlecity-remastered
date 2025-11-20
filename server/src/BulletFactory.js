@@ -5,6 +5,7 @@ const debug = require('debug')('BattleCity:BulletFactory');
 const {
     BULLET_SPEED_UNITS_PER_MS,
     BULLET_MAX_RANGE,
+    BULLET_FLARE_RANGE,
     BULLET_DAMAGE,
     DAMAGE_ROCKET,
     DAMAGE_FLARE,
@@ -44,6 +45,17 @@ const resolveBulletSpeed = (type) => {
     return BULLET_SPEED_UNITS_PER_MS;
 };
 
+const BULLET_RANGE_BY_TYPE = {
+    3: BULLET_FLARE_RANGE ?? TILE_SIZE,
+};
+
+const resolveBulletRange = (type) => {
+    if (Object.prototype.hasOwnProperty.call(BULLET_RANGE_BY_TYPE, type)) {
+        return BULLET_RANGE_BY_TYPE[type];
+    }
+    return BULLET_MAX_RANGE;
+};
+
 const decorateBulletMotion = (bullet) => {
     const radians = (bullet.angle / 16) * Math.PI;
     const unitX = Math.sin(radians) * -1;
@@ -55,6 +67,10 @@ const decorateBulletMotion = (bullet) => {
     bullet.velocityXPerMs = velocityXPerMs;
     bullet.velocityYPerMs = velocityYPerMs;
     bullet.maxVelocityPerMs = Math.max(Math.abs(velocityXPerMs), Math.abs(velocityYPerMs));
+    bullet.originX = bullet.originX ?? bullet.x;
+    bullet.originY = bullet.originY ?? bullet.y;
+    bullet.traveled = bullet.traveled ?? 0;
+    bullet.maxRange = Number.isFinite(bullet.maxRange) ? bullet.maxRange : BULLET_MAX_RANGE;
     bullet.rect = {
         x: bullet.x,
         y: bullet.y,
@@ -156,7 +172,10 @@ class BulletFactory {
             reportedShooterId: bulletData.reportedShooterId ?? null,
             damage: bulletData.damage ?? BULLET_DAMAGE,
             lifeMs: 0,
-            maxRange: BULLET_MAX_RANGE,
+            maxRange: bulletData.maxRange ?? BULLET_MAX_RANGE,
+            originX: bulletData.x,
+            originY: bulletData.y,
+            traveled: 0,
             createdAt: now,
             lastUpdateAt: now,
         }, bulletData));
@@ -214,7 +233,10 @@ class BulletFactory {
             reportedShooterId: bulletData.reportedShooterId ?? shooterId,
             damage: bulletData.damage ?? BULLET_DAMAGE,
             lifeMs: 0,
-            maxRange: BULLET_MAX_RANGE,
+            maxRange: bulletData.maxRange ?? BULLET_MAX_RANGE,
+            originX: bulletData.x,
+            originY: bulletData.y,
+            traveled: 0,
             createdAt: now,
             lastUpdateAt: now,
         }, bulletData));
@@ -290,6 +312,7 @@ class BulletFactory {
         const emitterId = (typeof data.emitterId === 'string' && data.emitterId.length > 0)
             ? data.emitterId
             : null;
+        const maxRange = resolveBulletRange(type);
         let targetId = null;
         if (data.targetId !== undefined && data.targetId !== null) {
             const value = String(data.targetId).trim();
@@ -307,6 +330,7 @@ class BulletFactory {
             sourceId,
             sourceType,
             damage,
+            maxRange,
             reportedShooterId,
             emitterId,
             targetId
@@ -375,6 +399,7 @@ class BulletFactory {
         const stepCount = Math.max(1, Math.ceil(maxStep / 8));
         const stepX = deltaX / stepCount;
         const stepY = deltaY / stepCount;
+        const stepDistance = Math.hypot(stepX, stepY);
 
         for (let index = 0; index < stepCount; index += 1) {
             const nextX = bullet.x + stepX;
@@ -404,6 +429,12 @@ class BulletFactory {
                 if (debug.enabled) {
                     debug(`Bullet ${bullet.id} hit structure at (${prevX.toFixed(1)}, ${prevY.toFixed(1)})`);
                 }
+                break;
+            }
+
+            bullet.traveled = (bullet.traveled ?? 0) + stepDistance;
+            if (Number.isFinite(bullet.maxRange) && bullet.maxRange > 0 && bullet.traveled >= bullet.maxRange) {
+                bullet._destroy = true;
                 break;
             }
         }

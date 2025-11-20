@@ -35,6 +35,8 @@ const NAME_LABEL_COLORS = Object.freeze({
     neutral: 0xFFFFFF
 });
 const MIN_ENEMY_NAME_ALPHA = 0.35;
+const CLOAK_NAME_ALPHA_MULTIPLIER = 0.35;
+const MIN_CLOAK_NAME_ALPHA = 0.12;
 const LABEL_CACHE_TTL_MS = 15000;
 
 const toFiniteCityId = (value) => {
@@ -162,7 +164,10 @@ const createNameLabel = (game, entity, options = {}) => {
         return null;
     }
     const fillColor = determineLabelColor(entity, options.referenceCity, options);
-    const alpha = resolveHealthEmphasis(entity, options.referenceCity, options);
+    let alpha = resolveHealthEmphasis(entity, options.referenceCity, options);
+    if (entity?.isCloaked) {
+        alpha = Math.max(MIN_CLOAK_NAME_ALPHA, alpha * CLOAK_NAME_ALPHA_MULTIPLIER);
+    }
     let record = cache.get(cacheKey);
     if (!record) {
         const label = new PIXI.Text(text, {

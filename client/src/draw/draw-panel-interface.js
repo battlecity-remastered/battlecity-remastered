@@ -63,7 +63,7 @@ const INVENTORY_SLOTS = {
     [ITEM_TYPE_TURRET]: {x: 7, y: 372},
     [ITEM_TYPE_SLEEPER]: {x: 42, y: 372},
     [ITEM_TYPE_PLASMA]: {x: 77, y: 372},
-    [ITEM_TYPE_CLOAK]: {x: 112, y: 267},
+    [ITEM_TYPE_CLOAK]: {x: 7, y: 372},
 };
 
 const resolveSlotPosition = (type, defaultX, defaultY) => {
