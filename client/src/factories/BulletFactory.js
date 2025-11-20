@@ -1,4 +1,11 @@
-import {BULLET_RANGE_DEFAULT, BULLET_RANGE_FLARE, MOVEMENT_SPEED_BULLET, MOVEMENT_SPEED_FLARE} from "../constants";
+import {
+    BULLET_RANGE_DEFAULT,
+    BULLET_RANGE_FLARE,
+    BULLET_RANGE_LASER,
+    BULLET_RANGE_ROCKET,
+    MOVEMENT_SPEED_BULLET,
+    MOVEMENT_SPEED_FLARE
+} from "../constants";
 import {BULLET_ALIVE} from "../constants";
 import {BULLET_DEAD} from "../constants";
 import {DAMAGE_LASER} from "../constants";
@@ -24,6 +31,8 @@ const BULLET_SPEED_BY_TYPE = {
 };
 
 const BULLET_RANGE_BY_TYPE = {
+    0: BULLET_RANGE_LASER,
+    1: BULLET_RANGE_ROCKET,
     3: BULLET_RANGE_FLARE,
 };
 

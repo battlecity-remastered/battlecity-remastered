@@ -5,6 +5,8 @@ const debug = require('debug')('BattleCity:BulletFactory');
 const {
     BULLET_SPEED_UNITS_PER_MS,
     BULLET_MAX_RANGE,
+    BULLET_RANGE_LASER,
+    BULLET_RANGE_ROCKET,
     BULLET_FLARE_RANGE,
     BULLET_DAMAGE,
     DAMAGE_ROCKET,
@@ -46,6 +48,8 @@ const resolveBulletSpeed = (type) => {
 };
 
 const BULLET_RANGE_BY_TYPE = {
+    0: BULLET_RANGE_LASER ?? BULLET_MAX_RANGE,
+    1: BULLET_RANGE_ROCKET ?? BULLET_MAX_RANGE,
     3: BULLET_FLARE_RANGE ?? TILE_SIZE,
 };
 

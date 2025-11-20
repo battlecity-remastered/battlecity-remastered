@@ -17,7 +17,9 @@ export const RADAR_OFFSET_ADJUST_Y = 69;
 
 export const MOVEMENT_SPEED_PLAYER = 0.50;
 export const MOVEMENT_SPEED_BULLET = 0.80;
-export const BULLET_RANGE_DEFAULT = 3000;
+export const BULLET_RANGE_LASER = 260;
+export const BULLET_RANGE_ROCKET = 340;
+export const BULLET_RANGE_DEFAULT = BULLET_RANGE_ROCKET;
 export const BULLET_RANGE_FLARE = 48;
 
 export const COLLISION_BLOCKING = 2;

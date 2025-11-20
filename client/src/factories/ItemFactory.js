@@ -188,6 +188,7 @@ class ItemFactory {
 
         if (this.game.tick > item.lastFired && item.target) {
             item.lastFired = this.game.tick + 250;
+            const bulletType = this.resolveDefenseBulletType(item);
 
             var angle = ((item.angle) * 3.14) / 180;
             var direction = -((32 / 6) * angle);
@@ -202,17 +203,18 @@ class ItemFactory {
             const shooterTeam = item.teamId ?? this.game.player.city ?? null;
 
             spawnMuzzleFlash(this.game, x2, y2);
-            this.game.bulletFactory.newBullet(shooterId, x2, y2, 0, direction, shooterTeam, {
+            this.game.bulletFactory.newBullet(shooterId, x2, y2, bulletType, direction, shooterTeam, {
                 sourceId: item.id ?? null,
                 sourceType: this.resolveItemSourceType(item),
-                targetId: item.target ?? null
+                targetId: item.target ?? null,
             });
             playSound(this.game, this.resolveDefenseShotSound(item), { x: x2, y: y2 });
             this.emitItemBulletShot(item, {
                 x: x2,
                 y: y2,
                 angle: direction,
-                team: shooterTeam
+                team: shooterTeam,
+                type: bulletType,
             });
         }
     }
@@ -672,6 +674,16 @@ class ItemFactory {
             return SOUND_IDS.TURRET;
         }
         return SOUND_IDS.LASER;
+    }
+
+    resolveDefenseBulletType(item) {
+        if (!item) {
+            return 0;
+        }
+        if (item.type === ITEM_TYPE_TURRET || item.type === ITEM_TYPE_PLASMA || item.type === ITEM_TYPE_SLEEPER) {
+            return 1;
+        }
+        return 0;
     }
 
     resolveItemTeam(item, fallback = null) {
