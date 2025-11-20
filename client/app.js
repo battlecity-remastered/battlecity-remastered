@@ -6,16 +6,16 @@ import { initialiseCameraShake, triggerCameraShake, updateCameraShake } from './
 import * as mapBuilder from "./src/mapBuilder";
 import * as cityBuilder from "./src/cityBuilder";
 
-import {play} from './src/play';
+import { play } from './src/play';
 import { MAX_HEALTH, COST_BUILDING, LABELS } from "./src/constants";
 
-import {setupKeyboardInputs} from './src/input/input-keyboard';
-import {setupMouseInputs} from './src/input/input-mouse';
+import { setupKeyboardInputs } from './src/input/input-keyboard';
+import { setupMouseInputs } from './src/input/input-mouse';
 
-import {drawGround} from "./src/draw/draw-ground";
-import {drawTiles} from "./src/draw/draw-tiles";
-import {drawChanging} from "./src/draw/draw-changing"
-import {drawBotDebug} from "./src/draw/draw-bot-debug";
+import { drawGround } from "./src/draw/draw-ground";
+import { drawTiles } from "./src/draw/draw-tiles";
+import { drawChanging } from "./src/draw/draw-changing"
+import { drawBotDebug } from "./src/draw/draw-bot-debug";
 
 import BuildingFactory from "./src/factories/BuildingFactory";
 import BulletFactory from "./src/factories/BulletFactory"
@@ -24,12 +24,12 @@ import ItemFactory from "./src/factories/ItemFactory";
 import RogueTankManager from "./src/rogue/RogueTankManager";
 
 import SocketListener from "./src/SocketListener"
-import {setupBuildingMenu} from "./src/draw/draw-building-interface";
-import {drawBuilding} from "./src/draw/draw-building-interface";
-import {drawItems} from "./src/draw/draw-items";
-import {drawIcons} from "./src/draw/draw-icons";
-import {drawPanelInterface} from "./src/draw/draw-panel-interface";
-import {getCitySpawn, getCityDisplayName} from "./src/utils/citySpawns";
+import { setupBuildingMenu } from "./src/draw/draw-building-interface";
+import { drawBuilding } from "./src/draw/draw-building-interface";
+import { drawItems } from "./src/draw/draw-items";
+import { drawIcons } from "./src/draw/draw-icons";
+import { drawPanelInterface } from "./src/draw/draw-panel-interface";
+import { getCitySpawn, getCityDisplayName } from "./src/utils/citySpawns";
 import LobbyManager from "./src/lobby/LobbyManager";
 import NotificationManager from "./src/ui/NotificationManager";
 import CallsignRegistry from "./src/utils/callsigns";
@@ -1353,6 +1353,8 @@ const resourcesToLoad = [
     { name: 'imgLEExplosion', url: assetUrl('imgLExplosion.png') },
     { name: 'imgSExplosion', url: assetUrl('imgSExplosion.png') },
     { name: 'imgMuzzleFlash', url: assetUrl('imgMuzzleFlash.png') },
+    { name: 'imgResearch', url: assetUrl('imgResearch.png') },
+    { name: 'imgResearchComplete', url: assetUrl('imgResearchComplete.png') },
     {
         name: 'mapData',
         url: assetUrl('map.dat'),
@@ -1431,7 +1433,9 @@ function setup() {
         resources.imgSmoke,
         resources.imgLEExplosion,
         resources.imgSExplosion,
-        resources.imgMuzzleFlash
+        resources.imgMuzzleFlash,
+        resources.imgResearch,
+        resources.imgResearchComplete
     ];
 
     colorKeyTargets.forEach((resource) => applyColorKey(resource));
@@ -1465,6 +1469,8 @@ function setup() {
     game.textures['imgLEExplosion'] = resources.imgLEExplosion.texture;
     game.textures['imageSExplosion'] = resources.imgSExplosion.texture;
     game.textures['imageMuzzleFlash'] = resources.imgMuzzleFlash.texture;
+    game.textures['imgResearch'] = resources.imgResearch.texture;
+    game.textures['imgResearchComplete'] = resources.imgResearchComplete.texture;
 
 
     setupKeyboardInputs(game);

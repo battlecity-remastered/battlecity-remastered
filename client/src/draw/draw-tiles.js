@@ -1,15 +1,15 @@
 import PIXI from '../pixi';
 
-import {MAP_SQUARE_LAVA} from "../constants";
-import {MAP_SQUARE_ROCK} from "../constants";
-import {MAP_SQUARE_BUILDING} from "../constants";
-import {BUILDING_COMMAND_CENTER} from "../constants";
-import {BUILDING_FACTORY} from "../constants";
-import {BUILDING_RESEARCH} from "../constants";
-import {BUILDING_HOUSE} from "../constants";
-import {BUILDING_REPAIR} from "../constants";
-import {POPULATION_MAX_HOUSE} from "../constants";
-import {POPULATION_MAX_NON_HOUSE} from "../constants";
+import { MAP_SQUARE_LAVA } from "../constants";
+import { MAP_SQUARE_ROCK } from "../constants";
+import { MAP_SQUARE_BUILDING } from "../constants";
+import { BUILDING_COMMAND_CENTER } from "../constants";
+import { BUILDING_FACTORY } from "../constants";
+import { BUILDING_RESEARCH } from "../constants";
+import { BUILDING_HOUSE } from "../constants";
+import { BUILDING_REPAIR } from "../constants";
+import { POPULATION_MAX_HOUSE } from "../constants";
+import { POPULATION_MAX_NON_HOUSE } from "../constants";
 import { getCityDisplayName } from '../utils/citySpawns';
 import { scheduleDestroy } from '../utils/pixiPerformance';
 
@@ -146,6 +146,45 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
         return;
     }
 
+    // Draw research status icon BEFORE building so it appears behind
+    if (baseType === BUILDING_RESEARCH && building && game.buildingFactory) {
+        const researchState = typeof game.buildingFactory.getResearchState === 'function'
+            ? game.buildingFactory.getResearchState(building.city, building.type)
+            : null;
+
+        // Default to red bar (imgResearch), only show complete bar when research is done
+        let researchTextureName = 'imgResearch';
+        if (researchState?.state === 'complete') {
+            researchTextureName = 'imgResearchComplete';
+        }
+
+        if (researchTextureName && game.textures[researchTextureName]) {
+            // Create scaled and cropped texture
+            const baseTexture = game.textures[researchTextureName].baseTexture;
+
+            // Crop 5px from top and bottom (original height 144px, cropped to 134px)
+            const cropTop = 5;
+            const cropBottom = 5;
+            const croppedHeight = 144 - cropTop - cropBottom; // 134px
+
+            const researchTexture = new PIXI.Texture(
+                baseTexture,
+                new PIXI.Rectangle(0, cropTop, baseTexture.width, croppedHeight)
+            );
+
+            // Scale to 90% of cropped size
+            const scaledWidth = 9;  // 10px * 0.9
+            const scaledHeight = Math.floor(croppedHeight * 0.9); // 134px * 0.9 ≈ 121px
+
+            // Position 2px more left (x+130), moved up 5px
+            const researchX = (i * TILE_SIZE) + 130;
+            const researchY = (j * TILE_SIZE) + Math.floor((144 - scaledHeight) / 2) - 5;
+
+            // Add the scaled sprite to the tile layer
+            tileLayer.addFrame(researchTexture, researchX, researchY, scaledWidth / baseTexture.width, scaledHeight / croppedHeight);
+        }
+    }
+
     tileLayer.addFrame(baseTexture, i * TILE_SIZE, j * TILE_SIZE, 1, 0);
 
     let buildingOverlayTexture = null;
@@ -259,7 +298,6 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
         addDigit(tens, 56);
         addDigit(ones, 72);
     }
-
 
 };
 
