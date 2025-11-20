@@ -300,6 +300,8 @@ class PlayerStateValidator {
 
         // 3. Check Buildings
         if (this.game.buildingFactory && this.game.buildingFactory.buildings) {
+            const { isFactory, isCommandCenter, isHospital } = require('../constants');
+
             for (const building of this.game.buildingFactory.buildings.values()) {
                 const buildingRect = {
                     x: building.x * TILE_SIZE,
@@ -307,6 +309,12 @@ class PlayerStateValidator {
                     w: TILE_SIZE * 3, // Buildings are 3x3
                     h: TILE_SIZE * 3
                 };
+
+                // Command Centers, Factories, and Hospitals have passable bottom row
+                const buildingType = Number(building.type);
+                if (isCommandCenter(buildingType) || isFactory(buildingType) || isHospital(buildingType)) {
+                    buildingRect.h = Math.max(0, buildingRect.h - TILE_SIZE);
+                }
 
                 // Simple AABB collision
                 if (rect.x < buildingRect.x + buildingRect.w &&

@@ -347,13 +347,25 @@ class BuildingFactory {
             return;
         }
 
-        if (building.ownerId !== socket.id) {
-            debug(`Demolish denied for ${data.id} owner=${building.ownerId} requestedBy=${socket.id}`);
-            this.emitDemolishDenied(socket, building.id, 'not_owner');
+        // Check if player is the current mayor of the building's city
+        const player = this.game.players[socket.id];
+        if (!player) {
+            debug(`Demolish denied for ${data.id} - player not found`);
+            this.emitDemolishDenied(socket, building.id, 'not_authorized');
             return;
         }
 
-        debug(`Demolish approved for ${data.id} by ${socket.id}`);
+        const buildingCityId = building.cityId ?? building.city ?? 0;
+        const playerCityId = player.city ?? 0;
+
+        // Player must be mayor of the same city as the building
+        if (!player.isMayor || playerCityId !== buildingCityId) {
+            debug(`Demolish denied for ${data.id} - player is not mayor of building's city (playerCity=${playerCityId}, buildingCity=${buildingCityId}, isMayor=${player.isMayor})`);
+            this.emitDemolishDenied(socket, building.id, 'not_mayor');
+            return;
+        }
+
+        debug(`Demolish approved for ${data.id} by mayor ${socket.id} of city ${buildingCityId}`);
         this.removeBuilding(building.id);
     }
 
@@ -1029,10 +1041,13 @@ class BuildingFactory {
         const TILE_SIZE = 48;
         const BUILDING_SIZE_TILES = 3; // Buildings are 3x3 tiles
 
+        debug(`Checking collision for building at tile (${buildingData.x}, ${buildingData.y})`);
+
         // Check against map boundaries (buildingData.x and buildingData.y are in TILES)
         if (buildingData.x < 0 || buildingData.y < 0 ||
             buildingData.x + BUILDING_SIZE_TILES > 512 ||
             buildingData.y + BUILDING_SIZE_TILES > 512) {
+            debug(`Building rejected: out of bounds`);
             return true;
         }
 
@@ -1053,10 +1068,12 @@ class BuildingFactory {
                 h: TILE_SIZE * BUILDING_SIZE_TILES
             };
             if (rectangleCollision(rect, existingRect)) {
+                debug(`Building rejected: collision with existing building at tile (${existing.x}, ${existing.y})`);
                 return true;
             }
         }
 
+        debug(`Building placement OK`);
         // TODO: Check against map blocking tiles (rocks, water) if map data is available here
         // For now, building collision is the most critical for preventing stacking
         return false;
@@ -1065,26 +1082,47 @@ class BuildingFactory {
     checkBuildingChain(buildingData, cityId) {
         // Command centers are the root, always allowed if no collision
         if (Number(buildingData.type) === 0) {
+            debug(`Building is Command Center, chain check passed`);
             return true;
         }
 
-        const MAX_DIST_SQ = MAX_BUILDING_CHAIN_DISTANCE * MAX_BUILDING_CHAIN_DISTANCE;
-        const x = buildingData.x;
-        const y = buildingData.y;
+        const TILE_SIZE = 48;
+        // MAX_BUILDING_CHAIN_DISTANCE is in pixels (960), convert to tiles (20)
+        const MAX_DIST_TILES = MAX_BUILDING_CHAIN_DISTANCE / TILE_SIZE;
+        const MAX_DIST_SQ = MAX_DIST_TILES * MAX_DIST_TILES;
+        const x = buildingData.x; // in tiles
+        const y = buildingData.y; // in tiles
 
+        debug(`Checking building chain for city ${cityId}, max distance: ${MAX_DIST_TILES} tiles`);
+        debug(`Total buildings in map: ${this.buildings.size}`);
+
+        let cityBuildingCount = 0;
         for (const existing of this.buildings.values()) {
+            debug(`  Building: type=${existing.type}, cityId=${existing.cityId}, pos=(${existing.x}, ${existing.y})`);
+
             // Must belong to same city/team
             if (existing.cityId !== cityId) continue;
 
-            const dx = existing.x - x;
-            const dy = existing.y - y;
+            cityBuildingCount++;
+
+            const dx = existing.x - x; // tile distance
+            const dy = existing.y - y; // tile distance
             const distSq = (dx * dx) + (dy * dy);
 
             if (distSq <= MAX_DIST_SQ) {
+                debug(`Building within range of existing building at (${existing.x}, ${existing.y}), distance: ${Math.sqrt(distSq).toFixed(1)} tiles`);
                 return true;
             }
         }
 
+        // If city has no buildings yet, this shouldn't happen (Command Center should exist)
+        // but allow it anyway to prevent soft-lock
+        if (cityBuildingCount === 0) {
+            debug(`No existing buildings for city ${cityId}, allowing placement`);
+            return true;
+        }
+
+        debug(`Building too far from any existing city buildings (checked ${cityBuildingCount} buildings)`);
         return false;
     }
 }
