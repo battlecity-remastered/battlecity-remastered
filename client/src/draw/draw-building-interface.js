@@ -2,7 +2,7 @@ import PIXI from "../pixi";
 import { scheduleDestroy } from "../utils/pixiPerformance";
 
 import { LABELS } from "../constants";
-import { CAN_BUILD } from "../constants";
+import { CAN_BUILD, RESEARCH_PENDING } from "../constants";
 
 var menuContainer = new PIXI.Container();
 let activeGhostBuilding = null;
@@ -197,12 +197,24 @@ export const setupBuildingMenu = (game) => {
         var canBuildList = Object.keys(canBuild);
 
         var y = 1;
+        const textStyle = new PIXI.TextStyle({
+            fontSize: 12,
+            fill: 0xffffff,
+        });
+        let menuWidth = 180;
+        let longestLabelWidth = 0;
 
         canBuildList.forEach((id) => {
-            if (canBuild[id] == CAN_BUILD) {
+            if (canBuild[id] === CAN_BUILD || canBuild[id] === RESEARCH_PENDING) {
                 y++;
+                const isPending = canBuild[id] === RESEARCH_PENDING;
+                const label = isPending ? `${LABELS[id].LABEL} (researching)` : LABELS[id].LABEL;
+                const metrics = PIXI.TextMetrics.measureText(label, textStyle);
+                longestLabelWidth = Math.max(longestLabelWidth, metrics.width);
             }
         });
+
+        menuWidth = Math.max(menuWidth, longestLabelWidth + 32);
 
         var graphics = new PIXI.Graphics();
         graphics.lineStyle(2, 0x00000, 0);
@@ -210,7 +222,7 @@ export const setupBuildingMenu = (game) => {
         graphics.drawRect(
             game.buildMenuOffset.x,
             game.buildMenuOffset.y,
-            180,
+            menuWidth,
             y * 16,
         );
         graphics.endFill();
@@ -220,13 +232,28 @@ export const setupBuildingMenu = (game) => {
 
         y = 1;
         canBuildList.forEach((id) => {
-            if (canBuild[id] == CAN_BUILD) {
+            if (canBuild[id] === CAN_BUILD || canBuild[id] === RESEARCH_PENDING) {
                 var buildingType = LABELS[id].TYPE;
+                const isPending = canBuild[id] === RESEARCH_PENDING;
 
                 var click = (e) => {
                     e.stopPropagation();
                     startGhostBuilding(game, buildingType, e.data);
                 };
+
+                if (isPending) {
+                    click = (e) => {
+                        e.stopPropagation();
+                        if (game.notify) {
+                            game.notify({
+                                title: 'Research In Progress',
+                                message: 'Factory unlocks once research completes.',
+                                variant: 'info',
+                                timeout: 3200
+                            });
+                        }
+                    };
+                }
 
                 var tmpText = new PIXI.Texture(
                     game.textures["buildingIcons"].baseTexture,
@@ -240,14 +267,21 @@ export const setupBuildingMenu = (game) => {
                 buildIcon.iconType = LABELS[id].IMAGE;
                 buildIcon.on("mousedown", click);
 
-                var basicText = new PIXI.Text(LABELS[id].LABEL, {
+                const label = isPending ? `${LABELS[id].LABEL} (researching)` : LABELS[id].LABEL;
+                const effectiveStyle = new PIXI.TextStyle({
                     fontSize: 12,
-                    fill: 0xffffff,
+                    fill: isPending ? 0xaaaaaa : 0xffffff,
                 });
+                var basicText = new PIXI.Text(label, effectiveStyle);
                 basicText.x = game.buildMenuOffset.x;
                 basicText.y = game.buildMenuOffset.y + y * 16;
                 basicText.interactive = true;
                 basicText.on("mousedown", click);
+
+                if (isPending) {
+                    buildIcon.alpha = 0.5;
+                    basicText.alpha = 0.8;
+                }
 
                 menuContainer.addChild(buildIcon);
                 menuContainer.addChild(basicText);

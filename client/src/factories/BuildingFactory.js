@@ -1,10 +1,15 @@
 import {checkBuildingCollision} from "../collision/collision-building";
-import {LABELS} from "../constants";
-import {CAN_BUILD_HOUSE} from "../constants";
-import {HAS_BUILT} from "../constants";
-import {CAN_BUILD} from "../constants";
-import {DEPENDENCY_TREE} from "../constants";
-import {COST_BUILDING} from "../constants";
+import {
+    LABELS,
+    CAN_BUILD_HOUSE,
+    HAS_BUILT,
+    CAN_BUILD,
+    CANT_BUILD,
+    RESEARCH_PENDING,
+    DEPENDENCY_TREE,
+    COST_BUILDING,
+    TIMER_RESEARCH,
+} from "../constants";
 import _ from 'underscore';
 import {BUILDING_COMMAND_CENTER} from "../constants";
 import {MAP_SQUARE_BUILDING} from "../constants";
@@ -66,6 +71,8 @@ const TYPE_LABEL_LOOKUP = Object.keys(LABELS).reduce((acc, key) => {
 }, {});
 
 const isFactoryType = (type) => type >= 100 && type < 200;
+const isResearchType = (type) => Math.floor(Number(type) / 100) === 4;
+const researchTimerKey = (cityId, researchType) => `${cityId}:${researchType}`;
 
 const playEffect = (game, soundId, position) => {
     if (!game || !game.audio || !soundId) {
@@ -87,9 +94,197 @@ class BuildingFactory {
         this.buildingsByCoord = {};
         this.pendingBuildCosts = new Map();
         this.pendingDemolish = new Set();
+        this.researchStatus = new Map();
+        this.researchTimers = new Map();
     }
 
     cycle() {
+    }
+
+    getResearchBucket(cityId, create = false) {
+        const numericCity = Number.isFinite(cityId) ? cityId : parseInt(cityId, 10);
+        if (!Number.isFinite(numericCity)) {
+            return null;
+        }
+        if (!this.researchStatus.has(numericCity)) {
+            if (!create) {
+                return null;
+            }
+            this.researchStatus.set(numericCity, new Map());
+        }
+        return this.researchStatus.get(numericCity);
+    }
+
+    getResearchState(cityId, researchType, { create = false } = {}) {
+        const bucket = this.getResearchBucket(cityId, create);
+        const numericType = Number.isFinite(researchType) ? researchType : parseInt(researchType, 10);
+        if (!bucket || !Number.isFinite(numericType)) {
+            return null;
+        }
+        if (!bucket.has(numericType)) {
+            if (!create) {
+                return null;
+            }
+            bucket.set(numericType, {
+                state: 'idle',
+                completeAt: null,
+                notifiedComplete: false,
+                seenPending: false,
+            });
+        }
+        return bucket.get(numericType);
+    }
+
+    clearResearchTimer(cityId, researchType) {
+        const key = researchTimerKey(cityId, researchType);
+        if (!this.researchTimers.has(key)) {
+            return;
+        }
+        const timerId = this.researchTimers.get(key);
+        clearTimeout(timerId);
+        this.researchTimers.delete(key);
+    }
+
+    scheduleResearchTimer(cityId, researchType, completeAt = null) {
+        const key = researchTimerKey(cityId, researchType);
+        this.clearResearchTimer(cityId, researchType);
+        const now = this.game.tick || Date.now();
+        const target = Number.isFinite(completeAt) ? completeAt : now + TIMER_RESEARCH;
+        const delay = Math.max(0, target - now);
+        if (!Number.isFinite(delay)) {
+            return;
+        }
+        const timerId = setTimeout(() => {
+            this.handleResearchCompletion(cityId, researchType);
+        }, delay);
+        this.researchTimers.set(key, timerId);
+    }
+
+    applyResearchState(cityId, researchType, state = 'idle') {
+        const cityIndex = Number.isFinite(cityId) ? cityId : parseInt(cityId, 10);
+        const city = this.game.cities?.[cityIndex];
+        if (!city || !city.canBuild) {
+            return;
+        }
+        const node = this.searchTree(dependencyTree[0], researchType);
+        if (!node || !node.children) {
+            return;
+        }
+        let nextState = CANT_BUILD;
+        if (state === 'pending') {
+            nextState = RESEARCH_PENDING;
+        } else if (state === 'complete') {
+            nextState = CAN_BUILD;
+        }
+        node.children.forEach((child) => {
+            const unlockKey = TYPE_LABEL_LOOKUP[child.id];
+            if (unlockKey && city.canBuild[unlockKey] !== HAS_BUILT) {
+                city.canBuild[unlockKey] = nextState;
+            }
+        });
+        this.game.forceDraw = true;
+    }
+
+    shouldNotifyResearch(cityId) {
+        const playerCity = Number.isFinite(this.game?.player?.city) ? this.game.player.city : null;
+        return Number.isFinite(playerCity) && playerCity === cityId;
+    }
+
+    maybeNotifyResearchComplete(cityId, researchType) {
+        if (!this.shouldNotifyResearch(cityId) || !this.game?.notify) {
+            return;
+        }
+        const labelKey = TYPE_LABEL_LOOKUP[researchType];
+        const researchLabel = labelKey && LABELS[labelKey] ? LABELS[labelKey].LABEL : 'Research';
+        const node = this.searchTree(dependencyTree[0], researchType);
+        const unlocks = [];
+        if (node && node.children) {
+            node.children.forEach((child) => {
+                const childKey = TYPE_LABEL_LOOKUP[child.id];
+                if (childKey && LABELS[childKey]) {
+                    unlocks.push(LABELS[childKey].LABEL);
+                }
+            });
+        }
+        const unlockMessage = unlocks.length ? `Unlocked: ${unlocks.join(', ')}.` : '';
+        const cityName = getCityDisplayName(cityId);
+        const message = [`${cityName} finished ${researchLabel}.`, unlockMessage].filter(Boolean).join(' ');
+        this.game.notify({
+            title: 'Research Complete',
+            message,
+            variant: 'success',
+            timeout: 4200,
+        });
+    }
+
+    markBuildingConstructed(cityId, buildingType) {
+        const cityIndex = Number.isFinite(cityId) ? cityId : parseInt(cityId, 10);
+        const city = this.game.cities?.[cityIndex];
+        if (!city || !city.canBuild) {
+            return;
+        }
+        const typeKey = Number(buildingType);
+        const labelKey = TYPE_LABEL_LOOKUP[typeKey];
+        if (!labelKey) {
+            return;
+        }
+        if (typeKey !== CAN_BUILD_HOUSE) {
+            city.canBuild[labelKey] = HAS_BUILT;
+            this.game.forceDraw = true;
+        }
+    }
+
+    handleResearchCompletion(cityId, researchType) {
+        const state = this.getResearchState(cityId, researchType, { create: true });
+        if (!state) {
+            return;
+        }
+        this.clearResearchTimer(cityId, researchType);
+        state.state = 'complete';
+        state.completeAt = null;
+        if (state.seenPending && !state.notifiedComplete) {
+            this.maybeNotifyResearchComplete(cityId, researchType);
+            state.notifiedComplete = true;
+        }
+        this.applyResearchState(cityId, researchType, 'complete');
+    }
+
+    handleResearchUpdate(update) {
+        if (!update) {
+            return;
+        }
+        const cityId = toFinite(update.cityId ?? update.city, null);
+        const researchType = toFinite(update.researchType ?? update.type, null);
+        if (cityId === null || researchType === null) {
+            return;
+        }
+        const state = this.getResearchState(cityId, researchType, { create: true });
+        if (!state) {
+            return;
+        }
+        const status = typeof update.state === 'string' ? update.state : 'idle';
+        state.state = status === 'pending' || status === 'complete' ? status : 'idle';
+        state.completeAt = toFinite(update.completeAt, null);
+        if (state.state === 'pending') {
+            state.seenPending = true;
+            state.notifiedComplete = false;
+        }
+        if (state.state === 'idle') {
+            state.seenPending = false;
+            state.notifiedComplete = false;
+        }
+        this.clearResearchTimer(cityId, researchType);
+        if (state.state === 'pending') {
+            this.scheduleResearchTimer(cityId, researchType, state.completeAt);
+        }
+        if (state.state === 'complete' && state.seenPending && !state.notifiedComplete) {
+            this.maybeNotifyResearchComplete(cityId, researchType);
+            state.notifiedComplete = true;
+        }
+        if (state.state !== 'complete') {
+            state.notifiedComplete = false;
+        }
+        this.applyResearchState(cityId, researchType, state.state);
     }
 
     newBuilding(owner, x, y, type, options = {}) {
@@ -390,6 +585,17 @@ class BuildingFactory {
         if (!id) {
             return;
         }
+        if (data.reason === 'research_pending' && this.game.notify) {
+            const eta = toFinite(data.completeAt, null);
+            const remainingSeconds = eta ? Math.max(0, Math.round((eta - (this.game.tick || Date.now())) / 1000)) : null;
+            const suffix = Number.isFinite(remainingSeconds) ? ` (~${remainingSeconds}s)` : '';
+            this.game.notify({
+                title: 'Research Pending',
+                message: `Research must finish before this structure can be built${suffix}.`,
+                variant: 'info',
+                timeout: 3600
+            });
+        }
         const pending = this.pendingBuildCosts.get(id);
         if (pending) {
             const cityState = this.game.cities?.[pending.cityId];
@@ -598,29 +804,11 @@ class BuildingFactory {
         if (buildingType == null || cityId == null || cityId === undefined) {
             return;
         }
-        const cityIndex = parseInt(cityId, 10);
-        const city = this.game.cities?.[cityIndex];
-        if (!city || !city.canBuild) {
-            return;
-        }
         const typeKey = Number(buildingType);
-        const labelKey = TYPE_LABEL_LOOKUP[typeKey];
-        if (!labelKey || city.canBuild[labelKey] === undefined) {
-            return;
-        }
-
-        if (typeKey !== CAN_BUILD_HOUSE) {
-            city.canBuild[labelKey] = HAS_BUILT;
-        }
-
-        const node = this.searchTree(dependencyTree[0], typeKey);
-        if (node && node.children) {
-            node.children.forEach((child) => {
-                const unlockKey = TYPE_LABEL_LOOKUP[child.id];
-                if (unlockKey && city.canBuild[unlockKey] !== HAS_BUILT) {
-                    city.canBuild[unlockKey] = CAN_BUILD;
-                }
-            });
+        this.markBuildingConstructed(cityId, typeKey);
+        if (isResearchType(typeKey)) {
+            const state = this.getResearchState(cityId, typeKey);
+            this.applyResearchState(cityId, typeKey, state?.state || 'idle');
         }
     }
 

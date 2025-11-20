@@ -1472,6 +1472,9 @@ function setup() {
     game.socketListener.on('population:update', (update) => {
         game.buildingFactory.applyPopulationUpdate(update);
     });
+    game.socketListener.on('research:update', (update) => {
+        game.buildingFactory.handleResearchUpdate(update);
+    });
     game.socketListener.on('building:new', (data) => {
         if (!data) {
             return;

@@ -15,6 +15,7 @@ const {
     POPULATION_MAX_HOUSE,
     POPULATION_MAX_NON_HOUSE,
     COST_BUILDING,
+    RESEARCH_DURATION_MS,
 } = require('./constants');
 const {
     COMMAND_CENTER_WIDTH_TILES,
@@ -52,6 +53,7 @@ class BuildingFactory {
         this.hazardManager = null;
         this.defenseManager = null;
         this.playerFactory = null;
+        this.researchByCity = new Map();
     }
 
     setManagers({ hazardManager = null, defenseManager = null, playerFactory = null } = {}) {
@@ -126,6 +128,7 @@ class BuildingFactory {
             });
 
             this.sendSnapshot(socket);
+            this.sendResearchSnapshot(socket);
         });
     }
 
@@ -233,6 +236,21 @@ class BuildingFactory {
                 x: buildingData.x,
                 y: buildingData.y,
                 id: buildingData.id,
+            }));
+            return;
+        }
+
+        const requiredResearchType = this.getRequiredResearchType(buildingData.type);
+        if (requiredResearchType !== null && !this.hasCompletedResearch(resolvedCityId, requiredResearchType)) {
+            const state = this.getResearchState(resolvedCityId, requiredResearchType);
+            socket.emit('build:denied', JSON.stringify({
+                reason: 'research_pending',
+                city: resolvedCityId,
+                x: buildingData.x,
+                y: buildingData.y,
+                id: buildingData.id,
+                researchType: requiredResearchType,
+                completeAt: state?.completeAt || null,
             }));
             return;
         }
@@ -567,10 +585,183 @@ class BuildingFactory {
         this.io.emit('factory:purge', JSON.stringify(payload));
     }
 
+    getResearchKey(cityId, researchType) {
+        return `${cityId}:${researchType}`;
+    }
+
+    getResearchBucket(cityId, create = false) {
+        const numericCity = toFiniteNumber(cityId, null);
+        if (numericCity === null) {
+            return null;
+        }
+        if (!this.researchByCity.has(numericCity)) {
+            if (!create) {
+                return null;
+            }
+            this.researchByCity.set(numericCity, new Map());
+        }
+        return this.researchByCity.get(numericCity);
+    }
+
+    getResearchState(cityId, researchType, { create = false } = {}) {
+        const bucket = this.getResearchBucket(cityId, create);
+        const numericType = toFiniteNumber(researchType, null);
+        if (!bucket || numericType === null) {
+            return null;
+        }
+        if (!bucket.has(numericType)) {
+            if (!create) {
+                return null;
+            }
+            bucket.set(numericType, {
+                state: 'idle',
+                startedAt: null,
+                completeAt: null,
+                completedAt: null,
+                buildingId: null,
+            });
+        }
+        return bucket.get(numericType);
+    }
+
+    emitResearchUpdate(cityId, researchType, state) {
+        if (!this.io) {
+            return;
+        }
+        const payload = {
+            cityId: toFiniteNumber(cityId, null),
+            researchType: toFiniteNumber(researchType, null),
+            state: state?.state || 'idle',
+            completeAt: state?.completeAt || null,
+        };
+        this.io.emit('research:update', JSON.stringify(payload));
+    }
+
+    startResearch(cityId, researchType, buildingId, now = null) {
+        const state = this.getResearchState(cityId, researchType, { create: true });
+        if (!state || state.state === 'complete') {
+            return state;
+        }
+        if (state.state === 'pending' && state.completeAt) {
+            return state;
+        }
+        const currentTick = now ?? this.game.tick ?? Date.now();
+        state.state = 'pending';
+        state.startedAt = currentTick;
+        state.completeAt = currentTick + RESEARCH_DURATION_MS;
+        state.buildingId = buildingId || state.buildingId || null;
+        this.emitResearchUpdate(cityId, researchType, state);
+        return state;
+    }
+
+    completeResearch(cityId, researchType) {
+        const state = this.getResearchState(cityId, researchType, { create: true });
+        if (!state || state.state === 'complete') {
+            return state;
+        }
+        state.state = 'complete';
+        state.completeAt = null;
+        state.completedAt = this.game.tick || Date.now();
+        this.emitResearchUpdate(cityId, researchType, state);
+        return state;
+    }
+
+    cancelResearch(cityId, researchType) {
+        const state = this.getResearchState(cityId, researchType);
+        if (!state || state.state !== 'pending') {
+            return;
+        }
+        state.state = 'idle';
+        state.startedAt = null;
+        state.completeAt = null;
+        state.buildingId = null;
+        this.emitResearchUpdate(cityId, researchType, state);
+    }
+
+    hasCompletedResearch(cityId, researchType) {
+        const state = this.getResearchState(cityId, researchType);
+        return !!state && state.state === 'complete';
+    }
+
+    getRequiredResearchType(buildingType) {
+        const numericType = toFiniteNumber(buildingType, null);
+        if (numericType === null) {
+            return null;
+        }
+        const family = Math.floor(numericType / 100);
+        if (family === 1) {
+            return numericType + 300;
+        }
+        if (numericType === 200 || numericType === 301) {
+            return 402;
+        }
+        return null;
+    }
+
+    advanceResearchForBuilding(building, activeResearchKeys, now) {
+        if (!isResearch(building.type)) {
+            return;
+        }
+        const cityId = toFiniteNumber(building.cityId ?? building.city, null);
+        if (cityId === null) {
+            return;
+        }
+        const researchType = toFiniteNumber(building.type, null);
+        const key = this.getResearchKey(cityId, researchType);
+        const hasPopulation = building.population >= POPULATION_MAX_NON_HOUSE;
+        if (hasPopulation) {
+            activeResearchKeys.add(key);
+            this.startResearch(cityId, researchType, building.id, now);
+            const state = this.getResearchState(cityId, researchType);
+            if (state && state.state === 'pending' && state.completeAt !== null && now >= state.completeAt) {
+                this.completeResearch(cityId, researchType);
+            }
+        }
+    }
+
+    cancelInactiveResearch(activeResearchKeys, now) {
+        for (const [cityId, researchMap] of this.researchByCity.entries()) {
+            for (const [researchType, state] of researchMap.entries()) {
+                const key = this.getResearchKey(cityId, researchType);
+                if (state.state === 'pending') {
+                    if (!activeResearchKeys.has(key)) {
+                        this.cancelResearch(cityId, researchType);
+                    } else if (state.completeAt !== null && now >= state.completeAt) {
+                        this.completeResearch(cityId, researchType);
+                    }
+                }
+            }
+        }
+    }
+
+    sendResearchSnapshot(socket) {
+        if (!socket || !this.researchByCity.size) {
+            return;
+        }
+        for (const [cityId, researchMap] of this.researchByCity.entries()) {
+            for (const [researchType, state] of researchMap.entries()) {
+                if (!state || state.state === 'idle') {
+                    continue;
+                }
+                const payload = {
+                    cityId,
+                    researchType,
+                    state: state.state,
+                    completeAt: state.completeAt || null,
+                };
+                socket.emit('research:update', JSON.stringify(payload));
+            }
+        }
+    }
+
     cycle() {
+        const activeResearchKeys = new Set();
+        const now = this.game.tick || Date.now();
         for (const building of this.buildings.values()) {
             building.cycle(this.game, this);
+            this.advanceResearchForBuilding(building, activeResearchKeys, now);
         }
+        this.cancelInactiveResearch(activeResearchKeys, now);
         this.cityManager.cycle(this.game.tick);
     }
 
@@ -783,6 +974,14 @@ class BuildingFactory {
             }
             if (building.population >= POPULATION_MAX_NON_HOUSE) {
                 return true;
+            }
+        }
+        const bucket = this.researchByCity.get(numericCity);
+        if (bucket) {
+            for (const state of bucket.values()) {
+                if (state && (state.state === 'pending' || state.state === 'complete')) {
+                    return true;
+                }
             }
         }
         return false;

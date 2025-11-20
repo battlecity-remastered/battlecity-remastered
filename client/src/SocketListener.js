@@ -354,6 +354,11 @@ class SocketListener extends EventEmitter2 {
             }
         });
 
+        this.io.on("research:update", (payload) => {
+            const data = this.safeParse(payload);
+            this.emit('research:update', data);
+        });
+
         this.io.on("city:finance", (payload) => {
             try {
                 const data = typeof payload === 'string' ? JSON.parse(payload) : payload;

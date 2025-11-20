@@ -35,6 +35,7 @@ export const TIMER_SHOOT_FLARE = 500;
 export const TIMER_BOMB = 5000;
 export const TIMER_CLOAK = 5000;
 export const TIMER_DFG = 5000;
+export const TIMER_RESEARCH = 10000;
 
 export const DAMAGE_LASER = 5;
 export const DAMAGE_ROCKET = 8;
@@ -72,6 +73,7 @@ export const POPULATION_MAX_NON_HOUSE = 50;
 export const CANT_BUILD = 0;
 export const CAN_BUILD = 1;
 export const HAS_BUILT = 2;
+export const RESEARCH_PENDING = 3;
 
 export const CAN_BUILD_HOSPITAL = 200;
 export const CAN_BUILD_HOUSE = 300;
