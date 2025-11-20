@@ -5,3 +5,5 @@ original/
 server/data/*.db
 .env
 .env.local
+.cache/
+.venv/
