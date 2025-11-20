@@ -1,5 +1,5 @@
 import * as PIXICore from 'pixi.js';
-import { installTilemap } from '../pixi-tilemap';
+import { installTilemap } from '../pixi-tilemap.js';
 
 const PIXI = { ...PIXICore };
 

@@ -1208,6 +1208,9 @@ game.resizeToFullscreen = () => {
     game.buildMenuOffset.y = height / 2;
     game.player.defaultOffset.x = (width - 200) / 2;
     game.player.defaultOffset.y = height / 2;
+    if (typeof game.updateInteractionHitArea === 'function') {
+        game.updateInteractionHitArea();
+    }
     game.forceDraw = true;
 };
 
@@ -1255,6 +1258,9 @@ game.resizeToWindow = () => {
     game.buildMenuOffset.y = height / 2;
     game.player.defaultOffset.x = (width - 200) / 2;
     game.player.defaultOffset.y = height / 2;
+    if (typeof game.updateInteractionHitArea === 'function') {
+        game.updateInteractionHitArea();
+    }
     game.forceDraw = true;
 };
 
