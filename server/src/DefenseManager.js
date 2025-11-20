@@ -351,8 +351,14 @@ class DefenseManager {
         if (!record) {
             return;
         }
+
+        // [SECURITY] Deduct inventory first
+        const consumed = this.recordInventoryConsumption(socket.id, record);
+        if (consumed <= 0) {
+            return;
+        }
+
         this.addDefense(record);
-        this.recordInventoryConsumption(socket.id, record);
     }
 
     handleRemove(_socket, payload) {
@@ -369,15 +375,15 @@ class DefenseManager {
 
     recordInventoryConsumption(socketId, record) {
         if (!record || !this.game || !this.game.buildingFactory || !this.game.buildingFactory.cityManager) {
-            return;
+            return 0;
         }
         const cityId = normaliseCityId(record.cityId, null);
         const type = toFiniteNumber(record.type, null);
         if (cityId === null || type === null) {
-            return;
+            return 0;
         }
         const ownerId = socketId || record.ownerId || null;
-        this.game.buildingFactory.cityManager.recordInventoryConsumption(ownerId, cityId, type, 1);
+        return this.game.buildingFactory.cityManager.recordInventoryConsumption(ownerId, cityId, type, 1);
     }
 }
 

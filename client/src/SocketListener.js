@@ -9,7 +9,7 @@ const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/g;
 const DEFAULT_CHAT_SCOPE = 'team';
 const LOCAL_SHOT_CACHE_TTL_MS = 700;
 
-import {updateBotWaypoints} from "./draw/draw-bot-debug";
+import { updateBotWaypoints } from "./draw/draw-bot-debug";
 
 const LOCAL_SOCKET_PORT = 8021;
 
@@ -293,9 +293,9 @@ class SocketListener extends EventEmitter2 {
                 }
             }
             if (typeof data.x === "number" &&
-        typeof data.y === "number" &&
-        data.type !== undefined &&
-        typeof this.game.iconFactory.removeUnownedIconsNear === "function") {
+                typeof data.y === "number" &&
+                data.type !== undefined &&
+                typeof this.game.iconFactory.removeUnownedIconsNear === "function") {
                 this.game.iconFactory.removeUnownedIconsNear(
                     data.x,
                     data.y,
@@ -560,7 +560,7 @@ class SocketListener extends EventEmitter2 {
             this.markLocalShot(bullet);
         }
         if (this.io && !this.io.disconnected) {
-            this.io.emit("bullet_shot", JSON.stringify(bullet));
+            this.io.emit("request_fire", JSON.stringify(bullet));
         }
     }
 

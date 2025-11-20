@@ -137,7 +137,9 @@ class PlayerFactory {
 
     constructor(game, options = {}) {
         this.game = game;
-        this.validator = new PlayerStateValidator();
+        this.validator = new PlayerStateValidator({
+            game: this.game
+        });
         this.io = null;
         this.cityRosters = new Map();
         this.cityCursor = 0;
@@ -153,6 +155,84 @@ class PlayerFactory {
         this.chatManager = null;
         this.userStore = options.userStore || null;
         this.scoreService = options.scoreService || null;
+    }
+
+    handlePlayerUpdate(socket, player) {
+        var existingPlayer = this.game.players[socket.id];
+        if (!existingPlayer) {
+            return;
+        }
+
+        var parsedPlayer = this.safeParse(player);
+        const now = Date.now();
+        if (parsedPlayer && (existingPlayer.isFake || existingPlayer.isSystemControlled || existingPlayer.isFakeRecruit)) {
+            if (parsedPlayer.sequence !== undefined && Number.isFinite(parsedPlayer.sequence)) {
+                if (existingPlayer.sequence !== undefined && parsedPlayer.sequence <= existingPlayer.sequence) {
+                    return;
+                }
+                existingPlayer.sequence = Math.max(existingPlayer.sequence || 0, Math.floor(parsedPlayer.sequence));
+            }
+            if (parsedPlayer.offset && typeof parsedPlayer.offset === 'object') {
+                const x = Number(parsedPlayer.offset.x);
+                const y = Number(parsedPlayer.offset.y);
+                if (Number.isFinite(x)) existingPlayer.offset.x = x;
+                if (Number.isFinite(y)) existingPlayer.offset.y = y;
+            }
+            if (parsedPlayer.direction !== undefined) {
+                const dir = Number(parsedPlayer.direction);
+                if (Number.isFinite(dir)) existingPlayer.direction = Math.round(dir) % 32;
+            }
+            if (parsedPlayer.isMoving !== undefined) {
+                existingPlayer.isMoving = parsedPlayer.isMoving;
+            }
+            if (parsedPlayer.isTurning !== undefined) {
+                existingPlayer.isTurning = parsedPlayer.isTurning;
+            }
+            existingPlayer.lastUpdateAt = now;
+            if (this.io) {
+                this.io.emit('player', JSON.stringify(existingPlayer));
+            }
+            return;
+        }
+
+        var validation = this.validator.validatePlayerUpdate(existingPlayer, parsedPlayer, { now });
+        if (!validation) {
+            return;
+        }
+
+        if (validation.sanitized) {
+            validation.sanitized.city = existingPlayer.city;
+            validation.sanitized.isMayor = existingPlayer.isMayor;
+        }
+
+        if (existingPlayer.sequence !== undefined &&
+            validation.sanitized &&
+            validation.sanitized.sequence !== undefined &&
+            validation.sanitized.sequence <= existingPlayer.sequence) {
+            debug("Ignoring out-of-order update from " + socket.id + " sequence " + validation.sanitized.sequence);
+            return;
+        }
+
+        if (!validation.valid) {
+            debug("Rejected player update for " + socket.id + " reasons: " + validation.reasons.join(","));
+            socket.emit('player:rejected', JSON.stringify({
+                reasons: validation.reasons,
+                flags: validation.flags,
+                player: existingPlayer
+            }));
+            socket.emit('player', JSON.stringify(existingPlayer));
+            return;
+        }
+
+        const blockedByWorld = this.enforceWorldMovement(existingPlayer, validation.sanitized);
+        if (blockedByWorld) {
+            validation.flags.push('movement_world_blocked');
+        }
+
+        existingPlayer.update(validation.sanitized, validation.timestamp);
+        if (this.io) {
+            this.io.emit('player', JSON.stringify(existingPlayer));
+        }
     }
 
     listen(io) {
@@ -270,79 +350,7 @@ class PlayerFactory {
             });
 
             socket.on('player', (player) => {
-                var existingPlayer = this.game.players[socket.id];
-                if (!existingPlayer) {
-                    return;
-                }
-
-                var parsedPlayer = this.safeParse(player);
-                const now = Date.now();
-                if (parsedPlayer && (existingPlayer.isFake || existingPlayer.isSystemControlled || existingPlayer.isFakeRecruit)) {
-                    if (parsedPlayer.sequence !== undefined && Number.isFinite(parsedPlayer.sequence)) {
-                        if (existingPlayer.sequence !== undefined && parsedPlayer.sequence <= existingPlayer.sequence) {
-                            return;
-                        }
-                        existingPlayer.sequence = Math.max(existingPlayer.sequence || 0, Math.floor(parsedPlayer.sequence));
-                    }
-                    if (parsedPlayer.offset && typeof parsedPlayer.offset === 'object') {
-                        const x = Number(parsedPlayer.offset.x);
-                        const y = Number(parsedPlayer.offset.y);
-                        if (Number.isFinite(x)) existingPlayer.offset.x = x;
-                        if (Number.isFinite(y)) existingPlayer.offset.y = y;
-                    }
-                    if (parsedPlayer.direction !== undefined) {
-                        const dir = Number(parsedPlayer.direction);
-                        if (Number.isFinite(dir)) existingPlayer.direction = Math.round(dir) % 32;
-                    }
-                    if (parsedPlayer.isMoving !== undefined) {
-                        existingPlayer.isMoving = parsedPlayer.isMoving;
-                    }
-                    if (parsedPlayer.isTurning !== undefined) {
-                        existingPlayer.isTurning = parsedPlayer.isTurning;
-                    }
-                    existingPlayer.lastUpdateAt = now;
-                    if (this.io) {
-                        this.io.emit('player', JSON.stringify(existingPlayer));
-                    }
-                    return;
-                }
-
-                var validation = this.validator.validatePlayerUpdate(existingPlayer, parsedPlayer, { now });
-                if (!validation) {
-                    return;
-                }
-
-                if (validation.sanitized) {
-                    validation.sanitized.city = existingPlayer.city;
-                    validation.sanitized.isMayor = existingPlayer.isMayor;
-                }
-
-                if (existingPlayer.sequence !== undefined &&
-                    validation.sanitized &&
-                    validation.sanitized.sequence !== undefined &&
-                    validation.sanitized.sequence <= existingPlayer.sequence) {
-                    debug("Ignoring out-of-order update from " + socket.id + " sequence " + validation.sanitized.sequence);
-                    return;
-                }
-
-                if (!validation.valid) {
-                    debug("Rejected player update for " + socket.id + " reasons: " + validation.reasons.join(","));
-                    socket.emit('player:rejected', JSON.stringify({
-                        reasons: validation.reasons,
-                        flags: validation.flags,
-                        player: existingPlayer
-                    }));
-                    socket.emit('player', JSON.stringify(existingPlayer));
-                    return;
-                }
-
-                const blockedByWorld = this.enforceWorldMovement(existingPlayer, validation.sanitized);
-                if (blockedByWorld) {
-                    validation.flags.push('movement_world_blocked');
-                }
-
-                existingPlayer.update(validation.sanitized, validation.timestamp);
-                io.emit('player', JSON.stringify(existingPlayer));
+                this.handlePlayerUpdate(socket, player);
             });
 
             socket.on('identity:update', (payload) => {
@@ -442,7 +450,7 @@ class PlayerFactory {
                 this.releaseSlot(removedPlayer, { emitSnapshot: false });
                 delete this.game.players[socket.id];
                 this.callsigns.release(socket.id);
-                io.emit('player:removed', JSON.stringify({id: removedPlayer.id}));
+                io.emit('player:removed', JSON.stringify({ id: removedPlayer.id }));
                 this.emitLobbySnapshot();
             });
         });
@@ -951,13 +959,15 @@ class PlayerFactory {
 
         switch (type) {
             case 'medkit':
-                if (this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null })) {
-                    this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
+                // [SECURITY] Deduct inventory first
+                if (this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1) > 0) {
+                    this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null });
                 }
                 break;
             case 'cloak':
-                if (this.applyCloak(socketId, Number.isFinite(data.duration) ? data.duration : TIMER_CLOAK)) {
-                    this.adjustCityInventory(socketId, ITEM_TYPES.CLOAK, -1);
+                // [SECURITY] Deduct inventory first
+                if (this.adjustCityInventory(socketId, ITEM_TYPES.CLOAK, -1) > 0) {
+                    this.applyCloak(socketId, Number.isFinite(data.duration) ? data.duration : TIMER_CLOAK);
                 }
                 break;
             default:

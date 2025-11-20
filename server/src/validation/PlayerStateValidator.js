@@ -20,6 +20,7 @@ class PlayerStateValidator {
     constructor(options) {
         this.options = Object.assign({}, DEFAULT_OPTIONS, options || {});
         this.axisHardCap = this.options.maxAxisDelta + this.options.snapAllowance;
+        this.game = this.options.game || null; // Inject game instance for collision checks
     }
 
     initializePlayerState(rawState, context) {
@@ -85,6 +86,16 @@ class PlayerStateValidator {
                 y: previousOffset.y
             };
             result.flags.push("movement_clamped");
+        } else if (this._checkCollision(sanitized.offset)) {
+            // [SECURITY] Collision Check
+            // If new position collides with map or building, reject it.
+            result.valid = false;
+            result.reasons.push("movement/collision");
+            sanitized.offset = {
+                x: previousOffset.x,
+                y: previousOffset.y
+            };
+            result.flags.push("collision_detected");
         }
 
         const directionDelta = this._directionDelta(previousState.direction, sanitized.direction);
@@ -241,6 +252,73 @@ class PlayerStateValidator {
             return max;
         }
         return value;
+    }
+    _checkCollision(offset) {
+        if (!this.game) {
+            return false;
+        }
+
+        const TILE_SIZE = 48;
+        const SPRITE_GAP = 8;
+        const rect = {
+            x: offset.x + SPRITE_GAP,
+            y: offset.y + SPRITE_GAP,
+            w: TILE_SIZE - (SPRITE_GAP * 2),
+            h: TILE_SIZE - (SPRITE_GAP * 2)
+        };
+
+        // 1. Check Map Boundaries
+        if (rect.x < 0 || rect.y < 0 || (rect.x + rect.w) > (512 * TILE_SIZE) || (rect.y + rect.h) > (512 * TILE_SIZE)) {
+            return true;
+        }
+
+        // 2. Check Map Tiles (Terrain)
+        if (this.game.map) {
+            const left = Math.floor(rect.x / TILE_SIZE);
+            const right = Math.floor((rect.x + rect.w) / TILE_SIZE);
+            const top = Math.floor(rect.y / TILE_SIZE);
+            const bottom = Math.floor((rect.y + rect.h) / TILE_SIZE);
+
+            const isBlocked = (x, y) => {
+                try {
+                    // 0 = Empty, 3 = Water (passable?), others blocked.
+                    // Assuming 0 is empty. Need to verify what blocks.
+                    // Usually 1=Brick, 2=Steel, 3=Water, 4=Ice, 5=Trees.
+                    // Tanks block on Brick(1), Steel(2), Water(3).
+                    // Trees(5) and Ice(4) might be passable.
+                    const tile = this.game.map[x][y];
+                    return tile === 1 || tile === 2 || tile === 3;
+                } catch (e) {
+                    return true; // Out of bounds
+                }
+            };
+
+            if (isBlocked(left, top) || isBlocked(left, bottom) || isBlocked(right, top) || isBlocked(right, bottom)) {
+                return true;
+            }
+        }
+
+        // 3. Check Buildings
+        if (this.game.buildingFactory && this.game.buildingFactory.buildings) {
+            for (const building of this.game.buildingFactory.buildings.values()) {
+                const buildingRect = {
+                    x: building.x * TILE_SIZE,
+                    y: building.y * TILE_SIZE,
+                    w: TILE_SIZE * 3, // Buildings are 3x3
+                    h: TILE_SIZE * 3
+                };
+
+                // Simple AABB collision
+                if (rect.x < buildingRect.x + buildingRect.w &&
+                    rect.x + rect.w > buildingRect.x &&
+                    rect.y < buildingRect.y + buildingRect.h &&
+                    rect.y + rect.h > buildingRect.y) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
 

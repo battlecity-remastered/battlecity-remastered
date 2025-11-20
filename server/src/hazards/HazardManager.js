@@ -158,6 +158,12 @@ class HazardManager {
             return this.hazards.get(hazard.id);
         }
 
+        // [SECURITY] Deduct inventory first
+        const consumed = this.recordInventoryConsumption(socket.id, hazard);
+        if (consumed <= 0) {
+            return null;
+        }
+
         this.hazards.set(hazard.id, hazard);
 
         if (!this.pendingIdsBySocket.has(socket.id)) {
@@ -166,7 +172,6 @@ class HazardManager {
         this.pendingIdsBySocket.get(socket.id).add(hazard.id);
 
         this.broadcastHazard("hazard:spawn", hazard);
-        this.recordInventoryConsumption(socket.id, hazard);
         return hazard;
     }
 
@@ -303,18 +308,18 @@ class HazardManager {
 
     recordInventoryConsumption(socketId, hazard) {
         if (!hazard || !this.game || !this.game.buildingFactory || !this.game.buildingFactory.cityManager) {
-            return;
+            return 0;
         }
         const itemType = HAZARD_TYPE_TO_ITEM.get(hazard.type);
         if (itemType === undefined) {
-            return;
+            return 0;
         }
         const cityId = Number.isFinite(hazard.teamId) ? Math.floor(hazard.teamId) : null;
         if (cityId === null) {
-            return;
+            return 0;
         }
         const ownerId = socketId || (typeof hazard.ownerId === "string" ? hazard.ownerId : null);
-        this.game.buildingFactory.cityManager.recordInventoryConsumption(ownerId, cityId, itemType, 1);
+        return this.game.buildingFactory.cityManager.recordInventoryConsumption(ownerId, cityId, itemType, 1);
     }
 
     recordInventoryPickup(socketId, hazard) {

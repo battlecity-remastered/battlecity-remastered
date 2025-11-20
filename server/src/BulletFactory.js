@@ -112,8 +112,8 @@ class BulletFactory {
         debug("Starting Bullet Server");
 
         io.on("connection", (socket) => {
-            socket.on('bullet_shot', (bullet) => {
-                this.spawnBullet(socket, bullet);
+            socket.on('request_fire', (payload) => {
+                this.handleRequestFire(socket, payload);
             });
             socket.on('disconnect', () => {
                 this.removeBulletsForShooter(socket.id);
@@ -139,10 +139,10 @@ class BulletFactory {
         return null;
     }
 
-    spawnBullet(socket, payload) {
+    handleRequestFire(socket, payload) {
         const now = Date.now();
-        const bulletData = this.sanitizeBullet(payload);
-        if (!bulletData) {
+        const data = this.parsePayload(payload);
+        if (!data) {
             return;
         }
 
@@ -151,58 +151,89 @@ class BulletFactory {
             return;
         }
 
-        const teamId = (bulletData.teamId !== undefined && bulletData.teamId !== null)
-            ? bulletData.teamId
-            : (this.playerFactory?.getPlayerTeam(socket.id) ?? null);
-        bulletData.teamId = teamId;
+        const sourceType = (typeof data.sourceType === 'string' && data.sourceType.length > 0)
+            ? data.sourceType.trim().toLowerCase()
+            : 'player';
 
-        if (bulletData.sourceId) {
-            if (!this.canRegisterSourceShot(bulletData.sourceId, bulletData.sourceType, now)) {
-                return;
-            }
-            this.registerSourceShot(bulletData.sourceId, now);
-        }
-
-        const defensiveShot = this.isStructureSource(bulletData);
-        const shooterId = defensiveShot && bulletData.sourceId
-            ? bulletData.sourceId
+        const sourceId = (typeof data.sourceId === 'string' && data.sourceId.length > 0)
+            ? data.sourceId
             : socket.id;
 
+        // Validate Cooldown
+        if (!this.canRegisterSourceShot(sourceId, sourceType, now)) {
+            return;
+        }
+
+        let type = Number(data.type);
+        if (!Number.isFinite(type)) {
+            type = 0;
+        } else {
+            type = Math.floor(type);
+        }
+
+        const angle = Number.isFinite(Number(data.angle)) ? Number(data.angle) : 0;
+        let spawnX, spawnY;
+
+        // [SECURITY] Authoritative Positioning
+        // If source is player, force spawn at player position.
+        // If source is a structure/bot (legacy client-side), accept client position for now.
+        if (sourceType === 'player' || !this.isStructureSource({ sourceType, sourceId })) {
+            // Calculate muzzle offset based on angle
+            const radians = (angle / 16) * Math.PI;
+            const offsetDist = 32;
+            spawnX = (shooter.offset.x + 24) + (Math.sin(radians) * -1 * offsetDist);
+            spawnY = (shooter.offset.y + 24) + (Math.cos(radians) * -1 * offsetDist);
+        } else {
+            // Trust client for structures (Rogue Tanks, Turrets, etc.)
+            spawnX = Number(data.x);
+            spawnY = Number(data.y);
+            if (!Number.isFinite(spawnX) || !Number.isFinite(spawnY)) {
+                return;
+            }
+        }
+
+        const teamId = (data.teamId !== undefined && data.teamId !== null)
+            ? data.teamId
+            : (this.playerFactory?.getPlayerTeam(socket.id) ?? null);
+
+        this.registerSourceShot(sourceId, now);
+
         const id = `bullet_${++bulletCounter}`;
-        const bullet = decorateBulletMotion(Object.assign({
+        const bullet = decorateBulletMotion({
             id,
-            shooterId,
+            shooterId: socket.id,
             emitterId: socket.id,
-            reportedShooterId: bulletData.reportedShooterId ?? null,
-            damage: bulletData.damage ?? BULLET_DAMAGE,
+            reportedShooterId: socket.id,
+            type,
+            angle,
+            x: spawnX,
+            y: spawnY,
+            speed: resolveBulletSpeed(type),
+            damage: resolveBulletDamage(type),
+            maxRange: resolveBulletRange(type),
+            teamId,
             lifeMs: 0,
-            maxRange: bulletData.maxRange ?? BULLET_MAX_RANGE,
-            originX: bulletData.x,
-            originY: bulletData.y,
             traveled: 0,
             createdAt: now,
             lastUpdateAt: now,
-        }, bulletData));
+            sourceType,
+            sourceId: (sourceId !== socket.id) ? sourceId : null
+        });
 
         this.bullets.set(id, bullet);
 
         if (this.io) {
             const broadcast = {
-                shooter: shooterId,
+                shooter: socket.id,
                 x: bullet.x,
                 y: bullet.y,
                 angle: bullet.angle,
                 type: bullet.type,
-                team: bullet.teamId
+                team: bullet.teamId,
+                sourceType: bullet.sourceType
             };
             if (bullet.sourceId) {
                 broadcast.sourceId = bullet.sourceId;
-            }
-            if (bullet.sourceType) {
-                broadcast.sourceType = bullet.sourceType;
-            }
-            if (bullet.targetId) {
-                broadcast.targetId = bullet.targetId;
             }
             this.io.emit('bullet_shot', JSON.stringify(broadcast));
         }
@@ -218,8 +249,8 @@ class BulletFactory {
         const shooterId = (payload && typeof payload.shooterId === 'string' && payload.shooterId.length)
             ? payload.shooterId
             : ((payload && typeof payload.shooter === 'string' && payload.shooter.length)
-                    ? payload.shooter
-                    : (bulletData.sourceId || 'system'));
+                ? payload.shooter
+                : (bulletData.sourceId || 'system'));
 
         const sourceId = bulletData.sourceId || shooterId;
         if (sourceId && !this.canRegisterSourceShot(sourceId, bulletData.sourceType, now)) {

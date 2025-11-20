@@ -165,8 +165,20 @@ class CityManager {
         if (socketId) {
             const playerInventory = this.ensurePlayerInventory(socketId, numericCity);
             if (playerInventory) {
+                // [SECURITY] Enforce inventory limit (e.g., 5 items per type)
+                const MAX_INVENTORY_PER_TYPE = 5;
                 const existing = playerInventory.items.get(type) || 0;
-                playerInventory.items.set(type, existing + amount);
+                if (existing >= MAX_INVENTORY_PER_TYPE) {
+                    return 0;
+                }
+                const allowed = Math.min(amount, MAX_INVENTORY_PER_TYPE - existing);
+                if (allowed > 0) {
+                    playerInventory.items.set(type, existing + allowed);
+                } else {
+                    return 0;
+                }
+                city.updatedAt = Date.now();
+                return allowed;
             }
         }
 
@@ -181,12 +193,40 @@ class CityManager {
         if (!Number.isFinite(numericCity) || type === null || amount <= 0) {
             return 0;
         }
+
+        // [SECURITY] If socketId is provided, check PLAYER inventory first
+        if (socketId) {
+            const playerInventory = this.ensurePlayerInventory(socketId, numericCity);
+            if (!playerInventory) {
+                return 0;
+            }
+            const owned = playerInventory.items.get(type) || 0;
+            if (owned < amount) {
+                return 0;
+            }
+            // Deduct from player
+            const remaining = owned - amount;
+            if (remaining > 0) {
+                playerInventory.items.set(type, remaining);
+            } else {
+                playerInventory.items.delete(type);
+                if (playerInventory.items.size === 0) {
+                    this.inventoryByPlayer.delete(socketId);
+                }
+            }
+        }
+
+        // Also deduct from city (shared pool)
         const city = this.ensureCity(numericCity);
         const cityInventory = this.ensureCityInventory(numericCity);
         const current = cityInventory.get(type) || 0;
-        if (current <= 0) {
-            return 0;
-        }
+
+        // Even if player had it, if city doesn't (shouldn't happen in sync), we clamp? 
+        // Or we just deduct what we can? 
+        // Logic: Player inventory is a subset/view of city inventory in this game design?
+        // Actually, looking at pickup: cityInventory gets +amount, player gets +amount.
+        // So they should be in sync.
+
         const applied = Math.min(current, amount);
         const nextValue = current - applied;
         if (nextValue > 0) {
@@ -195,24 +235,8 @@ class CityManager {
             cityInventory.delete(type);
         }
 
-        if (socketId && this.inventoryByPlayer.has(socketId)) {
-            const record = this.inventoryByPlayer.get(socketId);
-            if (record && record.cityId === numericCity) {
-                const owned = record.items.get(type) || 0;
-                const remaining = Math.max(0, owned - applied);
-                if (remaining > 0) {
-                    record.items.set(type, remaining);
-                } else {
-                    record.items.delete(type);
-                }
-                if (record.items.size === 0) {
-                    this.inventoryByPlayer.delete(socketId);
-                }
-            }
-        }
-
         city.updatedAt = Date.now();
-        return applied;
+        return amount; // Return requested amount since we validated player had it
     }
 
     getInventoryCount(cityId, itemType) {
@@ -311,22 +335,30 @@ class CityManager {
 
     spendForResearch(cityId, amount) {
         if (!amount || amount <= 0) {
-            return;
+            return false;
         }
         const city = this.ensureCity(cityId);
+        if (city.cash < amount) {
+            return false;
+        }
         city.cash -= amount;
         city.research += amount;
         city.updatedAt = Date.now();
+        return true;
     }
 
     spendForHospital(cityId, amount) {
         if (!amount || amount <= 0) {
-            return;
+            return false;
         }
         const city = this.ensureCity(cityId);
+        if (city.cash < amount) {
+            return false;
+        }
         city.cash -= amount;
         city.hospital += amount;
         city.updatedAt = Date.now();
+        return true;
     }
 
     trySpendForFactory(cityId, amount) {

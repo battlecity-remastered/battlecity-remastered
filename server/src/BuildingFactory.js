@@ -7,16 +7,20 @@ const FactoryBuilding = require('./FactoryBuilding');
 const CityManager = require('./CityManager');
 const { ITEM_TYPES, normalizeItemType } = require('./items');
 const {
+    POPULATION_INTERVAL_MS,
+    POPULATION_INCREMENT,
+    POPULATION_MAX_HOUSE,
+    POPULATION_MAX_NON_HOUSE,
+    COST_BUILDING,
     isHouse,
     isFactory,
     isResearch,
     isHospital,
     isCommandCenter,
-    POPULATION_MAX_HOUSE,
-    POPULATION_MAX_NON_HOUSE,
-    COST_BUILDING,
     RESEARCH_DURATION_MS,
+    MAX_BUILDING_CHAIN_DISTANCE,
 } = require('./constants');
+const { rectangleCollision } = require('./gameplay/geometry');
 const {
     COMMAND_CENTER_WIDTH_TILES,
     COMMAND_CENTER_HEIGHT_TILES,
@@ -166,17 +170,28 @@ class BuildingFactory {
         const itemType = toFiniteNumber(data.type, null);
         const quantity = Math.max(1, toFiniteNumber(data.quantity, 1) || 1);
         const previous = Math.max(0, toFiniteNumber(building.itemsLeft, 0) || 0);
-        const dispensed = Math.min(previous, quantity);
-        building.itemsLeft = previous - dispensed;
-        this.emitPopulationUpdate(building);
+
+        // [SECURITY] Check inventory limit before dispensing
+        let dispensed = Math.min(previous, quantity);
+        let actualDispensed = 0;
 
         const owningCity = playerCity !== null ? playerCity : buildingCity;
+
         if (dispensed > 0 &&
             itemType !== ITEM_TYPE_ORB &&
             this.cityManager &&
             Number.isFinite(owningCity) &&
             itemType !== null) {
-            this.cityManager.recordInventoryPickup(socket.id, owningCity, itemType, dispensed);
+            // Try to pick up items, respecting inventory limit
+            actualDispensed = this.cityManager.recordInventoryPickup(socket.id, owningCity, itemType, dispensed);
+        } else if (dispensed > 0 && itemType === ITEM_TYPE_ORB) {
+            // Orbs are special, handled below
+            actualDispensed = dispensed;
+        }
+
+        if (actualDispensed > 0) {
+            building.itemsLeft = previous - actualDispensed;
+            this.emitPopulationUpdate(building);
         }
 
         if (dispensed > 0 &&
@@ -232,6 +247,30 @@ class BuildingFactory {
         if (city.cash < COST_BUILDING) {
             socket.emit('build:denied', JSON.stringify({
                 reason: 'insufficient_funds',
+                city: resolvedCityId,
+                x: buildingData.x,
+                y: buildingData.y,
+                id: buildingData.id,
+            }));
+            return;
+        }
+
+        // [SECURITY] Server-side collision check
+        if (this.checkBuildingCollision(buildingData)) {
+            socket.emit('build:denied', JSON.stringify({
+                reason: 'collision',
+                city: resolvedCityId,
+                x: buildingData.x,
+                y: buildingData.y,
+                id: buildingData.id,
+            }));
+            return;
+        }
+
+        // [SECURITY] Server-side chain distance check
+        if (!this.checkBuildingChain(buildingData, resolvedCityId)) {
+            socket.emit('build:denied', JSON.stringify({
+                reason: 'too_far',
                 city: resolvedCityId,
                 x: buildingData.x,
                 y: buildingData.y,
@@ -984,6 +1023,68 @@ class BuildingFactory {
                 }
             }
         }
+        return false;
+    }
+    checkBuildingCollision(buildingData) {
+        const TILE_SIZE = 48;
+        const BUILDING_SIZE_TILES = 3; // Buildings are 3x3 tiles
+
+        // Check against map boundaries (buildingData.x and buildingData.y are in TILES)
+        if (buildingData.x < 0 || buildingData.y < 0 ||
+            buildingData.x + BUILDING_SIZE_TILES > 512 ||
+            buildingData.y + BUILDING_SIZE_TILES > 512) {
+            return true;
+        }
+
+        const rect = {
+            x: buildingData.x * TILE_SIZE,
+            y: buildingData.y * TILE_SIZE,
+            w: TILE_SIZE * BUILDING_SIZE_TILES,
+            h: TILE_SIZE * BUILDING_SIZE_TILES
+        };
+
+        // Check against existing buildings
+        for (const existing of this.buildings.values()) {
+            if (existing.id === buildingData.id) continue;
+            const existingRect = {
+                x: existing.x * TILE_SIZE,
+                y: existing.y * TILE_SIZE,
+                w: TILE_SIZE * BUILDING_SIZE_TILES,
+                h: TILE_SIZE * BUILDING_SIZE_TILES
+            };
+            if (rectangleCollision(rect, existingRect)) {
+                return true;
+            }
+        }
+
+        // TODO: Check against map blocking tiles (rocks, water) if map data is available here
+        // For now, building collision is the most critical for preventing stacking
+        return false;
+    }
+
+    checkBuildingChain(buildingData, cityId) {
+        // Command centers are the root, always allowed if no collision
+        if (Number(buildingData.type) === 0) {
+            return true;
+        }
+
+        const MAX_DIST_SQ = MAX_BUILDING_CHAIN_DISTANCE * MAX_BUILDING_CHAIN_DISTANCE;
+        const x = buildingData.x;
+        const y = buildingData.y;
+
+        for (const existing of this.buildings.values()) {
+            // Must belong to same city/team
+            if (existing.cityId !== cityId) continue;
+
+            const dx = existing.x - x;
+            const dy = existing.y - y;
+            const distSq = (dx * dx) + (dy * dy);
+
+            if (distSq <= MAX_DIST_SQ) {
+                return true;
+            }
+        }
+
         return false;
     }
 }

@@ -12,6 +12,7 @@ const COST_BUILDING = 500000;
 const COST_ITEM = 750000;
 const COST_INCOME_POPULATION = 10000;
 const COST_UPKEEP_HOSPITAL = 2000000;
+const MAX_BUILDING_CHAIN_DISTANCE = 48 * 20; // TILE_SIZE * 20
 
 const getFamilyCode = (type) => Math.floor(type / 100);
 
@@ -70,5 +71,7 @@ module.exports = {
     isFactory,
     isCommandCenter,
     isHospital,
+    isHospital,
     FACTORY_ITEM_LIMITS,
+    MAX_BUILDING_CHAIN_DISTANCE,
 };
