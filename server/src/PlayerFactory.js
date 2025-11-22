@@ -157,7 +157,7 @@ class PlayerFactory {
         this.scoreService = options.scoreService || null;
     }
 
-    applyScoreProfileToPlayer(player, profile) {
+    applyScoreProfileToPlayer(player, profile, options = {}) {
         if (!player || !profile) {
             return false;
         }
@@ -178,6 +178,11 @@ class PlayerFactory {
             player.rankTitle = resolvedRank;
             changed = true;
         }
+        if (changed && options.bumpSequence) {
+            const nextSequence = Number.isFinite(player.sequence) ? player.sequence : 0;
+            player.sequence = Math.max(0, Math.round(nextSequence)) + 1;
+            player.lastUpdateAt = Date.now();
+        }
         return changed;
     }
 
@@ -196,7 +201,7 @@ class PlayerFactory {
                 if (!player || !player.userId || String(player.userId) !== userId) {
                     return;
                 }
-                const changed = this.applyScoreProfileToPlayer(player, profile);
+                const changed = this.applyScoreProfileToPlayer(player, profile, { bumpSequence: true });
                 if (changed && this.io) {
                     this.io.emit('player', JSON.stringify(player));
                 }
@@ -1196,7 +1201,7 @@ class PlayerFactory {
                         ? this.scoreService.getProfile(identity.id)
                         : null);
                 if (profile) {
-                    this.applyScoreProfileToPlayer(player, profile);
+                    this.applyScoreProfileToPlayer(player, profile, { bumpSequence: true });
                 }
             }
         } else {
