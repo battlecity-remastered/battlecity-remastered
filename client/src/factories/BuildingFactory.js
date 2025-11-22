@@ -17,6 +17,8 @@ import {MAP_SQUARE_BUILDING} from "../constants.js";
 import {getCityDisplayName} from '../utils/citySpawns.js';
 import { SOUND_IDS } from '../audio/AudioManager.js';
 
+const { clearTimeout, setTimeout } = globalThis;
+
 const TILE_SIZE = 48;
 const MAX_BUILDING_CHAIN_DISTANCE = TILE_SIZE * 20;
 const MAX_BUILDING_CHAIN_DISTANCE_SQ = MAX_BUILDING_CHAIN_DISTANCE * MAX_BUILDING_CHAIN_DISTANCE;

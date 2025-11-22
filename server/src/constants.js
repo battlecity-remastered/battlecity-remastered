@@ -71,7 +71,6 @@ module.exports = {
     isFactory,
     isCommandCenter,
     isHospital,
-    isHospital,
     FACTORY_ITEM_LIMITS,
     MAX_BUILDING_CHAIN_DISTANCE,
 };

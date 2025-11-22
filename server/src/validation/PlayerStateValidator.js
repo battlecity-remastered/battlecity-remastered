@@ -288,7 +288,7 @@ class PlayerStateValidator {
                     // Trees(5) and Ice(4) might be passable.
                     const tile = this.game.map[x][y];
                     return tile === 1 || tile === 2 || tile === 3;
-                } catch (e) {
+                } catch (_e) {
                     return true; // Out of bounds
                 }
             };

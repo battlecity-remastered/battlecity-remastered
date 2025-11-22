@@ -246,11 +246,12 @@ class BulletFactory {
             return null;
         }
 
-        const shooterId = (payload && typeof payload.shooterId === 'string' && payload.shooterId.length)
-            ? payload.shooterId
-            : ((payload && typeof payload.shooter === 'string' && payload.shooter.length)
-                ? payload.shooter
-                : (bulletData.sourceId || 'system'));
+        let shooterId = bulletData.sourceId || 'system';
+        if (payload && typeof payload.shooterId === 'string' && payload.shooterId.length) {
+            shooterId = payload.shooterId;
+        } else if (payload && typeof payload.shooter === 'string' && payload.shooter.length) {
+            shooterId = payload.shooter;
+        }
 
         const sourceId = bulletData.sourceId || shooterId;
         if (sourceId && !this.canRegisterSourceShot(sourceId, bulletData.sourceType, now)) {

@@ -110,7 +110,7 @@ test('Building placement validates chain distance and collisions', () => {
 });
 
 test('Bullet requests are re-centered on the player', () => {
-    const { game, cityManager, playerFactory } = createGameContext();
+    const { game, playerFactory } = createGameContext();
     const socketId = 'player1';
     const socket = {
         id: socketId,
