@@ -34,6 +34,8 @@ RUN npm ci --omit=dev
 
 # Copy server source after installing prod dependencies
 COPY --from=builder /app/server ./
+# Ensure data assets (e.g., city templates) are present
+COPY --from=builder /app/server/data ./data
 
 EXPOSE 8021
 CMD ["node", "app.js"]
