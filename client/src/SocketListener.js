@@ -203,48 +203,7 @@ class SocketListener extends EventEmitter2 {
         });
 
         this.io.on("bullet_shot", (payload) => {
-            const data = this.safeParse(payload);
-            if (!data) {
-                return;
-            }
-            const shooterId = (typeof data.shooter === 'string' && data.shooter.length)
-                ? data.shooter
-                : null;
-            const localPlayerId = (typeof this.game?.player?.id === 'string' && this.game.player.id.length)
-                ? this.game.player.id
-                : null;
-            const hasStructureSource = (typeof data.sourceType === 'string' && data.sourceType.length > 0)
-                || (typeof data.sourceId === 'string' && data.sourceId.length > 0);
-            if (localPlayerId && shooterId && shooterId === localPlayerId && !hasStructureSource) {
-                return;
-            }
-            const options = {
-                sourceId: data.sourceId ?? null,
-                sourceType: data.sourceType ?? null,
-                targetId: data.targetId ?? null,
-            };
-            if (data.damage !== undefined) {
-                const numericDamage = Number(data.damage);
-                if (Number.isFinite(numericDamage)) {
-                    options.damage = numericDamage;
-                }
-            }
-            this.game.bulletFactory.newBullet(
-                data.shooter,
-                data.x,
-                data.y,
-                data.type,
-                data.angle,
-                data.team ?? null,
-                options
-            );
-            const suppressSound = this.shouldSuppressShotSound(data);
-            if (!suppressSound) {
-                spawnMuzzleFlash(this.game, data.x, data.y);
-            }
-            if (!suppressSound) {
-                this.playBulletShotSound(data);
-            }
+            this.handleBulletShot(payload);
         });
 
         this.io.on("new_icon", (icon) => {
@@ -553,6 +512,54 @@ class SocketListener extends EventEmitter2 {
         }
         const normalised = Math.max(0, Math.floor(numericId));
         this.io.emit('city:inspect', JSON.stringify({ city: normalised }));
+    }
+
+    handleBulletShot(payload) {
+        const data = this.safeParse(payload);
+        if (!data || !this.game || !this.game.bulletFactory) {
+            return;
+        }
+        const shooterId = (typeof data.shooter === 'string' && data.shooter.length)
+            ? data.shooter
+            : null;
+        const localPlayerId = (typeof this.game?.player?.id === 'string' && this.game.player.id.length)
+            ? this.game.player.id
+            : null;
+        const sourceType = (typeof data.sourceType === 'string' && data.sourceType.length > 0)
+            ? data.sourceType.trim().toLowerCase()
+            : null;
+        const hasStructureSource = (sourceType && sourceType !== 'player')
+            || (typeof data.sourceId === 'string' && data.sourceId.length > 0);
+        if (localPlayerId && shooterId && shooterId === localPlayerId && !hasStructureSource) {
+            return;
+        }
+        const options = {
+            sourceId: data.sourceId ?? null,
+            sourceType: sourceType ?? null,
+            targetId: data.targetId ?? null,
+        };
+        if (data.damage !== undefined) {
+            const numericDamage = Number(data.damage);
+            if (Number.isFinite(numericDamage)) {
+                options.damage = numericDamage;
+            }
+        }
+        this.game.bulletFactory.newBullet(
+            data.shooter,
+            data.x,
+            data.y,
+            data.type,
+            data.angle,
+            data.team ?? null,
+            options
+        );
+        const suppressSound = this.shouldSuppressShotSound(data);
+        if (!suppressSound) {
+            spawnMuzzleFlash(this.game, data.x, data.y);
+        }
+        if (!suppressSound) {
+            this.playBulletShotSound(data);
+        }
     }
 
     sendBulletShot(bullet) {
