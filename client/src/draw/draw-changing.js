@@ -2,6 +2,7 @@ import PIXI from '../pixi';
 import { getCityDisplayName } from '../utils/citySpawns';
 import { scheduleDestroy } from '../utils/pixiPerformance';
 import { MAX_HEALTH } from '../constants';
+import { buildRoleLabel, toFiniteCityId } from './nameLabels';
 
 const EXPLOSION_VARIANTS = {
     small: {
@@ -38,54 +39,6 @@ const MIN_ENEMY_NAME_ALPHA = 0.35;
 const CLOAK_NAME_ALPHA_MULTIPLIER = 0.35;
 const MIN_CLOAK_NAME_ALPHA = 0.12;
 const LABEL_CACHE_TTL_MS = 15000;
-
-const toFiniteCityId = (value) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) {
-        return null;
-    }
-    return Math.max(0, Math.floor(numeric));
-};
-
-const getEntityCallsign = (game, entity) => {
-    if (!entity) {
-        return null;
-    }
-    if (typeof entity.callsign === 'string' && entity.callsign.trim().length) {
-        return entity.callsign.trim();
-    }
-    if (entity.id && typeof game?.resolveCallsign === 'function') {
-        const resolved = game.resolveCallsign(entity.id);
-        if (typeof resolved === 'string' && resolved.trim().length) {
-            return resolved.trim();
-        }
-    }
-    return null;
-};
-
-const buildRoleLabel = (game, entity, options = {}) => {
-    const callsign = getEntityCallsign(game, entity);
-    const cityId = toFiniteCityId(entity?.city);
-    const cityName = Number.isFinite(cityId) ? getCityDisplayName(cityId) : null;
-    const isRogue = options.isRogue === true || (entity?.city === -1);
-    const isMayor = !!entity?.isMayor;
-    let rolePrefix;
-    if (isRogue) {
-        rolePrefix = 'Rogue';
-    } else if (isMayor) {
-        rolePrefix = 'Mayor';
-    } else {
-        rolePrefix = 'Recruit';
-    }
-    const namePart = callsign || 'Unit';
-    if (isRogue) {
-        return `${rolePrefix} ${namePart}`;
-    }
-    if (cityName) {
-        return `${rolePrefix} ${namePart} of ${cityName}`;
-    }
-    return `${rolePrefix} ${namePart}`;
-};
 
 const determineLabelColor = (entity, referenceCity, options = {}) => {
     if (options.isRogue) {

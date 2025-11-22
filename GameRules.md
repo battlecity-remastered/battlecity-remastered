@@ -16,7 +16,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - When every slot is filled the join request is rejected with `cities_full`, allowing a future lobby flow to queue players without spawning them. (server/src/PlayerFactory.js:39)
 - City spawn points and canonical city names are keyed in `shared/citySpawns.json`; both client and server snap players to those offsets so each team enters at the correct base. (client/src/utils/citySpawns.js:1, server/src/PlayerFactory.js:208)
 - The `map.dat` asset is rotated 180° during load so command centers align with their classic plazas; this prevents rocks from appearing inside the base footprint. (client/src/mapBuilder.js:45)
-- Mayors render a “Mayor of _City_” banner above their tank using the shared city display name to make leadership clear in-game. (client/src/draw/draw-changing.js:6)
+- Tank nameplates now show player rank and callsign on the first line with the city name beneath; rogues keep a single-line rogue label while respecting cloak fade. (client/src/draw/draw-changing.js:6, client/src/draw/nameLabels.js:1)
 
 ## Economy
 - Each city starts with `95,000,000` cash and resolves finance ticks every 7 seconds; the server clamps balances, tracks income/expenses, and rebroadcasts updates to clients. (server/src/CityManager.js:20)
@@ -34,7 +34,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Once a wave of rogues is destroyed the manager delays the next spawn by 60–120 seconds, keeping pressure on cities without immediate respawns. (client/src/rogue/RogueTankManager.js:760)
 - The radar UI plots tanks within ~2,400px of the local player, colour-coding friendlies vs enemies; cloaked players stay hidden and dots disappear once targets leave the radar window. (client/src/draw/draw-panel-interface.js:164, client/src/constants.js:4)
 - Every combatant now receives a server-curated callsign; the kill feed surfaces `Victim killed by Source` using those names, falling back to the weapon type for hazards and automated defenses. (server/src/PlayerFactory.js:625, client/app.js:1336, client/src/rogue/RogueTankManager.js:707)
-- Tank sprites render in-world nameplates: mayors display `Mayor <callsign> of <City>`, recruits show the same recruit formatting, and rogue tanks broadcast their own callsigns so players can ID threats at a glance. (client/src/draw/draw-changing.js:24)
+- Tank sprites render in-world nameplates using rank + callsign with the city name on a second line; rogues display a single-line rogue callsign. (client/src/draw/draw-changing.js:24, client/src/draw/nameLabels.js:1)
 - Fake city garrisons now spawn up to two automated recruits that anchor near the command center, scan ~18 tiles for enemies from other cities, fire laser volleys every ~1.4s, and respawn 45 seconds after being destroyed—with hazards and bullets damaging them exactly like human tanks. (server/src/FakeCityManager.js:196, server/src/FakeCityManager.js:397, server/src/PlayerFactory.js:244)
 
 ## Points & Ranks
