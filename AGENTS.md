@@ -18,6 +18,7 @@
 - `client/src/play.js` advances player movement/rotation, enforces map-edge clamps, and handles death resets; relies on `checkPlayerCollision` and constants.
 - Input handling lives in `client/src/input/`, mapping keyboard/mouse to `game.player` flags and factory actions (shooting, item drop, build menu).
 - Rendering pipeline split into modules under `client/src/draw/` (`drawGround`, `drawTiles`, `drawChanging`, etc.) and executed each animation frame by `gameLoop()`.
+- **CRITICAL: `forceDraw` Pattern** – The panel interface (`drawPanelInterface`) only performs expensive redraw operations when `game.forceDraw` is `true`. Socket event handlers MUST set `game.forceDraw = true` when they update state that requires visual updates (health, inventory, finance, etc.). Without this flag, UI changes lag behind data updates by up to a second. See `SocketListener.applyHealthUpdate` for an example.
 - The help/controls overlay lives in `client/src/ui/HelpModal.js`; update it alongside keybind or UI changes so users see accurate shortcuts.
 - The panel overlay (`drawPanelInterface`) now builds the radar each frame, using `imgRadarColors`/`imgMiniMapColors` to plot nearby tanks while skipping cloaked players and anything outside the 2,400px range window.
 - Factories (`client/src/factories/`) maintain linked-list structures (`next`/`previous`) to manage dynamic entities (buildings, bullets, icons, items). They coordinate with collision helpers under `client/src/collision/`.

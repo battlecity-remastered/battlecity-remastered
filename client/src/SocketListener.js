@@ -905,6 +905,12 @@ class SocketListener extends EventEmitter2 {
         }
         me.isMayor = !!player.isMayor;
         me.health = this.toFiniteNumber(player.health, me.health);
+        if (Number.isFinite(player.points)) {
+            me.points = player.points;
+        }
+        if (typeof player.rankTitle === 'string' && player.rankTitle.trim().length) {
+            me.rankTitle = player.rankTitle.trim();
+        }
         if (player.isCloaked !== undefined) {
             me.isCloaked = !!player.isCloaked;
         }
@@ -1125,6 +1131,9 @@ class SocketListener extends EventEmitter2 {
                     this.game.audio.playEffect(SOUND_IDS.HIT, { volume: 0.7 });
                 }
             }
+            // CRITICAL: forceDraw must be set to trigger immediate UI update.
+            // The health bar in draw-panel-interface.js only redraws when forceDraw is true.
+            // Without this, health changes lag behind by up to a second until another event triggers a redraw.
             this.game.forceDraw = true;
             return;
         }
@@ -1132,6 +1141,7 @@ class SocketListener extends EventEmitter2 {
             this.game.otherPlayers[update.id] = { id: update.id };
         }
         this.game.otherPlayers[update.id].health = Math.max(0, healthValue);
+        // Force UI redraw for other players' health bars as well
         this.game.forceDraw = true;
     }
 
