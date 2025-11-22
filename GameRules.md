@@ -8,6 +8,9 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Death resets the player to the defined spawn location with default stats.
 - Collision resolution keeps a rolling “last safe” position, nudges outward in 6px steps, scans nearby tiles, and finally snaps to city spawn if required so players can’t be trapped by buildings or terrain pushes. (client/src/play.js:18)
 
+## UI & Controls
+- Press `M` to open or close the strategic map overlay; the panel button triggers the same toggle, and the view also closes via the overlay close control or `Esc`.
+
 ## Teams & Roles
 - The authoritative server guarantees each city has exactly one mayor and at most three recruits; newcomers round-robin between city `0` and city `1` until both rosters reach that capacity. (server/src/PlayerFactory.js:11, server/src/PlayerFactory.js:195)
 - When every slot is filled the join request is rejected with `cities_full`, allowing a future lobby flow to queue players without spawning them. (server/src/PlayerFactory.js:39)

@@ -102,6 +102,7 @@ class MapModal {
         this.legendContainer = null;
         this.playerIndicator = null;
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleFullscreenChange = this.handleFullscreenChange.bind(this);
         this.palette = {
             ground: TERRAIN_PALETTE.ground,
             rock: TERRAIN_PALETTE.rock,
@@ -301,6 +302,22 @@ class MapModal {
         this.legendContainer = legend;
     }
 
+    attachOverlayToContainer() {
+        if (typeof document === 'undefined' || !this.overlay) {
+            return;
+        }
+        const target = document.fullscreenElement || document.body;
+        if (!target) {
+            return;
+        }
+        if (this.overlay.parentNode !== target) {
+            if (this.overlay.parentNode) {
+                this.overlay.parentNode.removeChild(this.overlay);
+            }
+            target.appendChild(this.overlay);
+        }
+    }
+
     open() {
         if (typeof document === 'undefined') {
             return;
@@ -308,11 +325,10 @@ class MapModal {
         if (!this.overlay) {
             return;
         }
-        if (!this.overlay.isConnected) {
-            document.body.appendChild(this.overlay);
-        }
+        this.attachOverlayToContainer();
         this.render();
         document.addEventListener('keydown', this.handleKeyDown);
+        document.addEventListener('fullscreenchange', this.handleFullscreenChange);
         this.isOpen = true;
     }
 
@@ -324,6 +340,7 @@ class MapModal {
             return;
         }
         document.removeEventListener('keydown', this.handleKeyDown);
+        document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
         if (this.overlay.parentNode) {
             this.overlay.parentNode.removeChild(this.overlay);
         }
@@ -345,6 +362,10 @@ class MapModal {
             event.preventDefault();
             this.close();
         }
+    }
+
+    handleFullscreenChange() {
+        this.attachOverlayToContainer();
     }
 
     render() {

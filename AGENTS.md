@@ -18,6 +18,7 @@
 - `client/src/play.js` advances player movement/rotation, enforces map-edge clamps, and handles death resets; relies on `checkPlayerCollision` and constants.
 - Input handling lives in `client/src/input/`, mapping keyboard/mouse to `game.player` flags and factory actions (shooting, item drop, build menu).
 - Rendering pipeline split into modules under `client/src/draw/` (`drawGround`, `drawTiles`, `drawChanging`, etc.) and executed each animation frame by `gameLoop()`.
+- The help/controls overlay lives in `client/src/ui/HelpModal.js`; update it alongside keybind or UI changes so users see accurate shortcuts.
 - The panel overlay (`drawPanelInterface`) now builds the radar each frame, using `imgRadarColors`/`imgMiniMapColors` to plot nearby tanks while skipping cloaked players and anything outside the 2,400px range window.
 - Factories (`client/src/factories/`) maintain linked-list structures (`next`/`previous`) to manage dynamic entities (buildings, bullets, icons, items). They coordinate with collision helpers under `client/src/collision/`.
 - Networking via `client/src/SocketListener.js` wraps `socket.io-client`; emits local state (`player`, `bullet_shot`, `new_building`) and applies server broadcasts to `game.otherPlayers`, factories, etc.
@@ -44,7 +45,7 @@
 - **CRITICAL: Always run tests BEFORE making changes** to establish a baseline and identify pre-existing failures.
 - **CRITICAL: Always run tests AFTER making changes** to catch regressions immediately.
 - Server tests: `cd server && npm test` (use `npm test <file>` for specific tests).
-- Client tests: `cd client && npm test` (currently limited coverage).
+- Client tests: `cd client && npm test` — test files live under `client/test/` and run via Node’s built-in test runner.
 - When a test fails after your changes, investigate immediately - don't assume it was pre-existing.
 - When adding new functionality, add corresponding test coverage to prevent future regressions.
 - If you discover broken tests that are unrelated to your changes, fix them or document them clearly.

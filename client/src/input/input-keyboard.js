@@ -189,6 +189,7 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         d = keyboard(68),
         s = keyboard(83),
         b = keyboard(66),
+        m = keyboard(77),
         o = keyboard(79),
         h = keyboard(72),
         c = keyboard(67),
@@ -269,6 +270,12 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         }
 
         dropInventoryItem(game, dropInfo);
+    };
+
+    m.press = function () {
+        if (typeof game?.toggleMapOverlay === 'function') {
+            game.toggleMapOverlay();
+        }
     };
 
     o.press = function () {

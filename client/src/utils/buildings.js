@@ -1,5 +1,5 @@
-import {CAN_BUILD_HOSPITAL} from "../constants";
-import {BUILDING_REPAIR} from "../constants";
+import {CAN_BUILD_HOSPITAL} from "../constants.js";
+import {BUILDING_REPAIR} from "../constants.js";
 
 const TILE_SIZE = 48;
 

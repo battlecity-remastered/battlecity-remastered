@@ -61,22 +61,22 @@ describe('collidedWithBuilding', () => {
     const baseX = 5 * TILE_SIZE;
     const baseY = 7 * TILE_SIZE;
 
-    const walkwayBullet = {x: baseX + 10, y: baseY + (TILE_SIZE + 12)};
+    const bayBullet = {x: baseX + 10, y: baseY + (TILE_SIZE * 2) + 12};
     const upperBullet = {x: baseX + 10, y: baseY + 12};
 
     it('allows shots through command center bays while blocking upper structure', () => {
         const building = createBuildingNode(5, 7, BUILDING_COMMAND_CENTER);
         const game = createGame({buildingFactory: createFactory(building)});
 
-        assert.equal(collidedWithBuilding(game, walkwayBullet), false);
+        assert.equal(collidedWithBuilding(game, bayBullet), false);
         assert.equal(collidedWithBuilding(game, upperBullet), true);
     });
 
-    it('blocks all tiles for factories', () => {
+    it('allows shots through factory bays while blocking upper structure', () => {
         const building = createBuildingNode(5, 7, BUILDING_FACTORY);
         const game = createGame({buildingFactory: createFactory(building)});
 
-        assert.equal(collidedWithBuilding(game, walkwayBullet), true);
+        assert.equal(collidedWithBuilding(game, bayBullet), false);
         assert.equal(collidedWithBuilding(game, upperBullet), true);
     });
 
@@ -84,7 +84,7 @@ describe('collidedWithBuilding', () => {
         const building = createBuildingNode(5, 7, BUILDING_REPAIR);
         const game = createGame({buildingFactory: createFactory(building)});
 
-        assert.equal(collidedWithBuilding(game, walkwayBullet), false);
+        assert.equal(collidedWithBuilding(game, bayBullet), false);
         assert.equal(collidedWithBuilding(game, upperBullet), true);
     });
 
@@ -92,13 +92,13 @@ describe('collidedWithBuilding', () => {
         const hospital = createBuildingNode(5, 7, CAN_BUILD_HOSPITAL);
         const hospitalGame = createGame({buildingFactory: createFactory(hospital)});
 
-        assert.equal(collidedWithBuilding(hospitalGame, walkwayBullet), false);
+        assert.equal(collidedWithBuilding(hospitalGame, bayBullet), false);
         assert.equal(collidedWithBuilding(hospitalGame, upperBullet), true);
 
         const hospitalString = createBuildingNode(5, 7, String(CAN_BUILD_HOSPITAL));
         const hospitalStringGame = createGame({buildingFactory: createFactory(hospitalString)});
 
-        assert.equal(collidedWithBuilding(hospitalStringGame, walkwayBullet), false);
+        assert.equal(collidedWithBuilding(hospitalStringGame, bayBullet), false);
         assert.equal(collidedWithBuilding(hospitalStringGame, upperBullet), true);
     });
 });

@@ -6,8 +6,8 @@ import { MAP_SQUARE_ROCK } from "../constants.js";
 import { MAP_SQUARE_BUILDING } from "../constants.js";
 import { BUILDING_COMMAND_CENTER } from "../constants.js";
 import { BUILDING_REPAIR } from "../constants.js";
-import { BUILDING_FACTORY } from "../constants";
-import { isHospitalBuilding } from "../utils/buildings";
+import { BUILDING_FACTORY } from "../constants.js";
+import { isHospitalBuilding } from "../utils/buildings.js";
 
 const TILE_SIZE = 48;
 const BULLET_SIZE = 4;
@@ -211,15 +211,19 @@ export const collidedWithBuilding = (game, bullet) => {
             ? Math.floor(numericType / 100)
             : NaN;
         const isCommandCenter = numericType === BUILDING_COMMAND_CENTER;
-        const isFactory = baseType === BUILDING_FACTORY;
+        const isFactory = numericType === BUILDING_FACTORY
+            || baseType === BUILDING_FACTORY
+            || (Number.isFinite(numericType) && numericType >= 100 && numericType < 200);
         const isHospital = isHospitalBuilding(building);
+        const isRepairBay = numericType === BUILDING_REPAIR;
         const hasDriveableBay = isCommandCenter
             || isFactory
             || isHospital
+            || isRepairBay
             || baseType === BUILDING_REPAIR;
 
         if (hasDriveableBay) {
-            buildingRect.h = buildingRect.h - 48;
+            buildingRect.h = TILE_SIZE * 2; // Block top two tiles; bottom tile is a driveable bay
         }
         if (collided(buildingRect, bullet)) {
             return true;
