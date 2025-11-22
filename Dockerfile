@@ -34,8 +34,12 @@ RUN npm ci --omit=dev
 
 # Copy server source after installing prod dependencies
 COPY --from=builder /app/server ./
-# Ensure data assets (e.g., city templates) are present
-COPY --from=builder /app/server/data ./data
+# Seed data assets (e.g., city templates) into a separate seed directory
+COPY --from=builder /app/server/data ./data-seed
+
+# Provide an entrypoint that seeds /app/server/data if the mounted volume is empty
+COPY server/docker-entrypoint.sh /app/server/docker-entrypoint.sh
+RUN chmod +x /app/server/docker-entrypoint.sh
 
 EXPOSE 8021
-CMD ["node", "app.js"]
+CMD ["/app/server/docker-entrypoint.sh"]
