@@ -53,7 +53,7 @@ class IconFactory {
         return true;
     }
 
-    cycle() {}
+    cycle() { }
 
     getLimitForType(type) {
         const limit = ITEM_TYPE_LIMITS?.[type];
@@ -97,7 +97,7 @@ class IconFactory {
 
     newIcon(owner, x, y, type, options = {}) {
         const requestedQuantity =
-      options.quantity !== undefined ? options.quantity : 1;
+            options.quantity !== undefined ? options.quantity : 1;
         let quantity = Math.max(1, parseInt(requestedQuantity, 10) || 1);
         if (owner !== null && owner !== undefined) {
             const allowed = this.getAllowedQuantity(owner, type, quantity);
@@ -108,21 +108,21 @@ class IconFactory {
         }
 
         const resolvedCity =
-      options.city !== undefined
-          ? options.city
-          : owner !== null &&
-            owner !== undefined &&
-            owner === this.game.player?.id
-              ? (this.game.player.city ?? null)
-              : null;
+            options.city !== undefined
+                ? options.city
+                : owner !== null &&
+                    owner !== undefined &&
+                    owner === this.game.player?.id
+                    ? (this.game.player.city ?? null)
+                    : null;
         const resolvedTeam =
-      options.teamId !== undefined
-          ? options.teamId
-          : owner !== null &&
-            owner !== undefined &&
-            owner === this.game.player?.id
-              ? (this.game.player.city ?? null)
-              : null;
+            options.teamId !== undefined
+                ? options.teamId
+                : owner !== null &&
+                    owner !== undefined &&
+                    owner === this.game.player?.id
+                    ? (this.game.player.city ?? null)
+                    : null;
         const resolvedId = this.normalizeIconId(options.id);
         const shouldGenerateId = !resolvedId && options.isSharedDrop;
 
@@ -160,7 +160,7 @@ class IconFactory {
         if (this.game.buildingFactory && icon.owner == null && !icon.isSharedDrop) {
             if (
                 !icon.sourceBuildingId &&
-        typeof this.game.buildingFactory.assignIconSource === "function"
+                typeof this.game.buildingFactory.assignIconSource === "function"
             ) {
                 const building = this.game.buildingFactory.assignIconSource(icon);
                 if (building) {
@@ -169,7 +169,7 @@ class IconFactory {
             }
             if (
                 !options.skipProductionUpdate &&
-        typeof this.game.buildingFactory.handleIconProduced === "function"
+                typeof this.game.buildingFactory.handleIconProduced === "function"
             ) {
                 this.game.buildingFactory.handleIconProduced(icon);
             }
@@ -179,16 +179,11 @@ class IconFactory {
             while (node) {
                 if (node !== icon && node.owner === icon.owner) {
                     node.selected = false;
-                    if (node.type === ITEM_TYPE_BOMB) {
-                        node.armed = false;
-                    }
+                    // Do not disarm bombs here, allow multiple bombs to exist but only one selected
                 }
                 node = node.next;
             }
-            if (icon.type === ITEM_TYPE_BOMB) {
-                icon.armed = !!icon.armed;
-                this.game.player.bombsArmed = icon.armed;
-            }
+            // Do not auto-arm bombs on creation/selection
             this.game.forceDraw = true;
         }
         return icon;
@@ -228,8 +223,8 @@ class IconFactory {
 
             if (
                 this.game.buildingFactory &&
-        typeof this.game.buildingFactory.handleIconCollected === "function" &&
-        !isSharedDrop
+                typeof this.game.buildingFactory.handleIconCollected === "function" &&
+                !isSharedDrop
             ) {
                 this.game.buildingFactory.handleIconCollected(icon);
             }
@@ -250,37 +245,30 @@ class IconFactory {
 
             // Always auto-select the picked up item (either new or existing)
             itemToSelect.selected = true;
-            if (itemToSelect.type === ITEM_TYPE_BOMB) {
-                // Preserve armed state if it was already selected, otherwise default to false
-                if (!itemToSelect.armed) {
-                    itemToSelect.armed = false;
-                }
-            } else {
-                itemToSelect.armed = false;
-            }
+
+            // Do NOT auto-arm bombs on pickup.
+            // If it was already armed (e.g. merging into an armed stack), keep it.
+            // If it's a new pickup, it starts unarmed unless explicitly set otherwise (which default newIcon handles).
 
             // Deselect all other owned icons (only one can be selected at a time)
             let node = this.getHead();
             while (node) {
                 if (node !== itemToSelect && node.owner === ownerId) {
                     node.selected = false;
-                    if (node.type === ITEM_TYPE_BOMB) {
-                        node.armed = false;
-                    }
                 }
                 node = node.next;
             }
 
-            // Handle bomb arming state
+            // Sync player state with the selected item
             if (itemToSelect.type === ITEM_TYPE_BOMB) {
-                this.game.player.bombsArmed = itemToSelect.armed;
+                this.game.player.bombsArmed = !!itemToSelect.armed;
             } else {
                 this.game.player.bombsArmed = false;
             }
 
             if (sharedDropId &&
-        this.game.socketListener &&
-        typeof this.game.socketListener.collectDroppedIcon === "function") {
+                this.game.socketListener &&
+                typeof this.game.socketListener.collectDroppedIcon === "function") {
                 this.game.socketListener.collectDroppedIcon({
                     id: sharedDropId,
                     type: icon.type,
@@ -329,10 +317,12 @@ class IconFactory {
         }
 
         if (dropInfo.type === ITEM_TYPE_BOMB) {
+            // If we have remaining quantity, ensure the remaining stack keeps its armed state
             if (safeQuantity > 1) {
-                selectedIcon.armed = dropInfo.armed;
+                selectedIcon.armed = !!selectedIcon.armed;
                 this.game.player.bombsArmed = selectedIcon.armed;
             } else {
+                // Last one dropped, no bombs left
                 this.game.player.bombsArmed = false;
             }
         }
@@ -423,22 +413,58 @@ class IconFactory {
    * @param selectedIcon
    */
     toggleSelected(selectedIcon) {
-        selectedIcon.selected = !selectedIcon.selected;
+        // If clicking the already selected icon
+        if (selectedIcon.selected) {
+            if (selectedIcon.type === ITEM_TYPE_BOMB) {
+                selectedIcon.armed = !selectedIcon.armed;
+                this.game.player.bombsArmed = selectedIcon.armed;
+                this.game.forceDraw = true;
+            }
+            return;
+        }
+
+        selectedIcon.selected = true;
 
         var icon = this.getHead();
         while (icon) {
             if (icon.owner == selectedIcon.owner && icon != selectedIcon) {
-                console.log("setting other icons selected to false");
                 icon.selected = false;
             }
             icon = icon.next;
         }
+
         if (selectedIcon.type === ITEM_TYPE_BOMB) {
-            selectedIcon.armed = selectedIcon.selected;
-            this.game.player.bombsArmed = selectedIcon.armed;
-        } else if (selectedIcon.selected) {
+            // When selecting a bomb, update player state to match the bomb's current armed state
+            this.game.player.bombsArmed = !!selectedIcon.armed;
+        } else {
             this.game.player.bombsArmed = false;
         }
+        this.game.forceDraw = true;
+    }
+
+    toggleBombArming() {
+        const ownerId = this.game?.player?.id;
+        if (!ownerId) return;
+
+        const bombIcon = this.findOwnedIconByType(ownerId, ITEM_TYPE_BOMB);
+        if (!bombIcon) return;
+
+        // If not selected, select it first
+        if (!bombIcon.selected) {
+            this.toggleSelected(bombIcon);
+            // When first selecting, we don't toggle arming yet, just select it.
+            // Or should we? The user requirement says "B toggles armed state".
+            // If I press B and I have a bomb but it's not selected, I probably want to select AND arm/disarm or just select.
+            // Let's stick to: Select if not selected. Toggle if selected.
+            return;
+        }
+
+        // Toggle armed state
+        bombIcon.armed = !bombIcon.armed;
+        this.game.player.bombsArmed = bombIcon.armed;
+        this.game.forceDraw = true;
+
+        console.log(`Bomb armed state toggled: ${bombIcon.armed}`);
     }
 
     findIconByLocation() {
@@ -448,16 +474,16 @@ class IconFactory {
         const playerCity = this.game.player?.city ?? null;
         while (icon) {
             const allowedTeam =
-        icon.teamId === null ||
-        icon.teamId === undefined ||
-        icon.teamId === playerCity;
+                icon.teamId === null ||
+                icon.teamId === undefined ||
+                icon.teamId === playerCity;
             if (
                 icon.owner == null &&
-        allowedTeam &&
-        icon.x >= this.game.player.offset.x - range &&
-        icon.x <= this.game.player.offset.x + range &&
-        icon.y >= this.game.player.offset.y - range &&
-        icon.y <= this.game.player.offset.y + range
+                allowedTeam &&
+                icon.x >= this.game.player.offset.x - range &&
+                icon.x <= this.game.player.offset.x + range &&
+                icon.y >= this.game.player.offset.y - range &&
+                icon.y <= this.game.player.offset.y + range
             ) {
                 return icon;
             }
@@ -548,8 +574,8 @@ class IconFactory {
 
         if (
             this.game.player &&
-      this.game.player.id === icon.owner &&
-      icon.type === ITEM_TYPE_BOMB
+            this.game.player.id === icon.owner &&
+            icon.type === ITEM_TYPE_BOMB
         ) {
             this.game.player.bombsArmed = icon.armed;
         }
@@ -601,11 +627,11 @@ class IconFactory {
         let icon = this.getHead();
         while (icon) {
             const matchesTeam =
-        teamId === null ||
-        teamId === undefined ||
-        icon.teamId === null ||
-        icon.teamId === undefined ||
-        icon.teamId === teamId;
+                teamId === null ||
+                teamId === undefined ||
+                icon.teamId === null ||
+                icon.teamId === undefined ||
+                icon.teamId === teamId;
             if (icon.owner == null && icon.type === type && matchesTeam && !icon.isSharedDrop) {
                 const dx = Math.abs(icon.x - x);
                 const dy = Math.abs(icon.y - y);
@@ -624,11 +650,11 @@ class IconFactory {
         while (icon && removed < amount) {
             const next = icon.next;
             const matchesTeam =
-        teamId === null ||
-        teamId === undefined ||
-        icon.teamId === null ||
-        icon.teamId === undefined ||
-        icon.teamId === teamId;
+                teamId === null ||
+                teamId === undefined ||
+                icon.teamId === null ||
+                icon.teamId === undefined ||
+                icon.teamId === teamId;
             if (icon.owner == null && icon.type === type && matchesTeam && !icon.isSharedDrop) {
                 const dx = Math.abs(icon.x - x);
                 const dy = Math.abs(icon.y - y);
