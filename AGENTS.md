@@ -40,6 +40,15 @@
 - Visual debugging helpers live under `client/scripts/`: `muzzle-debug.mjs` prints per-heading offsets while `muzzle-visualize.mjs` emits 64×64 PPMs showing the muzzle marker overlaid on the sprite.
 - Remaining misalignment is art-side: some frames shorten or skew the barrel. To get math-perfect alignment, the sprite should keep the muzzle highlight at a constant radius/angle from the turret pivot across all frames.
 
+## Testing Guidelines
+- **CRITICAL: Always run tests BEFORE making changes** to establish a baseline and identify pre-existing failures.
+- **CRITICAL: Always run tests AFTER making changes** to catch regressions immediately.
+- Server tests: `cd server && npm test` (use `npm test <file>` for specific tests).
+- Client tests: `cd client && npm test` (currently limited coverage).
+- When a test fails after your changes, investigate immediately - don't assume it was pre-existing.
+- When adding new functionality, add corresponding test coverage to prevent future regressions.
+- If you discover broken tests that are unrelated to your changes, fix them or document them clearly.
+
 ## Known Gaps / TODOs
 - Socket.IO server CORS is pinned to the dev client URL (`http://localhost:8020`); adjust in `server/app.js` if the client origin changes.
 - No automated tests; any changes that touch movement/collision should be exercised manually in the running client.

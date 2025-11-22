@@ -17,7 +17,7 @@ const {
     COMMAND_CENTER_HEIGHT_TILES
 } = require("./gameplay/constants");
 const { getPlayerRect, rectangleCollision } = require("./gameplay/geometry");
-const { isCommandCenter, isHospital, isHouse } = require('./constants');
+const { isCommandCenter, isHospital, isHouse, isResearch } = require('./constants');
 
 let bulletCounter = 0;
 
@@ -591,6 +591,13 @@ class BulletFactory {
             }
             if (isHouse(numericType)) {
                 return { width: 1, height: 1 };
+            }
+            if (isResearch(numericType)) {
+                const { RESEARCH_BUILDING_WIDTH_TILES, RESEARCH_BUILDING_HEIGHT_TILES } = require('./gameplay/constants');
+                return {
+                    width: RESEARCH_BUILDING_WIDTH_TILES,
+                    height: RESEARCH_BUILDING_HEIGHT_TILES
+                };
             }
         }
         return {

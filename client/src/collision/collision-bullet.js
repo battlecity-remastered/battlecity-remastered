@@ -1,13 +1,13 @@
-import {rectangleCollision} from "./collision-helpers.js";
-import {getPlayerRect} from "./collision-helpers.js";
+import { rectangleCollision } from "./collision-helpers.js";
+import { getPlayerRect } from "./collision-helpers.js";
 
 
-import {MAP_SQUARE_ROCK} from "../constants.js";
-import {MAP_SQUARE_BUILDING} from "../constants.js";
-import {BUILDING_COMMAND_CENTER} from "../constants.js";
-import {BUILDING_REPAIR} from "../constants.js";
-import {BUILDING_FACTORY} from "../constants";
-import {isHospitalBuilding} from "../utils/buildings";
+import { MAP_SQUARE_ROCK } from "../constants.js";
+import { MAP_SQUARE_BUILDING } from "../constants.js";
+import { BUILDING_COMMAND_CENTER } from "../constants.js";
+import { BUILDING_REPAIR } from "../constants.js";
+import { BUILDING_FACTORY } from "../constants";
+import { isHospitalBuilding } from "../utils/buildings";
 
 const TILE_SIZE = 48;
 const BULLET_SIZE = 4;
@@ -17,7 +17,7 @@ const BLOCKING_TILE_VALUES = new Set([
 ]);
 
 
-var collided = (testRect, bullet)=> {
+var collided = (testRect, bullet) => {
 
     var bulletRect = {
         x: bullet.x,
@@ -201,7 +201,7 @@ export const collidedWithBuilding = (game, bullet) => {
             x: (building.x) * 48,
             y: (building.y) * 48,
             w: 144,
-            h: 96,
+            h: 144,
         };
 
         const numericType = Number.isFinite(building.type)

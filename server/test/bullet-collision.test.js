@@ -20,7 +20,7 @@ const createBulletFactory = (buildings = []) => {
     };
     const playerFactory = {
         getPlayerTeam: () => null,
-        applyDamage: () => {},
+        applyDamage: () => { },
     };
     return new BulletFactory(game, playerFactory);
 };
@@ -88,6 +88,15 @@ describe("BulletFactory structure collisions", () => {
             bulletFactory.checkStructureCollision({ ...upperBullet, sourceType: "turret" }),
             true
         );
+    });
+
+    it("blocks the full 3x3 footprint for research buildings", () => {
+        const bulletFactory = createBulletFactory([
+            { x: baseTileX, y: baseTileY, type: 400 },
+        ]);
+
+        assert.equal(bulletFactory.checkStructureCollision({ ...walkwayBullet }), true);
+        assert.equal(bulletFactory.checkStructureCollision({ ...upperBullet }), true);
     });
 });
 

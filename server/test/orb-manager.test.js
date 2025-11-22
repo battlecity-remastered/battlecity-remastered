@@ -36,8 +36,8 @@ test("orb detonation consumes active orb count and frees production slot", () =>
         },
         cityManager
     };
-    const hazardManager = { removeHazardsForTeam() {} };
-    const defenseManager = { clearCity() {} };
+    const hazardManager = { removeHazardsForTeam() { } };
+    const defenseManager = { clearCity() { } };
 
     const attackerCityId = 0;
     const targetCityId = 1;
@@ -54,8 +54,8 @@ test("orb detonation consumes active orb count and frees production slot", () =>
 
     const playerFactory = {
         getPlayer: (socketId) => (socketId === socket.id ? player : null),
-        recordOrbVictoryForCity() {},
-        evictCityPlayers() {}
+        recordOrbVictoryForCity() { },
+        evictCityPlayers() { }
     };
 
     const orbManager = new OrbManager({
@@ -68,16 +68,22 @@ test("orb detonation consumes active orb count and frees production slot", () =>
     });
     orbManager.setIo(createIo());
 
+
     cityManager.registerOrbProduced(attackerCityId);
     cityManager.registerOrbHolder(socket.id, attackerCityId);
     assert.strictEqual(cityManager.getActiveOrbCount(attackerCityId), 1, "precondition: active orb count should be tracked");
 
     const spawn = citySpawns[String(targetCityId)];
     assert.ok(spawn, "target city spawn should exist");
+
+    // Drop in the detection zone, which is the "front strip" below the command center
+    // Command centers are 2 tiles tall, detection zone starts after them
+    const { COMMAND_CENTER_HEIGHT_TILES } = require("../src/gameplay/constants");
     const dropPayload = {
         x: spawn.tileX * TILE_SIZE,
-        y: spawn.tileY * TILE_SIZE
+        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE
     };
+
 
     orbManager.handleDrop(socket, JSON.stringify(dropPayload));
 
