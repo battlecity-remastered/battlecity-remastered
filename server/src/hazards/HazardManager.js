@@ -272,18 +272,19 @@ class HazardManager {
         const playerTeam = this.playerFactory?.getPlayerTeam(socket.id) ?? null;
         const isOwner = hazard.ownerId === socket.id;
         const isFriendlyMine = hazard.type === HAZARD_TYPES.MINE && hazardTeam !== null && hazardTeam === playerTeam;
+        const isFriendlyBomb = hazard.type === HAZARD_TYPES.BOMB && hazardTeam !== null && hazardTeam === playerTeam;
 
-        if (!isOwner && !isFriendlyMine) {
+        if (!isOwner && !isFriendlyMine && !isFriendlyBomb) {
             return;
         }
 
-        if (isFriendlyMine) {
+        if (isFriendlyMine || isFriendlyBomb) {
             this.recordInventoryPickup(socket.id, hazard);
         }
 
         const reason = (typeof payload.reason === "string" && payload.reason.trim().length > 0)
             ? payload.reason.trim()
-            : (isFriendlyMine ? "picked_up" : "owner_removed");
+            : ((isFriendlyMine || isFriendlyBomb) ? "picked_up" : "owner_removed");
 
         this.removeHazard(payload.id, reason);
     }

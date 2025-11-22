@@ -233,6 +233,12 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
                 return;
             }
         }
+        if (game?.itemFactory && typeof game.itemFactory.pickupFriendlyBomb === 'function') {
+            const handled = game.itemFactory.pickupFriendlyBomb();
+            if (handled) {
+                return;
+            }
+        }
         if (game?.itemFactory && typeof game.itemFactory.pickupFriendlyMine === 'function') {
             const handled = game.itemFactory.pickupFriendlyMine();
             if (handled) {

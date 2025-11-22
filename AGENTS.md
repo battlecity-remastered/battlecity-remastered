@@ -41,6 +41,10 @@
 - Visual debugging helpers live under `client/scripts/`: `muzzle-debug.mjs` prints per-heading offsets while `muzzle-visualize.mjs` emits 64×64 PPMs showing the muzzle marker overlaid on the sprite.
 - Remaining misalignment is art-side: some frames shorten or skew the barrel. To get math-perfect alignment, the sprite should keep the muzzle highlight at a constant radius/angle from the turret pivot across all frames.
 
+## ESM Import Conventions
+- All relative imports should include their `.js` (or `.mjs` / `.cjs`) extension. This keeps the Node test runner (`node --test --experimental-specifier-resolution=node`) and Vite in agreement and avoids the recurring “Cannot find module …/constants” style failures.
+- When touching a file, add extensions to any relative imports you edit; prefer the same convention in new files and tests.
+
 ## Testing Guidelines
 - **CRITICAL: Always run tests BEFORE making changes** to establish a baseline and identify pre-existing failures.
 - **CRITICAL: Always run tests AFTER making changes** to catch regressions immediately.

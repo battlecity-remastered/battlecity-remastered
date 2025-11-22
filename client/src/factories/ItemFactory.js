@@ -1,25 +1,25 @@
-import {ITEM_TYPE_TURRET} from "../constants";
-import {ITEM_TYPE_PLASMA} from "../constants";
-import {ITEM_TYPE_WALL} from "../constants";
-import {ITEM_TYPE_SLEEPER} from "../constants";
-import {ITEM_TYPE_MINE} from "../constants";
-import {ITEM_TYPE_BOMB} from "../constants";
-import {ITEM_TYPE_DFG} from "../constants";
-import {ITEM_TYPE_MEDKIT} from "../constants";
-import {ITEM_TYPE_CLOAK} from "../constants";
-import {ITEM_TYPE_ROCKET} from "../constants";
-import {BOMB_EXPLOSION_TILE_RADIUS} from "../constants";
-import {BOMB_ITEM_TILE_RADIUS} from "../constants";
-import {ITEM_TYPE_ORB} from "../constants";
-import {ITEM_TYPE_FLARE} from "../constants";
-import {BUILDING_COMMAND_CENTER} from "../constants";
-import {MAX_HEALTH} from "../constants";
-import {TIMER_DFG} from "../constants";
-import {TIMER_CLOAK} from "../constants";
-import {ITEM_INITIAL_LIFE} from "../constants";
-import {ITEM_BURN_THRESHOLDS} from "../constants";
-import { SOUND_IDS } from '../audio/AudioManager';
-import spawnMuzzleFlash from "../effects/muzzleFlash";
+import {ITEM_TYPE_TURRET} from "../constants.js";
+import {ITEM_TYPE_PLASMA} from "../constants.js";
+import {ITEM_TYPE_WALL} from "../constants.js";
+import {ITEM_TYPE_SLEEPER} from "../constants.js";
+import {ITEM_TYPE_MINE} from "../constants.js";
+import {ITEM_TYPE_BOMB} from "../constants.js";
+import {ITEM_TYPE_DFG} from "../constants.js";
+import {ITEM_TYPE_MEDKIT} from "../constants.js";
+import {ITEM_TYPE_CLOAK} from "../constants.js";
+import {ITEM_TYPE_ROCKET} from "../constants.js";
+import {BOMB_EXPLOSION_TILE_RADIUS} from "../constants.js";
+import {BOMB_ITEM_TILE_RADIUS} from "../constants.js";
+import {ITEM_TYPE_ORB} from "../constants.js";
+import {ITEM_TYPE_FLARE} from "../constants.js";
+import {BUILDING_COMMAND_CENTER} from "../constants.js";
+import {MAX_HEALTH} from "../constants.js";
+import {TIMER_DFG} from "../constants.js";
+import {TIMER_CLOAK} from "../constants.js";
+import {ITEM_INITIAL_LIFE} from "../constants.js";
+import {ITEM_BURN_THRESHOLDS} from "../constants.js";
+import { SOUND_IDS } from '../audio/AudioManager.js';
+import spawnMuzzleFlash from "../effects/muzzleFlash.js";
 import { applyHazardMetadata } from './hazardMetadata.js';
 
 const STRUCTURE_ITEM_TYPES = new Set([
@@ -835,6 +835,80 @@ class ItemFactory {
             player.bombsArmed = false;
         }
         this.deleteItem(orbItem, { notifyServer: false, reason: 'picked_up' });
+        player.collidedItem = null;
+        this.game.forceDraw = true;
+        return true;
+    }
+
+    pickupFriendlyBomb() {
+        const player = this.game?.player;
+        if (!player || !player.id) {
+            return false;
+        }
+        const bomb = player.collidedItem;
+        if (!bomb || bomb.type !== ITEM_TYPE_BOMB) {
+            return false;
+        }
+        const playerTeam = player.city ?? null;
+        const bombTeam = this.resolveItemTeam(bomb, null);
+        if (bombTeam !== null && playerTeam !== null && bombTeam !== playerTeam) {
+            return false;
+        }
+
+        const iconFactory = this.game?.iconFactory;
+        if (!iconFactory || typeof iconFactory.getAllowedQuantity !== 'function') {
+            return false;
+        }
+        const allowed = iconFactory.getAllowedQuantity(player.id, ITEM_TYPE_BOMB, 1);
+        if (allowed <= 0) {
+            return false;
+        }
+
+        let icon = iconFactory.findOwnedIconByType(player.id, ITEM_TYPE_BOMB);
+        if (icon) {
+            const limit = (typeof iconFactory.getLimitForType === 'function')
+                ? iconFactory.getLimitForType(ITEM_TYPE_BOMB)
+                : Infinity;
+            const current = Number.isFinite(icon.quantity)
+                ? icon.quantity
+                : parseInt(icon.quantity, 10) || 1;
+            const incremented = Math.max(1, current + 1);
+            icon.quantity = Number.isFinite(limit)
+                ? Math.min(limit, incremented)
+                : incremented;
+            icon.selected = true;
+            icon.armed = false;
+        } else if (typeof iconFactory.newIcon === 'function') {
+            icon = iconFactory.newIcon(player.id, player.offset?.x ?? 0, player.offset?.y ?? 0, ITEM_TYPE_BOMB, {
+                quantity: 1,
+                selected: true,
+                armed: false,
+                skipProductionUpdate: true,
+                synced: true,
+                city: playerTeam,
+                teamId: playerTeam
+            });
+        }
+
+        if (!icon) {
+            return false;
+        }
+
+        if (typeof iconFactory.getHead === 'function') {
+            let node = iconFactory.getHead();
+            while (node) {
+                if (node !== icon && node.owner === player.id) {
+                    node.selected = false;
+                    if (node.type === ITEM_TYPE_BOMB) {
+                        node.armed = false;
+                    }
+                }
+                node = node.next;
+            }
+        }
+
+        player.bombsArmed = false;
+        this.deleteItem(bomb, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
         return true;

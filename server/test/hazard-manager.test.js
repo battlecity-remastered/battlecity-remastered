@@ -230,6 +230,74 @@ test("friendly players can pick up mines to refund city inventory", () => {
     assert.equal(quantity, 1);
 });
 
+test("friendly players can pick up bombs to refund city inventory", () => {
+    const friendlySocket = "friend_socket";
+    const cityManager = {
+        recordInventoryPickup: createMockFn(),
+    };
+    const { manager, io } = setupManager({
+        teamMap: {
+            owner_socket: 1,
+            [friendlySocket]: 1
+        },
+        players: {
+            [friendlySocket]: {
+                id: "friendly_player",
+                offset: { x: 0, y: 0 }
+            }
+        },
+        cityManager
+    });
+
+    const hazard = placeHazard(manager, {
+        id: "bomb_pickup",
+        type: "bomb"
+    });
+
+    const socket = { id: friendlySocket };
+    manager.handleRemove(socket, { id: hazard.id, reason: "picked_up" });
+
+    assert.equal(manager.hazards.has(hazard.id), false, "bomb should be removed when picked up by a teammate");
+    const removeCalls = io.emit.calls.filter(([event]) => event === "hazard:remove");
+    assert.equal(removeCalls.length, 1, "pickup should broadcast hazard removal");
+    const removePayload = JSON.parse(removeCalls[0][1]);
+    assert.equal(removePayload.reason, "picked_up");
+
+    assert.equal(cityManager.recordInventoryPickup.calls.length, 1, "pickup should restore city inventory");
+    const [socketId, cityId, itemType, quantity] = cityManager.recordInventoryPickup.calls[0];
+    assert.equal(socketId, friendlySocket);
+    assert.equal(cityId, 1);
+    assert.equal(itemType, ITEM_TYPES.BOMB);
+    assert.equal(quantity, 1);
+});
+
+test("enemy players cannot pick up another city's bomb", () => {
+    const enemySocket = "enemy_socket";
+    const { manager, io } = setupManager({
+        teamMap: {
+            owner_socket: 1,
+            [enemySocket]: 2
+        },
+        players: {
+            [enemySocket]: {
+                id: "enemy_player",
+                offset: { x: 0, y: 0 }
+            }
+        }
+    });
+
+    const hazard = placeHazard(manager, {
+        id: "bomb_block",
+        type: "bomb"
+    });
+
+    manager.handleRemove({ id: enemySocket }, { id: hazard.id, reason: "picked_up" });
+
+    assert.equal(manager.hazards.has(hazard.id), true, "enemy pickup should be rejected");
+    const removeCalls = io.emit.calls.filter(([event]) => event === "hazard:remove");
+    assert.equal(removeCalls.length, 0, "no removal broadcast should occur");
+});
+
 test("dfgs freeze enemy players and share reveal metadata", () => {
     const enemySocket = "enemy_socket";
     const { manager, playerFactory, io } = setupManager({
@@ -292,4 +360,3 @@ test("dfgs freeze enemy players and share reveal metadata", () => {
         Date.now = originalNow;
     }
 });
-
