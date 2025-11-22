@@ -17,6 +17,7 @@ var isProduction = process.env.NODE_ENV === 'production' || isRender;
 
 var CLIENT_DIST_DIR = path.join(__dirname, '..', 'client', 'dist');
 var CLIENT_INDEX_FILE = path.join(CLIENT_DIST_DIR, 'index.html');
+var CLIENT_PUBLIC_DIR = path.join(__dirname, '..', 'client', 'data');
 var hasBuiltClient = fs.existsSync(CLIENT_INDEX_FILE);
 
 var citySpawns = require('../shared/citySpawns.json');
@@ -144,6 +145,43 @@ var staticOptions = {
         res.append('Vary', 'Accept-Encoding');
     }
 };
+
+const resolveExistingFile = (paths) => {
+    if (!Array.isArray(paths)) {
+        return null;
+    }
+    for (const candidate of paths) {
+        if (candidate && fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+    return null;
+};
+
+const resolveFaviconPath = () => resolveExistingFile([
+    path.join(CLIENT_DIST_DIR, 'favicon.ico'),
+    path.join(CLIENT_DIST_DIR, 'BC.ico'),
+    path.join(CLIENT_PUBLIC_DIR, 'favicon.ico'),
+    path.join(CLIENT_PUBLIC_DIR, 'BC.ico'),
+]);
+
+app.get('/favicon.ico', (req, res, next) => {
+    const faviconPath = resolveFaviconPath();
+    if (!faviconPath) {
+        res.status(404).end();
+        return;
+    }
+    if (isProduction) {
+        res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    } else {
+        res.setHeader('Cache-Control', 'no-cache');
+    }
+    res.sendFile(faviconPath, (error) => {
+        if (error) {
+            next(error);
+        }
+    });
+});
 
 if (hasBuiltClient) {
     app.use(express.static(CLIENT_DIST_DIR, staticOptions));
