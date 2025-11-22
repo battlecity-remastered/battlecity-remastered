@@ -26,8 +26,8 @@ class FactoryBuilding {
         const limit = FACTORY_ITEM_LIMITS[this.building.type];
         const cityId = this.building.cityId ?? this.building.city ?? 0;
         const itemType = this.building.type % 100;
-        if (factory && typeof factory.hasActiveResearch === 'function') {
-            if (!factory.hasActiveResearch(cityId)) {
+        if (factory && typeof factory.hasActiveResearchForBuildingType === 'function') {
+            if (!factory.hasActiveResearchForBuildingType(cityId, this.building.type)) {
                 this.productionTick = this.game.tick + 1000;
                 return;
             }

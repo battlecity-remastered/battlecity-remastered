@@ -1037,6 +1037,31 @@ class BuildingFactory {
         }
         return false;
     }
+
+    hasActiveResearchForBuildingType(cityId, buildingType) {
+        const numericCity = toFiniteNumber(cityId, null);
+        const numericBuildingType = toFiniteNumber(buildingType, null);
+        if (numericCity === null || numericBuildingType === null) {
+            return false;
+        }
+        const requiredResearchType = this.getRequiredResearchType(numericBuildingType);
+        if (requiredResearchType === null) {
+            return true;
+        }
+        for (const building of this.buildings.values()) {
+            if (!isResearch(building.type)) {
+                continue;
+            }
+            const buildingCity = toFiniteNumber(building.cityId ?? building.city, null);
+            if (buildingCity !== numericCity) {
+                continue;
+            }
+            if (building.type === requiredResearchType && building.population >= POPULATION_MAX_NON_HOUSE) {
+                return true;
+            }
+        }
+        return false;
+    }
     checkBuildingCollision(buildingData) {
         const TILE_SIZE = 48;
         const BUILDING_SIZE_TILES = 3; // Buildings are 3x3 tiles
