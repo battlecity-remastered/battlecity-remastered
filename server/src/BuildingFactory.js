@@ -839,7 +839,8 @@ class BuildingFactory {
     }
 
     findAvailableHouse(ownerId, cityId) {
-        let bestHouse = null;
+        let partialHouse = null;
+        let emptyHouse = null;
         for (const candidate of this.buildings.values()) {
             if (!isHouse(candidate.type)) {
                 continue;
@@ -852,14 +853,13 @@ class BuildingFactory {
             if (candidate.attachments.length >= 2) {
                 continue;
             }
-            if (!bestHouse || candidate.attachments.length < bestHouse.attachments.length) {
-                bestHouse = candidate;
-                if (bestHouse.attachments.length === 0) {
-                    break;
-                }
+            if (candidate.attachments.length === 1 && !partialHouse) {
+                partialHouse = candidate;
+            } else if (candidate.attachments.length === 0 && !emptyHouse) {
+                emptyHouse = candidate;
             }
         }
-        return bestHouse;
+        return partialHouse || emptyHouse;
     }
 
     attachBuildingToHouse(house, building) {

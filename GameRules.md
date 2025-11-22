@@ -164,7 +164,8 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 
 ## Houses ↔ Factories
 - Every non-house building (including factories) must attach to a compatible house to accumulate staff population; without an attachment its population is reset to `0`. (server/src/Building.js:75, server/src/BuildingFactory.js:205)
-- Attachment eligibility requires matching owner or matching city, and each house can host at most two attachments; the server picks the house with the fewest occupants. (server/src/BuildingFactory.js:224, server/src/BuildingFactory.js:237)
+- Houses are filled front-to-back: a non-house building always claims an existing partially filled house before using a brand-new empty one, so two staffed attachments fill a single house to 100 before the next house starts accumulating population. (server/src/BuildingFactory.js:818, original/Battle-City/server/CBuilding.cpp:504)
+- Attachment eligibility requires matching owner or matching city, and each house can host at most two attachments; attachments claim the first available slot using that ownership filter. (server/src/BuildingFactory.js:224, server/src/BuildingFactory.js:237)
 - When a factory attaches, its `cityId` is synced to the house and both sides receive `population:update` events so the client stays in sync. (server/src/BuildingFactory.js:248, client/src/factories/BuildingFactory.js:280)
 - House population is always the sum of its attachment slots; demolishing a house clears every attached building's link and population, while demolishing the factory just frees the slot. (server/src/BuildingFactory.js:165, server/src/BuildingFactory.js:257, server/src/BuildingFactory.js:295)
 - New houses retroactively claim eligible unattached buildings (again up to two), keeping older factories productive once housing exists. (server/src/BuildingFactory.js:299)
