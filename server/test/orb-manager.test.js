@@ -76,12 +76,11 @@ test("orb detonation consumes active orb count and frees production slot", () =>
     const spawn = citySpawns[String(targetCityId)];
     assert.ok(spawn, "target city spawn should exist");
 
-    // Drop in the detection zone, which is the "front strip" below the command center
-    // Command centers are 2 tiles tall, detection zone starts after them
+    // Drop in the detection zone, which is the bottom row of the command center footprint
     const { COMMAND_CENTER_HEIGHT_TILES } = require("../src/gameplay/constants");
     const dropPayload = {
         x: spawn.tileX * TILE_SIZE,
-        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE
+        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES - 1) * TILE_SIZE
     };
 
 
@@ -123,11 +122,11 @@ test("orb drop detection only matches the command center front strip", () => {
 
     // Center a tile inside the detection strip.
     const insideDropX = rect.x + (rect.width / 2) - (TILE_SIZE / 2);
-    const insideDropY = rect.y + (rect.height / 2) - (TILE_SIZE / 2);
+    const insideDropY = rect.y + (rect.height / 2);
     const matchedCity = orbManager.resolveTargetCity(insideDropX, insideDropY, null);
     assert.strictEqual(matchedCity, cityId, "drop centered in the front strip should match the city");
 
-    // Tile centered a full tile above the strip should not match (well outside the margin).
+    // Tile centered a full tile above the strip should not match.
     const highDropY = rect.y - TILE_SIZE;
     const noMatchAbove = orbManager.resolveTargetCity(insideDropX, highDropY, null);
     assert.strictEqual(noMatchAbove, null, "drop above the strip should not match");

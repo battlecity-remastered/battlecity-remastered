@@ -7,9 +7,6 @@ const {
     COMMAND_CENTER_HEIGHT_TILES,
 } = require('../gameplay/constants');
 
-const ORB_DETECTION_MARGIN_TILES = 0.15;
-const COMMAND_CENTER_FRONT_OFFSET = TILE_SIZE / 2;
-
 const ORB_RESULT_EVENT = 'orb:result';
 const CITY_ORBED_EVENT = 'city:orbed';
 
@@ -238,14 +235,7 @@ class OrbManager {
             if (!rect) {
                 return;
             }
-            const margin = TILE_SIZE * ORB_DETECTION_MARGIN_TILES;
-            const expanded = {
-                x: rect.x - margin,
-                y: rect.y - margin,
-                width: rect.width + (margin * 2),
-                height: rect.height + (margin * 2),
-            };
-            if (!this.pointWithinRect(centerX, centerY, expanded)) {
+            if (!this.pointWithinRect(centerX, centerY, rect)) {
                 return;
             }
             const clampedX = Math.max(rect.x, Math.min(centerX, rect.x + rect.width));
@@ -274,8 +264,8 @@ class OrbManager {
         }
         const baseX = tileX * TILE_SIZE;
         const baseY = tileY * TILE_SIZE;
-        const detectionY = baseY + (COMMAND_CENTER_HEIGHT_TILES * TILE_SIZE);
-        const detectionHeight = TILE_SIZE + COMMAND_CENTER_FRONT_OFFSET;
+        const detectionY = baseY + ((COMMAND_CENTER_HEIGHT_TILES - 1) * TILE_SIZE);
+        const detectionHeight = TILE_SIZE; // Only the front (bottom) tile is orbable
         return {
             x: baseX,
             y: detectionY,

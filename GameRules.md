@@ -89,6 +89,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Command Centers are immune to bomb demolition and will never be deleted by local explosion cleanup. (client/src/factories/ItemFactory.js:698)
 - Cities become *orbable* once they either (a) reach a historical maximum of at least 21 constructed buildings, or (b) have ever operated a Bomb or Orb factory. (server/src/CityManager.js:129)
 - An Orb dropped on an enemy command center now triggers a full city wipe when the target meets the orbable criteria: the command center is destroyed, every building is demolished, all hazards are cleared, and the affected players are sent back to the lobby. (server/src/orb/OrbManager.js:47, server/src/PlayerFactory.js:658)
+- Orb drops only register when they land on the bottom (front) tile row of an enemy command center; no extra margin is applied around the footprint. (server/src/orb/OrbManager.js:240)
 - Factory output counts now come entirely from the server snapshot. Each `new_building` payload includes `itemsLeft`, and the client reconciles the expected drops through `syncFactoryItems`. (client/src/SocketListener.js:140, client/src/factories/BuildingFactory.js:538)
 - Factory output now mirrors the original Battle City per-item caps; production stalls once a city's stock hits the legacy limit and resumes only after that item is spent.\
   | Item | Player inventory cap | Factory stock cap | Notes |
