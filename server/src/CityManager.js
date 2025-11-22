@@ -9,6 +9,7 @@ const {
 } = require('./constants');
 const { ITEM_TYPES, normalizeItemType } = require('./items');
 const { ORBABLE_SIZE } = require('./gameplay/constants');
+const { DEFAULT_CITY_CAN_BUILD } = require('../../shared/buildTreeConfig');
 
 const REFUND_CHANCE = 0.25;
 const BOMB_FACTORY_TYPES = new Set([103]);
@@ -105,6 +106,7 @@ class CityManager {
                 score: 0,
                 lastOrbBounty: 0,
                 lastOrbReward: 0,
+                canBuild: { ...DEFAULT_CITY_CAN_BUILD },
             };
             this.cities.set(id, city);
             if (!this.game.cities) {

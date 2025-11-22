@@ -5,7 +5,7 @@ const { test } = require("node:test");
 
 const CityManager = require("../src/CityManager");
 const OrbManager = require("../src/orb/OrbManager");
-const { TILE_SIZE, ORBABLE_SIZE } = require("../src/gameplay/constants");
+const { TILE_SIZE, ORBABLE_SIZE, COMMAND_CENTER_HEIGHT_TILES } = require("../src/gameplay/constants");
 const citySpawns = require("../../shared/citySpawns.json");
 
 const createSocket = (id) => {
@@ -76,11 +76,11 @@ test("orb detonation consumes active orb count and frees production slot", () =>
     const spawn = citySpawns[String(targetCityId)];
     assert.ok(spawn, "target city spawn should exist");
 
-    // Drop in the detection zone, which is the bottom row of the command center footprint
+    // Drop in the detection zone, which is the bottom (third) row of the command center footprint
     const { COMMAND_CENTER_HEIGHT_TILES } = require("../src/gameplay/constants");
     const dropPayload = {
         x: spawn.tileX * TILE_SIZE,
-        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES - 1) * TILE_SIZE
+        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE
     };
 
 
@@ -119,6 +119,11 @@ test("orb drop detection only matches the command center front strip", () => {
     const cityId = 0;
     const rect = orbManager.getCommandCenterRect(cityId);
     assert.ok(rect, "command center rect should be available for city 0");
+    const spawn = citySpawns[String(cityId)];
+    assert.ok(spawn, "city spawn should exist");
+    const expectedY = (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE;
+    assert.strictEqual(rect.y, expectedY, "detection strip should align to the bottom row start");
+    assert.strictEqual(rect.height, TILE_SIZE, "detection strip should be exactly one tile tall");
 
     // Center a tile inside the detection strip.
     const insideDropX = rect.x + (rect.width / 2) - (TILE_SIZE / 2);
@@ -126,8 +131,13 @@ test("orb drop detection only matches the command center front strip", () => {
     const matchedCity = orbManager.resolveTargetCity(insideDropX, insideDropY, null);
     assert.strictEqual(matchedCity, cityId, "drop centered in the front strip should match the city");
 
+    // Tile centered on the middle row (one tile above) should not match.
+    const middleRowDropY = rect.y - TILE_SIZE;
+    const noMatchMiddle = orbManager.resolveTargetCity(insideDropX, middleRowDropY, null);
+    assert.strictEqual(noMatchMiddle, null, "drop on the middle row should not match");
+
     // Tile centered a full tile above the strip should not match.
-    const highDropY = rect.y - TILE_SIZE;
+    const highDropY = rect.y - (TILE_SIZE * 1.5);
     const noMatchAbove = orbManager.resolveTargetCity(insideDropX, highDropY, null);
     assert.strictEqual(noMatchAbove, null, "drop above the strip should not match");
 

@@ -1,8 +1,8 @@
-import {rectangleCollision} from "./collision-helpers";
-import {checkTiles} from "./collision-helpers";
-import {checkEdges} from "./collision-helpers";
-import {getPlayerRect} from "./collision-helpers";
-import {checkItems} from "./collision-helpers";
+import {rectangleCollision} from "./collision-helpers.js";
+import {checkTiles} from "./collision-helpers.js";
+import {checkEdges} from "./collision-helpers.js";
+import {getPlayerRect} from "./collision-helpers.js";
+import {checkItems} from "./collision-helpers.js";
 
 
 var checkPlayers = (game, buildingRect) => {

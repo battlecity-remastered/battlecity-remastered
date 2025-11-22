@@ -264,8 +264,8 @@ class OrbManager {
         }
         const baseX = tileX * TILE_SIZE;
         const baseY = tileY * TILE_SIZE;
-        const detectionY = baseY + ((COMMAND_CENTER_HEIGHT_TILES - 1) * TILE_SIZE);
-        const detectionHeight = TILE_SIZE; // Only the front (bottom) tile is orbable
+        const detectionY = baseY + (COMMAND_CENTER_HEIGHT_TILES * TILE_SIZE);
+        const detectionHeight = TILE_SIZE; // Only the front (bottom-most) tile is orbable
         return {
             x: baseX,
             y: detectionY,

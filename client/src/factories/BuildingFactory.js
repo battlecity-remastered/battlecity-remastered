@@ -1,4 +1,4 @@
-import {checkBuildingCollision} from "../collision/collision-building";
+import {checkBuildingCollision} from "../collision/collision-building.js";
 import {
     LABELS,
     CAN_BUILD_HOUSE,
@@ -9,12 +9,13 @@ import {
     DEPENDENCY_TREE,
     COST_BUILDING,
     TIMER_RESEARCH,
-} from "../constants";
+    DEFAULT_CITY_CAN_BUILD,
+} from "../constants.js";
 import _ from 'underscore';
-import {BUILDING_COMMAND_CENTER} from "../constants";
-import {MAP_SQUARE_BUILDING} from "../constants";
-import {getCityDisplayName} from '../utils/citySpawns';
-import { SOUND_IDS } from '../audio/AudioManager';
+import {BUILDING_COMMAND_CENTER} from "../constants.js";
+import {MAP_SQUARE_BUILDING} from "../constants.js";
+import {getCityDisplayName} from '../utils/citySpawns.js';
+import { SOUND_IDS } from '../audio/AudioManager.js';
 
 const TILE_SIZE = 48;
 const MAX_BUILDING_CHAIN_DISTANCE = TILE_SIZE * 20;
@@ -232,6 +233,39 @@ class BuildingFactory {
             city.canBuild[labelKey] = HAS_BUILT;
             this.game.forceDraw = true;
         }
+    }
+
+    recomputeCityBuildPermissions(cityId) {
+        const cityIndex = Number.isFinite(cityId) ? cityId : parseInt(cityId, 10);
+        const city = Number.isFinite(cityIndex) ? this.game.cities?.[cityIndex] : null;
+        if (!city) {
+            return;
+        }
+
+        const base = { ...DEFAULT_CITY_CAN_BUILD };
+        const target = (city.canBuild && typeof city.canBuild === 'object') ? city.canBuild : {};
+        Object.keys(target).forEach((key) => delete target[key]);
+        Object.assign(target, base);
+        city.canBuild = target;
+
+        const researchBucket = this.getResearchBucket(cityIndex);
+        if (researchBucket) {
+            for (const [researchType, state] of researchBucket.entries()) {
+                const status = state?.state || 'idle';
+                this.applyResearchState(cityIndex, researchType, status);
+            }
+        }
+
+        let node = this.getHead();
+        while (node) {
+            const nodeCity = Number.isFinite(node.city) ? node.city : parseInt(node.city, 10);
+            if (Number.isFinite(nodeCity) && nodeCity === cityIndex) {
+                this.markBuildingConstructed(cityIndex, node.type);
+            }
+            node = node.next;
+        }
+
+        this.game.forceDraw = true;
     }
 
     handleResearchCompletion(cityId, researchType) {
@@ -511,27 +545,6 @@ class BuildingFactory {
             building.itemsLeft = 0;
         }
 
-        if (building.owner === null || building.owner === this.game.player.id) {
-            const playerCityIndex = Number(this.game?.player?.city);
-            const playerCity = Number.isFinite(playerCityIndex)
-                ? this.game.cities?.[playerCityIndex]
-                : null;
-
-            if (playerCity && playerCity.canBuild && typeof playerCity.canBuild === 'object') {
-                Object.keys(playerCity.canBuild).forEach((id) => {
-                    const label = LABELS[id];
-                    if (!label) {
-                        return;
-                    }
-                    const tempId = label.TYPE;
-                    if (Number.parseInt(tempId, 10) === building.type && tempId !== CAN_BUILD_HOUSE) {
-                        playerCity.canBuild[id] = CAN_BUILD;
-                    }
-                });
-            }
-        }
-
-
         if (notifyServer && this.game.socketListener && this.game.socketListener.sendDemolishBuilding) {
             this.game.socketListener.sendDemolishBuilding(building.id);
         }
@@ -554,6 +567,8 @@ class BuildingFactory {
         if (this.pendingBuildCosts.has(building.id)) {
             this.pendingBuildCosts.delete(building.id);
         }
+
+        this.recomputeCityBuildPermissions(building.city ?? this.game?.player?.city ?? null);
 
         return returnBuilding;
     }

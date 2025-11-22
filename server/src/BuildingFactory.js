@@ -7,6 +7,15 @@ const FactoryBuilding = require('./FactoryBuilding');
 const CityManager = require('./CityManager');
 const { ITEM_TYPES, normalizeItemType } = require('./items');
 const {
+    LABELS,
+    DEPENDENCY_TREE,
+    DEFAULT_CITY_CAN_BUILD,
+    CANT_BUILD,
+    CAN_BUILD,
+    HAS_BUILT,
+    RESEARCH_PENDING,
+} = require('../../shared/buildTreeConfig');
+const {
     POPULATION_INTERVAL_MS,
     POPULATION_INCREMENT,
     POPULATION_MAX_HOUSE,
@@ -58,6 +67,123 @@ class BuildingFactory {
         this.defenseManager = null;
         this.playerFactory = null;
         this.researchByCity = new Map();
+        this.canBuildByCity = new Map();
+        this.typeLabelLookup = Object.keys(LABELS).reduce((acc, key) => {
+            acc[LABELS[key].TYPE] = key;
+            return acc;
+        }, {});
+        this.dependencyTreeRoot = this.buildDependencyTree(DEPENDENCY_TREE);
+    }
+
+    buildDependencyTree(entries) {
+        const roots = [];
+        const lookup = new Map();
+
+        entries.forEach((node) => {
+            const enriched = { ...node, children: [] };
+            lookup.set(node.id, enriched);
+        });
+
+        lookup.forEach((node) => {
+            if (!node.parentid) {
+                roots.push(node);
+                return;
+            }
+            const parent = lookup.get(node.parentid);
+            if (parent) {
+                parent.children.push(node);
+            } else {
+                roots.push(node);
+            }
+        });
+
+        return roots[0] || null;
+    }
+
+    searchTree(element, matchingId) {
+        if (!element) {
+            return null;
+        }
+        if (element.id === matchingId) {
+            return element;
+        } else if (element.children != null) {
+            let result = null;
+            for (let i = 0; result == null && i < element.children.length; i += 1) {
+                result = this.searchTree(element.children[i], matchingId);
+            }
+            return result;
+        }
+        return null;
+    }
+
+    getCityCanBuild(cityId) {
+        const numericCity = toFiniteNumber(cityId, null);
+        if (!Number.isFinite(numericCity)) {
+            return null;
+        }
+        if (!this.canBuildByCity.has(numericCity)) {
+            this.canBuildByCity.set(numericCity, { ...DEFAULT_CITY_CAN_BUILD });
+        }
+        return this.canBuildByCity.get(numericCity);
+    }
+
+    applyResearchState(cityId, researchType, state = 'idle') {
+        const canBuild = this.getCityCanBuild(cityId);
+        if (!canBuild) {
+            return;
+        }
+        const node = this.searchTree(this.dependencyTreeRoot, researchType);
+        if (!node || !node.children) {
+            return;
+        }
+        let nextState = CANT_BUILD;
+        if (state === 'pending') {
+            nextState = RESEARCH_PENDING;
+        } else if (state === 'complete') {
+            nextState = CAN_BUILD;
+        }
+        node.children.forEach((child) => {
+            const unlockKey = this.typeLabelLookup[child.id];
+            if (unlockKey && canBuild[unlockKey] !== HAS_BUILT) {
+                canBuild[unlockKey] = nextState;
+            }
+        });
+    }
+
+    markBuildingConstructed(cityId, buildingType) {
+        const canBuild = this.getCityCanBuild(cityId);
+        if (!canBuild) {
+            return;
+        }
+        const typeKey = toFiniteNumber(buildingType, null);
+        const labelKey = this.typeLabelLookup[typeKey];
+        if (!labelKey || typeKey === 300) {
+            return;
+        }
+        canBuild[labelKey] = HAS_BUILT;
+    }
+
+    recomputeCityCanBuild(cityId) {
+        const numericCity = toFiniteNumber(cityId, null);
+        if (!Number.isFinite(numericCity)) {
+            return;
+        }
+        this.canBuildByCity.set(numericCity, { ...DEFAULT_CITY_CAN_BUILD });
+
+        const researchBucket = this.researchByCity.get(numericCity);
+        if (researchBucket) {
+            for (const [researchType, state] of researchBucket.entries()) {
+                const status = state?.state || 'idle';
+                this.applyResearchState(numericCity, researchType, status);
+            }
+        }
+
+        for (const building of this.buildings.values()) {
+            const bCity = toFiniteNumber(building.cityId ?? building.city, null);
+            if (bCity === numericCity) {
+                this.markBuildingConstructed(numericCity, building.type);
+            }
+        }
     }
 
     setManagers({ hazardManager = null, defenseManager = null, playerFactory = null } = {}) {
@@ -279,6 +405,23 @@ class BuildingFactory {
             return;
         }
 
+        const canBuild = this.getCityCanBuild(resolvedCityId);
+        const labelKey = this.typeLabelLookup[toFiniteNumber(buildingData.type, null)];
+        if (canBuild && labelKey) {
+            const state = canBuild[labelKey];
+            if (state !== CAN_BUILD) {
+                socket.emit('build:denied', JSON.stringify({
+                    reason: 'locked',
+                    city: resolvedCityId,
+                    x: buildingData.x,
+                    y: buildingData.y,
+                    id: buildingData.id,
+                    state,
+                }));
+                return;
+            }
+        }
+
         const requiredResearchType = this.getRequiredResearchType(buildingData.type);
         if (requiredResearchType !== null && !this.hasCompletedResearch(resolvedCityId, requiredResearchType)) {
             const state = this.getResearchState(resolvedCityId, requiredResearchType);
@@ -306,6 +449,7 @@ class BuildingFactory {
             this.cityManager.registerBuilding(newBuilding);
         }
         this.cityManager.recordBuildingCost(newBuilding.cityId);
+        this.markBuildingConstructed(newBuilding.cityId, newBuilding.type);
 
         if (isHouse(newBuilding.type)) {
             this.backfillAttachmentsForHouse(newBuilding);
@@ -490,6 +634,7 @@ class BuildingFactory {
 
         building.population = 0;
         this.emitPopulationUpdate(building, true);
+        this.recomputeCityCanBuild(building.cityId ?? building.city ?? null);
 
         if (broadcast && this.io) {
             this.io.emit('demolish_building', JSON.stringify({ id }));
@@ -701,6 +846,7 @@ class BuildingFactory {
         state.startedAt = currentTick;
         state.completeAt = currentTick + RESEARCH_DURATION_MS;
         state.buildingId = buildingId || state.buildingId || null;
+        this.applyResearchState(cityId, researchType, 'pending');
         this.emitResearchUpdate(cityId, researchType, state);
         return state;
     }
@@ -713,6 +859,7 @@ class BuildingFactory {
         state.state = 'complete';
         state.completeAt = null;
         state.completedAt = this.game.tick || Date.now();
+        this.applyResearchState(cityId, researchType, 'complete');
         this.emitResearchUpdate(cityId, researchType, state);
         return state;
     }
@@ -726,6 +873,7 @@ class BuildingFactory {
         state.startedAt = null;
         state.completeAt = null;
         state.buildingId = null;
+        this.applyResearchState(cityId, researchType, 'idle');
         this.emitResearchUpdate(cityId, researchType, state);
     }
 
