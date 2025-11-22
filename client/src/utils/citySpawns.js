@@ -1,4 +1,4 @@
-import citySpawns from '../../../shared/citySpawns.json' assert { type: 'json' };
+import citySpawns from '../../../shared/citySpawns.json' with { type: 'json' };
 
 const TILE_SIZE = 48;
 const COMMAND_CENTER_WIDTH_TILES = 3;
