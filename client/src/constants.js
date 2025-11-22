@@ -43,7 +43,7 @@ export const TIMER_RESEARCH = 10000;
 
 export const DAMAGE_LASER = 5;
 export const DAMAGE_ROCKET = 8;
-export const DAMAGE_MINE = 19;
+export const DAMAGE_MINE = 35;
 export const DAMAGE_BOMB = 40;
 export const DAMAGE_FLARE = 5;
 

@@ -13,7 +13,7 @@ module.exports = {
     DAMAGE_ROCKET: 8,
     DAMAGE_FLARE: 5,
     MAX_HEALTH: 40,
-    DAMAGE_MINE: 19,
+    DAMAGE_MINE: 35,
     DAMAGE_BOMB: 25,
     BOMB_TIMER_MS: 5000,
     BOMB_ITEM_TILE_RADIUS: 2,
