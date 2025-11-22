@@ -1,13 +1,14 @@
-import {COLLISION_BLOCKING} from "../constants.js";
-import {COLLISION_MAP_EDGE_LEFT} from "../constants.js";
-import {COLLISION_MAP_EDGE_RIGHT} from "../constants.js";
-import {COLLISION_MAP_EDGE_TOP} from "../constants.js";
-import {COLLISION_MAP_EDGE_BOTTOM} from "../constants.js";
-import {COLLISION_MINE} from "../constants.js";
-import {COLLISION_DFG} from "../constants.js";
-import {ITEM_TYPE_MINE} from "../constants.js";
-import {ITEM_TYPE_DFG} from "../constants.js";
-import {ITEM_TYPE_ORB} from "../constants.js";
+import { COLLISION_BLOCKING } from "../constants.js";
+import { COLLISION_MAP_EDGE_LEFT } from "../constants.js";
+import { COLLISION_MAP_EDGE_RIGHT } from "../constants.js";
+import { COLLISION_MAP_EDGE_TOP } from "../constants.js";
+import { COLLISION_MAP_EDGE_BOTTOM } from "../constants.js";
+import { COLLISION_MINE } from "../constants.js";
+import { COLLISION_DFG } from "../constants.js";
+import { ITEM_TYPE_MINE } from "../constants.js";
+import { ITEM_TYPE_DFG } from "../constants.js";
+import { ITEM_TYPE_ORB } from "../constants.js";
+import { ITEM_TYPE_BOMB } from "../constants.js";
 
 export const rectangleCollision = (rect1, rect2) => {
     if (!rect1 || !rect2) {
@@ -84,6 +85,10 @@ export const checkItems = (game, rect) => {
                 // Orbs should not block movement so players can recover them or finish a drop.
                 // Keep collidedItem handy for any contextual logic that needs to know about overlap.
                 game.player.collidedItem = item;
+            } else if (item.type === ITEM_TYPE_BOMB) {
+                // Bombs should not block movement so players can drive over them.
+                // Keep collidedItem handy for any contextual logic that needs to know about overlap.
+                game.player.collidedItem = item;
             } else if (item.active !== false && item.type !== ITEM_TYPE_DFG) {
                 return COLLISION_BLOCKING;
             }
@@ -125,7 +130,7 @@ export const checkTiles = (game, rect) => {
             if (map[left][bottom] != 0 && map[left][bottom] != 3) return COLLISION_BLOCKING;
             if (map[right][top] != 0 && map[right][top] != 3) return COLLISION_BLOCKING;
             if (map[right][bottom] != 0 && map[right][bottom] != 3) return COLLISION_BLOCKING;
-        }catch (_ex) {
+        } catch (_ex) {
             console.error("Invalid map reference")
         }
     }
