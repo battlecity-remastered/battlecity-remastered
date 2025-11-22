@@ -145,6 +145,7 @@ document.getElementById("game").appendChild(app.view);
 
 var stats = new Stats();
 stats.showPanel(0);
+stats.dom.style.display = 'none'; // Hidden by default, shown when debug mode is enabled
 document.getElementById("game").appendChild(stats.dom);
 
 const gameContainer = document.getElementById("game");
@@ -240,6 +241,8 @@ const game = {
         offsetY: 0,
     },
     gBotDebug: null,
+    debugMode: false,
+    stats: stats,
 };
 
 game.audio = new AudioManager();
@@ -253,8 +256,8 @@ const orbHintElement = document.createElement('div');
 orbHintElement.id = 'orb-hint';
 const orbHintStyle = orbHintElement.style;
 orbHintStyle.position = 'fixed';
-orbHintStyle.top = '24px';
-orbHintStyle.right = '24px';
+orbHintStyle.top = '8px';
+orbHintStyle.left = '8px';
 orbHintStyle.padding = '10px 14px';
 orbHintStyle.borderRadius = '12px';
 orbHintStyle.background = 'rgba(10, 18, 52, 0.82)';

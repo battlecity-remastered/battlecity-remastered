@@ -192,7 +192,8 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         o = keyboard(79),
         h = keyboard(72),
         c = keyboard(67),
-        f = keyboard(70);
+        f = keyboard(70),
+        f3 = keyboard(114); // F3 key for debug mode
 
 
     left.press = function () {
@@ -302,6 +303,18 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         if (typeof game?.toggleFullscreen === 'function') {
             game.toggleFullscreen();
         }
+    };
+
+    f3.press = function () {
+        // Toggle debug mode
+        game.debugMode = !game.debugMode;
+
+        // Show or hide the stats panel
+        if (game.stats && game.stats.dom) {
+            game.stats.dom.style.display = game.debugMode ? 'block' : 'none';
+        }
+
+        console.log('Debug mode:', game.debugMode ? 'enabled' : 'disabled');
     };
 
     ctrl.press = function () {
