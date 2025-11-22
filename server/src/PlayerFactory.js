@@ -157,6 +157,58 @@ class PlayerFactory {
         this.scoreService = options.scoreService || null;
     }
 
+    applyScoreProfileToPlayer(player, profile, options = {}) {
+        if (!player || !profile) {
+            return false;
+        }
+        let changed = false;
+        const numericPoints = Number(profile.points);
+        if (Number.isFinite(numericPoints)) {
+            const bounded = Math.max(0, Math.floor(numericPoints));
+            if (player.points !== bounded) {
+                player.points = bounded;
+                changed = true;
+            }
+        }
+        const resolvedRank = profile.rankTitle
+            || (this.scoreService && typeof this.scoreService.resolveRank === 'function'
+                ? this.scoreService.resolveRank(profile.points)
+                : null);
+        if (resolvedRank && player.rankTitle !== resolvedRank) {
+            player.rankTitle = resolvedRank;
+            changed = true;
+        }
+        if (changed && options.bumpSequence) {
+            const nextSequence = Number.isFinite(player.sequence) ? player.sequence : 0;
+            player.sequence = Math.max(0, Math.round(nextSequence)) + 1;
+            player.lastUpdateAt = Date.now();
+        }
+        return changed;
+    }
+
+    updatePlayerScores(userIds = []) {
+        if (!this.scoreService || !Array.isArray(userIds) || !userIds.length) {
+            return;
+        }
+        const uniqueIds = Array.from(new Set(userIds.filter((value) => value !== undefined && value !== null)
+            .map((value) => String(value))));
+        uniqueIds.forEach((userId) => {
+            const profile = this.scoreService.getProfile(userId);
+            if (!profile) {
+                return;
+            }
+            Object.values(this.game.players || {}).forEach((player) => {
+                if (!player || !player.userId || String(player.userId) !== userId) {
+                    return;
+                }
+                const changed = this.applyScoreProfileToPlayer(player, profile, { bumpSequence: true });
+                if (changed && this.io) {
+                    this.io.emit('player', JSON.stringify(player));
+                }
+            });
+        });
+    }
+
     handlePlayerUpdate(socket, player) {
         var existingPlayer = this.game.players[socket.id];
         if (!existingPlayer) {
@@ -521,6 +573,10 @@ class PlayerFactory {
         }
         if (Array.isArray(result.promotions)) {
             result.promotions.forEach((promotion) => this.announcePromotion(promotion));
+            const promotedUserIds = result.promotions
+                .map((promotion) => promotion && promotion.userId)
+                .filter((value) => value !== undefined && value !== null);
+            this.updatePlayerScores(promotedUserIds);
         }
         if (result.changed) {
             this.emitLobbySnapshot();
@@ -562,6 +618,7 @@ class PlayerFactory {
             orbHolderUserId,
             points
         });
+        this.updatePlayerScores(participantUserIds);
         this.handleScoreServiceResult(result);
     }
 
@@ -604,6 +661,7 @@ class PlayerFactory {
             killerUserIds,
             killerUserId
         });
+        this.updatePlayerScores([victimUserId, killerUserId, ...killerUserIds]);
         this.handleScoreServiceResult(result);
     }
 
@@ -1137,11 +1195,20 @@ class PlayerFactory {
             player.userId = identity.id;
             player.callsign = identity.name;
             if (this.scoreService && typeof this.scoreService.syncIdentity === 'function') {
-                this.scoreService.syncIdentity(identity);
+                const update = this.scoreService.syncIdentity(identity);
+                const profile = update?.profile
+                    || (typeof this.scoreService.getProfile === 'function'
+                        ? this.scoreService.getProfile(identity.id)
+                        : null);
+                if (profile) {
+                    this.applyScoreProfileToPlayer(player, profile, { bumpSequence: true });
+                }
             }
         } else {
             player.userId = null;
             player.callsign = this.callsigns.assign(player.id, { category: 'human' });
+            player.rankTitle = null;
+            player.points = 0;
         }
     }
 

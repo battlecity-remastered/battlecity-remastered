@@ -49,12 +49,20 @@ const RANK_THRESHOLDS = Object.freeze([
     { limit: Infinity, title: 'King' }
 ]);
 
+const VALID_RANK_TITLES = new Set(RANK_THRESHOLDS.map((entry) => entry.title));
+
 const resolveRankTitle = (entity) => {
     if (entity && typeof entity.rankTitle === 'string' && entity.rankTitle.trim().length) {
-        return entity.rankTitle.trim();
+        const trimmed = entity.rankTitle.trim();
+        if (VALID_RANK_TITLES.has(trimmed)) {
+            return trimmed;
+        }
     }
     if (entity && typeof entity.rank === 'string' && entity.rank.trim().length) {
-        return entity.rank.trim();
+        const trimmed = entity.rank.trim();
+        if (VALID_RANK_TITLES.has(trimmed)) {
+            return trimmed;
+        }
     }
     const points = Number(entity?.points);
     if (Number.isFinite(points) && points >= 0) {

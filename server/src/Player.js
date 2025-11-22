@@ -28,6 +28,8 @@ class Player {
         this.isFake = false;
         this.isFakeRecruit = false;
         this.type = null;
+        this.points = 0;
+        this.rankTitle = null;
         this.userId = this._sanitizeId(player && (player.userId || (player.identity && player.identity.id)));
         this.callsign = this._sanitizeCallsign(player && player.callsign);
         this.lastUpdateAt = now || Date.now();
@@ -68,6 +70,18 @@ class Player {
 
         if (player.isMayor !== undefined) {
             this.isMayor = !!player.isMayor;
+        }
+
+        if (player.points !== undefined) {
+            const numericPoints = this._toFiniteNumber(player.points, this.points);
+            if (Number.isFinite(numericPoints)) {
+                this.points = Math.max(0, Math.floor(numericPoints));
+            }
+        }
+
+        if (player.rankTitle !== undefined) {
+            const title = typeof player.rankTitle === 'string' ? player.rankTitle.trim() : null;
+            this.rankTitle = title && title.length ? title : this.rankTitle;
         }
 
         if (player.callsign) {
@@ -153,6 +167,12 @@ class Player {
         }
         if (this.userId) {
             payload.userId = this.userId;
+        }
+        if (Number.isFinite(this.points)) {
+            payload.points = this.points;
+        }
+        if (this.rankTitle) {
+            payload.rankTitle = this.rankTitle;
         }
         return payload;
     }

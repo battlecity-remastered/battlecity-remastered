@@ -16,8 +16,6 @@ const {
     RESEARCH_PENDING,
 } = require('../../shared/buildTreeConfig');
 const {
-    POPULATION_INTERVAL_MS,
-    POPULATION_INCREMENT,
     POPULATION_MAX_HOUSE,
     POPULATION_MAX_NON_HOUSE,
     COST_BUILDING,

@@ -1,15 +1,15 @@
 import { io } from 'socket.io-client';
-import { EventEmitter2 } from 'eventemitter2';
-import { getCitySpawn, getCityDisplayName } from './utils/citySpawns';
-import { SOUND_IDS } from './audio/AudioManager';
-import spawnMuzzleFlash from './effects/muzzleFlash';
+import EventEmitter2 from 'eventemitter2';
+import { getCitySpawn, getCityDisplayName } from './utils/citySpawns.js';
+import { SOUND_IDS } from './audio/AudioManager.js';
+import spawnMuzzleFlash from './effects/muzzleFlash.js';
 
 const CHAT_MAX_LENGTH = 240;
 const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/g;
 const DEFAULT_CHAT_SCOPE = 'team';
 const LOCAL_SHOT_CACHE_TTL_MS = 700;
 
-import { updateBotWaypoints } from "./draw/draw-bot-debug";
+import { updateBotWaypoints } from './draw/draw-bot-debug.js';
 
 const LOCAL_SOCKET_PORT = 8021;
 
@@ -1013,6 +1013,20 @@ class SocketListener extends EventEmitter2 {
         };
         player.city = this.toFiniteNumber(player.city, 0);
         player.isMayor = !!player.isMayor;
+        const pointsValue = this.toFiniteNumber(player.points, null);
+        if (Number.isFinite(pointsValue) && pointsValue >= 0) {
+            player.points = Math.floor(pointsValue);
+        } else {
+            delete player.points;
+        }
+        if (typeof player.rankTitle === 'string') {
+            const trimmedRank = player.rankTitle.trim();
+            if (trimmedRank.length) {
+                player.rankTitle = trimmedRank;
+            } else {
+                delete player.rankTitle;
+            }
+        }
         const healthValue = this.toFiniteNumber(player.health, this.game?.player?.health ?? 0);
         player.health = Number.isFinite(healthValue) ? Math.max(0, healthValue) : 0;
         const directionValue = this.toFiniteNumber(player.direction, 0);

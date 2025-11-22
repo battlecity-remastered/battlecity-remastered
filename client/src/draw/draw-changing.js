@@ -1,5 +1,4 @@
 import PIXI from '../pixi';
-import { getCityDisplayName } from '../utils/citySpawns';
 import { scheduleDestroy } from '../utils/pixiPerformance';
 import { MAX_HEALTH } from '../constants';
 import { buildRoleLabel, toFiniteCityId } from './nameLabels';
