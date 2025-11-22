@@ -18,6 +18,10 @@
             nodejs
             pkgs.esbuild
             pkgs.watchexec
+            (pkgs.python311.withPackages (ps: [
+              ps.numpy
+              ps.matplotlib
+            ]))
           ];
 
           shellHook = ''

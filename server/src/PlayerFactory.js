@@ -359,6 +359,7 @@ class PlayerFactory {
                 }
 
                 var newPlayer = new Player(socket.id, initialState, validation.timestamp);
+                newPlayer.spawnGraceUntil = Date.now() + 5000;
                 newPlayer.city = assignment.city;
                 newPlayer.isMayor = assignment.isMayor;
                 if (parsedPlayer && parsedPlayer.isFake) {
@@ -1512,6 +1513,8 @@ class PlayerFactory {
         const radius = Number.isFinite(options.radiusTiles)
             ? Math.max(0, Math.floor(options.radiusTiles))
             : MAX_SPAWN_SEARCH_RADIUS_TILES;
+
+        // First try the existing spiral offsets at the requested radius
         const offsets = getSpawnOffsets(radius);
         for (const offset of offsets) {
             const candidateX = clamp(spawn.x + offset.dx, 0, MAP_MAX_COORD);
@@ -1523,6 +1526,23 @@ class PlayerFactory {
                 return Object.assign({}, spawn, { x: candidateX, y: candidateY });
             }
         }
+
+        // If still blocked (e.g., walls around CC), expand search radius up to 4 tiles in 8 directions
+        const radii = [TILE_SIZE, TILE_SIZE * 2, TILE_SIZE * 3, TILE_SIZE * 4];
+        const directions = [
+            { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 }
+        ];
+        for (const r of radii) {
+            for (const dir of directions) {
+                const candidateX = clamp(spawn.x + dir.dx * r, 0, MAP_MAX_COORD);
+                const candidateY = clamp(spawn.y + dir.dy * r, 0, MAP_MAX_COORD);
+                if (!this.isSpawnBlocked(candidateX, candidateY)) {
+                    return Object.assign({}, spawn, { x: candidateX, y: candidateY });
+                }
+            }
+        }
+
         return spawn;
     }
 

@@ -78,24 +78,28 @@ class PlayerStateValidator {
             maxDistance = Math.min(this.axisHardCap, Math.max(maxDistance, boost));
         }
 
-        if (Math.abs(delta.x) > maxDistance || Math.abs(delta.y) > maxDistance || totalDistance > (maxDistance + 8)) {
-            result.valid = false;
-            result.reasons.push("movement/exceeds_threshold");
-            sanitized.offset = {
-                x: previousOffset.x,
-                y: previousOffset.y
-            };
-            result.flags.push("movement_clamped");
-        } else if (this._checkCollision(sanitized.offset)) {
-            // [SECURITY] Collision Check
-            // If new position collides with map or building, reject it.
-            result.valid = false;
-            result.reasons.push("movement/collision");
-            sanitized.offset = {
-                x: previousOffset.x,
-                y: previousOffset.y
-            };
-            result.flags.push("collision_detected");
+        const hasSpawnGrace = Number.isFinite(previousState.spawnGraceUntil) && now <= previousState.spawnGraceUntil;
+
+        if (!hasSpawnGrace) {
+            if (Math.abs(delta.x) > maxDistance || Math.abs(delta.y) > maxDistance || totalDistance > (maxDistance + 8)) {
+                result.valid = false;
+                result.reasons.push("movement/exceeds_threshold");
+                sanitized.offset = {
+                    x: previousOffset.x,
+                    y: previousOffset.y
+                };
+                result.flags.push("movement_clamped");
+            } else if (this._checkCollision(sanitized.offset)) {
+                // [SECURITY] Collision Check
+                // If new position collides with map or building, reject it.
+                result.valid = false;
+                result.reasons.push("movement/collision");
+                sanitized.offset = {
+                    x: previousOffset.x,
+                    y: previousOffset.y
+                };
+                result.flags.push("collision_detected");
+            }
         }
 
         const directionDelta = this._directionDelta(previousState.direction, sanitized.direction);

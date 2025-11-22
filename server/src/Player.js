@@ -30,6 +30,7 @@ class Player {
         this.type = null;
         this.points = 0;
         this.rankTitle = null;
+        this.spawnGraceUntil = 0;
         this.userId = this._sanitizeId(player && (player.userId || (player.identity && player.identity.id)));
         this.callsign = this._sanitizeCallsign(player && player.callsign);
         this.lastUpdateAt = now || Date.now();
@@ -82,6 +83,13 @@ class Player {
         if (player.rankTitle !== undefined) {
             const title = typeof player.rankTitle === 'string' ? player.rankTitle.trim() : null;
             this.rankTitle = title && title.length ? title : this.rankTitle;
+        }
+
+        if (player.spawnGraceUntil !== undefined) {
+            const grace = this._toFiniteNumber(player.spawnGraceUntil, this.spawnGraceUntil);
+            if (Number.isFinite(grace)) {
+                this.spawnGraceUntil = grace;
+            }
         }
 
         if (player.callsign) {

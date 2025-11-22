@@ -1,9 +1,11 @@
+
 "use strict";
 
 const path = require('path');
 const { spawn } = require('child_process');
 const citySpawns = require('../../shared/citySpawns.json');
 const fakeCityConfig = require('../../shared/fakeCities.json');
+const CityFileLoader = require('./CityFileLoader');
 const {
     TILE_SIZE,
     MAX_HEALTH,
@@ -15,6 +17,7 @@ const { rectangleCollision } = require('./gameplay/geometry');
 const { isCommandCenter } = require('./constants');
 
 const DEFENSE_ITEM_TYPES = Object.freeze({
+    wall: 8,
     turret: 9,
     turrets: 9,
     plasma: 11,
@@ -23,6 +26,7 @@ const DEFENSE_ITEM_TYPES = Object.freeze({
     sleeper: 10,
     sleepers: 10,
     'sleeper_turret': 10,
+    dfg: 7
 });
 
 const RECRUIT_DEFAULT_COUNT = 2;
@@ -81,6 +85,8 @@ const RECRUIT_POSITION_PATTERNS = Object.freeze([
 ]);
 
 const DEFAULT_BOTS_PER_CITY = 2;
+const MIN_ORBABLE_CITIES = 3;
+const CITIES_DATA_DIR = path.join(__dirname, '..', 'data', 'cities');
 
 const clamp = (value, min, max) => {
     if (!Number.isFinite(value)) {
@@ -467,7 +473,7 @@ const pushVisitedTile = (record, tileX, tileY) => {
     if (!record || !Number.isFinite(tileX) || !Number.isFinite(tileY)) {
         return;
     }
-    const key = `${tileX}_${tileY}`;
+    const key = `${tileX}_${tileY} `;
     if (!Array.isArray(record.visitedTiles)) {
         record.visitedTiles = [];
     }
@@ -488,7 +494,8 @@ const resolveBlueprintSize = (type) => {
             height: COMMAND_CENTER_HEIGHT_TILES
         };
     }
-    return { width: 1, height: 1 };
+    // Default buildings occupy a 3x3 footprint in tile space
+    return { width: 3, height: 3 };
 };
 
 const clampTileIndex = (value) => {
@@ -590,8 +597,12 @@ class FakeCityManager {
         this.navGrid = null;
         this.debug = require('debug')('BattleCity:FakeCityManager');
         this.disabled = !enabled;
+        this.cityFileLayouts = new Map();
+
         if (this.disabled) {
             this.debug('[fake-city] manager disabled via configuration');
+        } else {
+            this.loadCityLayouts();
         }
     }
 
@@ -601,6 +612,27 @@ class FakeCityManager {
 
     setIo(io) {
         this.io = io;
+    }
+
+    loadCityLayouts() {
+        try {
+            const spawnLookup = new Map();
+            Object.values(citySpawns || {}).forEach((entry) => {
+                if (!entry || !entry.name) {
+                    return;
+                }
+                const key = String(entry.name).toLowerCase();
+                spawnLookup.set(key, {
+                    tileX: entry.tileX,
+                    tileY: entry.tileY
+                });
+            });
+            this.cityFileLayouts = CityFileLoader.loadCitiesFromDirectory(CITIES_DATA_DIR, spawnLookup);
+            this.debug(`[fake - city] Loaded ${this.cityFileLayouts.size} city layouts from.city files`);
+        } catch (error) {
+            this.debug(`[fake - city] Failed to load city layouts: ${error.message} `);
+            this.cityFileLayouts = new Map();
+        }
     }
 
     update(now = Date.now()) {
@@ -614,16 +646,105 @@ class FakeCityManager {
         this.nextEvaluation = now + interval;
 
         const humanCount = this.getHumanPlayerCount();
-        const minPlayers = Math.max(0, toFiniteNumber(this.config.minPlayers, 1));
         const configured = this.getConfiguredCities();
         const maxActive = Math.min(configured.length, Math.max(0, toFiniteNumber(this.config.maxActive, configured.length)));
-        const desired = Math.min(maxActive, Math.max(0, minPlayers - humanCount));
+
+        // Calculate desired fake cities based on player count
+        const minPlayers = Math.max(0, toFiniteNumber(this.config.minPlayers, 1));
+        let desired = Math.min(maxActive, Math.max(0, minPlayers - humanCount));
+
+        // Solo player feature: spawn nearby city if only one human player
+        if (humanCount === 1 && this.activeCities.size === 0) {
+            const players = Object.values(this.game?.players || {});
+            const soloPlayer = players.find(p => p && !p.isBot);
+            if (soloPlayer && Number.isFinite(soloPlayer.city)) {
+                this.spawnNearbyCityForPlayer(soloPlayer.city);
+            }
+        }
+
+        // Ensure we always have minimum orbable cities
+        const orbableCount = this.getOrbableCityCount();
+        if (orbableCount < MIN_ORBABLE_CITIES) {
+            const needed = MIN_ORBABLE_CITIES - orbableCount;
+            desired = Math.max(desired, needed);
+            desired = Math.min(desired, maxActive);
+            this.debug(`[fake - city] Only ${orbableCount} orbable cities, spawning ${needed} more`);
+        }
 
         if (desired > this.activeCities.size) {
             this.spawnFakeCities(desired - this.activeCities.size, configured);
         } else if (desired < this.activeCities.size) {
             this.removeFakeCities(this.activeCities.size - desired);
         }
+    }
+
+    /**
+     * Get count of currently orbable fake cities
+     * @returns {number} - Number of orbable fake cities
+     */
+    getOrbableCityCount() {
+        const cityManager = this.buildingFactory?.cityManager;
+        if (!cityManager) {
+            return 0;
+        }
+
+        let count = 0;
+        for (const cityId of this.activeCities.keys()) {
+            if (cityManager.isOrbable(cityId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Spawn a fake city near a player's location (for solo player experience)
+     * @param {number} playerCityId - The player's current city ID
+     */
+    spawnNearbyCityForPlayer(playerCityId) {
+        if (!Number.isFinite(playerCityId)) {
+            return false;
+        }
+
+        const playerSpawn = citySpawns?.[String(playerCityId)];
+        if (!playerSpawn) {
+            return false;
+        }
+
+        const configured = this.getConfiguredCities();
+        const available = configured.filter((entry) => !this.activeCities.has(toFiniteNumber(entry.cityId)));
+
+        if (available.length === 0) {
+            return false;
+        }
+
+        // Find nearest available city
+        let nearestCity = null;
+        let nearestDistance = Infinity;
+
+        for (const entry of available) {
+            const cityId = toFiniteNumber(entry.cityId, null);
+            if (cityId === null) continue;
+
+            const spawn = citySpawns?.[String(cityId)];
+            if (!spawn) continue;
+
+            const dx = (spawn.tileX || 0) - (playerSpawn.tileX || 0);
+            const dy = (spawn.tileY || 0) - (playerSpawn.tileY || 0);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > 0 && distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestCity = entry;
+            }
+        }
+
+        if (nearestCity && this.spawnFakeCity(nearestCity)) {
+            this.debug(`[fake - city] Spawned nearby city ${nearestCity.cityId} for solo player at city ${playerCityId} `);
+            return true;
+        }
+
+        return false;
     }
 
     spawnBotInCity(cityId, desiredCount = null) {
@@ -683,14 +804,25 @@ class FakeCityManager {
         return resolveBotsPerCity(resolvedEntry, this.config);
     }
 
-    updateCityBotCapacityMetadata(cityId, desiredCount) {
+    updateCityBotCapacityMetadata(cityId, desiredCount, entry = null) {
         if (!Number.isFinite(cityId)) {
             return;
         }
         const numericCity = Math.max(0, Math.floor(cityId));
         const desired = Number.isFinite(desiredCount) ? Math.max(0, Math.floor(desiredCount)) : 0;
+        const configEntry = entry || this.findCityConfig(numericCity);
+        const overrideMayorSlots = Number.isFinite(toFiniteNumber(configEntry?.mayorSlots, null))
+            ? Math.max(0, Math.floor(configEntry.mayorSlots))
+            : null;
+        const overrideRecruitSlots = Number.isFinite(toFiniteNumber(configEntry?.recruitSlots, null))
+            ? Math.max(0, Math.floor(configEntry.recruitSlots))
+            : null;
         const mayorSlots = desired > 0 ? 1 : 0;
         const recruitCapacity = Math.max(0, desired - mayorSlots);
+        const resolvedMayorSlots = overrideMayorSlots !== null ? overrideMayorSlots : mayorSlots;
+        const resolvedRecruitCapacity = overrideRecruitSlots !== null
+            ? overrideRecruitSlots
+            : recruitCapacity;
         const cityManager = this.buildingFactory?.cityManager;
         if (!cityManager) {
             return;
@@ -699,8 +831,8 @@ class FakeCityManager {
         if (!cityState) {
             return;
         }
-        cityState.fakeBotMayorSlots = mayorSlots;
-        cityState.fakeBotRecruitCapacity = recruitCapacity;
+        cityState.fakeBotMayorSlots = resolvedMayorSlots;
+        cityState.fakeBotRecruitCapacity = resolvedRecruitCapacity;
     }
 
     ensureCityBotCount(cityId, desiredCount = DEFAULT_BOTS_PER_CITY) {
@@ -710,7 +842,8 @@ class FakeCityManager {
         const numericCity = Math.max(0, Math.floor(cityId));
         const target = Math.max(0, Math.floor(desiredCount));
 
-        this.updateCityBotCapacityMetadata(numericCity, target);
+        const entry = this.findCityConfig(numericCity);
+        this.updateCityBotCapacityMetadata(numericCity, target, entry);
 
         const record = this.activeCities.get(numericCity);
         if (!record || !Array.isArray(record.buildingIds) || record.buildingIds.length === 0) {
@@ -726,7 +859,7 @@ class FakeCityManager {
         let spawned = 0;
         while ((this.botProcesses.get(numericCity)?.size || 0) < target) {
             const index = (this.botProcesses.get(numericCity)?.size || 0) + 1;
-            const nameHint = `bot-${numericCity}-${index}`;
+            const nameHint = `bot - ${numericCity} -${index} `;
             const currentBots = this.botProcesses.get(numericCity)?.size || 0;
             const cityState = this.playerFactory && typeof this.playerFactory.computeCityState === 'function'
                 ? this.playerFactory.computeCityState(numericCity)
@@ -746,8 +879,8 @@ class FakeCityManager {
         const resolvedLayout = Array.isArray(layout) && layout.length
             ? layout
             : (Array.isArray(entry?.layout) && entry.layout.length
-                    ? entry.layout
-                    : (Array.isArray(this.config.layout) ? this.config.layout : []));
+                ? entry.layout
+                : (Array.isArray(this.config.layout) ? this.config.layout : []));
 
         const bounds = calculateLayoutBounds(resolvedLayout, baseTileX, baseTileY);
         const margin = Math.max(0, toFiniteNumber(entry?.patrolMarginTiles, RECRUIT_PATROL_MARGIN_TILES));
@@ -1001,23 +1134,20 @@ class FakeCityManager {
         if (!this.isBlocked(spawn.x, spawn.y)) {
             return spawn;
         }
-        this.debug(`[recruit fallback] spawn blocked at (${spawn.x.toFixed(1)}, ${spawn.y.toFixed(1)}) searching alternatives`);
-        const offsets = [
-            { dx: TILE_SIZE, dy: 0 },
-            { dx: -TILE_SIZE, dy: 0 },
-            { dx: 0, dy: TILE_SIZE },
-            { dx: 0, dy: -TILE_SIZE },
-            { dx: TILE_SIZE * 0.75, dy: TILE_SIZE * 0.75 },
-            { dx: -TILE_SIZE * 0.75, dy: TILE_SIZE * 0.75 },
-            { dx: TILE_SIZE * 0.75, dy: -TILE_SIZE * 0.75 },
-            { dx: -TILE_SIZE * 0.75, dy: -TILE_SIZE * 0.75 }
+        this.debug(`[recruit fallback] spawn blocked at(${spawn.x.toFixed(1)}, ${spawn.y.toFixed(1)}) searching alternatives`);
+        const radii = [TILE_SIZE, TILE_SIZE * 2, TILE_SIZE * 3, TILE_SIZE * 4];
+        const directions = [
+            { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+            { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 }
         ];
-        for (const offset of offsets) {
-            const candidateX = clamp(spawn.x + offset.dx, 0, MAP_MAX_COORD);
-            const candidateY = clamp(spawn.y + offset.dy, 0, MAP_MAX_COORD);
-            if (!this.isBlocked(candidateX, candidateY)) {
-                this.debug(`[recruit fallback] spawn moved to (${candidateX.toFixed(1)}, ${candidateY.toFixed(1)})`);
-                return Object.assign({}, spawn, { x: candidateX, y: candidateY });
+        for (const radius of radii) {
+            for (const dir of directions) {
+                const candidateX = clamp(spawn.x + dir.dx * radius, 0, MAP_MAX_COORD);
+                const candidateY = clamp(spawn.y + dir.dy * radius, 0, MAP_MAX_COORD);
+                if (!this.isBlocked(candidateX, candidateY)) {
+                    this.debug(`[recruit fallback] spawn moved to(${candidateX.toFixed(1)}, ${candidateY.toFixed(1)})`);
+                    return Object.assign({}, spawn, { x: candidateX, y: candidateY });
+                }
             }
         }
         return spawn;
@@ -1169,7 +1299,7 @@ class FakeCityManager {
             return null;
         }
         const visitedPenalty = options.visitedPenalty instanceof Set ? options.visitedPenalty : null;
-        const startKey = `${start.x}_${start.y}`;
+        const startKey = `${start.x}_${start.y} `;
         const open = [];
         const openMap = new Map();
         const cameFrom = new Map();
@@ -1179,7 +1309,7 @@ class FakeCityManager {
 
         const pushNode = (node) => {
             open.push(node);
-            openMap.set(`${node.x}_${node.y}`, node);
+            openMap.set(`${node.x}_${node.y} `, node);
         };
 
         const popLowest = () => {
@@ -1196,7 +1326,7 @@ class FakeCityManager {
                 return null;
             }
             open.splice(bestIndex, 1);
-            openMap.delete(`${bestNode.x}_${bestNode.y}`);
+            openMap.delete(`${bestNode.x}_${bestNode.y} `);
             return bestNode;
         };
 
@@ -1209,7 +1339,7 @@ class FakeCityManager {
             if (!current) {
                 break;
             }
-            const currentKey = `${current.x}_${current.y}`;
+            const currentKey = `${current.x}_${current.y} `;
             if (current.x === goal.x && current.y === goal.y) {
                 const path = [];
                 let walkerKey = currentKey;
@@ -1240,7 +1370,7 @@ class FakeCityManager {
                 if (this.isNavTileBlocked(neighbor.x, neighbor.y)) {
                     continue;
                 }
-                const neighborKey = `${neighbor.x}_${neighbor.y}`;
+                const neighborKey = `${neighbor.x}_${neighbor.y} `;
                 const penalty = visitedPenalty && visitedPenalty.has(neighborKey) ? 6 : 0;
                 const tentativeG = current.g + 1 + penalty;
                 const existingG = gScore.get(neighborKey);
@@ -1324,9 +1454,9 @@ class FakeCityManager {
 
         const targetCenter = target
             ? {
-                    x: (target.offset?.x ?? target.x ?? 0) + (TILE_SIZE / 2),
-                    y: (target.offset?.y ?? target.y ?? 0) + (TILE_SIZE / 2)
-                }
+                x: (target.offset?.x ?? target.x ?? 0) + (TILE_SIZE / 2),
+                y: (target.offset?.y ?? target.y ?? 0) + (TILE_SIZE / 2)
+            }
             : null;
 
         if (mode === 'patrol') {
@@ -1622,7 +1752,7 @@ class FakeCityManager {
         const player = this.playerFactory.createSystemPlayer(payload, {
             isFake: true,
             isFakeRecruit: true,
-            ownerId: record.ownerId ?? `fake_city_${record.cityId}`,
+            ownerId: record.ownerId ?? `fake_city_${record.cityId} `,
             type: 'fake_recruit',
             broadcast: options.broadcast !== false,
             health: MAX_HEALTH
@@ -1672,7 +1802,7 @@ class FakeCityManager {
         record.stuckCounter = 0;
         player.isMoving = 0;
         const debugLabel = `[recruit ${record.id}]`;
-        this.debug(`${debugLabel} spawn ready at (${spawn.x.toFixed(1)}, ${spawn.y.toFixed(1)}) dir=${player.direction}`);
+        this.debug(`${debugLabel} spawn ready at(${spawn.x.toFixed(1)}, ${spawn.y.toFixed(1)}) dir = ${player.direction} `);
 
         return player;
     }
@@ -1762,9 +1892,9 @@ class FakeCityManager {
 
         const lastSeen = lastSeenAge <= LAST_SEEN_TIMEOUT_MS
             ? {
-                    x: record.lastSeenX ?? shooterCenter.x,
-                    y: record.lastSeenY ?? shooterCenter.y
-                }
+                x: record.lastSeenX ?? shooterCenter.x,
+                y: record.lastSeenY ?? shooterCenter.y
+            }
             : null;
 
         const rangePx = targetCenter
@@ -1848,7 +1978,7 @@ class FakeCityManager {
 
         let goalKey = null;
         if (goal && Number.isFinite(goal.goalTileX) && Number.isFinite(goal.goalTileY)) {
-            goalKey = `${goal.goalTileX}_${goal.goalTileY}`;
+            goalKey = `${goal.goalTileX}_${goal.goalTileY} `;
         }
 
         let desiredDirectionHint = previousDirection;
@@ -1872,9 +2002,9 @@ class FakeCityManager {
         const currentTile = pixelToTile(px, py);
         let desiredPoint = goal
             ? {
-                    x: goal.goalPixelX ?? px,
-                    y: goal.goalPixelY ?? py
-                }
+                x: goal.goalPixelX ?? px,
+                y: goal.goalPixelY ?? py
+            }
             : null;
 
         if (goal && goal.requiresPath && desiredPoint) {
@@ -1934,9 +2064,9 @@ class FakeCityManager {
             if (desiredPoint) {
                 const point = (mode === 'patrol' && Number.isFinite(record.motionSeed))
                     ? {
-                            x: clamp(desiredPoint.x + ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD),
-                            y: clamp(desiredPoint.y - ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD)
-                        }
+                        x: clamp(desiredPoint.x + ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD),
+                        y: clamp(desiredPoint.y - ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD)
+                    }
                     : desiredPoint;
                 return {
                     point,
@@ -2309,7 +2439,7 @@ class FakeCityManager {
             y: clamp(originY + offsetY, 0, mapMax),
             direction: pattern.direction ?? 16
         };
-        this.debug(`[bot] computed spawn for city ${cityId} at (${spawn.x}, ${spawn.y})`);
+        this.debug(`[bot] computed spawn for city ${cityId} at(${spawn.x}, ${spawn.y})`);
         return this.ensureSpawnIsClear(spawn);
     }
 
@@ -2334,7 +2464,7 @@ class FakeCityManager {
         const patrolPath = this.getPatrolPathForCity(numericCity);
         const pathLength = patrolPath.length;
         for (let index = 0; index < count; index += 1) {
-            const id = `fake_recruit_${numericCity}_${index}`;
+            const id = `fake_recruit_${numericCity}_${index} `;
             const spawn = this.computeRecruitSpawn(numericCity, baseTileX, baseTileY, index);
             const rotation = pathLength ? Math.floor(Math.random() * pathLength) : 0;
             const variant = pathLength ? createPatrolVariant(patrolPath, { rotation }) : [];
@@ -2351,7 +2481,7 @@ class FakeCityManager {
                 nextShotAt: 0,
                 nextScanAt: now,
                 nextThinkAt: 0,
-                ownerId: `fake_city_${numericCity}`,
+                ownerId: `fake_city_${numericCity} `,
                 lastBroadcastAt: 0,
                 broadcastCooldown: 150,
                 targetId: null,
@@ -2468,13 +2598,13 @@ class FakeCityManager {
             };
 
             child.once('error', (error) => {
-                this.debug(`[bot] spawn failed for city ${numericCity}: ${error.message}`);
+                this.debug(`[bot] spawn failed for city ${numericCity}: ${error.message} `);
                 cleanup();
             });
 
             child.once('exit', (code, signal) => {
                 this.debug(
-                    `[bot] city ${numericCity} bot exited code=${code} signal=${signal || 'null'}`
+                    `[bot] city ${numericCity} bot exited code = ${code} signal = ${signal || 'null'} `
                 );
                 cleanup();
             });
@@ -2491,10 +2621,10 @@ class FakeCityManager {
                 record.botProcesses.push(child);
             }
 
-            this.debug(`[bot] launched bot for city ${numericCity}${options.name ? ` (${options.name})` : ''}`);
+            this.debug(`[bot] launched bot for city ${numericCity}${options.name ? ` (${options.name})` : ''} `);
             return child;
         } catch (error) {
-            this.debug(`[bot] unable to launch bot for city ${numericCity}: ${error.message}`);
+            this.debug(`[bot] unable to launch bot for city ${numericCity}: ${error.message} `);
             return null;
         }
     }
@@ -2524,11 +2654,11 @@ class FakeCityManager {
                 }
                 terminated += 1;
             } catch (error) {
-                this.debug(`[bot] failed to terminate bot for city ${numericCity}: ${error.message}`);
+                this.debug(`[bot] failed to terminate bot for city ${numericCity}: ${error.message} `);
             }
         }
         if (terminated > 0) {
-            this.debug(`[bot] terminated ${terminated} bot(s) for city ${numericCity} (${reason})`);
+            this.debug(`[bot] terminated ${terminated} bot(s) for city ${numericCity}(${reason})`);
         }
     }
 
@@ -2585,6 +2715,227 @@ class FakeCityManager {
         return null;
     }
 
+    /**
+     * Generate random hazard placements within city bounds
+     * Validates positions against buildings, blocking tiles, and map edges
+     * @param {number} baseX - Base tile X coordinate
+     * @param {number} baseY - Base tile Y coordinate
+     * @param {Array} layout - Building layout
+     * @param {number} count - Number of hazards to generate
+     * @param {string} type - Hazard type ('mine', 'turret', 'plasma', 'sleeper')
+     * @returns {Array} - Array of hazard placements {type, dx, dy, angle?}
+     */
+    generateRandomHazards(baseX, baseY, layout, count, type, extraOccupied = null) {
+        const hazards = [];
+        if (count <= 0) {
+            return hazards;
+        }
+
+        // Calculate city bounds from layout
+        const bounds = calculateLayoutBounds(layout, baseX, baseY);
+        const minX = Math.max(0, bounds.minTileX - 2);
+        const maxX = Math.min(MAP_SIZE_TILES - 1, bounds.maxTileX + 2);
+        const minY = Math.max(0, bounds.minTileY - 2);
+        const maxY = Math.min(MAP_SIZE_TILES - 1, bounds.maxTileY + 2);
+
+        // Build set of occupied tiles from layout and exclusions
+        const occupiedTiles = new Set();
+        if (Array.isArray(layout)) {
+            for (const blueprint of layout) {
+                const dx = toFiniteNumber(blueprint?.dx, 0);
+                const dy = toFiniteNumber(blueprint?.dy, 0);
+                const tileX = Math.floor(baseX + dx);
+                const tileY = Math.floor(baseY + dy);
+
+                // Mark tiles occupied by this building (including multi-tile buildings)
+                const { width, height } = resolveBlueprintSize(toFiniteNumber(blueprint?.type, null));
+                for (let ox = 0; ox < width; ox++) {
+                    for (let oy = 0; oy < height; oy++) {
+                        occupiedTiles.add(`${tileX + ox}_${tileY + oy}`);
+                    }
+                }
+            }
+        }
+        if (extraOccupied && extraOccupied.size) {
+            extraOccupied.forEach((key) => occupiedTiles.add(key));
+        }
+
+        // Helper to check if a position is valid
+        const isValidPosition = (tileX, tileY, placedPositions) => {
+            // Check map bounds
+            if (tileX < minX || tileX > maxX || tileY < minY || tileY > maxY) {
+                return false;
+            }
+
+            // Check if occupied by building
+            if (occupiedTiles.has(`${tileX}_${tileY}`)) {
+                return false;
+            }
+
+            // Check if already placed hazard here
+            if (placedPositions.has(`${tileX}_${tileY}`)) {
+                return false;
+            }
+
+            // Check if blocking tile (lava, rocks, water)
+            const mapValue = this.getMapValue(tileX, tileY);
+            if (isBlockingTileValue(mapValue)) {
+                return false;
+            }
+
+            return true;
+        };
+
+        const placedPositions = new Set();
+        const maxAttempts = count * 20; // Try 20x the desired count
+        let attempts = 0;
+
+        while (hazards.length < count && attempts < maxAttempts) {
+            attempts++;
+
+            // Random position within bounds
+            const tileX = Math.floor(minX + Math.random() * (maxX - minX + 1));
+            const tileY = Math.floor(minY + Math.random() * (maxY - minY + 1));
+
+            if (!isValidPosition(tileX, tileY, placedPositions)) {
+                continue;
+            }
+
+            const dx = tileX - baseX;
+            const dy = tileY - baseY;
+
+            // Add small random offset within tile for variety (0.1 to 0.9)
+            const offsetX = 0.1 + Math.random() * 0.8;
+            const offsetY = 0.1 + Math.random() * 0.8;
+
+            const hazard = {
+                type,
+                dx: dx + offsetX,
+                dy: dy + offsetY
+            };
+
+            // Add random angle for turrets/plasma/sleepers
+            if (type === 'turret' || type === 'plasma' || type === 'sleeper') {
+                hazard.angle = Math.floor(Math.random() * 32);
+            }
+
+            hazards.push(hazard);
+            placedPositions.add(`${tileX}_${tileY}`);
+        }
+
+        if (hazards.length < count) {
+            this.debug(`[fake - city] Only placed ${hazards.length}/${count} ${type} hazards (ran out of valid positions)`);
+        }
+
+        return hazards;
+    }
+
+    /**
+     * Generate guaranteed defenses around the command center's bottom row (orbable zone)
+     * @param {number} baseX - Base tile X coordinate
+     * @param {number} baseY - Base tile Y coordinate
+     * @returns {Array} - Array of defense placements for CC protection
+     */
+    generateCommandCenterDefenses(baseX, baseY) {
+        const defenses = [];
+
+        // Command center is 3 tiles wide, 2 tiles tall
+        // Bottom row (y + 2) is the orbable zone - heavily defend it
+
+        // Place walls directly on the bottom row of the CC footprint (orbable zone)
+        for (let dx = 0; dx < COMMAND_CENTER_WIDTH_TILES; dx++) {
+            defenses.push({
+                type: 'wall',
+                dx,
+                dy: COMMAND_CENTER_HEIGHT_TILES,
+                allowOverlap: false
+            });
+        }
+
+        // Mines slightly ahead of the walls to avoid overlap but still guard the front
+        defenses.push({
+            type: 'mine',
+            dx: 0.5,
+            dy: COMMAND_CENTER_HEIGHT_TILES + 0.5
+        });
+        defenses.push({
+            type: 'mine',
+            dx: 2.5,
+            dy: COMMAND_CENTER_HEIGHT_TILES + 0.5
+        });
+
+        // Turrets on the corners of the orbable zone
+        defenses.push({
+            type: 'turret',
+            dx: -1,
+            dy: COMMAND_CENTER_HEIGHT_TILES,
+            angle: 8 // Facing down-right
+        });
+
+        defenses.push({
+            type: 'turret',
+            dx: COMMAND_CENTER_WIDTH_TILES,
+            dy: COMMAND_CENTER_HEIGHT_TILES,
+            angle: 24 // Facing down-left
+        });
+
+        // Additional plasma cannons for extra defense
+        defenses.push({
+            type: 'plasma',
+            dx: -1,
+            dy: 0,
+            angle: 16 // Facing down
+        });
+
+        defenses.push({
+            type: 'plasma',
+            dx: COMMAND_CENTER_WIDTH_TILES,
+            dy: 0,
+            angle: 16 // Facing down
+        });
+
+        return defenses;
+    }
+
+    /**
+     * Build a set of occupied/exclusion tiles including CC footprint, walls, and a small escape corridor
+     */
+    buildCcOccupiedTiles(baseX, baseY, ccDefenses) {
+        const occupied = new Set();
+        // CC footprint
+        for (let ox = 0; ox < COMMAND_CENTER_WIDTH_TILES; ox++) {
+            for (let oy = 0; oy < COMMAND_CENTER_HEIGHT_TILES; oy++) {
+                occupied.add(`${baseX + ox}_${baseY + oy}`);
+            }
+        }
+        // Add CC defenses (walls/mines/turrets/plasma positions)
+        if (Array.isArray(ccDefenses)) {
+            ccDefenses.forEach((def) => {
+                const dx = toFiniteNumber(def?.dx, null);
+                const dy = toFiniteNumber(def?.dy, null);
+                if (!Number.isFinite(dx) || !Number.isFinite(dy)) {
+                    return;
+                }
+                const tx = Math.floor(baseX + dx);
+                const ty = Math.floor(baseY + dy);
+                occupied.add(`${tx}_${ty}`);
+            });
+        }
+        // Escape corridor directly below CC: clear a 5x4 area centered on CC
+        const corridorMinX = baseX - 1;
+        const corridorMaxX = baseX + COMMAND_CENTER_WIDTH_TILES + 1;
+        const corridorMinY = baseY + COMMAND_CENTER_HEIGHT_TILES;
+        const corridorMaxY = corridorMinY + 3;
+        for (let x = corridorMinX; x <= corridorMaxX; x++) {
+            for (let y = corridorMinY; y <= corridorMaxY; y++) {
+                if (x >= 0 && y >= 0 && x < MAP_SIZE_TILES && y < MAP_SIZE_TILES) {
+                    occupied.add(`${x}_${y}`);
+                }
+            }
+        }
+        return occupied;
+    }
+
     deployDefenses(cityId, entry, baseX, baseY, layout, ownerId) {
         const result = {
             items: [],
@@ -2604,8 +2955,12 @@ class FakeCityManager {
                 const dy = toFiniteNumber(blueprint?.dy, 0);
                 const tileX = Math.floor(baseX + dx);
                 const tileY = Math.floor(baseY + dy);
-                if (Number.isFinite(tileX) && Number.isFinite(tileY)) {
-                    layoutOccupied.add(`${tileX}_${tileY}`);
+                const { width, height } = resolveBlueprintSize(toFiniteNumber(blueprint?.type, null));
+                for (let ox = 0; ox < width; ox++) {
+                    for (let oy = 0; oy < height; oy++) {
+                        const key = `${tileX + ox}_${tileY + oy}`;
+                        layoutOccupied.add(key);
+                    }
                 }
             }
         }
@@ -2725,9 +3080,23 @@ class FakeCityManager {
 
         const baseX = toFiniteNumber(entry.baseTileX, toFiniteNumber(spawn.tileX, 0));
         const baseY = toFiniteNumber(entry.baseTileY, toFiniteNumber(spawn.tileY, 0));
-        const layout = Array.isArray(entry.layout) && entry.layout.length
-            ? entry.layout
-            : (Array.isArray(this.config.layout) ? this.config.layout : []);
+
+        // Try to load layout from city file based on city name
+        let layout = null;
+        if (this.cityFileLayouts.size > 0) {
+            const cityName = spawn.name || '';
+            layout = CityFileLoader.pickRandomLayout(this.cityFileLayouts, cityName);
+            if (layout) {
+                this.debug(`[fake-city] Using ${cityName} layout`);
+            }
+        }
+
+        // Fall back to configured layout if no city file layout found
+        if (!layout || layout.length === 0) {
+            layout = Array.isArray(entry.layout) && entry.layout.length
+                ? entry.layout
+                : (Array.isArray(this.config.layout) ? this.config.layout : []);
+        }
 
         if (!layout.length) {
             return false;
@@ -2758,6 +3127,8 @@ class FakeCityManager {
             : null;
         const patrolPath = this.buildPatrolPath(entry, baseX, baseY, layout);
         const spawnedIds = [];
+        let testBuilding = null;
+
         for (const blueprint of layout) {
             const type = toFiniteNumber(blueprint?.type, null);
             if (type === null) {
@@ -2767,6 +3138,14 @@ class FakeCityManager {
             const dy = toFiniteNumber(blueprint?.dy, 0);
             const x = baseX + dx;
             const y = baseY + dy;
+
+            // DEBUG TEST: Spawn first building to see coordinate system
+            if (spawnedIds.length === 0) {
+                console.log(`[fake-city TEST] City spawn: (${baseX}, ${baseY})`);
+                console.log(`[fake-city TEST] First building: type=${type}, dx=${dx}, dy=${dy}`);
+                console.log(`[fake-city TEST] Calculated position: (${x}, ${y})`);
+            }
+
             const building = this.buildingFactory?.spawnStaticBuilding({
                 id: `fake_${cityId}_${x}_${y}`,
                 ownerId,
@@ -2778,7 +3157,14 @@ class FakeCityManager {
             });
             if (building) {
                 spawnedIds.push(building.id);
+                if (spawnedIds.length === 1) {
+                    testBuilding = { x, y, type };
+                }
             }
+        }
+
+        if (testBuilding) {
+            console.log(`[fake-city TEST] First building spawned at: (${testBuilding.x}, ${testBuilding.y}) type=${testBuilding.type}`);
         }
 
         if (spawnedIds.length === 0) {
@@ -2790,7 +3176,33 @@ class FakeCityManager {
             return false;
         }
 
-        const defenses = this.deployDefenses(cityId, entry, baseX, baseY, layout, ownerId);
+        // Generate multi-tiered defenses:
+        // 1. Guaranteed CC defenses (includes walls on CC bottom row)
+        const ccDefenses = this.generateCommandCenterDefenses(baseX, baseY);
+
+        // Build occupied/exclusion tiles so hazards avoid CC footprint/defenses and leave an escape corridor
+        const ccOccupiedTiles = this.buildCcOccupiedTiles(baseX, baseY, ccDefenses);
+
+        // 2. Random hazards/items across the city: ensure each type appears
+        const randomMines = this.generateRandomHazards(baseX, baseY, layout, 8, 'mine', ccOccupiedTiles);
+        const randomTurrets = this.generateRandomHazards(baseX, baseY, layout, 4, 'turret', ccOccupiedTiles);
+        const randomPlasma = this.generateRandomHazards(baseX, baseY, layout, 3, 'plasma', ccOccupiedTiles);
+        const randomSleepers = this.generateRandomHazards(baseX, baseY, layout, 2, 'sleeper', ccOccupiedTiles);
+        const randomDfg = this.generateRandomHazards(baseX, baseY, layout, 2, 'dfg', ccOccupiedTiles);
+
+        // Combine all defenses
+        const allDefenses = [
+            ...ccDefenses,
+            ...randomMines,
+            ...randomTurrets,
+            ...randomPlasma,
+            ...randomSleepers,
+            ...randomDfg
+        ];
+
+        // Deploy defenses using the existing deployment system
+        const customEntry = { ...entry, defenses: allDefenses };
+        const defenses = this.deployDefenses(cityId, customEntry, baseX, baseY, layout, ownerId);
         const defenseItemsSnapshot = defenses.items.map((item) => ({ ...item }));
         const hazardIdsSnapshot = Array.isArray(defenses.hazardIds) ? [...defenses.hazardIds] : [];
 
