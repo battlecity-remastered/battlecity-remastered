@@ -1125,12 +1125,14 @@ class SocketListener extends EventEmitter2 {
                     this.game.audio.playEffect(SOUND_IDS.HIT, { volume: 0.7 });
                 }
             }
+            this.game.forceDraw = true;
             return;
         }
         if (!this.game.otherPlayers[update.id]) {
             this.game.otherPlayers[update.id] = { id: update.id };
         }
         this.game.otherPlayers[update.id].health = Math.max(0, healthValue);
+        this.game.forceDraw = true;
     }
 
     applyStatusUpdate(update) {
