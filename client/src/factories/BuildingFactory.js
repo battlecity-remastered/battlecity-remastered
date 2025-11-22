@@ -459,20 +459,22 @@ class BuildingFactory {
                 console.warn('Demolition restricted: only mayors may demolish buildings.');
             }
             this.game.isDemolishing = false;
-            return;
+            return false;
         }
 
         const buildingNode = this.findBuildingAtTile(x, y);
         if (!buildingNode) {
-            return;
+            return false;
         }
         if (this.pendingDemolish.has(buildingNode.id)) {
-            return;
+            return false;
         }
         if (this.game.socketListener?.sendDemolishBuilding) {
             this.pendingDemolish.add(buildingNode.id);
             this.game.socketListener.sendDemolishBuilding(buildingNode.id);
+            return true;
         }
+        return false;
     }
 
     deleteBuilding(building, notifyServer = true) {

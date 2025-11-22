@@ -108,11 +108,13 @@ export const setupMouseInputsWithPixi = (game, pixiInstance) => {
           48,
             );
 
-            game.buildingFactory.demolishBuilding(x, y);
-
-            game.isDemolishing = false;
-            game.stage.cursor = "cursor";
-            game.interactionLayer.cursor = "cursor";
+            const demolished = game.buildingFactory.demolishBuilding(x, y);
+            if (!demolished) {
+                game.isDemolishing = false;
+                game.stage.cursor = "cursor";
+                game.interactionLayer.cursor = "cursor";
+            }
+            return;
         }
     });
 
