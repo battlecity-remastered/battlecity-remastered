@@ -5,18 +5,30 @@ import {
     BULLET_RANGE_ROCKET,
     MOVEMENT_SPEED_BULLET,
     MOVEMENT_SPEED_FLARE
-} from "../constants";
-import {BULLET_ALIVE} from "../constants";
-import {BULLET_DEAD} from "../constants";
-import {DAMAGE_LASER} from "../constants";
-import {DAMAGE_ROCKET} from "../constants";
-import {DAMAGE_FLARE} from "../constants";
+} from "../constants.js";
+import {BULLET_ALIVE} from "../constants.js";
+import {BULLET_DEAD} from "../constants.js";
+import {DAMAGE_LASER} from "../constants.js";
+import {DAMAGE_ROCKET} from "../constants.js";
+import {DAMAGE_FLARE} from "../constants.js";
 
-import {collidedWithRock} from "../collision/collision-bullet";
-import {collidedWithCurrentPlayer} from "../collision/collision-bullet";
-import {collidedWithAnotherPlayer} from "../collision/collision-bullet";
-import {collidedWithBuilding} from "../collision/collision-bullet";
-import {collidedWithItem} from "../collision/collision-bullet";
+import {collidedWithRock} from "../collision/collision-bullet.js";
+import {collidedWithCurrentPlayer} from "../collision/collision-bullet.js";
+import {collidedWithAnotherPlayer} from "../collision/collision-bullet.js";
+import {collidedWithBuilding} from "../collision/collision-bullet.js";
+import {collidedWithItem} from "../collision/collision-bullet.js";
+
+const DEFENSE_SOURCE_TYPES = new Set(['turret', 'plasma', 'sleeper']);
+
+const isDefenseStructureBullet = (bullet) => {
+    if (!bullet) {
+        return false;
+    }
+    const sourceType = typeof bullet.sourceType === 'string'
+        ? bullet.sourceType.toLowerCase()
+        : '';
+    return DEFENSE_SOURCE_TYPES.has(sourceType);
+};
 
 const BULLET_DAMAGE_BY_TYPE = {
     0: DAMAGE_LASER,
@@ -69,6 +81,7 @@ class BulletFactory {
         while (bullet) {
 
             var fDir = bullet.angle;
+            const defenseShot = isDefenseStructureBullet(bullet);
 
             const speed = bullet.speed ?? getBulletSpeed(bullet.type);
 
@@ -99,13 +112,22 @@ class BulletFactory {
 
             const collidedItem = collidedWithItem(this.game, bullet);
             if (collidedItem) {
-                if (this.game.itemFactory && typeof this.game.itemFactory.handleBulletHit === 'function') {
-                    const result = this.game.itemFactory.handleBulletHit(collidedItem, bullet) || {};
-                    if (result.consumed !== false) {
+                if (defenseShot) {
+                    if (this.game.itemFactory && typeof this.game.itemFactory.spawnExplosion === 'function') {
+                        const impactX = Number.isFinite(bullet.x) ? bullet.x : collidedItem.x;
+                        const impactY = Number.isFinite(bullet.y) ? bullet.y : collidedItem.y;
+                        this.game.itemFactory.spawnExplosion(impactX, impactY);
+                    }
+                    bullet.life = BULLET_DEAD;
+                } else {
+                    if (this.game.itemFactory && typeof this.game.itemFactory.handleBulletHit === 'function') {
+                        const result = this.game.itemFactory.handleBulletHit(collidedItem, bullet) || {};
+                        if (result.consumed !== false) {
+                            bullet.life = BULLET_DEAD;
+                        }
+                    } else {
                         bullet.life = BULLET_DEAD;
                     }
-                } else {
-                    bullet.life = BULLET_DEAD;
                 }
             }
 
