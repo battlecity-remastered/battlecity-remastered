@@ -192,9 +192,17 @@ class BulletFactory {
             }
         }
 
-        const teamId = (data.teamId !== undefined && data.teamId !== null)
-            ? data.teamId
-            : (this.playerFactory?.getPlayerTeam(socket.id) ?? null);
+        let teamId = null;
+        const teamRaw = data.team ?? data.teamId;
+        if (teamRaw !== undefined && teamRaw !== null) {
+            const numericTeam = Number(teamRaw);
+            if (Number.isFinite(numericTeam)) {
+                teamId = Math.floor(numericTeam);
+            }
+        }
+        if (teamId === null) {
+            teamId = this.playerFactory?.getPlayerTeam(socket.id) ?? null;
+        }
 
         this.registerSourceShot(sourceId, now);
 

@@ -65,3 +65,21 @@ test('allows local structure-origin bullets (e.g., turret)', () => {
     });
     assert.strictEqual(getBulletCallCount(), 1);
 });
+
+test('ignores echoed structure shots when the client already fired locally', () => {
+    const { listener, getBulletCallCount } = createListener();
+    listener.markLocalShot({
+        shooter: 'player-1',
+        sourceId: 'turret-99'
+    });
+    listener.handleBulletShot({
+        shooter: 'player-1',
+        sourceType: 'turret',
+        sourceId: 'turret-99',
+        x: 20,
+        y: 30,
+        type: 0,
+        angle: 4
+    });
+    assert.strictEqual(getBulletCallCount(), 0);
+});

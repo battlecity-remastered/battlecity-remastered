@@ -533,6 +533,12 @@ class SocketListener extends EventEmitter2 {
         if (localPlayerId && shooterId && shooterId === localPlayerId && !hasStructureSource) {
             return;
         }
+        if (hasStructureSource && this.isDuplicateLocalStructureShot({
+            shooter: shooterId,
+            sourceId: data.sourceId ?? null
+        })) {
+            return;
+        }
         const options = {
             sourceId: data.sourceId ?? null,
             sourceType: sourceType ?? null,
@@ -1210,6 +1216,35 @@ class SocketListener extends EventEmitter2 {
             return SOUND_IDS.TURRET;
         }
         return SOUND_IDS.LASER;
+    }
+
+    isDuplicateLocalStructureShot(bullet) {
+        if (!bullet || !this.localShotCache) {
+            return false;
+        }
+        const now = Date.now();
+        this.pruneLocalShots(now);
+        const sourceId = (typeof bullet.sourceId === 'string' && bullet.sourceId.length > 0)
+            ? bullet.sourceId
+            : null;
+        if (sourceId) {
+            const sourceKey = `source:${sourceId}`;
+            const sourceTimestamp = this.localShotCache.get(sourceKey);
+            if (sourceTimestamp && now - sourceTimestamp < LOCAL_SHOT_CACHE_TTL_MS) {
+                return true;
+            }
+        }
+        const shooterId = (typeof bullet.shooter === 'string' && bullet.shooter.length > 0)
+            ? bullet.shooter
+            : null;
+        if (shooterId) {
+            const shooterKey = `shooter:${shooterId}`;
+            const shooterTimestamp = this.localShotCache.get(shooterKey);
+            if (shooterTimestamp && now - shooterTimestamp < LOCAL_SHOT_CACHE_TTL_MS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     markLocalShot(bullet) {
