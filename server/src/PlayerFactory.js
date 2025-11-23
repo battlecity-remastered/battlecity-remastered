@@ -92,6 +92,12 @@ const toFiniteNumber = (value, fallback = null) => {
     return fallback;
 };
 
+const distanceSquared = (ax, ay, bx, by) => {
+    const dx = ax - bx;
+    const dy = ay - by;
+    return (dx * dx) + (dy * dy);
+};
+
 const normaliseCityIdValue = (value, fallback = null) => {
     const numeric = toFiniteNumber(value, fallback);
     if (!Number.isFinite(numeric)) {
@@ -1829,7 +1835,7 @@ class PlayerFactory {
         };
     }
 
-    buildLobbyEntry(cityId) {
+    buildLobbyEntry(cityId, options = {}) {
         const state = this.computeCityState(cityId);
         if (!state || state.isFake) {
             return null;
@@ -1859,13 +1865,90 @@ class PlayerFactory {
             orbs: (() => {
                 const city = this.game.cities ? this.game.cities[state.cityId] : null;
                 return city ? Number(city.orbs) || 0 : 0;
+            })(),
+            nearestPlayerDistance: (() => {
+                const centers = Array.isArray(options?.playerCenters) ? options.playerCenters : [];
+                if (!centers.length) {
+                    return null;
+                }
+                const cityCenter = this.getCityCenter(state.cityId);
+                if (!cityCenter) {
+                    return null;
+                }
+                let minDistanceSq = Infinity;
+                for (const center of centers) {
+                    const distSq = distanceSquared(center.x, center.y, cityCenter.x, cityCenter.y);
+                    if (Number.isFinite(distSq) && distSq < minDistanceSq) {
+                        minDistanceSq = distSq;
+                    }
+                }
+                if (!Number.isFinite(minDistanceSq) || minDistanceSq === Infinity) {
+                    return null;
+                }
+                return Math.sqrt(minDistanceSq);
             })()
+        };
+    }
+
+    getActivePlayerCenters() {
+        const players = this.game?.players;
+        if (!players || typeof players !== 'object') {
+            return [];
+        }
+        const centers = [];
+        Object.values(players).forEach((player) => {
+            if (!player
+                || player.isSystemControlled
+                || player.isFake
+                || player.isFakeRecruit) {
+                return;
+            }
+            if (player.health !== undefined && player.health <= 0) {
+                return;
+            }
+            if (!Number.isFinite(player.city)) {
+                return;
+            }
+            const offsetX = Number(player?.offset?.x);
+            const offsetY = Number(player?.offset?.y);
+            if (!Number.isFinite(offsetX) || !Number.isFinite(offsetY)) {
+                return;
+            }
+            centers.push({
+                x: offsetX + PLAYER_SPRITE_HALF,
+                y: offsetY + PLAYER_SPRITE_HALF
+            });
+        });
+        return centers;
+    }
+
+    getCityCenter(cityId) {
+        const spawn = this.getSpawnForCity(cityId);
+        if (!spawn || !Number.isFinite(spawn.x) || !Number.isFinite(spawn.y)) {
+            return null;
+        }
+        return {
+            x: spawn.x + PLAYER_SPRITE_HALF,
+            y: spawn.y + PLAYER_SPRITE_HALF
         };
     }
 
     buildLobbySnapshot() {
         const cityIds = this.getCityCandidates();
-        const entries = cityIds.map((id) => this.buildLobbyEntry(id)).filter((entry) => !!entry);
+        const playerCenters = this.getActivePlayerCenters();
+        const entries = cityIds
+            .map((id) => this.buildLobbyEntry(id, { playerCenters }))
+            .filter((entry) => !!entry)
+            .sort((a, b) => {
+                const aDistance = Number.isFinite(a?.nearestPlayerDistance) ? a.nearestPlayerDistance : Infinity;
+                const bDistance = Number.isFinite(b?.nearestPlayerDistance) ? b.nearestPlayerDistance : Infinity;
+                if (aDistance !== bDistance) {
+                    return aDistance - bDistance;
+                }
+                const aId = Number.isFinite(a?.id) ? a.id : 0;
+                const bId = Number.isFinite(b?.id) ? b.id : 0;
+                return aId - bId;
+            });
         const highScores = this.scoreService && typeof this.scoreService.getHighScores === 'function'
             ? this.scoreService.getHighScores(20)
             : [];

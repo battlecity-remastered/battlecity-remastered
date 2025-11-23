@@ -1156,6 +1156,11 @@ class LobbyManager {
         }
 
         const sortedCities = [...this.lastSnapshot.cities].sort((a, b) => {
+            const aDistance = Number.isFinite(a?.nearestPlayerDistance) ? a.nearestPlayerDistance : Infinity;
+            const bDistance = Number.isFinite(b?.nearestPlayerDistance) ? b.nearestPlayerDistance : Infinity;
+            if (aDistance !== bDistance) {
+                return aDistance - bDistance;
+            }
             const aId = Number.isFinite(a?.id) ? a.id : 0;
             const bId = Number.isFinite(b?.id) ? b.id : 0;
             return aId - bId;
