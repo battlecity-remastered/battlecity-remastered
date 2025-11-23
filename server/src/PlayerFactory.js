@@ -1626,7 +1626,8 @@ class PlayerFactory {
 
     assignCityAndRole(socketId, preferences) {
         const prefs = preferences || { city: null, role: null, requested: false };
-        const cityIds = this.getCityCandidates();
+        const allowFake = this.isFakeCity(prefs.city);
+        const cityIds = this.getCityCandidates({ includeFake: allowFake });
         if (!cityIds.length) {
             return { city: 0, isMayor: false, overflow: true, source: 'auto' };
         }
@@ -1729,7 +1730,17 @@ class PlayerFactory {
         this.cityCursor = (index + 1) % ids.length;
     }
 
-    getCityCandidates() {
+    isFakeCity(cityId) {
+        const id = normaliseCityIdValue(cityId, null);
+        if (id === null || id === undefined) {
+            return false;
+        }
+        const cityState = this.game && this.game.cities ? this.game.cities[id] : null;
+        return !!(cityState && cityState.isFake);
+    }
+
+    getCityCandidates(options = {}) {
+        const includeFake = options && options.includeFake === true;
         const candidates = new Set(this.defaultCityPool);
         const cityList = this.game && Array.isArray(this.game.cities) ? this.game.cities : null;
 
@@ -1739,10 +1750,11 @@ class PlayerFactory {
                 if (!entry && entry !== 0) {
                     continue;
                 }
-                if (entry && entry.isFake) {
+                const id = Number.isFinite(entry?.id) ? entry.id : index;
+                if (entry && entry.isFake && !includeFake) {
+                    candidates.delete(id);
                     continue;
                 }
-                const id = Number.isFinite(entry?.id) ? entry.id : index;
                 candidates.add(id);
             }
         }
@@ -1819,7 +1831,7 @@ class PlayerFactory {
 
     buildLobbyEntry(cityId) {
         const state = this.computeCityState(cityId);
-        if (!state) {
+        if (!state || state.isFake) {
             return null;
         }
         const spawn = this.citySpawns && this.citySpawns[String(state.cityId)];

@@ -14,7 +14,8 @@ const {
     COMMAND_CENTER_HEIGHT_TILES
 } = require('./gameplay/constants');
 const { rectangleCollision } = require('./gameplay/geometry');
-const { isCommandCenter } = require('./constants');
+const { isCommandCenter, FACTORY_ITEM_LIMITS } = require('./constants');
+const { ITEM_TYPES } = require('./items');
 
 const DEFENSE_ITEM_TYPES = Object.freeze({
     wall: 8,
@@ -2738,6 +2739,21 @@ class FakeCityManager {
             return hazards;
         }
 
+        const shuffleInPlace = (values) => {
+            if (!Array.isArray(values) || values.length < 2) {
+                return;
+            }
+            for (let i = values.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                if (j === i) {
+                    continue;
+                }
+                const tmp = values[i];
+                values[i] = values[j];
+                values[j] = tmp;
+            }
+        };
+
         // Calculate city bounds from layout
         const bounds = calculateLayoutBounds(layout, baseX, baseY);
         const minX = Math.max(0, bounds.minTileX - 2);
@@ -2768,9 +2784,13 @@ class FakeCityManager {
         }
 
         // Helper to check if a position is valid
-        const isValidPosition = (tileX, tileY, placedPositions) => {
+        const isValidPosition = (tileX, tileY, placedPositions, bounds = null) => {
+            const boundsMinX = bounds?.minX ?? minX;
+            const boundsMaxX = bounds?.maxX ?? maxX;
+            const boundsMinY = bounds?.minY ?? minY;
+            const boundsMaxY = bounds?.maxY ?? maxY;
             // Check map bounds
-            if (tileX < minX || tileX > maxX || tileY < minY || tileY > maxY) {
+            if (tileX < boundsMinX || tileX > boundsMaxX || tileY < boundsMinY || tileY > boundsMaxY) {
                 return false;
             }
 
@@ -2794,24 +2814,51 @@ class FakeCityManager {
         };
 
         const placedPositions = new Set();
-        const maxAttempts = count * 20; // Try 20x the desired count
-        let attempts = 0;
+        const candidateKeys = new Set();
+        const candidates = [];
 
-        while (hazards.length < count && attempts < maxAttempts) {
-            attempts++;
-
-            // Random position within bounds
-            const tileX = Math.floor(minX + Math.random() * (maxX - minX + 1));
-            const tileY = Math.floor(minY + Math.random() * (maxY - minY + 1));
-
-            if (!isValidPosition(tileX, tileY, placedPositions)) {
-                continue;
+        const collectCandidates = (paddingTiles = 0) => {
+            const paddedMinX = clampTileIndex(minX - paddingTiles);
+            const paddedMaxX = clampTileIndex(maxX + paddingTiles);
+            const paddedMinY = clampTileIndex(minY - paddingTiles);
+            const paddedMaxY = clampTileIndex(maxY + paddingTiles);
+            for (let tileX = paddedMinX; tileX <= paddedMaxX; tileX += 1) {
+                for (let tileY = paddedMinY; tileY <= paddedMaxY; tileY += 1) {
+                    const key = `${tileX}_${tileY}`;
+                    if (candidateKeys.has(key)) {
+                        continue;
+                    }
+                    if (!isValidPosition(tileX, tileY, placedPositions, {
+                        minX: paddedMinX,
+                        maxX: paddedMaxX,
+                        minY: paddedMinY,
+                        maxY: paddedMaxY
+                    })) {
+                        continue;
+                    }
+                    candidateKeys.add(key);
+                    candidates.push({ tileX, tileY });
+                }
             }
+        };
 
-            const dx = tileX - baseX;
-            const dy = tileY - baseY;
+        // Collect candidates inside the footprint and gradually expand outward if needed
+        collectCandidates(0);
+        let padding = 2;
+        while (candidates.length < count && padding <= 10) {
+            collectCandidates(padding);
+            padding += 2;
+        }
 
-            // Add small random offset within tile for variety (0.1 to 0.9)
+        shuffleInPlace(candidates);
+
+        for (const candidate of candidates) {
+            if (hazards.length >= count) {
+                break;
+            }
+            const dx = candidate.tileX - baseX;
+            const dy = candidate.tileY - baseY;
+
             const offsetX = 0.1 + Math.random() * 0.8;
             const offsetY = 0.1 + Math.random() * 0.8;
 
@@ -2821,17 +2868,16 @@ class FakeCityManager {
                 dy: dy + offsetY
             };
 
-            // Add random angle for turrets/plasma/sleepers
             if (type === 'turret' || type === 'plasma' || type === 'sleeper') {
                 hazard.angle = Math.floor(Math.random() * 32);
             }
 
             hazards.push(hazard);
-            placedPositions.add(`${tileX}_${tileY}`);
+            placedPositions.add(`${candidate.tileX}_${candidate.tileY}`);
         }
 
         if (hazards.length < count) {
-            this.debug(`[fake - city] Only placed ${hazards.length}/${count} ${type} hazards (ran out of valid positions)`);
+            this.debug(`[fake - city] Only placed ${hazards.length}/${count} ${type} hazards (insufficient valid tiles)`);
         }
 
         return hazards;
@@ -2946,7 +2992,8 @@ class FakeCityManager {
     deployDefenses(cityId, entry, baseX, baseY, layout, ownerId) {
         const result = {
             items: [],
-            hazardIds: []
+            hazardIds: [],
+            hazardCounts: {}
         };
         const defenses = Array.isArray(entry?.defenses) && entry.defenses.length
             ? entry.defenses
@@ -3006,14 +3053,14 @@ class FakeCityManager {
             const worldY = tileY * TILE_SIZE;
             const typeKey = typeof rawType === 'string' ? rawType.toLowerCase() : rawType;
 
-            if (typeKey === 'mine' || typeKey === 'mines' || typeKey === 'minefield') {
+            if (typeKey === 'mine' || typeKey === 'mines' || typeKey === 'minefield' || typeKey === 'dfg') {
                 if (!this.hazardManager || typeof this.hazardManager.spawnSystemHazard !== 'function') {
                     continue;
                 }
-                const hazardId = defense.id || `fake_mine_${cityId}_${++this.defenseSequence}`;
+                const hazardId = defense.id || `fake_${typeKey}_${cityId}_${++this.defenseSequence}`;
                 const hazard = this.hazardManager.spawnSystemHazard({
                     id: hazardId,
-                    type: 'mine',
+                    type: typeKey === 'dfg' ? 'dfg' : 'mine',
                     x: worldX,
                     y: worldY,
                     teamId: cityId,
@@ -3021,6 +3068,9 @@ class FakeCityManager {
                 });
                 if (hazard) {
                     result.hazardIds.push(hazard.id);
+                    const hazardItemType = (hazard.type === 'dfg') ? ITEM_TYPES.DFG : ITEM_TYPES.MINE;
+                    const currentHazardCount = result.hazardCounts[hazardItemType] || 0;
+                    result.hazardCounts[hazardItemType] = currentHazardCount + 1;
                     placedTiles.add(tileKey);
                 }
                 continue;
@@ -3212,6 +3262,9 @@ class FakeCityManager {
         const defenses = this.deployDefenses(cityId, customEntry, baseX, baseY, layout, ownerId);
         const defenseItemsSnapshot = defenses.items.map((item) => ({ ...item }));
         const hazardIdsSnapshot = Array.isArray(defenses.hazardIds) ? [...defenses.hazardIds] : [];
+        const hazardCountsSnapshot = defenses.hazardCounts ? { ...defenses.hazardCounts } : {};
+
+        this.prefillCityInventory(cityId, defenseItemsSnapshot, hazardCountsSnapshot);
 
         const cityRecord = {
             ownerId,
@@ -3242,6 +3295,72 @@ class FakeCityManager {
         this.buildNavGrid(true);
 
         return true;
+    }
+
+    prefillCityInventory(cityId, defenseItems, hazardCounts) {
+        const cityManager = this.buildingFactory?.cityManager;
+        if (!cityManager || typeof cityManager.recordInventoryPickup !== 'function') {
+            return;
+        }
+        const numericCity = toFiniteNumber(cityId, null);
+        if (numericCity === null) {
+            return;
+        }
+
+        const limitByItemType = {
+            [ITEM_TYPES.WALL]: FACTORY_ITEM_LIMITS?.[108] ?? 20,
+            [ITEM_TYPES.TURRET]: FACTORY_ITEM_LIMITS?.[109] ?? 10,
+            [ITEM_TYPES.SLEEPER]: FACTORY_ITEM_LIMITS?.[110] ?? 5,
+            [ITEM_TYPES.PLASMA]: FACTORY_ITEM_LIMITS?.[111] ?? 5,
+            [ITEM_TYPES.MINE]: FACTORY_ITEM_LIMITS?.[104] ?? 10,
+            [ITEM_TYPES.DFG]: FACTORY_ITEM_LIMITS?.[107] ?? 5,
+        };
+
+        const deployedCounts = {};
+        if (Array.isArray(defenseItems)) {
+            defenseItems.forEach((item) => {
+                const type = toFiniteNumber(item?.type, null);
+                if (!Number.isFinite(type)) {
+                    return;
+                }
+                deployedCounts[type] = (deployedCounts[type] || 0) + 1;
+            });
+        }
+        if (hazardCounts && typeof hazardCounts === 'object') {
+            Object.entries(hazardCounts).forEach(([key, value]) => {
+                const type = toFiniteNumber(key, null);
+                const count = toFiniteNumber(value, 0);
+                if (!Number.isFinite(type) || count <= 0) {
+                    return;
+                }
+                deployedCounts[type] = (deployedCounts[type] || 0) + count;
+            });
+        }
+
+        const factoryStockProvider = (itemType) => {
+            if (this.buildingFactory && typeof this.buildingFactory.getCityFactoryStock === 'function') {
+                return this.buildingFactory.getCityFactoryStock(numericCity, itemType);
+            }
+            return 0;
+        };
+
+        Object.entries(limitByItemType).forEach(([typeKey, limitValue]) => {
+            const itemType = Number(typeKey);
+            const limit = toFiniteNumber(limitValue, null);
+            if (!Number.isFinite(itemType) || !Number.isFinite(limit) || limit <= 0) {
+                return;
+            }
+            const deployed = deployedCounts[itemType] || 0;
+            const factoryStock = factoryStockProvider(itemType) || 0;
+            const currentInventory = (typeof cityManager.getInventoryCount === 'function')
+                ? cityManager.getInventoryCount(numericCity, itemType)
+                : 0;
+            const desiredInventory = Math.max(0, limit - deployed - factoryStock);
+            const delta = desiredInventory - currentInventory;
+            if (delta > 0) {
+                cityManager.recordInventoryPickup(null, numericCity, itemType, delta);
+            }
+        });
     }
 
     removeFakeCities(count) {
