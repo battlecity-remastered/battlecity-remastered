@@ -18,6 +18,7 @@
             nodejs
             pkgs.esbuild
             pkgs.watchexec
+            pkgs.pre-commit
             (pkgs.python311.withPackages (ps: [
               ps.numpy
               ps.matplotlib
@@ -29,6 +30,7 @@
             export PATH="$BATTLECITY_ROOT/client/node_modules/.bin:$BATTLECITY_ROOT/server/node_modules/.bin:$PATH"
             echo "BattleCity dev shell ready (node $(node --version))."
             echo "Install deps once: (cd client && npm install) && (cd server && npm install)"
+            echo "Install git hooks: pre-commit install --install-hooks"
             echo "Run dev servers:"
             echo "  client -> cd client && npm run dev"
             echo "  server -> cd server && npm run dev"

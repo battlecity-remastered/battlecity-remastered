@@ -44,6 +44,9 @@ const ORIGINAL_TO_REMASTERED_TYPE = {
  * @returns {number} - Remastered game building type
  */
 function convertBuildingType(originalType) {
+    if (originalType === 0) {
+        return 0; // Command center
+    }
     return ORIGINAL_TO_REMASTERED_TYPE[originalType] || 300; // Default to house
 }
 

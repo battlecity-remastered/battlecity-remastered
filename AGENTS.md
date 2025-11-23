@@ -74,4 +74,8 @@
 - Server broadcasts of new items: `server/src/FactoryBuilding.js`.
 - Configuration constants: `client/src/constants.js` (movement speeds, build dependencies, item ids, etc.).
 
+## Workflow Hygiene
+- Start new work by checking out an appropriately named branch that reflects the task (e.g., `feature/…`, `fix/…`, `chore/…`).
+- Before merging, squash commits into a clean single commit (or minimal set if justified) and write a best-practice commit message once the work is signed off and complete.
+
 Keep this file updated when adding systems (e.g., AI, new map loaders, authoritative physics) so future agents have a quick on-ramp.

@@ -29,6 +29,15 @@ repos:
         pass_filenames: false
         files: '\.(js|jsx|ts|tsx)$'
 
+  # Tests (run both client and server suites)
+  - repo: local
+    hooks:
+      - id: node-tests
+        name: node tests (client + server)
+        entry: bash -c 'npm test --prefix client && npm test --prefix server'
+        language: system
+        pass_filenames: false
+
   # Prettier (uses files regex, not types_or)
   - repo: local
     hooks:

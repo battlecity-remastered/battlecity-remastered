@@ -876,11 +876,14 @@ class FakeCityManager {
     }
 
     buildPatrolPath(entry, baseTileX, baseTileY, layout) {
-        const resolvedLayout = Array.isArray(layout) && layout.length
-            ? layout
-            : (Array.isArray(entry?.layout) && entry.layout.length
-                ? entry.layout
-                : (Array.isArray(this.config.layout) ? this.config.layout : []));
+        let resolvedLayout = [];
+        if (Array.isArray(layout) && layout.length) {
+            resolvedLayout = layout;
+        } else if (Array.isArray(entry?.layout) && entry.layout.length) {
+            resolvedLayout = entry.layout;
+        } else if (Array.isArray(this.config.layout)) {
+            resolvedLayout = this.config.layout;
+        }
 
         const bounds = calculateLayoutBounds(resolvedLayout, baseTileX, baseTileY);
         const margin = Math.max(0, toFiniteNumber(entry?.patrolMarginTiles, RECRUIT_PATROL_MARGIN_TILES));
@@ -1452,12 +1455,13 @@ class FakeCityManager {
             };
         };
 
-        const targetCenter = target
-            ? {
+        let targetCenter = null;
+        if (target) {
+            targetCenter = {
                 x: (target.offset?.x ?? target.x ?? 0) + (TILE_SIZE / 2),
                 y: (target.offset?.y ?? target.y ?? 0) + (TILE_SIZE / 2)
-            }
-            : null;
+            };
+        }
 
         if (mode === 'patrol') {
             const fallbackDirection = wrapDirection(player.direction ?? 16);
@@ -1890,12 +1894,13 @@ class FakeCityManager {
             }
         }
 
-        const lastSeen = lastSeenAge <= LAST_SEEN_TIMEOUT_MS
-            ? {
+        let lastSeen = null;
+        if (lastSeenAge <= LAST_SEEN_TIMEOUT_MS) {
+            lastSeen = {
                 x: record.lastSeenX ?? shooterCenter.x,
                 y: record.lastSeenY ?? shooterCenter.y
-            }
-            : null;
+            };
+        }
 
         const rangePx = targetCenter
             ? Math.sqrt(distanceSquared(shooterCenter.x, shooterCenter.y, targetCenter.x, targetCenter.y))
@@ -2000,12 +2005,13 @@ class FakeCityManager {
 
         const nav = this.navGrid || this.buildNavGrid();
         const currentTile = pixelToTile(px, py);
-        let desiredPoint = goal
-            ? {
+        let desiredPoint = null;
+        if (goal) {
+            desiredPoint = {
                 x: goal.goalPixelX ?? px,
                 y: goal.goalPixelY ?? py
-            }
-            : null;
+            };
+        }
 
         if (goal && goal.requiresPath && desiredPoint) {
             const goalDistanceSq = distanceSquared(px, py, desiredPoint.x, desiredPoint.y);
@@ -2062,12 +2068,13 @@ class FakeCityManager {
                 };
             }
             if (desiredPoint) {
-                const point = (mode === 'patrol' && Number.isFinite(record.motionSeed))
-                    ? {
+                let point = desiredPoint;
+                if (mode === 'patrol' && Number.isFinite(record.motionSeed)) {
+                    point = {
                         x: clamp(desiredPoint.x + ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD),
                         y: clamp(desiredPoint.y - ((record.motionSeed - 0.5) * PATH_JITTER_PX), 0, MAP_MAX_COORD)
-                    }
-                    : desiredPoint;
+                    };
+                }
                 return {
                     point,
                     fromPath: false
@@ -2836,7 +2843,7 @@ class FakeCityManager {
      * @param {number} baseY - Base tile Y coordinate
      * @returns {Array} - Array of defense placements for CC protection
      */
-    generateCommandCenterDefenses(baseX, baseY) {
+    generateCommandCenterDefenses(_baseX, _baseY) {
         const defenses = [];
 
         // Command center is 3 tiles wide, 2 tiles tall
