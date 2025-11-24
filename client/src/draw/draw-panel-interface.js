@@ -559,6 +559,29 @@ const updateRadar = (game, radarState) => {
         }
     }
 
+    const defenders = game.defenderBotManager?.defenders;
+    if (Array.isArray(defenders) && defenders.length) {
+        defenders.forEach((defender) => {
+            if (!defender || !defender.offset) {
+                return;
+            }
+            const botX = toFiniteNumber(defender.offset.x, null);
+            const botY = toFiniteNumber(defender.offset.y, null);
+            if (!Number.isFinite(botX) || !Number.isFinite(botY)) {
+                return;
+            }
+            tryPlot(
+                botX,
+                botY,
+                toFiniteNumber(defender.city, null),
+                toFiniteNumber(defender.health, null),
+                false,
+                false,
+                'player'
+            );
+        });
+    }
+
     const rogueManager = game.rogueTankManager;
     if (rogueManager && Array.isArray(rogueManager.tanks)) {
         const tanks = rogueManager.tanks;

@@ -837,6 +837,9 @@ class FakeCityManager {
     }
 
     ensureCityBotCount(cityId, desiredCount = DEFAULT_BOTS_PER_CITY) {
+        // DISABLED - Using new client-side defender bots instead
+        return 0;
+
         if (!Number.isFinite(cityId)) {
             return 0;
         }
@@ -1695,6 +1698,9 @@ class FakeCityManager {
     }
 
     updateRecruits(now = Date.now()) {
+        // TEMPORARILY DISABLED - Testing new client-side defender bots
+        return;
+
         if (!this.recruits.size) {
             return;
         }

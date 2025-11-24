@@ -22,7 +22,7 @@ import BulletFactory from "./src/factories/BulletFactory"
 import IconFactory from "./src/factories/IconFactory";
 import ItemFactory from "./src/factories/ItemFactory";
 import RogueTankManager from "./src/rogue/RogueTankManager";
-
+import DefenderBotManager from "./src/defenders/DefenderBotManager";
 import SocketListener from "./src/SocketListener"
 import { setupBuildingMenu } from "./src/draw/draw-building-interface";
 import { drawBuilding } from "./src/draw/draw-building-interface";
@@ -1309,6 +1309,7 @@ if (game.identityManager) {
 game.iconFactory = new IconFactory(game);
 game.itemFactory = new ItemFactory(game);
 game.rogueTankManager = new RogueTankManager(game);
+game.defenderBotManager = new DefenderBotManager(game);
 
 game.introModal = new IntroModal({
     heading: 'Battle City Remastered',
@@ -1926,6 +1927,9 @@ function gameLoop() {
     game.itemFactory.cycle();
     if (game.rogueTankManager) {
         game.rogueTankManager.update();
+    }
+    if (game.defenderBotManager) {
+        game.defenderBotManager.update();
     }
 
     setupBuildingMenu(game);

@@ -115,7 +115,7 @@ export const collidedWithAnotherPlayer = (game, bullet) => {
         }
 
         return collided(getPlayerRect(player), bullet)
-    }) || collidedWithRogues(game, bullet);
+    }) || collidedWithRogues(game, bullet) || collidedWithDefenders(game, bullet);
 };
 
 function collidedWithRogues(game, bullet) {
@@ -143,6 +143,43 @@ function collidedWithRogues(game, bullet) {
 
         if (collided(getPlayerRect(tank), bullet)) {
             manager.handleBulletCollision(bullet, tank);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function collidedWithDefenders(game, bullet) {
+    const manager = game.defenderBotManager;
+    if (!manager || !Array.isArray(manager.defenders)) {
+        return false;
+    }
+
+    const bulletTeam = bullet.team ?? null;
+
+    for (let i = 0; i < manager.defenders.length; i += 1) {
+        const defender = manager.defenders[i];
+        if (!defender || !defender.offset) {
+            continue;
+        }
+
+        if (bullet.shooter && bullet.shooter === defender.id) {
+            continue;
+        }
+
+        const defenderTeam = defender.city ?? null;
+        if (bulletTeam !== null && defenderTeam === bulletTeam) {
+            continue;
+        }
+
+        if (collided(getPlayerRect(defender), bullet)) {
+            // Reduce defender health and remove if dead
+            defender.health -= 1;
+            if (defender.health <= 0) {
+                manager.removeDefenderAtIndex(i);
+                game.itemFactory.spawnExplosion(defender.offset.x, defender.offset.y);
+            }
             return true;
         }
     }

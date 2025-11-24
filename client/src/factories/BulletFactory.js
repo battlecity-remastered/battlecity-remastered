@@ -4,7 +4,8 @@ import {
     BULLET_RANGE_LASER,
     BULLET_RANGE_ROCKET,
     MOVEMENT_SPEED_BULLET,
-    MOVEMENT_SPEED_FLARE
+    MOVEMENT_SPEED_FLARE,
+    MAX_HEALTH
 } from "../constants.js";
 import {BULLET_ALIVE} from "../constants.js";
 import {BULLET_DEAD} from "../constants.js";
@@ -17,6 +18,7 @@ import {collidedWithCurrentPlayer} from "../collision/collision-bullet.js";
 import {collidedWithAnotherPlayer} from "../collision/collision-bullet.js";
 import {collidedWithBuilding} from "../collision/collision-bullet.js";
 import {collidedWithItem} from "../collision/collision-bullet.js";
+import { SOUND_IDS } from "../audio/AudioManager.js";
 
 const DEFENSE_SOURCE_TYPES = new Set(['turret', 'plasma', 'sleeper']);
 
@@ -74,6 +76,58 @@ class BulletFactory {
     constructor(game) {
         this.game = game
         this.bulletListHead = null;
+    }
+
+    isLocalBotBullet(bullet) {
+        if (!bullet || !bullet.sourceType) {
+            return false;
+        }
+        const source = String(bullet.sourceType).toLowerCase();
+        return source === 'defender_bot' || source === 'rogue_tank';
+    }
+
+    applyLocalDamageToPlayer(bullet) {
+        if (!this.isLocalBotBullet(bullet)) {
+            return;
+        }
+        const player = this.game?.player;
+        if (!player) {
+            return;
+        }
+        const damage = Number.isFinite(bullet.damage) ? bullet.damage : getBulletDamage(bullet.type);
+        const previous = Number.isFinite(player.health) ? player.health : MAX_HEALTH;
+        const next = Math.max(0, previous - damage);
+        player.health = next;
+        player.lastLocalBotDamageAt = Date.now();
+
+        // Notify server immediately so health persists authoritative sync
+        const socketListener = this.game?.socketListener;
+        if (socketListener?.io?.connected && typeof socketListener.createPlayerPayload === 'function') {
+            socketListener.sequenceCounter = (socketListener.sequenceCounter || 0) + 1;
+            player.sequence = socketListener.sequenceCounter;
+            const payload = socketListener.createPlayerPayload();
+            if (payload) {
+                payload.health = next;
+                payload.sequence = socketListener.sequenceCounter;
+                try {
+                    socketListener.io.emit("player", JSON.stringify(payload));
+                } catch (_error) {
+                    // ignore send errors
+                }
+            }
+        }
+        if (next <= 0) {
+            player.engineLoopActive = false;
+        }
+        if (this.game.audio) {
+            if (next <= 0 && previous > 0) {
+                this.game.audio.playEffect(SOUND_IDS.DIE, { volume: 0.8 });
+                this.game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+            } else if (next < previous) {
+                this.game.audio.playEffect(SOUND_IDS.HIT, { volume: 0.7 });
+            }
+        }
+        this.game.forceDraw = true;
     }
 
     cycle() {
@@ -141,6 +195,7 @@ class BulletFactory {
 
 
             if (collidedWithCurrentPlayer(this.game, bullet)) {
+                this.applyLocalDamageToPlayer(bullet);
                 bullet.life = BULLET_DEAD;
             }
 

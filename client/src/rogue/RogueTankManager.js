@@ -1,9 +1,10 @@
-import {MOVEMENT_SPEED_PLAYER} from '../constants';
-import {ITEM_TYPE_TURRET} from '../constants';
-import {ITEM_TYPE_PLASMA} from '../constants';
-import {ITEM_TYPE_BOMB} from '../constants';
-import {rectangleCollision} from '../collision/collision-helpers';
-import {getCityDisplayName} from '../utils/citySpawns';
+import { MOVEMENT_SPEED_PLAYER } from '../constants';
+import { ITEM_TYPE_TURRET } from '../constants';
+import { ITEM_TYPE_PLASMA } from '../constants';
+import { ITEM_TYPE_BOMB } from '../constants';
+import { getCityDisplayName } from '../utils/citySpawns';
+import { normalizeVector, rotateVector, vectorToDirection, directionToVector, clampDelta, tryStep, findAlternateVector } from '../bots/movement-utils.js';
+import { createBlockingChecker } from '../bots/collision.js';
 
 const TILE_SIZE = 48;
 const HALF_TILE = TILE_SIZE / 2;
@@ -15,15 +16,15 @@ const CITY_SECOND_TANK_THRESHOLD = 32;
 const SPAWN_EVALUATION_INTERVAL = 5000;
 const MOVE_DECISION_INTERVAL = 1300;
 const TARGET_REFRESH_INTERVAL = 2200;
-const BASE_SPEED_MULTIPLIER = 0.55;
-const SHOOT_INTERVAL = 2800;
-const SHOOT_RANGE = TILE_SIZE * 10;
-const SHOOT_INACCURACY = 6;
-const BOMB_INTERVAL = 9000;
-const BOMB_INTERVAL_JITTER = 4500;
-const BOMB_FUSE = 2600;
-const BOMB_FUSE_JITTER = 1200;
-const BOMB_DROP_RADIUS = TILE_SIZE * 7;
+const BASE_SPEED_MULTIPLIER = 0.85;
+const SHOOT_INTERVAL = 1400;
+const SHOOT_RANGE = TILE_SIZE * 12;
+const SHOOT_INACCURACY = 4;
+const BOMB_INTERVAL = 6500;
+const BOMB_INTERVAL_JITTER = 3200;
+const BOMB_FUSE = 2400;
+const BOMB_FUSE_JITTER = 900;
+const BOMB_DROP_RADIUS = TILE_SIZE * 9;
 const MAX_LIFETIME = 240000;
 const WANDER_RADIUS = TILE_SIZE * 7;
 const ROGUE_ENGAGE_RADIUS = TILE_SIZE * 11;
@@ -54,55 +55,6 @@ const distanceSquared = (ax, ay, bx, by) => {
     return (dx * dx) + (dy * dy);
 };
 
-const directionToVector = (direction) => {
-    const theta = (-direction / 16) * Math.PI;
-    return {
-        dx: Math.sin(theta),
-        dy: Math.cos(theta)
-    };
-};
-
-const vectorToDirection = (dx, dy, fallback = 0) => {
-    if (!Number.isFinite(dx) || !Number.isFinite(dy) || (Math.abs(dx) < 1e-4 && Math.abs(dy) < 1e-4)) {
-        return fallback;
-    }
-    const length = Math.sqrt((dx * dx) + (dy * dy));
-    if (length < 1e-4) {
-        return fallback;
-    }
-    const normX = dx / length;
-    const normY = dy / length;
-    const theta = Math.atan2(-normX, -normY);
-    let direction = Math.round((-theta / Math.PI) * 16);
-    direction %= 32;
-    if (direction < 0) {
-        direction += 32;
-    }
-    return direction;
-};
-
-const normalizeVector = (dx, dy) => {
-    const length = Math.sqrt((dx * dx) + (dy * dy));
-    if (length < 1e-4) {
-        return {dx: 0, dy: 0};
-    }
-    return {
-        dx: dx / length,
-        dy: dy / length
-    };
-};
-
-const rotateVector = (vector, angle) => {
-    if (!vector) {
-        return {dx: 0, dy: 0};
-    }
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const dx = (vector.dx * cos) - (vector.dy * sin);
-    const dy = (vector.dx * sin) + (vector.dy * cos);
-    return normalizeVector(dx, dy);
-};
-
 const describeDirectionFromCity = (cityX, cityY, targetX, targetY, threshold = DIRECTION_THRESHOLD) => {
     const dx = targetX - cityX;
     const dy = targetY - cityY;
@@ -130,6 +82,7 @@ class RogueTankManager {
         this.instancePrefix = `local_${Math.random().toString(16).slice(-6)}`;
         this.nextAllowedSpawnTime = 0;
         this.cityRadiusCache = new Map();
+        this.blocking = createBlockingChecker(game);
     }
 
     getCallsignRegistry() {
@@ -183,26 +136,9 @@ class RogueTankManager {
         return id;
     }
 
-    emitTankShot(tank, originX, originY, direction) {
-        const socketListener = this.game?.socketListener;
-        if (!socketListener || typeof socketListener.sendBulletShot !== 'function') {
-            return;
-        }
-        const shooterId = this.game.player?.id ?? null;
-        if (!shooterId) {
-            return;
-        }
-        socketListener.sendBulletShot({
-            shooter: shooterId,
-            x: originX,
-            y: originY,
-            type: 0,
-            angle: -direction,
-            team: null,
-            sourceId: tank?.id ?? null,
-            sourceType: 'rogue_tank',
-            targetId: typeof tank?.target === 'object' ? tank.target.id ?? null : null
-        });
+    emitTankShot(_tank, _originX, _originY, _direction) {
+        // Client-side only: do not notify server about rogue shots.
+        return;
     }
 
     update() {
@@ -306,7 +242,7 @@ class RogueTankManager {
             let spawnY = centerY + Math.sin(angle) * distance;
             spawnX = Math.max(HALF_TILE, Math.min((512 * TILE_SIZE) - HALF_TILE, spawnX));
             spawnY = Math.max(HALF_TILE, Math.min((512 * TILE_SIZE) - HALF_TILE, spawnY));
-            if (this.isBlocked(spawnX, spawnY)) {
+            if (this.blocking.isBlocked(spawnX, spawnY)) {
                 continue;
             }
 
@@ -315,8 +251,8 @@ class RogueTankManager {
             const engageRadius = this.getCityEngageRadius(cityId, timestamp);
             const tank = {
                 id: tankId,
-                offset: {x: spawnX, y: spawnY},
-                lastSafeOffset: {x: spawnX, y: spawnY},
+                offset: { x: spawnX, y: spawnY },
+                lastSafeOffset: { x: spawnX, y: spawnY },
                 direction: Math.floor(Math.random() * 32),
                 isMoving: 0,
                 targetCityId: cityId,
@@ -351,7 +287,12 @@ class RogueTankManager {
         }
         const x = toFinite(city.x, 0) + (TILE_SIZE * 1.5);
         const y = toFinite(city.y, 0) + (TILE_SIZE * 1.5);
-        return {x, y};
+        return { x, y };
+    }
+
+    isCityOrbable(cityId) {
+        const city = this.game.cities?.[cityId];
+        return !!(city && city.isOrbable);
     }
 
     refreshTarget(tank, now) {
@@ -360,10 +301,15 @@ class RogueTankManager {
         }
         tank.nextTargetRefresh = now + TARGET_REFRESH_INTERVAL + Math.random() * 1200;
 
-        const cityCenter = this.getCityCenter(tank.targetCityId);
+        // Rogues should target the player's home base, not the city being attacked
+        const playerHomeCity = this.game.player?.city;
+        const targetCityId = Number.isFinite(playerHomeCity) ? playerHomeCity : tank.targetCityId;
+
+        const cityCenter = this.getCityCenter(targetCityId);
+        const cityOrbable = this.isCityOrbable(targetCityId);
         if (cityCenter) {
             if (!Number.isFinite(tank.engageRadius) || now >= (tank.nextRadiusRefresh || 0)) {
-                tank.engageRadius = this.getCityEngageRadius(tank.targetCityId, now);
+                tank.engageRadius = this.getCityEngageRadius(targetCityId, now);
                 tank.nextRadiusRefresh = now + 5000;
             }
             const engageRadius = Number.isFinite(tank.engageRadius) ? tank.engageRadius : ROGUE_ENGAGE_RADIUS;
@@ -373,6 +319,19 @@ class RogueTankManager {
                 cityCenter.x,
                 cityCenter.y
             );
+            // If city not orbable yet, linger at the perimeter instead of diving in
+            if (!cityOrbable) {
+                const desiredRadius = engageRadius * 0.9;
+                if (distSq < (desiredRadius * desiredRadius)) {
+                    const angle = Math.random() * Math.PI * 2;
+                    tank.target = {
+                        kind: 'point',
+                        x: cityCenter.x + Math.cos(angle) * engageRadius,
+                        y: cityCenter.y + Math.sin(angle) * engageRadius
+                    };
+                    return;
+                }
+            }
             if (distSq > (engageRadius * engageRadius)) {
                 tank.target = {
                     kind: 'point',
@@ -381,7 +340,9 @@ class RogueTankManager {
                 };
                 return;
             }
-            this.notifyCityUnderAttack(tank, tank.targetCityId, cityCenter, engageRadius);
+            if (cityOrbable) {
+                this.notifyCityUnderAttack(tank, targetCityId, cityCenter, engageRadius);
+            }
         }
 
         const turretTarget = this.pickNearestTurret(tank);
@@ -390,7 +351,7 @@ class RogueTankManager {
             return;
         }
 
-        const fallback = this.pickWanderPoint(tank.targetCityId);
+        const fallback = this.pickWanderPoint(targetCityId);
         tank.target = fallback;
     }
 
@@ -484,19 +445,19 @@ class RogueTankManager {
             tank.isMoving = 0;
             return false;
         }
-        const delta = Math.min(this.game.timePassed || 0, 60);
+        const delta = clampDelta(this.game.timePassed);
         const step = delta * MOVEMENT_SPEED_PLAYER * BASE_SPEED_MULTIPLIER;
         if (step <= 0) {
             return false;
         }
 
-        if (this.tryStep(tank, vector, step)) {
+        if (tryStep(tank, vector, step, this.blocking.isBlocked)) {
             tank.isMoving = 1;
             return true;
         }
 
-        const alternate = this.findAlternateVector(tank, vector, step);
-        if (alternate && this.tryStep(tank, alternate, step)) {
+        const alternate = findAlternateVector(tank, vector, step, AVOIDANCE_ANGLES, this.blocking.isBlocked);
+        if (alternate && tryStep(tank, alternate, step, this.blocking.isBlocked)) {
             tank.cachedVector = alternate;
             tank.direction = vectorToDirection(alternate.dx, alternate.dy, tank.direction);
             tank.isMoving = 1;
@@ -507,39 +468,6 @@ class RogueTankManager {
         tank.cachedVector = null;
         tank.nextDecisionAt = Math.min(tank.nextDecisionAt || (now + 400), now + 450 + Math.random() * 250);
         return false;
-    }
-
-    tryStep(tank, vector, step) {
-        if (!vector) {
-            return false;
-        }
-        const nextX = tank.offset.x + (vector.dx * step);
-        const nextY = tank.offset.y + (vector.dy * step);
-        if (this.isBlocked(nextX, nextY)) {
-            return false;
-        }
-        tank.offset.x = nextX;
-        tank.offset.y = nextY;
-        tank.lastSafeOffset = {x: nextX, y: nextY};
-        return true;
-    }
-
-    findAlternateVector(tank, vector, step) {
-        if (!vector) {
-            return null;
-        }
-        for (let i = 0; i < AVOIDANCE_ANGLES.length; i += 1) {
-            const rotated = rotateVector(vector, AVOIDANCE_ANGLES[i]);
-            if (!rotated || (Math.abs(rotated.dx) < 1e-4 && Math.abs(rotated.dy) < 1e-4)) {
-                continue;
-            }
-            const nextX = tank.offset.x + (rotated.dx * step);
-            const nextY = tank.offset.y + (rotated.dy * step);
-            if (!this.isBlocked(nextX, nextY)) {
-                return rotated;
-            }
-        }
-        return null;
     }
 
     resolveTargetPosition(target) {
@@ -569,6 +497,10 @@ class RogueTankManager {
         }
 
         const distSq = distanceSquared(tank.offset.x + HALF_TILE, tank.offset.y + HALF_TILE, target.x, target.y);
+        if (!this.isCityOrbable(tank.targetCityId)) {
+            return;
+        }
+
         if (distSq > (SHOOT_RANGE * SHOOT_RANGE)) {
             return;
         }
@@ -586,7 +518,10 @@ class RogueTankManager {
         const originX = (tank.offset.x + HALF_TILE) + (vec.dx * 30);
         const originY = (tank.offset.y + HALF_TILE) + (vec.dy * 30);
 
-        this.game.bulletFactory.newBullet(tank.id, originX, originY, 0, -direction, null);
+        this.game.bulletFactory.newBullet(tank.id, originX, originY, 0, -direction, null, {
+            sourceType: 'rogue_tank',
+            targetId: typeof target === 'object' ? target.id ?? null : null
+        });
         this.emitTankShot(tank, originX, originY, direction);
         tank.fireCooldown = now + SHOOT_INTERVAL + Math.random() * 800;
     }
@@ -600,6 +535,9 @@ class RogueTankManager {
         if (!city) {
             return;
         }
+        if (!this.isCityOrbable(tank.targetCityId)) {
+            return;
+        }
 
         const centerX = toFinite(city.x, 0) + (TILE_SIZE * 1.5);
         const centerY = toFinite(city.y, 0) + (TILE_SIZE * 1.5);
@@ -608,7 +546,7 @@ class RogueTankManager {
             return;
         }
 
-        const bomb = this.game.itemFactory?.newItem({id: tank.id, city: null, armed: true}, tank.offset.x, tank.offset.y, ITEM_TYPE_BOMB, {
+        const bomb = this.game.itemFactory?.newItem({ id: tank.id, city: null, armed: true }, tank.offset.x, tank.offset.y, ITEM_TYPE_BOMB, {
             notifyServer: false
         });
 
@@ -640,105 +578,12 @@ class RogueTankManager {
             }
             if (now >= entry.detonateAt) {
                 this.game.itemFactory.spawnExplosion(entry.item.x, entry.item.y);
-                this.game.itemFactory.detonateBomb(entry.item, {notifyServer: false});
+                this.game.itemFactory.detonateBomb(entry.item, { notifyServer: false });
                 continue;
             }
             next.push(entry);
         }
         tank.activeBombs = next;
-    }
-
-    isBlocked(x, y) {
-        const rect = {
-            x: x + SPRITE_GAP,
-            y: y + SPRITE_GAP,
-            w: TILE_SIZE - (SPRITE_GAP * 2),
-            h: TILE_SIZE - (SPRITE_GAP * 2)
-        };
-
-        if (this.hitsEdges(rect)) {
-            return true;
-        }
-
-        if (this.hitsBlockingTile(rect)) {
-            return true;
-        }
-
-        if (this.hitsBuilding(rect)) {
-            return true;
-        }
-
-        if (this.hitsItem(rect)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    hitsEdges(rect) {
-        if (rect.x < 0 || rect.y < 0) {
-            return true;
-        }
-        if ((rect.x + rect.w) > (512 * TILE_SIZE) || (rect.y + rect.h) > (512 * TILE_SIZE)) {
-            return true;
-        }
-        return false;
-    }
-
-    hitsBlockingTile(rect) {
-        const map = this.game.map;
-        if (!Array.isArray(map) || !map.length) {
-            return false;
-        }
-
-        const left = Math.floor(rect.x / TILE_SIZE);
-        const right = Math.floor((rect.x + rect.w) / TILE_SIZE);
-        const top = Math.floor(rect.y / TILE_SIZE);
-        const bottom = Math.floor((rect.y + rect.h) / TILE_SIZE);
-
-        const isBlocked = (x, y) => {
-            try {
-                return map[x][y] !== 0 && map[x][y] !== 3;
-            } catch (_error) {
-                return true;
-            }
-        };
-
-        return isBlocked(left, top) || isBlocked(left, bottom) || isBlocked(right, top) || isBlocked(right, bottom);
-    }
-
-    hitsBuilding(rect) {
-        let node = this.game.buildingFactory.getHead();
-        while (node) {
-            const buildingRect = {
-                x: node.x * TILE_SIZE,
-                y: node.y * TILE_SIZE,
-                w: TILE_SIZE * 3,
-                h: TILE_SIZE * 3
-            };
-            if (rectangleCollision(rect, buildingRect)) {
-                return true;
-            }
-            node = node.next;
-        }
-        return false;
-    }
-
-    hitsItem(rect) {
-        let node = this.game.itemFactory.getHead();
-        while (node) {
-            const itemRect = {
-                x: node.x,
-                y: node.y,
-                w: TILE_SIZE,
-                h: TILE_SIZE
-            };
-            if (rectangleCollision(rect, itemRect)) {
-                return true;
-            }
-            node = node.next;
-        }
-        return false;
     }
 
     resolveBulletKillDetails(bullet) {

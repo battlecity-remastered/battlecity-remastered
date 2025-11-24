@@ -304,6 +304,29 @@ const drawRogueTanks = (game, stage) => {
     });
 };
 
+const drawDefenderBots = (game, stage) => {
+    const manager = game.defenderBotManager;
+    if (!manager || !Array.isArray(manager.defenders) || manager.defenders.length === 0) {
+        return;
+    }
+
+    manager.defenders.forEach((defender, index) => {
+        if (!defender || !defender.offset) {
+            return;
+        }
+
+        const sprite = createTankSprite(game, defender, game.player);
+        sprite.x = (defender.offset.x) + (game.player.defaultOffset.x - (game.player.offset.x / 48) * 48);
+        sprite.y = (defender.offset.y) + (game.player.defaultOffset.y - (game.player.offset.y / 48) * 48);
+        maybeAddNameLabel(game, defender, sprite, {
+            isRogue: false,
+            referenceCity: game.player.city,
+            cacheKey: defender.id || `defender:${index}`
+        });
+        stage.addChild(sprite);
+    });
+};
+
 var drawBullets = (game, stage) => {
     var bullet = game.bulletFactory.getHead();
 
@@ -414,6 +437,7 @@ export const drawChanging = (game) => {
     drawPlayer(game, game.objectContainer);
     drawOtherPlayers(game, game.objectContainer);
     drawRogueTanks(game, game.objectContainer);
+    drawDefenderBots(game, game.objectContainer);
     drawBullets(game, game.objectContainer);
     drawExplosions(game, game.objectContainer);
 

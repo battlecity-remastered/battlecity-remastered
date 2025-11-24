@@ -9,7 +9,7 @@ const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/g;
 const DEFAULT_CHAT_SCOPE = 'team';
 const LOCAL_SHOT_CACHE_TTL_MS = 700;
 
-import { updateBotWaypoints } from './draw/draw-bot-debug.js';
+import { updateBotWaypoints, updateDefenderPaths } from './draw/draw-bot-debug.js';
 
 const LOCAL_SOCKET_PORT = 8021;
 
@@ -64,6 +64,9 @@ class SocketListener extends EventEmitter2 {
 
         this.on('bot:debug', (data) => {
             updateBotWaypoints(data);
+        });
+        this.on('bot:debug:defenders', (payload) => {
+            updateDefenderPaths(payload);
         });
     }
 
@@ -910,7 +913,12 @@ class SocketListener extends EventEmitter2 {
             }
         }
         me.isMayor = !!player.isMayor;
-        me.health = this.toFiniteNumber(player.health, me.health);
+        const incomingHealth = this.toFiniteNumber(player.health, me.health);
+        if (Number.isFinite(incomingHealth)) {
+            me.health = Number.isFinite(me.health)
+                ? Math.min(me.health, incomingHealth)
+                : incomingHealth;
+        }
         if (Number.isFinite(player.points)) {
             me.points = player.points;
         }
@@ -1123,6 +1131,12 @@ class SocketListener extends EventEmitter2 {
         if (myId && update.id === myId) {
             const previous = Number.isFinite(this.game.player?.health) ? this.game.player.health : healthValue;
             const nextHealth = Math.max(0, healthValue);
+
+            // Never let server heal above local health; only apply decreases
+            if (nextHealth > previous) {
+                return;
+            }
+
             if (this.game.player) {
                 this.game.player.health = nextHealth;
                 if (nextHealth <= 0) {
