@@ -61,6 +61,7 @@ class SocketListener extends EventEmitter2 {
         this.sequenceCounter = 0;
         this.lastServerSequence = 0;
         this.localShotCache = new Map();
+        this.hasConnectedOnce = false;
 
         this.on('bot:debug', (data) => {
             updateBotWaypoints(data);
@@ -77,6 +78,11 @@ class SocketListener extends EventEmitter2 {
         });
         this.io.on("connect", () => {
             console.log("connected");
+            const wasReconnecting = this.hasConnectedOnce;
+            this.hasConnectedOnce = true;
+            if (wasReconnecting) {
+                this.resetWorldState();
+            }
             this.sequenceCounter = 0;
             this.lastServerSequence = 0;
             this.emit("connected");
@@ -1421,6 +1427,32 @@ class SocketListener extends EventEmitter2 {
             return fallback;
         }
         return 0;
+    }
+
+    resetWorldState() {
+        if (!this.game) {
+            return;
+        }
+        if (this.game.bulletFactory && typeof this.game.bulletFactory.resetState === 'function') {
+            this.game.bulletFactory.resetState();
+        }
+        if (this.game.buildingFactory && typeof this.game.buildingFactory.resetState === 'function') {
+            this.game.buildingFactory.resetState();
+        }
+        if (this.game.iconFactory && typeof this.game.iconFactory.resetState === 'function') {
+            this.game.iconFactory.resetState();
+        }
+        if (this.game.itemFactory && typeof this.game.itemFactory.resetState === 'function') {
+            this.game.itemFactory.resetState();
+        }
+        if (this.game.defenseItems && typeof this.game.defenseItems.clear === 'function') {
+            this.game.defenseItems.clear();
+        }
+        this.game.otherPlayers = {};
+        this.game.buildings = {};
+        this.game.cities = [];
+        this.localShotCache.clear();
+        this.game.forceDraw = true;
     }
 
 

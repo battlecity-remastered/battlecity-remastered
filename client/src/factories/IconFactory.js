@@ -7,6 +7,14 @@ class IconFactory {
         this.iconsById = new Map();
     }
 
+    resetState() {
+        let node = this.getHead();
+        while (node) {
+            node = this.deleteIcon(node);
+        }
+        this.iconsById.clear();
+    }
+
     generateIconId(prefix = "icon") {
         const base = this.game?.socketListener?.io?.id ?? "local";
         return `${prefix}_${base}_${Date.now()}_${Math.random().toString(16).slice(-6)}`;

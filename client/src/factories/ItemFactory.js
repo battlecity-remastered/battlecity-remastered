@@ -115,6 +115,20 @@ class ItemFactory {
         }
     }
 
+    resetState() {
+        let node = this.getHead();
+        while (node) {
+            node = this.deleteItem(node, { notifyServer: false });
+        }
+        this.itemsById.clear();
+        this.pendingHazards.clear();
+        this.pendingDefenseIds.clear();
+        this.socketBound = false;
+        this.nextLocalId = 0;
+        this.nextDefenseId = 0;
+        this.pendingOrbItems = [];
+    }
+
     bindSocketEvents(socketListener) {
         if (!socketListener || this.socketBound) {
             return;
