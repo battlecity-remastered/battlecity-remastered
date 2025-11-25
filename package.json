@@ -14,5 +14,9 @@
   "devDependencies": {
     "@eslint/js": "^9.39.0",
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "discord": "^0.8.2",
+    "discord.js": "^14.25.1"
   }
 }
