@@ -83,7 +83,10 @@ class LoopMonitor {
             parts.push(`proc ${procMetric.avg.toFixed(2)}ms (min ${procMetric.min.toFixed(2)}, max ${procMetric.max.toFixed(2)})`);
         }
         if (parts.length && this.logger) {
-            this.logger(`[${this.label}] ${parts.join(' | ')}`);
+            this.logger(`[${this.label}] ${parts.join(' | ')}`, {
+                delta: deltaMetric,
+                proc: procMetric
+            });
         }
     }
 }

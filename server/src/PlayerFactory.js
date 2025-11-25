@@ -161,6 +161,7 @@ class PlayerFactory {
         this.chatManager = null;
         this.userStore = options.userStore || null;
         this.scoreService = options.scoreService || null;
+        this.onPlayerAssigned = typeof options.onPlayerAssigned === 'function' ? options.onPlayerAssigned : null;
     }
 
     applyScoreProfileToPlayer(player, profile, options = {}) {
@@ -2005,6 +2006,24 @@ class PlayerFactory {
         }
 
         this.emitLobbySnapshot();
+
+        if (this.onPlayerAssigned) {
+            const city = this.citySpawns && this.citySpawns[player.city];
+            const cityName = city && city.name ? city.name : `City ${player.city}`;
+            const callsign = player.callsign || (player.identity && player.identity.name) || shortenId(player.id) || 'Unknown player';
+            const role = player.isMayor ? 'mayor' : 'recruit';
+            try {
+                this.onPlayerAssigned({
+                    player,
+                    assignment,
+                    cityName,
+                    callsign,
+                    role
+                });
+            } catch (error) {
+                debug('onPlayerAssigned handler failed: %s', error && error.message ? error.message : error);
+            }
+        }
     }
 
     releaseSlot(player, options = {}) {

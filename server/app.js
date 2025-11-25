@@ -198,6 +198,17 @@ var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
 var { LoopMonitor } = require('./src/utils/LoopMonitor');
+var { DiscordNotifier } = require('./src/utils/DiscordNotifier');
+
+const shortenId = (value) => {
+    if (!value || typeof value !== 'string') {
+        return '';
+    }
+    if (value.length <= 8) {
+        return value;
+    }
+    return `${value.slice(0, 4)}...${value.slice(-2)}`;
+};
 
 const parseBooleanEnv = (value) => {
     if (value === undefined || value === null) {
@@ -225,10 +236,70 @@ const explicitFakeCityFlag = process.env.SERVER_DISABLE_FAKE_CITIES ?? process.e
 const disableFakeCities = explicitFakeCityFlag !== undefined
     ? parseBooleanEnv(explicitFakeCityFlag)
     : shouldProfileLoop;
+const discordNotifier = DiscordNotifier.fromEnv(process.env);
+
+const sendDiscordNotification = (content) => {
+    if (!discordNotifier) {
+        return;
+    }
+    discordNotifier.send(content).catch((error) => {
+        console.warn('[discord] Failed to send notification:', error?.message || error);
+    });
+};
+
+const resolveCityName = (cityId) => {
+    if (cityId === null || cityId === undefined) {
+        return 'Unknown city';
+    }
+    const entry = citySpawns && Object.prototype.hasOwnProperty.call(citySpawns, cityId)
+        ? citySpawns[cityId]
+        : null;
+    if (entry && typeof entry.name === 'string' && entry.name.trim().length) {
+        return entry.name;
+    }
+    return `City ${cityId}`;
+};
+
+const formatPlayerDisplayName = (player) => {
+    if (!player) {
+        return 'Unknown player';
+    }
+    const callsign = typeof player.callsign === 'string' ? player.callsign.trim() : '';
+    if (callsign.length) {
+        return callsign;
+    }
+    const identityName = typeof player?.identity?.name === 'string' ? player.identity.name.trim() : '';
+    if (identityName.length) {
+        return identityName;
+    }
+    const playerId = typeof player.id === 'string' ? player.id : '';
+    const shortId = shortenId(playerId);
+    return shortId || 'Unknown player';
+};
+
+const handlePlayerAssigned = (event) => {
+    if (!discordNotifier) {
+        return;
+    }
+    const player = event && event.player;
+    if (!player || player.isFake || player.isSystemControlled || player.isFakeRecruit) {
+        return;
+    }
+    const cityName = event && event.cityName ? event.cityName : resolveCityName(player.city);
+    const roleLabel = event && event.role === 'mayor' ? 'Mayor' : 'Recruit';
+    const playerName = formatPlayerDisplayName(player);
+    sendDiscordNotification(`${playerName} joined ${cityName} as ${roleLabel}.`);
+};
+
+const loopLogger = (message) => {
+    console.log(message);
+};
+
 const loopMonitor = shouldProfileLoop ? new LoopMonitor({
     reportIntervalMs: Number(process.env.SERVER_LOOP_REPORT_MS) || 5000,
     maxSamples: Number(process.env.SERVER_LOOP_SAMPLE_SIZE) || 600,
-    label: 'server-loop'
+    label: 'server-loop',
+    logger: loopLogger
 }) : null;
 
 app.get('/health', (_req, res) => {
@@ -323,7 +394,7 @@ const verifyGoogleToken = async (credential) => {
 };
 
 const scoreService = new ScoreService({ userStore });
-const playerFactory = new PlayerFactory(game, { userStore, scoreService });
+const playerFactory = new PlayerFactory(game, { userStore, scoreService, onPlayerAssigned: handlePlayerAssigned });
 playerFactory.listen(io);
 const bulletFactory = new BulletFactory(game, playerFactory);
 bulletFactory.listen(io);

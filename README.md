@@ -30,6 +30,20 @@ Multiplayer will not run without a server running and js changed
 - npm start  # Express + Socket.IO on http://localhost:8021
 - npm run dev  # optional: auto-restart with nodemon
 
+### Discord notifications
+
+Player assignment events (e.g. "Alan joined Balkh as Mayor") can be relayed to a Discord channel when a bot is configured:
+
+1. Create a Discord application and bot in the [Discord Developer Portal](https://discord.com/developers/applications), then copy the bot token.
+2. Invite the bot to your server with permission to post in the target text channel (the **Send Messages** permission is sufficient).
+3. Expose these variables when starting the server:
+   - `DISCORD_BOT_TOKEN`: the bot token.
+   - `DISCORD_CHANNEL_ID`: the numeric channel ID where notifications should appear.
+   - Optional: `DISCORD_MIN_INTERVAL_MS` to rate-limit messages (defaults to 10000 ms) and `DISCORD_REQUEST_TIMEOUT_MS` to control the HTTP timeout (defaults to 5000 ms).
+4. Start the server normally (e.g. `npm start --workspace server`). Join messages from real players will post to the configured channel; bots and fake/system players are ignored.
+
+> `discord.js` ships with the server workspace and is used by default for these notifications. If the package is missing for any reason, the notifier will fall back to its HTTPS client so messages keep flowing.
+
 ### Google login / registration setup
 
 1. Create a Google Cloud project (or reuse an existing one) and add an **OAuth 2.0 Client ID** for a web application via the [Google Identity Services](https://console.cloud.google.com/apis/credentials). Authorize the JavaScript origins you will use for the client (e.g. `http://localhost:8020`).
