@@ -7,7 +7,6 @@ try {
     // Prefer discord.js when it is installed so we use the official REST helper
     // and route builder. If it is missing we fall back to plain HTTPS to keep
     // notifications working without the extra dependency.
-    // eslint-disable-next-line global-require
     discord = require('discord.js');
 } catch (_error) {
     discord = null;

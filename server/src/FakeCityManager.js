@@ -749,10 +749,8 @@ class FakeCityManager {
     }
 
     spawnBotInCity(cityId, desiredCount = null) {
-        this.debug(`[bot] ensure bots for city ${cityId}`);
-        const entry = this.findCityConfig(cityId);
-        const target = Number.isFinite(desiredCount) ? Math.max(0, Math.floor(desiredCount)) : this.resolveDesiredBotCount(cityId, entry);
-        this.ensureCityBotCount(cityId, target);
+        this.debug(`[bot] server-side defenders disabled; ignoring spawn request for city ${cityId} (desired=${desiredCount})`);
+        return 0;
     }
 
 
@@ -836,47 +834,8 @@ class FakeCityManager {
         cityState.fakeBotRecruitCapacity = resolvedRecruitCapacity;
     }
 
-    ensureCityBotCount(cityId, desiredCount = DEFAULT_BOTS_PER_CITY) {
-        // DISABLED - Using new client-side defender bots instead
+    ensureCityBotCount(_cityId, _desiredCount = DEFAULT_BOTS_PER_CITY) {
         return 0;
-
-        if (!Number.isFinite(cityId)) {
-            return 0;
-        }
-        const numericCity = Math.max(0, Math.floor(cityId));
-        const target = Math.max(0, Math.floor(desiredCount));
-
-        const entry = this.findCityConfig(numericCity);
-        this.updateCityBotCapacityMetadata(numericCity, target, entry);
-
-        const record = this.activeCities.get(numericCity);
-        if (!record || !Array.isArray(record.buildingIds) || record.buildingIds.length === 0) {
-            this.killCityBot(numericCity, 'no_buildings');
-            return 0;
-        }
-
-        if (target === 0) {
-            this.killCityBot(numericCity, 'desired_zero');
-            return 0;
-        }
-
-        let spawned = 0;
-        while ((this.botProcesses.get(numericCity)?.size || 0) < target) {
-            const index = (this.botProcesses.get(numericCity)?.size || 0) + 1;
-            const nameHint = `bot - ${numericCity} -${index} `;
-            const currentBots = this.botProcesses.get(numericCity)?.size || 0;
-            const cityState = this.playerFactory && typeof this.playerFactory.computeCityState === 'function'
-                ? this.playerFactory.computeCityState(numericCity)
-                : null;
-            const shouldRequestMayor = currentBots === 0 && (!cityState || cityState.openMayor);
-            const role = shouldRequestMayor ? 'mayor' : 'recruit';
-            const child = this.spawnCityBot(numericCity, { name: nameHint, role });
-            if (!child) {
-                break;
-            }
-            spawned += 1;
-        }
-        return spawned;
     }
 
     buildPatrolPath(entry, baseTileX, baseTileY, layout) {
@@ -1697,43 +1656,8 @@ class FakeCityManager {
         return null;
     }
 
-    updateRecruits(now = Date.now()) {
-        // TEMPORARILY DISABLED - Testing new client-side defender bots
+    updateRecruits(_now = Date.now()) {
         return;
-
-        if (!this.recruits.size) {
-            return;
-        }
-        const players = this.game?.players || {};
-        for (const record of this.recruits.values()) {
-            if (!record || record.state === 'removed') {
-                continue;
-            }
-
-            if (record.state === 'pending') {
-                this.spawnRecruit(record, { now });
-                continue;
-            }
-
-            if (record.state === 'dead') {
-                if (record.respawnAt && now >= record.respawnAt) {
-                    this.spawnRecruit(record, { now });
-                }
-                continue;
-            }
-
-            const player = players[record.id];
-            if (!player || player.health <= 0) {
-                this.handleRecruitDeath(record, now);
-                continue;
-            }
-
-            if (record.nextThinkAt && now < record.nextThinkAt) {
-                continue;
-            }
-            record.nextThinkAt = now + RECRUIT_THINK_INTERVAL_MS;
-            this.updateRecruitBehaviour(record, player, now);
-        }
     }
 
     spawnRecruit(record, options = {}) {

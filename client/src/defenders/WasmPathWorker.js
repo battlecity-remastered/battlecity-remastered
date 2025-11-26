@@ -79,18 +79,34 @@ class MinHeap {
 }
 
 let wasmExports = null;
+let wasmLoadPromise = null;
 
-const loadWasm = async () => {
+const loadWasm = () => {
     if (wasmExports) {
-        return wasmExports;
+        return Promise.resolve(wasmExports);
+    }
+    if (wasmLoadPromise) {
+        return wasmLoadPromise;
     }
     const url = new URL('./wasm/astar.wasm', import.meta.url);
-    const response = await fetch(url);
-    const bytes = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(bytes);
-    wasmExports = instance.exports;
-    return wasmExports;
+    wasmLoadPromise = (async () => {
+        const response = await fetch(url);
+        const bytes = await response.arrayBuffer();
+        const { instance } = await WebAssembly.instantiate(bytes);
+        wasmExports = instance.exports;
+        return wasmExports;
+    })().catch((err) => {
+        // Allow retries if the initial fetch/instantiate fails
+        wasmLoadPromise = null;
+        throw err;
+    });
+    return wasmLoadPromise;
 };
+
+// Kick off loading immediately so the worker is ready by the time a request arrives.
+loadWasm().catch(() => {
+    // Errors are surfaced through the warmup/path handlers; this just prevents unhandled rejections.
+});
 
 const isBlockedTile = (tileX, tileY, mask) => {
     if (tileX < mask.left || tileX > mask.right || tileY < mask.top || tileY > mask.bottom) {

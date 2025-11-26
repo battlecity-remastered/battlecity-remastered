@@ -79,25 +79,12 @@ class WasmPathfinder {
 
     #buildMaskSnapshot(goalX, goalY, radiusTiles = 40) {
         const mask = this.navMask.getMask(2000, this.#getMaskOptions(goalX, goalY, radiusTiles));
-        if (!mask?.bounds) {
+        if (!mask?.bounds || !mask.grid) {
             return null;
         }
-        const width = (mask.bounds.right - mask.bounds.left) + 1;
-        const height = (mask.bounds.bottom - mask.bounds.top) + 1;
-        const grid = new Uint8Array(width * height);
-
-        for (const key of mask.blocked || []) {
-            const [xStr, yStr] = key.split(',');
-            const x = Number(xStr);
-            const y = Number(yStr);
-            if (!Number.isInteger(x) || !Number.isInteger(y)) {
-                continue;
-            }
-            const idx = ((y - mask.bounds.top) * width) + (x - mask.bounds.left);
-            if (idx >= 0 && idx < grid.length) {
-                grid[idx] = 1;
-            }
-        }
+        const { width, height } = mask;
+        // Copy so the cached navmask grid is not neutered by transferable postMessage
+        const grid = new Uint8Array(mask.grid);
 
         return {
             grid,

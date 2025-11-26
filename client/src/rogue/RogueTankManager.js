@@ -3,12 +3,11 @@ import { ITEM_TYPE_TURRET } from '../constants';
 import { ITEM_TYPE_PLASMA } from '../constants';
 import { ITEM_TYPE_BOMB } from '../constants';
 import { getCityDisplayName } from '../utils/citySpawns';
-import { normalizeVector, rotateVector, vectorToDirection, directionToVector, clampDelta, tryStep, findAlternateVector } from '../bots/movement-utils.js';
+import { normalizeVector, vectorToDirection, directionToVector, clampDelta, tryStep, findAlternateVector } from '../bots/movement-utils.js';
 import { createBlockingChecker } from '../bots/collision.js';
 
 const TILE_SIZE = 48;
 const HALF_TILE = TILE_SIZE / 2;
-const SPRITE_GAP = 8;
 const MAX_GLOBAL_TANKS = 2;
 const MAX_TANKS_PER_CITY = 2;
 const CITY_SIZE_THRESHOLD = 18;
@@ -172,8 +171,17 @@ class RogueTankManager {
             return;
         }
 
+        const playerHomeCity = Number.isFinite(this.game.player?.city) ? this.game.player.city : null;
+        const playerCityOrbable = Number.isFinite(playerHomeCity) ? this.isCityOrbable(playerHomeCity) : false;
+        if (!playerCityOrbable) {
+            return;
+        }
+
         cities.forEach((city, index) => {
             if (!city || globalSlots <= 0) {
+                return;
+            }
+            if (index !== playerHomeCity) {
                 return;
             }
             const buildingCount = this.game.buildingFactory.countBuildingsForCity(index);

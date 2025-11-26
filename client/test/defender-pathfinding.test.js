@@ -116,7 +116,16 @@ test('Pathfinder returns null for blocked goal', () => {
 
     const path = pathfinder.findPath(startX, startY, goalX, goalY);
 
-    assert.strictEqual(path, null, 'Path should be null when goal is blocked');
+    assert.ok(path, 'Path should reroute to the nearest open tile when goal is blocked');
+    assert.ok(path.length > 0, 'Path should include waypoints');
+    const finalWaypoint = path[path.length - 1];
+    const finalTileX = Math.floor(finalWaypoint.x / TILE_SIZE);
+    const finalTileY = Math.floor(finalWaypoint.y / TILE_SIZE);
+    assert.deepStrictEqual(
+        { x: finalTileX, y: finalTileY },
+        { x: 4, y: 4 },
+        'Path should end at the closest passable tile adjacent to the blocked goal'
+    );
 
-    console.log(`✓ Correctly returned null for blocked goal`);
+    console.log(`✓ Rerouted to (${finalTileX},${finalTileY}) for blocked goal`);
 });

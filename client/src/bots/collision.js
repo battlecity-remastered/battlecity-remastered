@@ -1,10 +1,11 @@
 // Shared collision helpers for bot movement
 import { rectangleCollision } from '../collision/collision-helpers.js';
+import { ITEM_TYPE_MINE, ITEM_TYPE_DFG } from '../constants.js';
 
 const TILE_SIZE = 48;
 const SPRITE_GAP = 8;
 
-export const createBlockingChecker = (game) => {
+export const createBlockingChecker = (game, getEntityContext = null) => {
     const hitsEdges = (rect) => {
         if (rect.x < 0 || rect.y < 0) {
             return true;
@@ -54,7 +55,11 @@ export const createBlockingChecker = (game) => {
         return false;
     };
 
-    const hitsItem = (rect) => {
+    const hitsItem = (rect, entity) => {
+        const context = (typeof getEntityContext === 'function') ? getEntityContext(entity) : null;
+        const entityTeam = Number.isFinite(context?.teamId) ? Math.floor(context.teamId) : null;
+        const entityOwner = context?.ownerId ?? null;
+
         let node = game.itemFactory?.getHead?.();
         while (node) {
             const itemRect = {
@@ -64,6 +69,16 @@ export const createBlockingChecker = (game) => {
                 h: TILE_SIZE
             };
             if (rectangleCollision(rect, itemRect)) {
+                const itemTeam = Number.isFinite(node.teamId ?? node.city) ? Math.floor(node.teamId ?? node.city) : null;
+                const isFriendly = (entityTeam !== null && itemTeam !== null && entityTeam === itemTeam)
+                    || (!!entityOwner && node.ownerId && node.ownerId === entityOwner)
+                    || (!!entityOwner && node.owner && node.owner === entityOwner);
+
+                // Friendly mines/DFGs should not block bots from their own team.
+                if (isFriendly && (node.type === ITEM_TYPE_MINE || node.type === ITEM_TYPE_DFG)) {
+                    node = node.next;
+                    continue;
+                }
                 return true;
             }
             node = node.next;
@@ -71,7 +86,7 @@ export const createBlockingChecker = (game) => {
         return false;
     };
 
-    const isBlocked = (x, y) => {
+    const isBlocked = (x, y, entity = null) => {
         const rect = {
             x: x + SPRITE_GAP,
             y: y + SPRITE_GAP,
@@ -88,7 +103,7 @@ export const createBlockingChecker = (game) => {
         if (hitsBuilding(rect)) {
             return true;
         }
-        if (hitsItem(rect)) {
+        if (hitsItem(rect, entity)) {
             return true;
         }
         return false;
