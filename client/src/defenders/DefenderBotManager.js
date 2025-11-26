@@ -11,6 +11,7 @@ const MAX_DEFENDERS_PER_CITY = 4;
 const MAX_TOTAL_DEFENDERS = 4;
 const SPAWN_CHECK_INTERVAL = 3000;
 const ENGAGEMENT_RADIUS = TILE_SIZE * 30;
+const DISENGAGEMENT_RADIUS = ENGAGEMENT_RADIUS * 2;
 const BASE_SPEED_MULTIPLIER = 1.0;
 const SHOOT_INTERVAL = 750;
 const SHOOT_RANGE = TILE_SIZE * 16;
@@ -66,6 +67,9 @@ class DefenderBotManager {
         });
         this.debugEnabled = false;
         this.debugLastEmit = 0;
+        this.socketEventsBound = false;
+        this.handleCityOrbed = this.handleCityOrbed.bind(this);
+        this.bindSocketEvents();
     }
 
     createDefenderId() {
@@ -89,6 +93,7 @@ class DefenderBotManager {
             this.evaluateSpawns(now);
         }
 
+        this.pruneDefendersOutsideCityLimit();
         this.updateDefenders(now);
         this.emitDebugPaths(now);
     }
@@ -956,6 +961,66 @@ class DefenderBotManager {
             }
         }
         this.defenders.splice(index, 1);
+        this.game.forceDraw = true;
+    }
+
+    pruneDefendersOutsideCityLimit() {
+        if (!this.defenders.length || !this.game?.player) {
+            return;
+        }
+        const playerX = this.game.player.offset?.x || 0;
+        const playerY = this.game.player.offset?.y || 0;
+        const disengageSq = DISENGAGEMENT_RADIUS * DISENGAGEMENT_RADIUS;
+
+        for (const [cityId, defendersForCity] of this.cityDefenders.entries()) {
+            if (!defendersForCity || defendersForCity.size === 0) {
+                this.cityDefenders.delete(cityId);
+                continue;
+            }
+            const city = this.game.cities?.[cityId];
+            if (!city) {
+                this.removeDefendersForCity(cityId);
+                continue;
+            }
+            const cityX = toFinite(city.x, 0) + (TILE_SIZE * 1.5);
+            const cityY = toFinite(city.y, 0) + (TILE_SIZE * 1.5);
+            const distSq = distanceSquared(playerX + HALF_TILE, playerY + HALF_TILE, cityX, cityY);
+            if (distSq > disengageSq) {
+                console.log(`[DefenderBot] Removing defenders for city ${cityId} (player disengaged)`);
+                this.removeDefendersForCity(cityId);
+            }
+        }
+    }
+
+    removeDefendersForCity(cityId) {
+        if (cityId === null || cityId === undefined) {
+            return;
+        }
+        for (let i = this.defenders.length - 1; i >= 0; i -= 1) {
+            if (this.defenders[i]?.cityId === cityId) {
+                this.removeDefenderAtIndex(i);
+            }
+        }
+        this.cityDefenders.delete(cityId);
+        this.game.forceDraw = true;
+    }
+
+    bindSocketEvents() {
+        const socketListener = this.game?.socketListener;
+        if (!socketListener || typeof socketListener.on !== 'function' || this.socketEventsBound) {
+            return;
+        }
+        socketListener.on('city:orbed', this.handleCityOrbed);
+        this.socketEventsBound = true;
+    }
+
+    handleCityOrbed(data) {
+        const cityId = toFinite(data?.targetCity ?? data?.city ?? data?.id, null);
+        if (cityId === null) {
+            return;
+        }
+        console.log(`[DefenderBot] Removing defenders for orbed city ${cityId}`);
+        this.removeDefendersForCity(cityId);
     }
 
 }
