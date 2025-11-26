@@ -10,6 +10,7 @@ import { BUILDING_HOUSE } from "../constants";
 import { BUILDING_REPAIR } from "../constants";
 import { POPULATION_MAX_HOUSE } from "../constants";
 import { POPULATION_MAX_NON_HOUSE } from "../constants";
+import { TYPE_LABEL_LOOKUP, LABELS } from '../constants';
 import { getCityDisplayName } from '../utils/citySpawns';
 import { scheduleDestroy } from '../utils/pixiPerformance';
 
@@ -188,11 +189,15 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
     tileLayer.addFrame(baseTexture, i * TILE_SIZE, j * TILE_SIZE, 1, 0);
 
     let buildingOverlayTexture = null;
+    const typeLookupKey = TYPE_LABEL_LOOKUP?.[Number(building?.type)];
+    const overlayIcon = typeLookupKey && LABELS[typeLookupKey]
+        ? LABELS[typeLookupKey].BUILDING_ICON ?? LABELS[typeLookupKey].ICON
+        : subType;
     try {
         buildingOverlayTexture = getSubTexture(
             game.textures['imageItems']?.baseTexture,
-            `buildingOverlay:${subType}`,
-            subType * 32,
+            `buildingOverlay:${overlayIcon}`,
+            overlayIcon * 32,
             0,
             32,
             32

@@ -257,7 +257,7 @@ export const setupBuildingMenu = (game) => {
 
                 var tmpText = new PIXI.Texture(
                     game.textures["buildingIcons"].baseTexture,
-                    new PIXI.Rectangle(LABELS[id].ICON * 16, 0, 16, 16),
+                    new PIXI.Rectangle((LABELS[id].MENU_ICON ?? LABELS[id].ICON) * 16, 0, 16, 16),
                 );
 
                 var buildIcon = new PIXI.Sprite(tmpText);

@@ -1001,8 +1001,17 @@ class ItemFactory {
         }
     }
 
+    isLocalPlayersBuilding(building) {
+        if (!building || !this.game?.player) {
+            return false;
+        }
+        const ownerId = building.owner ?? building.ownerId ?? null;
+        return ownerId !== null && ownerId === this.game.player.id;
+    }
+
     detonateBomb(item, options = {}) {
         const notifyServer = options.notifyServer !== undefined ? !!options.notifyServer : true;
+        const reportDemolish = options.reportDemolish === true;
         const centerTileX = Math.floor((item.x + 24) / 48);
         const centerTileY = Math.floor((item.y + 24) / 48);
 
@@ -1034,7 +1043,9 @@ class ItemFactory {
                     building = building.next;
                     continue;
                 }
-                building = this.game.buildingFactory.deleteBuilding(building, notifyServer);
+                const shouldNotifyDemolish = notifyServer || (reportDemolish && this.isLocalPlayersBuilding(building));
+                const demolishReason = shouldNotifyDemolish && reportDemolish ? 'bot_destroyed' : null;
+                building = this.game.buildingFactory.deleteBuilding(building, shouldNotifyDemolish, demolishReason);
                 continue;
             }
             building = building.next;

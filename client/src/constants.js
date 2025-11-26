@@ -1,3 +1,5 @@
+import * as sharedBuildTreeConfigModule from '../../shared/buildTreeConfig.js';
+
 export const RESOLUTION_X = 1024;
 export const RESOLUTION_Y = 768;
 
@@ -102,7 +104,7 @@ export const CAN_BUILD_BOMB_RESEARCH = 403;
 export const CAN_BUILD_BOMB_FACTORY = 103;
 export const CAN_BUILD_SLEEPER_RESEARCH = 410;
 export const CAN_BUILD_SLEEPER_FACTORY = 110;
-export const CAN_BUILD_WALL_RESEARCH = 408;
+export const CAN_BUILD_WALL_RESEARCH = 413;
 export const CAN_BUILD_WALL_FACTORY = 108;
 export const CAN_BUILD_DFG_RESEARCH = 407;
 export const CAN_BUILD_DFG_FACTORY = 107;
@@ -153,260 +155,13 @@ export const ITEM_TYPE_LIMITS = {
     [ITEM_TYPE_LASER]: 4,
 };
 
-export const BUILD_TREE_CONFIG = [
-    {
-        key: 'CAN_BUILD_HOSPITAL',
-        type: CAN_BUILD_HOSPITAL,
-        label: 'Hospital',
-        icon: 12,
-        image: BUILDING_REPAIR,
-        parent: CAN_BUILD_MEDKIT_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_HOUSE',
-        type: CAN_BUILD_HOUSE,
-        label: 'Housing',
-        icon: 0,
-        image: BUILDING_HOUSE,
-        parent: 0,
-        initial: CAN_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_LASER_RESEARCH',
-        type: CAN_BUILD_LASER_RESEARCH,
-        label: 'Laser Research',
-        icon: 1,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_HOUSE,
-        initial: CAN_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_LASER_FACTORY',
-        type: CAN_BUILD_LASER_FACTORY,
-        label: 'Laser Factory',
-        icon: 1,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_LASER_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_BAZOOKA_RESEARCH',
-        type: CAN_BUILD_BAZOOKA_RESEARCH,
-        label: 'Bazooka Research',
-        icon: 2,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_HOUSE,
-        initial: CAN_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_BAZOOKA_FACTORY',
-        type: CAN_BUILD_BAZOOKA_FACTORY,
-        label: 'Bazooka Factory',
-        icon: 2,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_BAZOOKA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_TURRET_RESEARCH',
-        type: CAN_BUILD_TURRET_RESEARCH,
-        label: 'Turret Research',
-        icon: 9,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_HOUSE,
-        initial: CAN_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_TURRET_FACTORY',
-        type: CAN_BUILD_TURRET_FACTORY,
-        label: 'Turret Factory',
-        icon: 9,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_TURRET_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_CLOAK_RESEARCH',
-        type: CAN_BUILD_CLOAK_RESEARCH,
-        label: 'Cloak Research',
-        icon: 1,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_BAZOOKA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_CLOAK_FACTORY',
-        type: CAN_BUILD_CLOAK_FACTORY,
-        label: 'Cloak Factory',
-        icon: 1,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_CLOAK_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_MEDKIT_RESEARCH',
-        type: CAN_BUILD_MEDKIT_RESEARCH,
-        label: 'MedKit Research',
-        icon: 3,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_BAZOOKA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_MEDKIT_FACTORY',
-        type: CAN_BUILD_MEDKIT_FACTORY,
-        label: 'MedKit Factory',
-        icon: 3,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_MEDKIT_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_PLASMA_RESEARCH',
-        type: CAN_BUILD_PLASMA_RESEARCH,
-        label: 'Plasma Turret Research',
-        icon: 10,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_TURRET_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_PLASMA_FACTORY',
-        type: CAN_BUILD_PLASMA_FACTORY,
-        label: 'Plasma Turret Factory',
-        icon: 10,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_PLASMA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_MINE_RESEARCH',
-        type: CAN_BUILD_MINE_RESEARCH,
-        label: 'Mine Research',
-        icon: 5,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_TURRET_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_MINE_FACTORY',
-        type: CAN_BUILD_MINE_FACTORY,
-        label: 'Mine Factory',
-        icon: 5,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_MINE_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_ORB_RESEARCH',
-        type: CAN_BUILD_ORB_RESEARCH,
-        label: 'Orb Research',
-        icon: 6,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_CLOAK_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_ORB_FACTORY',
-        type: CAN_BUILD_ORB_FACTORY,
-        label: 'Orb Factory',
-        icon: 6,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_ORB_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_BOMB_RESEARCH',
-        type: CAN_BUILD_BOMB_RESEARCH,
-        label: 'Time Bomb Research',
-        icon: 4,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_CLOAK_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_BOMB_FACTORY',
-        type: CAN_BUILD_BOMB_FACTORY,
-        label: 'Time Bomb Factory',
-        icon: 4,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_BOMB_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_SLEEPER_RESEARCH',
-        type: CAN_BUILD_SLEEPER_RESEARCH,
-        label: 'Sleeper Research',
-        icon: 8,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_PLASMA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_SLEEPER_FACTORY',
-        type: CAN_BUILD_SLEEPER_FACTORY,
-        label: 'Sleeper Factory',
-        icon: 8,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_SLEEPER_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_WALL_RESEARCH',
-        type: CAN_BUILD_WALL_RESEARCH,
-        label: 'Wall Research',
-        icon: 11,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_PLASMA_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_WALL_FACTORY',
-        type: CAN_BUILD_WALL_FACTORY,
-        label: 'Wall Factory',
-        icon: 11,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_WALL_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_DFG_RESEARCH',
-        type: CAN_BUILD_DFG_RESEARCH,
-        label: 'DFG Research',
-        icon: 8,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_MINE_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_DFG_FACTORY',
-        type: CAN_BUILD_DFG_FACTORY,
-        label: 'DFG Factory',
-        icon: 8,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_DFG_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_FLARE_RESEARCH',
-        type: CAN_BUILD_FLARE_RESEARCH,
-        label: 'Flare Gun Research',
-        icon: 7,
-        image: BUILDING_RESEARCH,
-        parent: CAN_BUILD_ORB_RESEARCH,
-        initial: CANT_BUILD,
-    },
-    {
-        key: 'CAN_BUILD_FLARE_FACTORY',
-        type: CAN_BUILD_FLARE_FACTORY,
-        label: 'Flare Gun Factory',
-        icon: 7,
-        image: BUILDING_FACTORY,
-        parent: CAN_BUILD_FLARE_RESEARCH,
-        initial: CANT_BUILD,
-    },
-];
+const SHARED_BUILD_TREE_CONFIG = Array.isArray(sharedBuildTreeConfigModule?.BUILD_TREE_CONFIG)
+    ? sharedBuildTreeConfigModule.BUILD_TREE_CONFIG
+    : [];
+
+export const BUILD_TREE_CONFIG = Array.isArray(SHARED_BUILD_TREE_CONFIG) && SHARED_BUILD_TREE_CONFIG.length
+    ? SHARED_BUILD_TREE_CONFIG
+    : [];
 
 export const DEPENDENCY_TREE = BUILD_TREE_CONFIG.map((entry) => ({
     id: entry.type,
@@ -414,12 +169,21 @@ export const DEPENDENCY_TREE = BUILD_TREE_CONFIG.map((entry) => ({
 }));
 
 export const LABELS = BUILD_TREE_CONFIG.reduce((acc, entry) => {
+    const menuIcon = entry.menuIcon ?? entry.icon ?? 0;
+    const buildingIcon = entry.buildingIcon ?? entry.icon ?? menuIcon;
     acc[entry.key] = {
-        ICON: entry.icon,
+        ICON: menuIcon,
+        MENU_ICON: menuIcon,
+        BUILDING_ICON: buildingIcon,
         IMAGE: entry.image,
         TYPE: entry.type,
         LABEL: entry.label,
     };
+    return acc;
+}, {});
+
+export const TYPE_LABEL_LOOKUP = Object.keys(LABELS).reduce((acc, key) => {
+    acc[LABELS[key].TYPE] = key;
     return acc;
 }, {});
 

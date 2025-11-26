@@ -77,6 +77,48 @@ const isFactoryType = (type) => type >= 100 && type < 200;
 const isResearchType = (type) => Math.floor(Number(type) / 100) === 4;
 const researchTimerKey = (cityId, researchType) => `${cityId}:${researchType}`;
 
+const BUILD_STATE_LABELS = {
+    [CANT_BUILD]: 'locked',
+    [CAN_BUILD]: 'available',
+    [HAS_BUILT]: 'already built',
+    [RESEARCH_PENDING]: 'research pending',
+};
+
+const resolveBuildingLabel = (type) => {
+    const numericType = toFinite(type, null);
+    if (!Number.isFinite(numericType)) {
+        return null;
+    }
+    const labelKey = TYPE_LABEL_LOOKUP[numericType];
+    if (!labelKey) {
+        return `type ${numericType}`;
+    }
+    return LABELS[labelKey]?.LABEL || labelKey;
+};
+
+const describeBuildDenialReason = (reason, data) => {
+    switch (reason) {
+        case 'wrong_city':
+            return 'player is not assigned to that city';
+        case 'not_mayor':
+            return 'only mayors can place buildings';
+        case 'insufficient_funds':
+            return 'city treasury lacks funds for construction';
+        case 'collision':
+            return 'placement collides with an existing structure';
+        case 'too_far':
+            return 'placement is outside the allowed city build radius';
+        case 'locked':
+            return data?.state ? `build option locked (${data.state})` : 'build option locked by tech tree';
+        case 'research_pending': {
+            const researchLabel = resolveBuildingLabel(data?.researchType);
+            return researchLabel ? `waiting for ${researchLabel} research to complete` : 'required research is still pending';
+        }
+        default:
+            return reason || 'unknown reason';
+    }
+};
+
 const playEffect = (game, soundId, position) => {
     if (!game || !game.audio || !soundId) {
         return;
@@ -513,7 +555,7 @@ class BuildingFactory {
         return false;
     }
 
-    deleteBuilding(building, notifyServer = true) {
+    deleteBuilding(building, notifyServer = true, reason = null) {
 
 
         this.game.map[building.x][building.y] = 0;
@@ -548,7 +590,8 @@ class BuildingFactory {
         }
 
         if (notifyServer && this.game.socketListener && this.game.socketListener.sendDemolishBuilding) {
-            this.game.socketListener.sendDemolishBuilding(building.id);
+            const payload = reason ? { id: building.id, reason } : building.id;
+            this.game.socketListener.sendDemolishBuilding(payload);
         }
 
         var returnBuilding = building.next;
@@ -596,6 +639,19 @@ class BuildingFactory {
         }
     }
 
+    logBuildDenied(data, building) {
+        const reason = data?.reason || 'unknown';
+        const buildingLabel = resolveBuildingLabel(building?.type ?? data?.type);
+        const cityId = toFinite(data?.city ?? (building?.city ?? building?.cityId), null);
+        const cityLabel = Number.isFinite(cityId) ? getCityDisplayName(cityId) : null;
+        const coordsLabel = Number.isFinite(data?.x) && Number.isFinite(data?.y) ? ` at (${data.x}, ${data.y})` : '';
+        const reasonLabel = describeBuildDenialReason(reason, data);
+        const stateLabel = data?.state !== undefined ? ` (state: ${BUILD_STATE_LABELS[data.state] || data.state})` : '';
+        const targetLabel = buildingLabel ? buildingLabel : `building ${data?.id || '(unknown)'}`;
+        const citySuffix = cityLabel ? ` in ${cityLabel}` : '';
+        console.warn(`[build] Denied ${targetLabel}${citySuffix}${coordsLabel}: ${reasonLabel}${stateLabel}`, data);
+    }
+
     handleBuildDenied(data) {
         if (!data) {
             return;
@@ -603,6 +659,20 @@ class BuildingFactory {
         const id = data.id || `${data.x}_${data.y}`;
         if (!id) {
             return;
+        }
+        const building = this.getBuildingById(id);
+        this.logBuildDenied(data, building);
+        const targetCityId = toFinite(data.city ?? (building?.city ?? building?.cityId), null);
+        const buildingType = toFinite(building?.type ?? data?.type, null);
+        if (Number.isFinite(targetCityId) && Number.isFinite(buildingType)) {
+            const city = this.game.cities?.[targetCityId];
+            const labelKey = TYPE_LABEL_LOOKUP[buildingType];
+            if (city?.canBuild && labelKey && data.state !== undefined) {
+                city.canBuild[labelKey] = data.state;
+                this.game.forceDraw = true;
+            } else if (city?.canBuild && labelKey && !city.canBuild[labelKey]) {
+                this.recomputeCityBuildPermissions(targetCityId);
+            }
         }
         if (data.reason === 'research_pending' && this.game.notify) {
             const eta = toFinite(data.completeAt, null);
@@ -627,7 +697,6 @@ class BuildingFactory {
             }
             this.pendingBuildCosts.delete(id);
         }
-        const building = this.getBuildingById(id);
         if (building && building.owner === this.game.player.id) {
             this.deleteBuilding(building, false);
         }

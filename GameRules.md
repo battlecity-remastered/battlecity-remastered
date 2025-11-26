@@ -121,14 +121,61 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Default fortresses pre-seed minefields and autonomous turrets/plasma/sleeper emplacements, all team-locked so only the owning city can interact with them; the layout mirrors `defaultDefenses` and is streamed to clients along with hazard snapshots. (shared/fakeCities.json:17, server/src/FakeCityManager.js:110, server/src/hazards/HazardManager.js:74, client/src/SocketListener.js:129)
 
 ## Build Tree
-- Housing is available immediately and permits launching the two starting research lines.
-- Lazer Research (→ Lazer Factory) is unlocked from the start and, once completed, enables Cloak Research, MedKit Research, and their factories.
-- Turret Research (→ Turret Factory) is also granted at the start and unlocks Plasma Turret Research and Mine Research.
-- Cloak Research unlocks Cloak Factory plus Orb Research and Time Bomb Research, which then unlock their matching factories.
-- MedKit Research unlocks MedKit Factory and allows the city to construct Hospitals.
-- Plasma Turret Research unlocks Plasma Turret Factory as well as Sleeper Research and Wall Research; each research unlocks its paired factory.
-- Mine Research unlocks Mine Factory and DFG Research (and then DFG Factory).
-- Orb Research grants Orb Factory production and unlocks Flare Gun Research (and the Flare Gun Factory).
+**Starting unlocks**
+- Housing (300) is available immediately.
+- Laser Research (412) → Laser Factory (112).
+- Bazooka Research (401) → Bazooka Factory (101).
+- Turret Research (409) → Turret Factory (109).
+
+**Dependency map**
+- Bazooka Research (401)
+  - Cloak Research (400) → Cloak Factory (100)
+    - Orb Research (405) → Orb Factory (105)
+      - Flare Gun Research (407) → Flare Gun Factory (106)
+    - Time Bomb Research (403) → Time Bomb Factory (103)
+  - MedKit Research (402) → MedKit Factory (102) and Hospital (200)
+- Turret Research (409)
+  - Plasma Turret Research (411) → Plasma Turret Factory (111)
+    - Sleeper Research (410) → Sleeper Factory (110)
+    - Wall Research (413) → Wall Factory (108)
+  - Mine Research (404) → Mine Factory (104)
+    - DFG Research (406) → DFG Factory (107)
+
+**Mermaid view**
+```mermaid
+flowchart TD
+    Housing[Housing 300]
+    Bazooka[Bazooka Research 401]
+    Laser[Laser Research 412]
+    Turret[Turret Research 409]
+    Cloak[Cloak Research 400]
+    Orb[Orb Research 405]
+    Flare[Flare Gun Research 407]
+    TimeBomb[Time Bomb Research 403]
+    Medkit[MedKit Research 402]
+    Hospital[Hospital 200]
+    Plasma[Plasma Turret Research 411]
+    Sleeper[Sleeper Research 410]
+    Wall[Wall Research 413]
+    Mine[Mine Research 404]
+    DFG[DFG Research 406]
+
+    Housing --> Bazooka
+    Housing --> Laser
+    Housing --> Turret
+
+    Bazooka --> Cloak
+    Bazooka --> Medkit
+    Cloak --> Orb
+    Cloak --> TimeBomb
+    Orb --> Flare
+    Medkit --> Hospital
+    Turret --> Plasma
+    Turret --> Mine
+    Plasma --> Sleeper
+    Plasma --> Wall
+    Mine --> DFG
+```
 
 ## Items
 - **Cloak** – Press `C` to activate a 5-second cloak as long as you own the icon; enemies stop drawing your tank while allied players still see you. The server tracks the timer so taking damage or timeout automatically broadcasts a status update. (client/src/input/input-keyboard.js:150, client/src/factories/ItemFactory.js:208, server/src/PlayerFactory.js:318)

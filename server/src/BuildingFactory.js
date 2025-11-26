@@ -475,6 +475,7 @@ class BuildingFactory {
             this.emitDemolishDenied(socket, null, 'invalid_payload');
             return;
         }
+        const requestedReason = typeof data.reason === 'string' ? data.reason : null;
 
         const building = this.buildings.get(data.id);
         if (!building) {
@@ -499,6 +500,18 @@ class BuildingFactory {
 
         const buildingCityId = building.cityId ?? building.city ?? 0;
         const playerCityId = player.city ?? 0;
+
+        if (requestedReason === 'bot_destroyed') {
+            const isOwner = building.ownerId === socket.id;
+            if (!isOwner || playerCityId !== buildingCityId) {
+                debug(`Demolish denied for ${data.id} - bot_destroyed request but player not owner or wrong city (ownerMatch=${isOwner}, playerCity=${playerCityId}, buildingCity=${buildingCityId})`);
+                this.emitDemolishDenied(socket, building.id, 'not_owner');
+                return;
+            }
+            debug(`Demolish approved for ${data.id} via bot_destroyed by owner ${socket.id} in city ${buildingCityId}`);
+            this.removeBuilding(building.id);
+            return;
+        }
 
         // Player must be mayor of the same city as the building
         if (!player.isMayor || playerCityId !== buildingCityId) {
@@ -886,13 +899,15 @@ class BuildingFactory {
             return null;
         }
         const family = Math.floor(numericType / 100);
-        if (family === 1) {
-            return numericType + 300;
+        const requiresResearch = family === 1 || numericType === 200 || numericType === 301;
+        if (!requiresResearch) {
+            return null;
         }
-        if (numericType === 200 || numericType === 301) {
-            return 402;
+        const node = this.searchTree(this.dependencyTreeRoot, numericType);
+        if (!node || node.parentid === undefined || node.parentid === 0) {
+            return null;
         }
-        return null;
+        return node.parentid;
     }
 
     advanceResearchForBuilding(building, activeResearchKeys, now) {

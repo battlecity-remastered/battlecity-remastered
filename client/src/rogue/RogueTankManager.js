@@ -586,7 +586,7 @@ class RogueTankManager {
             }
             if (now >= entry.detonateAt) {
                 this.game.itemFactory.spawnExplosion(entry.item.x, entry.item.y);
-                this.game.itemFactory.detonateBomb(entry.item, { notifyServer: false });
+                this.game.itemFactory.detonateBomb(entry.item, { notifyServer: false, reportDemolish: true });
                 continue;
             }
             next.push(entry);

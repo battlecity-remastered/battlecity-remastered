@@ -498,11 +498,24 @@ class SocketListener extends EventEmitter2 {
         }
     }
 
-    sendDemolishBuilding(buildingId) {
-        if (!this.io || this.io.disconnected || !buildingId) {
+    sendDemolishBuilding(building) {
+        if (!this.io || this.io.disconnected || !building) {
             return;
         }
-        this.io.emit('demolish_building', JSON.stringify({ id: buildingId }));
+        let payload = null;
+        if (typeof building === 'object' && building !== null) {
+            const id = this.toFiniteNumber(building.id, null) || building.id;
+            if (!id) {
+                return;
+            }
+            payload = { id };
+            if (typeof building.reason === 'string' && building.reason.length > 0) {
+                payload.reason = building.reason;
+            }
+        } else {
+            payload = { id: building };
+        }
+        this.io.emit('demolish_building', JSON.stringify(payload));
     }
 
     requestCityInfo(cityId) {
