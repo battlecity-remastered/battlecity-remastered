@@ -143,6 +143,30 @@ class BuildingFactory {
         this.researchTimers = new Map();
     }
 
+    resetState() {
+        let node = this.getHead();
+        while (node) {
+            node = this.deleteBuilding(node, false);
+        }
+        this.buildingsById = {};
+        this.buildingsByCoord = {};
+        this.pendingBuildCosts.clear();
+        this.pendingDemolish.clear();
+        for (const timerId of this.researchTimers.values()) {
+            clearTimeout(timerId);
+        }
+        this.researchTimers.clear();
+        this.researchStatus.clear();
+        if (Array.isArray(this.game?.cities)) {
+            this.game.cities.forEach((city) => {
+                if (city && city.canBuild) {
+                    Object.assign(city.canBuild, { ...DEFAULT_CITY_CAN_BUILD });
+                }
+            });
+        }
+        this.game.forceDraw = true;
+    }
+
     cycle() {
     }
 

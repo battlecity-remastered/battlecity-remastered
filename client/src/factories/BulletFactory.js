@@ -87,6 +87,13 @@ class BulletFactory {
         this.bulletListHead = null;
     }
 
+    resetState() {
+        let node = this.getHead();
+        while (node) {
+            node = this.deleteBullet(node);
+        }
+    }
+
     isLocalBotBullet(bullet) {
         if (!bullet || !bullet.sourceType) {
             return false;
