@@ -25,6 +25,24 @@ var getIconsWithinRange = function (iconFactory, player) {
     return foundIcons
 };
 
+const textureCache = new Map();
+const getIconTexture = (baseTexture, cacheKey, x, y, width, height) => {
+    if (!baseTexture) {
+        return null;
+    }
+    const baseId = baseTexture.uid || baseTexture.cacheId || 'base';
+    const key = `${baseId}:${cacheKey}:${x}:${y}:${width}:${height}`;
+    let cached = textureCache.get(key);
+    if (!cached) {
+        cached = new PIXI.Texture(
+            baseTexture,
+            new PIXI.Rectangle(x, y, width, height)
+        );
+        textureCache.set(key, cached);
+    }
+    return cached;
+};
+
 let lastOrbIconFrame = null;
 
 export const drawIcons = (game, iconTiles) => {
@@ -60,9 +78,13 @@ export const drawIcons = (game, iconTiles) => {
                 frameHeight = 32;
                 drawX += 2;
             }
-            var tmpText = new PIXI.Texture(
+            const tmpText = getIconTexture(
                 baseTexture,
-                new PIXI.Rectangle(frameX, frameY, frameWidth, frameHeight)
+                `icon:${icon.type}:${frameX}:${frameY}:${frameWidth}:${frameHeight}`,
+                frameX,
+                frameY,
+                frameWidth,
+                frameHeight
             );
             iconTiles.addFrame(tmpText, drawX, drawY);
         });

@@ -56,20 +56,20 @@ export class NavMask {
     }
 
     buildMask(bounds) {
-        const passable = new Set();
-        const blocked = new Set();
+        const width = (bounds.right - bounds.left) + 1;
+        const height = (bounds.bottom - bounds.top) + 1;
+        const grid = new Uint8Array(width * height);
+        // default 0 (passable); mark blocked tiles with 1
 
-        const addBlocked = (tileX, tileY) => {
+        const indexOf = (tileX, tileY) => ((tileY - bounds.top) * width) + (tileX - bounds.left);
+        const markBlocked = (tileX, tileY) => {
             if (tileX < bounds.left || tileX > bounds.right || tileY < bounds.top || tileY > bounds.bottom) {
                 return;
             }
-            blocked.add(`${tileX},${tileY}`);
-        };
-        const addPassable = (tileX, tileY) => {
-            if (tileX < bounds.left || tileX > bounds.right || tileY < bounds.top || tileY > bounds.bottom) {
-                return;
+            const idx = indexOf(tileX, tileY);
+            if (idx >= 0 && idx < grid.length) {
+                grid[idx] = 1;
             }
-            passable.add(`${tileX},${tileY}`);
         };
 
         const map = this.game?.map;
@@ -81,10 +81,8 @@ export class NavMask {
                 }
                 for (let y = bounds.top; y <= bounds.bottom; y += 1) {
                     const val = col[y];
-                    if (PASSABLE_VALUES.has(val)) {
-                        addPassable(x, y);
-                    } else {
-                        addBlocked(x, y);
+                    if (!PASSABLE_VALUES.has(val)) {
+                        markBlocked(x, y);
                     }
                 }
             }
@@ -95,7 +93,7 @@ export class NavMask {
         while (b) {
             for (let dx = -1; dx <= 3; dx += 1) {
                 for (let dy = -1; dy <= 3; dy += 1) {
-                    addBlocked(b.x + dx, b.y + dy);
+                    markBlocked(b.x + dx, b.y + dy);
                 }
             }
             b = b.next;
@@ -113,7 +111,7 @@ export class NavMask {
                 // Inflate blocker by 1 tile in each direction to keep waypoints off hazards
                 for (let dx = -1; dx <= 1; dx += 1) {
                     for (let dy = -1; dy <= 1; dy += 1) {
-                        addBlocked(tileX + dx, tileY + dy);
+                        markBlocked(tileX + dx, tileY + dy);
                     }
                 }
             }
@@ -124,15 +122,26 @@ export class NavMask {
             if (tileX < bounds.left || tileX > bounds.right || tileY < bounds.top || tileY > bounds.bottom) {
                 return true;
             }
-            return blocked.has(`${tileX},${tileY}`);
+            const idx = indexOf(tileX, tileY);
+            return idx < 0 || idx >= grid.length ? true : grid[idx] === 1;
         };
-        const isPassableTile = (tileX, tileY) => passable.has(`${tileX},${tileY}`) && !blocked.has(`${tileX},${tileY}`);
+        const isPassableTile = (tileX, tileY) => !isBlockedTile(tileX, tileY);
         const isBlocked = (x, y) => {
             const tileX = Math.floor(x / TILE_SIZE);
             const tileY = Math.floor(y / TILE_SIZE);
             return isBlockedTile(tileX, tileY);
         };
 
-        return { isBlocked, isBlockedTile, isPassableTile, blocked, passable, bounds };
+        const maskBounds = { ...bounds, width, height };
+
+        return {
+            isBlocked,
+            isBlockedTile,
+            isPassableTile,
+            grid,
+            width,
+            height,
+            bounds: maskBounds
+        };
     }
 }

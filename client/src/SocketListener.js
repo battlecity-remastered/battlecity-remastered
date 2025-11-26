@@ -1131,14 +1131,50 @@ class SocketListener extends EventEmitter2 {
         if (myId && update.id === myId) {
             const previous = Number.isFinite(this.game.player?.health) ? this.game.player.health : healthValue;
             const nextHealth = Math.max(0, healthValue);
+            const now = Date.now();
+            const justRespawned = Number.isFinite(this.game.player?.lastRespawnAt)
+                && (now - this.game.player.lastRespawnAt) < 1500;
+            const debugBotDamage = (() => {
+                try {
+                    const storage = globalThis?.localStorage;
+                    return storage?.getItem('debugBotDamage') === '1';
+                } catch (_error) {
+                    return false;
+                }
+            })();
+
+            if (debugBotDamage) {
+                console.warn('[BotDamage] server health update', {
+                    previous,
+                    nextHealth,
+                    source: update.source,
+                    now
+                });
+            }
 
             // Never let server heal above local health; only apply decreases
             if (nextHealth > previous) {
                 return;
             }
+            // Ignore stale death updates right after a local respawn so we don't bounce back to low health.
+            if (justRespawned && nextHealth < previous) {
+                if (debugBotDamage) {
+                    console.warn('[BotDamage] ignoring stale server health after respawn', {
+                        previous,
+                        nextHealth,
+                        now,
+                        lastRespawnAt: this.game.player?.lastRespawnAt
+                    });
+                }
+                return;
+            }
 
             if (this.game.player) {
                 this.game.player.health = nextHealth;
+                if (nextHealth <= 0) {
+                    this.game.player.awaitingServerDeath = false;
+                    this.game.player.botDeathConfirmSent = false;
+                }
                 if (nextHealth <= 0) {
                     this.game.player.engineLoopActive = false;
                 }

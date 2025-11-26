@@ -644,15 +644,6 @@ const getCityDisplayName = (cityId) => {
     return `City ${id + 1}`;
 };
 
-const shortenId = (value) => {
-    if (!value || typeof value !== 'string') {
-        return null;
-    }
-    if (value.length <= 8) {
-        return value;
-    }
-    return `${value.slice(0, 4)}...${value.slice(-2)}`;
-};
 
 const parseCityInspectPayload = (payload) => {
     if (payload === null || payload === undefined) {

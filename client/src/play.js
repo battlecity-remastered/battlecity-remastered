@@ -46,6 +46,39 @@ const UNSTICK_MAX_DISTANCE = 96;
 const MAX_VELOCITY = 20;
 const DIRECTION_STEPS = 32;
 
+const isBotDamageDebug = () => {
+    try {
+        const storage = globalThis?.localStorage;
+        return storage?.getItem('debugBotDamage') === '1';
+    } catch (_error) {
+        return false;
+    }
+};
+
+const emitBotDamagePing = (game, amount = MAX_HEALTH, meta = {}) => {
+    try {
+        const socket = game?.socketListener?.io;
+        if (socket?.connected) {
+            socket.emit('player:bot_damage', Object.assign({
+                amount,
+                sourceType: 'defender_bot',
+                shooterId: null,
+                bulletType: null
+            }, meta || {}));
+            if (isBotDamageDebug()) {
+                console.warn('[BotDamage] sent bot damage ping', {
+                    amount,
+                    meta,
+                    socketId: socket.id,
+                    connected: socket.connected
+                });
+            }
+        }
+    } catch (_error) {
+        // ignore send errors
+    }
+};
+
 const DIRECTION_VECTORS = Array.from({ length: DIRECTION_STEPS }, (_unused, direction) => {
     const angle = (-direction / 16) * Math.PI;
     return {
@@ -446,15 +479,63 @@ const ensurePlayerUnstuck = (game) => {
 };
 
 var killPlayer = (game) => {
-    game.player.offset.x = 0;
-    game.player.offset.y = 0;
+    if (!game || !game.player) {
+        return;
+    }
+
+    const now = game.tick || Date.now();
+
+    // Respawn at city spawn with fresh health to avoid getting stuck at zero HP.
+    movePlayerToCitySpawn(game);
+    game.player.health = MAX_HEALTH;
+    game.player.isMoving = 0;
+    game.player.isTurning = 0;
+    game.player.isFrozen = false;
+    game.player.frozenUntil = 0;
+    game.player.frozenBy = null;
+    game.player.direction = normaliseDirection(game.player.direction);
+    game.player.lastRespawnAt = now;
+    game.player.awaitingServerDeath = false;
+    game.player.botDeathConfirmSent = false;
+
     if (game.player.engineLoopActive) {
         game.player.engineLoopActive = false;
     }
     if (game.audio) {
         game.audio.setLoopState(SOUND_IDS.ENGINE, false);
     }
+
+    // Surface a local death event so the lobby/notifications react like server-driven deaths.
+    if (game.socketListener && typeof game.socketListener.emit === 'function') {
+        const myId = game.socketListener?.io?.id || game.player.id || 'local';
+        game.socketListener.emit('player:dead', {
+            id: myId,
+            reason: { sourceType: 'defender_bot', type: 'defender_bot' }
+        });
+    }
+    if (game.lobby && typeof game.lobby.handleEviction === 'function') {
+        game.lobby.handleEviction({ reason: 'death', city: game.player.city, attackerCity: null });
+    }
+
+    // Keep server in sync so it does not think we're still dead.
+    const socketListener = game.socketListener;
+    if (socketListener?.io?.connected && typeof socketListener.createPlayerPayload === 'function') {
+        socketListener.sequenceCounter = (socketListener.sequenceCounter || 0) + 1;
+        game.player.sequence = socketListener.sequenceCounter;
+        const payload = socketListener.createPlayerPayload();
+        if (payload) {
+            payload.health = game.player.health;
+            payload.sequence = socketListener.sequenceCounter;
+            try {
+                socketListener.io.emit("player", JSON.stringify(payload));
+            } catch (_error) {
+                // ignore send errors
+            }
+        }
+    }
+
     updateLastSafeOffset(game);
+    game.forceDraw = true;
 };
 
 export const play = (game) => {
@@ -497,6 +578,43 @@ export const play = (game) => {
         game.player.isMoving = 0;
     }
 
+    // On bot damage we wait for server to drive the death/eviction; fall back if it hangs.
+    if (game.player.health <= 0) {
+        const awaitingServer = !!game.player.awaitingServerDeath;
+        if (isBotDamageDebug()) {
+            console.warn('[BotDamage] zero health path', {
+                health: game.player.health,
+                awaitingServer,
+                lastLocalBotDamageAt: game.player.lastLocalBotDamageAt,
+                tick: now
+            });
+        }
+        const fallbackTimeout = 1200;
+        const elapsedSinceHit = game.player.lastLocalBotDamageAt ? (now - game.player.lastLocalBotDamageAt) : Infinity;
+        const expired = !awaitingServer || elapsedSinceHit > fallbackTimeout;
+
+        // If we're still waiting on the server, nudge it once with a full-damage ping.
+        if (awaitingServer && elapsedSinceHit > 700 && !game.player.botDeathConfirmSent) {
+            emitBotDamagePing(game, MAX_HEALTH, { reason: 'death_confirm' });
+            game.player.botDeathConfirmSent = true;
+            if (isBotDamageDebug()) {
+                console.warn('[BotDamage] sent death confirm ping', {
+                    elapsedSinceHit,
+                    tick: now
+                });
+            }
+        }
+
+        if (expired) {
+            game.player.awaitingServerDeath = false;
+            game.player.botDeathConfirmSent = false;
+            killPlayer(game);
+        } else {
+            game.player.isMoving = 0;
+        }
+        return;
+    }
+
     applyHospitalHealing(game);
 
     if (!isFrozen) {
@@ -516,9 +634,5 @@ export const play = (game) => {
             game.audio.setLoopState(SOUND_IDS.ENGINE, false);
             game.player.engineLoopActive = false;
         }
-    }
-
-    if (game.player.health === 0) {
-        killPlayer(game);
     }
 };

@@ -5,11 +5,14 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "predev": "npm run build:wasm",
     "dev": "vite",
+    "prebuild": "npm run build:wasm",
     "build": "vite build",
     "preview": "vite preview",
     "deploy-client": "npm run build && ./node_modules/.bin/gh-pages -d dist",
-    "test": "node --test --experimental-specifier-resolution=node"
+    "test": "node --test --experimental-specifier-resolution=node",
+    "build:wasm": "node ./scripts/build-astar-wasm.mjs"
   },
   "author": "",
   "license": "ISC",

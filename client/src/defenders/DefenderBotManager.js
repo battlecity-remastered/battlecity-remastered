@@ -1,15 +1,14 @@
-import { MOVEMENT_SPEED_PLAYER, ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG } from '../constants';
-import { getCityDisplayName } from '../utils/citySpawns';
-import SimplePathfinder from './SimplePathfinder';
-import { normalizeVector, rotateVector, vectorToDirection, directionToVector, tryStep, findAlternateVector, clampDelta } from '../bots/movement-utils.js';
+import { MOVEMENT_SPEED_PLAYER, ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG } from '../constants.js';
+import WasmPathfinder from './WasmPathfinder.js';
+import { normalizeVector, vectorToDirection, directionToVector, tryStep, findAlternateVector, clampDelta } from '../bots/movement-utils.js';
 import { createBlockingChecker } from '../bots/collision.js';
 
 console.log('[DefenderBot] *** MODULE LOADED ***');
 
 const TILE_SIZE = 48;
 const HALF_TILE = TILE_SIZE / 2;
-const SPRITE_GAP = 8;
 const MAX_DEFENDERS_PER_CITY = 4;
+const MAX_TOTAL_DEFENDERS = 4;
 const SPAWN_CHECK_INTERVAL = 3000;
 const ENGAGEMENT_RADIUS = TILE_SIZE * 30;
 const BASE_SPEED_MULTIPLIER = 1.0;
@@ -19,7 +18,6 @@ const MINE_PLACE_INTERVAL = 8000;
 const MINE_PLACE_RADIUS = TILE_SIZE * 5;
 const KITE_DISTANCE = TILE_SIZE * 1.5; // tighter so they stay in your face
 const BOMB_DEFUSE_RANGE = TILE_SIZE * 8;
-const MOVE_DECISION_INTERVAL = 1100;
 const TARGET_REFRESH_INTERVAL = 1800;
 const PATHFIND_INTERVAL = 1000; // Recalculate path a bit less to reduce churn
 const AVOIDANCE_ANGLES = Object.freeze([Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2]);
@@ -59,8 +57,13 @@ class DefenderBotManager {
         this.nextSpawnCheck = 0;
         this.cityDefenders = new Map(); // cityId -> Set of defender IDs
         this.instancePrefix = `defender_${Math.random().toString(16).slice(-6)}`;
-        this.pathfinder = new SimplePathfinder(game);
-        this.blocking = createBlockingChecker(game);
+        this.pathfinder = new WasmPathfinder(game);
+        this.blocking = createBlockingChecker(game, (entity) => {
+            if (entity && typeof entity === 'object') {
+                return { teamId: entity.cityId ?? null, ownerId: entity.id ?? null };
+            }
+            return { teamId: null, ownerId: null };
+        });
         this.debugEnabled = false;
         this.debugLastEmit = 0;
     }
@@ -79,8 +82,6 @@ class DefenderBotManager {
         }
 
         const now = this.game.tick || Date.now();
-        const frameBucket = 0; // process all defenders each frame to keep speed up
-        const staggerStride = 1;
 
         if (now >= this.nextSpawnCheck) {
             this.nextSpawnCheck = now + SPAWN_CHECK_INTERVAL;
@@ -88,7 +89,7 @@ class DefenderBotManager {
             this.evaluateSpawns(now);
         }
 
-        this.updateDefenders(now, frameBucket, staggerStride);
+        this.updateDefenders(now);
         this.emitDebugPaths(now);
     }
 
@@ -97,54 +98,65 @@ class DefenderBotManager {
         const cities = this.game.cities || [];
         const playerCity = this.game.player?.city;
 
+        if (this.defenders.length >= MAX_TOTAL_DEFENDERS) {
+            return;
+        }
+
         if (!cities.length || !Number.isFinite(playerCity)) {
             return;
         }
+
+        // Only spawn defenders for the single nearest eligible fake city, and cap total defenders.
+        let bestCity = null;
+        let bestCityIndex = null;
+        let bestDistSq = Infinity;
 
         cities.forEach((city, cityIndex) => {
             if (!city || cityIndex === playerCity) {
                 return; // Skip player's own city
             }
-
-            // Check if city is a fake city
             if (!city.isFakeCandidate) {
                 return;
             }
 
-            // Check if player is near this city
             const cityX = toFinite(city.x, 0) + (TILE_SIZE * 1.5);
             const cityY = toFinite(city.y, 0) + (TILE_SIZE * 1.5);
             const playerX = this.game.player.offset?.x || 0;
             const playerY = this.game.player.offset?.y || 0;
             const distSq = distanceSquared(playerX + HALF_TILE, playerY + HALF_TILE, cityX, cityY);
-
             if (distSq > (ENGAGEMENT_RADIUS * ENGAGEMENT_RADIUS)) {
-                return; // Player not close enough
+                return;
             }
 
-            // Check if any human players are in this city
             const hasHumans = Object.values(this.game.otherPlayers || {}).some(player => {
                 return player && player.city === cityIndex && !player.isBot;
             });
-
             if (hasHumans) {
-                return; // Don't spawn if humans are defending
+                return;
             }
 
-            // Check if defenders already spawned for this city
             const existing = this.cityDefenders.get(cityIndex);
-
             if (existing && existing.size >= MAX_DEFENDERS_PER_CITY) {
-                return; // Already have full complement
+                return;
             }
 
-            // Spawn defenders
-            console.log(`[DefenderBot] ✅ Spawning defenders for city ${cityIndex}!`);
-            this.spawnDefendersForCity(city, cityIndex, timestamp);
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                bestCity = city;
+                bestCityIndex = cityIndex;
+            }
         });
+
+        if (bestCity !== null && bestCityIndex !== null) {
+            const remainingSlots = Math.max(0, MAX_TOTAL_DEFENDERS - this.defenders.length);
+            if (remainingSlots > 0) {
+                console.log(`[DefenderBot] ✅ Spawning defenders for nearest city ${bestCityIndex}! (remaining slots ${remainingSlots})`);
+                this.spawnDefendersForCity(bestCity, bestCityIndex, timestamp, remainingSlots);
+            }
+        }
     }
 
-    spawnDefendersForCity(city, cityId, now) {
+    spawnDefendersForCity(city, cityId, now, maxNew = MAX_DEFENDERS_PER_CITY) {
         const existing = this.cityDefenders.get(cityId) || new Set();
         if (existing.size >= MAX_DEFENDERS_PER_CITY) {
             return;
@@ -160,8 +172,9 @@ class DefenderBotManager {
         const centerX = toFinite(city.x, 0) + (TILE_SIZE * 1.5);
         const centerY = toFinite(city.y, 0) + (TILE_SIZE * 1.5);
 
+        let spawnedCount = 0;
         roles.forEach((role, index) => {
-            if (existing.size >= MAX_DEFENDERS_PER_CITY) {
+            if (existing.size >= MAX_DEFENDERS_PER_CITY || spawnedCount >= maxNew || this.defenders.length >= MAX_TOTAL_DEFENDERS) {
                 return;
             }
 
@@ -213,6 +226,7 @@ class DefenderBotManager {
             existing.add(defenderId);
             this.cityDefenders.set(cityId, existing);
             this.game.forceDraw = true;
+            spawnedCount += 1;
         });
     }
 
@@ -291,7 +305,7 @@ class DefenderBotManager {
         }
     }
 
-    updateDefenders(now, frameBucket = 0, staggerStride = 1) {
+    updateDefenders(now) {
         if (this.defenders.length > 0 && this.game?.debugMode) {
             console.log(`[DefenderBot] Updating ${this.defenders.length} defenders`);
         }
@@ -371,7 +385,7 @@ class DefenderBotManager {
         defender.target = target || this.findPlayerTarget(defender);
     }
 
-    findPlayerTarget(defender) {
+    findPlayerTarget(_defender) {
         const playerX = this.game.player.offset?.x || 0;
         const playerY = this.game.player.offset?.y || 0;
         return {
@@ -420,7 +434,7 @@ class DefenderBotManager {
         return null;
     }
 
-    findMinePosition(defender) {
+    findMinePosition(_defender) {
         // Predict where player is going
         const playerX = this.game.player.offset?.x || 0;
         const playerY = this.game.player.offset?.y || 0;
@@ -560,7 +574,7 @@ class DefenderBotManager {
         );
 
         if (distSq <= (MINE_PLACE_RADIUS * MINE_PLACE_RADIUS)) {
-            this.tryPlaceMine(defender, now);
+            this.tryPlaceMine(defender, now, target);
         }
     }
 
@@ -592,12 +606,27 @@ class DefenderBotManager {
         defender.fireCooldown = now + SHOOT_INTERVAL + Math.random() * 600;
     }
 
-    tryPlaceMine(defender, now) {
+    tryPlaceMine(defender, now, target) {
         const mineType = Math.random() < 0.6 ? ITEM_TYPE_MINE : ITEM_TYPE_DFG;
+        const centerX = defender.offset.x + HALF_TILE;
+        const centerY = defender.offset.y + HALF_TILE;
+
+        const desiredVector = target
+            ? normalizeVector(target.x - centerX, target.y - centerY)
+            : (defender.cachedVector || directionToVector(defender.direction));
+        const dropDistance = TILE_SIZE * 1.5;
+        const desiredX = centerX + desiredVector.dx * dropDistance;
+        const desiredY = centerY + desiredVector.dy * dropDistance;
+        const placement = this.findSafeHazardPlacement(defender, desiredX, desiredY);
+
+        if (!placement) {
+            return;
+        }
+
         const item = this.game.itemFactory?.newItem(
-            { id: defender.id, city: null },
-            defender.offset.x,
-            defender.offset.y,
+            { id: defender.id, city: defender.cityId ?? null },
+            placement.x,
+            placement.y,
             mineType,
             { notifyServer: false }
         );
@@ -609,7 +638,41 @@ class DefenderBotManager {
         }
     }
 
-    emitDefenderShot(defender, originX, originY, direction) {
+    findSafeHazardPlacement(defender, desiredX, desiredY) {
+        const minSeparationSq = (TILE_SIZE * 0.9) * (TILE_SIZE * 0.9);
+        const maxSeparationSq = (TILE_SIZE * 4) * (TILE_SIZE * 4);
+        const origin = {
+            x: defender.offset.x + HALF_TILE,
+            y: defender.offset.y + HALF_TILE
+        };
+
+        const candidates = [];
+        const radii = [0, TILE_SIZE * 1.5, TILE_SIZE * 2.5];
+        const angles = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, Math.PI];
+
+        radii.forEach((radius) => {
+            angles.forEach((angle) => {
+                const x = desiredX + Math.cos(angle) * radius;
+                const y = desiredY + Math.sin(angle) * radius;
+                candidates.push({ x, y });
+            });
+        });
+
+        for (const candidate of candidates) {
+            const distSq = distanceSquared(origin.x, origin.y, candidate.x, candidate.y);
+            if (distSq < minSeparationSq || distSq > maxSeparationSq) {
+                continue;
+            }
+            if (this.blocking.isBlocked(candidate.x, candidate.y, defender)) {
+                continue;
+            }
+            return candidate;
+        }
+
+        return null;
+    }
+
+    emitDefenderShot(_defender, _originX, _originY, _direction) {
         // Defender bots are CLIENT-SIDE ONLY - do NOT send their shots to the server
         // This prevents the server from creating player records for defender IDs
         // which would then require movement validation and cause errors
@@ -649,29 +712,58 @@ class DefenderBotManager {
             return;
         }
 
-        const mask = this.pathfinder.navMask.getMask(750, this.pathfinder.getMaskOptions(target.x, target.y));
+        const mask = this.pathfinder.navMask.getMask(750, {
+            centerX: target.x,
+            centerY: target.y,
+            radiusTiles: 40
+        });
         const approach = this.pickApproachPoint(defender, target, mask);
         const goalX = approach.x;
         const goalY = approach.y;
 
+        // If we're already sitting close enough to the goal, avoid churning new paths.
+        const arrivalRadius = TILE_SIZE * 0.75;
+        const goalDistSq = distanceSquared(
+            defender.offset.x + HALF_TILE,
+            defender.offset.y + HALF_TILE,
+            goalX,
+            goalY
+        );
+        if (goalDistSq <= (arrivalRadius * arrivalRadius)) {
+            defender.isMoving = 0;
+            defender.path = null;
+            defender.pendingPathRequest = null;
+            defender.cachedVector = null;
+            defender.nextPathfind = now + PATHFIND_INTERVAL;
+            return;
+        }
+
         // Recalculate path periodically or if no path exists
-        if (!defender.path || now >= defender.nextPathfind) {
+        if (!defender.pendingPathRequest && (!defender.path || now >= defender.nextPathfind)) {
             const defenderX = defender.offset.x + HALF_TILE;
             const defenderY = defender.offset.y + HALF_TILE;
+            const requestId = (this.nextPathRequestId || 0) + 1;
+            this.nextPathRequestId = requestId;
+            defender.pendingPathRequest = requestId;
 
-            // Find new path
-            const path = this.pathfinder.findPath(defenderX, defenderY, goalX, goalY);
-
+            this.pathfinder.findPath(defenderX, defenderY, goalX, goalY).then((path) => {
+                if (defender.pendingPathRequest !== requestId) {
+                    return;
+                }
                 if (path && path.length > 1) {
                     defender.path = path;
                     defender.waypointIndex = 1; // Skip first waypoint (current position)
                     defender.nextPathfind = now + (PATHFIND_INTERVAL * 1.6); // stick with a path longer to reduce churn
                 } else {
-                    // No path found or already at goal, use direct movement
                     defender.path = null;
                     defender.nextPathfind = now + 900; // Try again soon
                 }
-            }
+            }).finally(() => {
+                if (defender.pendingPathRequest === requestId) {
+                    defender.pendingPathRequest = null;
+                }
+            });
+        }
 
         // Follow path if we have one
         if (defender.path && defender.waypointIndex < defender.path.length) {
@@ -688,6 +780,7 @@ class DefenderBotManager {
                 if (defender.waypointIndex >= defender.path.length) {
                     // Reached end of path
                     defender.path = null;
+                    defender.nextPathfind = now + PATHFIND_INTERVAL;
                     defender.isMoving = 0;
                     return;
                 }
@@ -702,7 +795,7 @@ class DefenderBotManager {
             const delta = clampDelta(this.game.timePassed);
             const step = delta * MOVEMENT_SPEED_PLAYER * BASE_SPEED_MULTIPLIER;
 
-            if (tryStep(defender, vector, step, this.blocking.isBlocked)) {
+            if (tryStep(defender, vector, step, (x, y) => this.blocking.isBlocked(x, y, defender))) {
                 defender.isMoving = 1;
                 defender.stuckCount = 0;
             } else {
@@ -719,16 +812,24 @@ class DefenderBotManager {
             const dy = goalY - (defender.offset.y + HALF_TILE);
             const vector = normalizeVector(dx, dy);
 
+            if (goalDistSq <= (arrivalRadius * arrivalRadius)) {
+                defender.isMoving = 0;
+                defender.path = null;
+                defender.cachedVector = null;
+                defender.nextPathfind = now + PATHFIND_INTERVAL;
+                return;
+            }
+
             defender.direction = vectorToDirection(vector.dx, vector.dy, defender.direction);
             const delta = clampDelta(this.game.timePassed);
             const step = delta * MOVEMENT_SPEED_PLAYER * BASE_SPEED_MULTIPLIER;
 
-            if (tryStep(defender, vector, step, this.blocking.isBlocked)) {
+            if (tryStep(defender, vector, step, (x, y) => this.blocking.isBlocked(x, y, defender))) {
                 defender.isMoving = 1;
                 defender.stuckCount = 0;
             } else {
-                const alternate = findAlternateVector(defender, vector, step, AVOIDANCE_ANGLES, this.blocking.isBlocked);
-                if (alternate && tryStep(defender, alternate, step, this.blocking.isBlocked)) {
+                const alternate = findAlternateVector(defender, vector, step, AVOIDANCE_ANGLES, (x, y) => this.blocking.isBlocked(x, y, defender));
+                if (alternate && tryStep(defender, alternate, step, (x, y) => this.blocking.isBlocked(x, y, defender))) {
                     defender.cachedVector = alternate;
                     defender.direction = vectorToDirection(alternate.dx, alternate.dy, defender.direction);
                     defender.isMoving = 1;
@@ -761,13 +862,13 @@ class DefenderBotManager {
             return false;
         }
 
-        if (tryStep(defender, vector, step, this.blocking.isBlocked)) {
+        if (tryStep(defender, vector, step, (x, y) => this.blocking.isBlocked(x, y, defender))) {
             defender.isMoving = 1;
             return true;
         }
 
-        const alternate = findAlternateVector(defender, vector, step, AVOIDANCE_ANGLES, this.blocking.isBlocked);
-        if (alternate && tryStep(defender, alternate, step, this.blocking.isBlocked)) {
+        const alternate = findAlternateVector(defender, vector, step, AVOIDANCE_ANGLES, (x, y) => this.blocking.isBlocked(x, y, defender));
+        if (alternate && tryStep(defender, alternate, step, (x, y) => this.blocking.isBlocked(x, y, defender))) {
             defender.cachedVector = alternate;
             defender.direction = vectorToDirection(alternate.dx, alternate.dy, defender.direction);
             defender.isMoving = 1;

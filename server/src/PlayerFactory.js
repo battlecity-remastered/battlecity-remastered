@@ -443,6 +443,26 @@ class PlayerFactory {
                 this.handleItemUse(socket, payload);
             });
 
+            socket.on('player:bot_damage', (payload) => {
+                const data = this.safeParse(payload);
+                if (!data || !Number.isFinite(data.amount) || data.amount <= 0) {
+                    return;
+                }
+                const amount = Math.min(40, Math.max(0, Math.floor(data.amount)));
+                const meta = {
+                    type: 'bot_bullet',
+                    sourceType: data.sourceType || 'defender_bot',
+                    shooterId: data.shooterId ?? null,
+                    bulletType: data.bulletType ?? null
+                };
+                console.warn('[server] player:bot_damage', {
+                    socketId: socket.id,
+                    amount,
+                    meta
+                });
+                this.applyDamage(socket.id, amount, meta);
+            });
+
             socket.on('lobby:leave', (payload) => {
                 const request = this.safeParse(payload);
                 console.log(`[server] lobby:leave from ${socket.id}`, request);

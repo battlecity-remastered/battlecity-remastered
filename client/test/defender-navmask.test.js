@@ -53,5 +53,5 @@ test('NavMask blocks defensive items', () => {
     const nav = new NavMask(game);
     const mask = nav.getMask(1000);
     assert.ok(mask.isBlockedTile(3, 4), 'defense tile should be blocked');
-    assert.ok(mask.isPassableTile(2, 4), 'neighbor tile should remain passable');
+    assert.ok(mask.isBlockedTile(2, 4), 'neighbor tiles are padded as blocked to keep bots away from hazards');
 });

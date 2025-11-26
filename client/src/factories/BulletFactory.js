@@ -71,6 +71,15 @@ const getBulletRange = (type) => {
     return BULLET_RANGE_DEFAULT;
 };
 
+const isBotDamageDebug = () => {
+    try {
+        const storage = globalThis?.localStorage;
+        return storage?.getItem('debugBotDamage') === '1';
+    } catch (_error) {
+        return false;
+    }
+};
+
 class BulletFactory {
 
     constructor(game) {
@@ -99,6 +108,48 @@ class BulletFactory {
         const next = Math.max(0, previous - damage);
         player.health = next;
         player.lastLocalBotDamageAt = Date.now();
+        if (next <= 0) {
+            player.awaitingServerDeath = true;
+        }
+
+        if (isBotDamageDebug()) {
+            console.warn('[BotDamage] local bot hit', {
+                previous,
+                next,
+                damage,
+                sourceType: bullet.sourceType,
+                bulletType: bullet.type,
+                time: player.lastLocalBotDamageAt
+            });
+        }
+
+        // Ask the server to apply authoritative damage so death/eviction flows correctly.
+        const socket = this.game?.socketListener?.io;
+        if (socket?.connected) {
+            try {
+                socket.emit('player:bot_damage', {
+                    amount: damage,
+                    sourceType: bullet.sourceType || 'defender_bot',
+                    shooterId: bullet.shooter || bullet.sourceId || bullet.emitterId || null,
+                    bulletType: bullet.type ?? null
+                });
+                if (isBotDamageDebug()) {
+                    console.warn('[BotDamage] sent player:bot_damage', {
+                        damage,
+                        sourceType: bullet.sourceType,
+                        shooterId: bullet.shooter || bullet.sourceId || bullet.emitterId || null,
+                        socketId: socket.id,
+                        connected: socket.connected
+                    });
+                }
+            } catch (_error) {
+                // ignore send errors
+            }
+        } else if (isBotDamageDebug()) {
+            console.warn('[BotDamage] socket not connected; cannot send bot damage', {
+                connected: !!socket?.connected
+            });
+        }
 
         // Notify server immediately so health persists authoritative sync
         const socketListener = this.game?.socketListener;
