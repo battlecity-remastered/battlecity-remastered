@@ -5,7 +5,7 @@ const DEFAULT_OPTIONS = {
     minMapCoordinate: 0,
     maxMapCoordinate: 511 * 48,
     speedPerMs: 0.50,
-    maxAxisDelta: 24,
+    maxAxisDelta: 96,
     snapAllowance: 96,
     frameToleranceMs: 50,
     maxDirectionIndex: 31,
@@ -81,7 +81,7 @@ class PlayerStateValidator {
         const hasSpawnGrace = Number.isFinite(previousState.spawnGraceUntil) && now <= previousState.spawnGraceUntil;
 
         if (!hasSpawnGrace) {
-            if (Math.abs(delta.x) > maxDistance || Math.abs(delta.y) > maxDistance || totalDistance > (maxDistance + 12)) {
+            if (Math.abs(delta.x) > maxDistance || Math.abs(delta.y) > maxDistance || totalDistance > (maxDistance + 24)) {
                 result.valid = false;
                 result.reasons.push("movement/exceeds_threshold");
                 sanitized.offset = {
