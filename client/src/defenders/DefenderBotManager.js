@@ -1,6 +1,6 @@
-import { MOVEMENT_SPEED_PLAYER, ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG } from '../constants';
-import { getCityDisplayName } from '../utils/citySpawns';
-import SimplePathfinder from './SimplePathfinder';
+import { MOVEMENT_SPEED_PLAYER, ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG } from '../constants.js';
+import { getCityDisplayName } from '../utils/citySpawns.js';
+import WasmPathfinder from './WasmPathfinder.js';
 import { normalizeVector, rotateVector, vectorToDirection, directionToVector, tryStep, findAlternateVector, clampDelta } from '../bots/movement-utils.js';
 import { createBlockingChecker } from '../bots/collision.js';
 
@@ -59,7 +59,7 @@ class DefenderBotManager {
         this.nextSpawnCheck = 0;
         this.cityDefenders = new Map(); // cityId -> Set of defender IDs
         this.instancePrefix = `defender_${Math.random().toString(16).slice(-6)}`;
-        this.pathfinder = new SimplePathfinder(game);
+        this.pathfinder = new WasmPathfinder(game);
         this.blocking = createBlockingChecker(game);
         this.debugEnabled = false;
         this.debugLastEmit = 0;
@@ -649,29 +649,41 @@ class DefenderBotManager {
             return;
         }
 
-        const mask = this.pathfinder.navMask.getMask(750, this.pathfinder.getMaskOptions(target.x, target.y));
+        const mask = this.pathfinder.navMask.getMask(750, {
+            centerX: target.x,
+            centerY: target.y,
+            radiusTiles: 40
+        });
         const approach = this.pickApproachPoint(defender, target, mask);
         const goalX = approach.x;
         const goalY = approach.y;
 
         // Recalculate path periodically or if no path exists
-        if (!defender.path || now >= defender.nextPathfind) {
+        if (!defender.pendingPathRequest && (!defender.path || now >= defender.nextPathfind)) {
             const defenderX = defender.offset.x + HALF_TILE;
             const defenderY = defender.offset.y + HALF_TILE;
+            const requestId = (this.nextPathRequestId || 0) + 1;
+            this.nextPathRequestId = requestId;
+            defender.pendingPathRequest = requestId;
 
-            // Find new path
-            const path = this.pathfinder.findPath(defenderX, defenderY, goalX, goalY);
-
+            this.pathfinder.findPath(defenderX, defenderY, goalX, goalY).then((path) => {
+                if (defender.pendingPathRequest !== requestId) {
+                    return;
+                }
                 if (path && path.length > 1) {
                     defender.path = path;
                     defender.waypointIndex = 1; // Skip first waypoint (current position)
                     defender.nextPathfind = now + (PATHFIND_INTERVAL * 1.6); // stick with a path longer to reduce churn
                 } else {
-                    // No path found or already at goal, use direct movement
                     defender.path = null;
                     defender.nextPathfind = now + 900; // Try again soon
                 }
-            }
+            }).finally(() => {
+                if (defender.pendingPathRequest === requestId) {
+                    defender.pendingPathRequest = null;
+                }
+            });
+        }
 
         // Follow path if we have one
         if (defender.path && defender.waypointIndex < defender.path.length) {

@@ -2,3 +2,4 @@
 .idea
 static/
 .env.local
+src/defenders/wasm/*.wasm

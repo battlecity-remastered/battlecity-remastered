@@ -3,6 +3,82 @@ import { ITEM_TYPE_TURRET, ITEM_TYPE_PLASMA, ITEM_TYPE_WALL } from "../constants
 import { NavMask } from "../bots/navmask.js";
 const TILE_SIZE = 48;
 
+class MinHeap {
+    constructor(compare) {
+        this.compare = compare;
+        this.items = [];
+    }
+
+    get size() {
+        return this.items.length;
+    }
+
+    push(node) {
+        const idx = this.items.length;
+        this.items.push(node);
+        node._idx = idx;
+        this.#bubbleUp(idx);
+    }
+
+    pop() {
+        if (!this.items.length) return null;
+        const min = this.items[0];
+        const end = this.items.pop();
+        min._idx = -1;
+        if (this.items.length) {
+            this.items[0] = end;
+            this.items[0]._idx = 0;
+            this.#bubbleDown(0);
+        }
+        return min;
+    }
+
+    update(node) {
+        const idx = node._idx;
+        if (idx == null || idx < 0 || idx >= this.items.length) return;
+        this.#bubbleUp(idx);
+        this.#bubbleDown(idx);
+    }
+
+    #bubbleUp(idx) {
+        while (idx > 0) {
+            const parent = (idx - 1) >> 1;
+            if (this.compare(this.items[idx], this.items[parent]) >= 0) break;
+            this.#swap(idx, parent);
+            idx = parent;
+        }
+    }
+
+    #bubbleDown(idx) {
+        const length = this.items.length;
+        while (true) {
+            const left = (idx * 2) + 1;
+            const right = left + 1;
+            let smallest = idx;
+
+            if (left < length && this.compare(this.items[left], this.items[smallest]) < 0) {
+                smallest = left;
+            }
+
+            if (right < length && this.compare(this.items[right], this.items[smallest]) < 0) {
+                smallest = right;
+            }
+
+            if (smallest === idx) break;
+            this.#swap(idx, smallest);
+            idx = smallest;
+        }
+    }
+
+    #swap(a, b) {
+        const tmp = this.items[a];
+        this.items[a] = this.items[b];
+        this.items[b] = tmp;
+        this.items[a]._idx = a;
+        this.items[b]._idx = b;
+    }
+}
+
 class SimplePathfinder {
     constructor(game) {
         this.game = game;
@@ -17,7 +93,6 @@ class SimplePathfinder {
     findPath(startX, startY, goalX, goalY, maxNodes = 1500) {
         // focus the navmask around the goal to avoid scanning the whole map
         this.mask = this.navMask.getMask(2000, this.getMaskOptions(goalX, goalY));
-        const mask = this.mask;
 
         let startTileX = Math.floor(startX / TILE_SIZE);
         let startTileY = Math.floor(startY / TILE_SIZE);
@@ -44,28 +119,26 @@ class SimplePathfinder {
             return null;
         }
 
-        const openSet = [
-            {
-                x: startTileX,
-                y: startTileY,
-                g: 0,
-                h: this.heuristic(startTileX, startTileY, goalTileX, goalTileY),
-                f: 0,
-                parent: null
-            }
-        ];
+        const openSet = new MinHeap((a, b) => a.f - b.f);
+        const startNode = {
+            x: startTileX,
+            y: startTileY,
+            g: 0,
+            h: this.heuristic(startTileX, startTileY, goalTileX, goalTileY),
+            f: 0,
+            parent: null
+        };
+        openSet.push(startNode);
         const closedSet = new Set();
         const openHash = new Map();
-        openHash.set(`${startTileX},${startTileY}`, openSet[0]);
+        openHash.set(`${startTileX},${startTileY}`, startNode);
 
         let iterations = 0;
 
-        while (openSet.length > 0 && iterations < maxNodes) {
+        while (openSet.size > 0 && iterations < maxNodes) {
             iterations++;
 
-            // Find node with lowest f score
-            openSet.sort((a, b) => a.f - b.f);
-            const current = openSet.shift();
+            const current = openSet.pop();
             const currentKey = `${current.x},${current.y}`;
             openHash.delete(currentKey);
             closedSet.add(currentKey);
@@ -130,6 +203,7 @@ class SimplePathfinder {
                 if (existingNode) {
                     // Update existing node
                     Object.assign(existingNode, newNode);
+                    openSet.update(existingNode);
                 } else {
                     // Add new node
                     openSet.push(newNode);
@@ -182,10 +256,12 @@ class SimplePathfinder {
     }
 
     heuristic(x1, y1, x2, y2) {
-        // Euclidean distance
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        return Math.sqrt(dx * dx + dy * dy);
+        // Octile distance (consistent with diagonal movement costs)
+        const dx = Math.abs(x2 - x1);
+        const dy = Math.abs(y2 - y1);
+        const min = Math.min(dx, dy);
+        const max = Math.max(dx, dy);
+        return (max - min) + (1.4 * min);
     }
 
     findNearestPassable(tileX, tileY, maxRadius = 20) {
