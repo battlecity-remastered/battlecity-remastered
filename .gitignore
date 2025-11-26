@@ -7,3 +7,5 @@ server/data/*.db
 .env.local
 .cache/
 .venv/
+client/.direnv/
+.direnv/
