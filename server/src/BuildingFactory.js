@@ -71,6 +71,8 @@ class BuildingFactory {
             return acc;
         }, {});
         this.dependencyTreeRoot = this.buildDependencyTree(DEPENDENCY_TREE);
+        this.snapshotIntervalMs = 10000;
+        this.lastSnapshotAt = 0;
     }
 
     buildDependencyTree(entries) {
@@ -224,12 +226,22 @@ class BuildingFactory {
         };
     }
 
-    sendSnapshot(socket) {
+    emitSnapshot(target = null) {
+        const emitter = target || this.io;
+        if (!emitter) {
+            return;
+        }
         for (const building of this.buildings.values()) {
             const snapshot = this.serializeBuilding(building);
-            socket.emit('new_building', JSON.stringify(snapshot));
-            socket.emit('population:update', snapshot);
+            emitter.emit('new_building', JSON.stringify(snapshot));
+            emitter.emit('population:update', snapshot);
         }
+        const now = this.game?.tick || Date.now();
+        this.lastSnapshotAt = now;
+    }
+
+    sendSnapshot(socket) {
+        this.emitSnapshot(socket);
     }
 
     listen(io) {
@@ -975,6 +987,9 @@ class BuildingFactory {
         }
         this.cancelInactiveResearch(activeResearchKeys, now);
         this.cityManager.cycle(this.game.tick);
+        if (this.snapshotIntervalMs > 0 && this.io && (now - this.lastSnapshotAt) >= this.snapshotIntervalMs) {
+            this.emitSnapshot();
+        }
     }
 
     ensureAttachment(building) {
