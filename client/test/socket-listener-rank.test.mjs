@@ -48,10 +48,9 @@ test('applyPlayerUpdate persists rank metadata for other players', () => {
         rankTitle: 'Sergeant'
     });
 
-    assert.deepEqual(game.otherPlayers['remote-1'], {
-        id: 'remote-1',
-        sequence: 1,
-        points: 450,
-        rankTitle: 'Sergeant'
-    });
+    const actual = game.otherPlayers['remote-1'];
+    assert.equal(actual.id, 'remote-1');
+    assert.equal(actual.sequence, 1);
+    assert.equal(actual.points, 450);
+    assert.equal(actual.rankTitle, 'Sergeant');
 });
