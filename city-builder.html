@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>BattleCity Offline City Builder</title>
     <style>
         :root {
@@ -21,6 +22,7 @@
         }
         #toolbar {
             display: flex;
+            flex-wrap: wrap;
             gap: 12px;
             align-items: center;
             padding: 10px 14px;
@@ -46,6 +48,7 @@
             border-right: 1px solid var(--panel-border);
             padding: 12px;
             overflow-y: auto;
+            min-height: 0;
         }
         #inspector {
             border-left: 1px solid var(--panel-border);
@@ -61,6 +64,7 @@
             display: block;
             background: #0c0f14;
             cursor: grab;
+            touch-action: none;
         }
         h3 {
             margin: 10px 0 6px;
@@ -71,7 +75,7 @@
         }
         .palette-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 8px;
         }
         .palette-item {
@@ -148,6 +152,51 @@
             background: #1e2735;
             margin-right: 6px;
         }
+        .mobile-toggle {
+            display: none;
+        }
+        @media (max-width: 1100px) {
+            #container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+            }
+            #palette, #inspector {
+                position: fixed;
+                top: 56px;
+                bottom: 0;
+                width: 320px;
+                max-width: 88vw;
+                z-index: 6;
+                box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+                transition: transform 0.25s ease, opacity 0.25s ease;
+                background: rgba(12, 15, 20, 0.96);
+            }
+            #palette {
+                left: 0;
+                transform: translateX(-105%);
+                border-right: 1px solid var(--panel-border);
+            }
+            #palette.open { transform: translateX(0); }
+            #inspector {
+                right: 0;
+                transform: translateX(105%);
+                border-left: 1px solid var(--panel-border);
+            }
+            #inspector.open { transform: translateX(0); }
+            #canvasHolder { min-height: 60vh; }
+            .mobile-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            #exportPanel {
+                position: fixed;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -159,6 +208,8 @@
     <button id="resetView">Center on City</button>
     <button id="toggleExport">Export Layout</button>
     <button id="resetCity">Reset City Layout</button>
+    <button id="paletteToggle" class="mobile-toggle">Palette</button>
+    <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
     <span id="status">Ready.</span>
 </div>
 <div id="container">
@@ -251,6 +302,8 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
 
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
+    const palettePanel = document.getElementById('palette');
+    const inspectorPanel = document.getElementById('inspector');
     const citySelect = document.getElementById('citySelect');
     const buildingPalette = document.getElementById('buildingPalette');
     const hazardPalette = document.getElementById('hazardPalette');
@@ -262,6 +315,8 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
     const exportOutput = document.getElementById('exportOutput');
     const copyExportBtn = document.getElementById('copyExport');
     const resetCityBtn = document.getElementById('resetCity');
+    const paletteToggle = document.getElementById('paletteToggle');
+    const inspectorToggle = document.getElementById('inspectorToggle');
 
     const selectionInfo = document.getElementById('selectionInfo');
     const editControls = document.getElementById('editControls');
@@ -286,6 +341,10 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         dragging: null,
         armedPlacement: null,
         panning: false,
+        panOrigin: null,
+        panPointerId: null,
+        panMoved: false,
+        hoverTile: null,
         cityDesigns: new Map(),
         selectedCity: null,
         selection: null,
@@ -667,6 +726,7 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             item.addEventListener('click', () => {
                 state.armedPlacement = { kind: 'building', type: entry.type };
                 statusEl.textContent = `Armed ${entry.label}. Click map to place.`;
+                closeMobileDrawers();
             });
             buildingPalette.appendChild(item);
         });
@@ -692,6 +752,7 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             item.addEventListener('click', () => {
                 state.armedPlacement = { kind: 'hazard', key: entry.key };
                 statusEl.textContent = `Armed ${entry.label}. Click map to place.`;
+                closeMobileDrawers();
             });
             hazardPalette.appendChild(item);
         });
@@ -705,6 +766,7 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             render();
             return;
         }
+        inspectorPanel.classList.add('open');
         editControls.style.display = 'block';
         selectionInfo.textContent = '';
         selectionTypeEl.textContent = `${selection.kind}: ${selection.label}`;
@@ -819,10 +881,10 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         render();
     }
 
-    function handleCanvasClick(ev) {
+    function handleCanvasInteraction(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
         const world = screenToWorld(x, y);
         const tile = screenToTile(x, y);
         if (state.armedPlacement) {
@@ -830,6 +892,11 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             return;
         }
         pickSelection(world.x, world.y);
+    }
+
+    function handleCanvasClick(ev) {
+        ev.preventDefault();
+        handleCanvasInteraction(ev.clientX, ev.clientY);
     }
 
     function handleDragOver(ev) {
@@ -859,24 +926,57 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
     }
 
     function startPan(ev) {
-        if (state.armedPlacement) return;
         state.panning = true;
+        state.panPointerId = ev.pointerId ?? ev.identifier ?? null;
+        state.panMoved = false;
         canvas.style.cursor = 'grabbing';
         state.panOrigin = { x: ev.clientX, y: ev.clientY, offsetX: state.view.offsetX, offsetY: state.view.offsetY };
     }
 
     function movePan(ev) {
-        if (!state.panning) return;
+        if (!state.panning || !state.panOrigin) return;
+        if (state.panPointerId !== null && ev.pointerId !== undefined && ev.pointerId !== state.panPointerId) return;
         const dx = (ev.clientX - state.panOrigin.x) / state.view.scale;
         const dy = (ev.clientY - state.panOrigin.y) / state.view.scale;
+        if (Math.abs(ev.clientX - state.panOrigin.x) > 4 || Math.abs(ev.clientY - state.panOrigin.y) > 4) {
+            state.panMoved = true;
+        }
         state.view.offsetX = state.panOrigin.offsetX + dx;
         state.view.offsetY = state.panOrigin.offsetY + dy;
         render();
     }
 
-    function endPan() {
+    function endPan(ev) {
+        if (state.panPointerId !== null && ev && ev.pointerId !== undefined && ev.pointerId !== state.panPointerId) return;
         state.panning = false;
+        state.panOrigin = null;
+        state.panPointerId = null;
+        state.panMoved = false;
         canvas.style.cursor = 'grab';
+    }
+
+    function handleTouchStart(ev) {
+        if (!ev.touches.length) return;
+        ev.preventDefault();
+        const touch = ev.touches[0];
+        startPan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
+    }
+
+    function handleTouchMove(ev) {
+        if (!ev.touches.length) return;
+        ev.preventDefault();
+        const touch = ev.touches[0];
+        movePan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
+    }
+
+    function handleTouchEnd(ev) {
+        if (!ev.changedTouches.length) return;
+        const touch = ev.changedTouches[0];
+        const moved = state.panMoved;
+        endPan({ pointerId: touch.identifier });
+        if (!moved) {
+            handleCanvasInteraction(touch.clientX, touch.clientY);
+        }
     }
 
     function centerOnCity() {
@@ -925,6 +1025,11 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         render();
     }
 
+    function closeMobileDrawers() {
+        palettePanel.classList.remove('open');
+        inspectorPanel.classList.remove('open');
+    }
+
     function init() {
         const mapData = decodeMap(MAP_BASE64);
         buildMap(mapData);
@@ -938,6 +1043,9 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         window.addEventListener('resize', () => {
             canvas.width = canvas.clientWidth;
             canvas.height = canvas.clientHeight;
+            if (window.innerWidth > 1100) {
+                closeMobileDrawers();
+            }
             render();
         });
         canvas.width = canvas.clientWidth;
@@ -947,6 +1055,10 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         canvas.addEventListener('mousedown', startPan);
         window.addEventListener('mousemove', movePan);
         window.addEventListener('mouseup', endPan);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchEnd);
         canvas.addEventListener('dragover', handleDragOver);
         canvas.addEventListener('drop', handleDrop);
 
@@ -964,6 +1076,19 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             });
         });
         resetCityBtn.addEventListener('click', resetCity);
+
+        paletteToggle.addEventListener('click', () => {
+            const opened = palettePanel.classList.toggle('open');
+            if (opened) {
+                inspectorPanel.classList.remove('open');
+            }
+        });
+        inspectorToggle.addEventListener('click', () => {
+            const opened = inspectorPanel.classList.toggle('open');
+            if (opened) {
+                palettePanel.classList.remove('open');
+            }
+        });
 
         tileXInput.addEventListener('change', applySelectionEdits);
         tileYInput.addEventListener('change', applySelectionEdits);
@@ -990,6 +1115,7 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
             state.selectedCity = Number(citySelect.value);
             centerOnCity();
             setSelection(null);
+            closeMobileDrawers();
             render();
         });
     }
