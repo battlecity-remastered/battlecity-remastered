@@ -21,6 +21,8 @@ import {ITEM_BURN_THRESHOLDS} from "../constants.js";
 import { SOUND_IDS } from '../audio/AudioManager.js';
 import spawnMuzzleFlash from "../effects/muzzleFlash.js";
 import { applyHazardMetadata } from './hazardMetadata.js';
+import { TILE_SIZE } from "../constants.js";
+import { getPlayerRect } from "../collision/collision-helpers.js";
 
 const STRUCTURE_ITEM_TYPES = new Set([
     ITEM_TYPE_WALL,
@@ -428,6 +430,50 @@ class ItemFactory {
         }
     }
 
+    getPlayerDominantTile(player) {
+        if (!player || !player.offset) {
+            return null;
+        }
+        const rect = getPlayerRect(player);
+        const startX = Math.floor(rect.x / TILE_SIZE);
+        const endX = Math.floor((rect.x + rect.w - 1) / TILE_SIZE);
+        const startY = Math.floor(rect.y / TILE_SIZE);
+        const endY = Math.floor((rect.y + rect.h - 1) / TILE_SIZE);
+
+        let best = null;
+        const centerTileX = Math.floor((player.offset.x + TILE_SIZE / 2) / TILE_SIZE);
+        const centerTileY = Math.floor((player.offset.y + TILE_SIZE / 2) / TILE_SIZE);
+
+        for (let tx = startX; tx <= endX; tx += 1) {
+            for (let ty = startY; ty <= endY; ty += 1) {
+                const tileRect = {
+                    x: tx * TILE_SIZE,
+                    y: ty * TILE_SIZE,
+                    w: TILE_SIZE,
+                    h: TILE_SIZE
+                };
+                const overlapW = Math.max(0, Math.min(rect.x + rect.w, tileRect.x + tileRect.w) - Math.max(rect.x, tileRect.x));
+                const overlapH = Math.max(0, Math.min(rect.y + rect.h, tileRect.y + tileRect.h) - Math.max(rect.y, tileRect.y));
+                const area = overlapW * overlapH;
+                if (area <= 0) {
+                    continue;
+                }
+                if (!best || area > best.area ||
+                    (area === best.area && tx === centerTileX && ty === centerTileY)) {
+                    best = { x: tx, y: ty, area };
+                }
+            }
+        }
+
+        if (best) {
+            return { x: best.x, y: best.y };
+        }
+        return {
+            x: centerTileX,
+            y: centerTileY
+        };
+    }
+
     isHazardType(type) {
         return HAZARD_ITEM_TYPES.has(type);
     }
@@ -540,9 +586,19 @@ class ItemFactory {
 
         let adjustedX = x;
         let adjustedY = y;
-        if (type === ITEM_TYPE_BOMB || type === ITEM_TYPE_MINE) {
-            adjustedX = Math.floor(x / 48) * 48;
-            adjustedY = Math.floor(y / 48) * 48;
+
+        if (DEFENSE_ITEM_TYPES.has(type)) {
+            const dominantTile = this.getPlayerDominantTile(this.game?.player);
+            if (dominantTile) {
+                adjustedX = dominantTile.x * TILE_SIZE;
+                adjustedY = dominantTile.y * TILE_SIZE;
+            } else {
+                adjustedX = Math.floor(x / TILE_SIZE) * TILE_SIZE;
+                adjustedY = Math.floor(y / TILE_SIZE) * TILE_SIZE;
+            }
+        } else if (type === ITEM_TYPE_BOMB || type === ITEM_TYPE_MINE) {
+            adjustedX = Math.floor(x / TILE_SIZE) * TILE_SIZE;
+            adjustedY = Math.floor(y / TILE_SIZE) * TILE_SIZE;
         }
 
         const isHazard = HAZARD_ITEM_TYPES.has(type);
