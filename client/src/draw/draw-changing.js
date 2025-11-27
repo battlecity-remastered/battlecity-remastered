@@ -347,6 +347,7 @@ var drawBullets = (game, stage) => {
         if (bulletTexture.source && Number.isFinite(bulletTexture.source.height)) {
             spriteRows = Math.max(1, Math.floor(bulletTexture.source.height / 8));
         }
+        let spriteRow = 0;
         if (spriteRow >= spriteRows) {
             spriteRow = spriteRows - 1;
         }

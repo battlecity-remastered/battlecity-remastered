@@ -254,14 +254,29 @@ const ensureHealthSpriteState = (game) => {
     }
     if (!game[PANEL_HEALTH_STATE_KEY]) {
         const healthTexture = game.textures?.health;
-        if (!healthTexture) {
+        if (!healthTexture || !healthTexture.source) {
             return null;
         }
-        const sprite = new PIXI.Sprite(healthTexture);
+        const texture = new PIXI.Texture({
+            source: healthTexture.source,
+            frame: healthTexture.frame
+                ? new PIXI.Rectangle(
+                    healthTexture.frame.x,
+                    healthTexture.frame.y,
+                    healthTexture.frame.width,
+                    healthTexture.frame.height
+                )
+                : new PIXI.Rectangle(0, 0, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
+        });
+        const sprite = new PIXI.Sprite(texture);
         sprite.anchor.set(1, 1);
+        sprite.roundPixels = true;
+        const mask = new PIXI.Graphics();
+        sprite.mask = mask;
         game[PANEL_HEALTH_STATE_KEY] = {
             sprite,
-            texture: healthTexture
+            texture,
+            mask
         };
     }
     return game[PANEL_HEALTH_STATE_KEY];
@@ -893,19 +908,33 @@ var drawHealth = (game, stage) => {
     if (!sprite || !texture) {
         return;
     }
-    const needsUpdate = texture.frame.height !== height;
-    if (needsUpdate) {
-        texture.frame = new PIXI.Rectangle(0, 0, HEALTH_BAR_WIDTH, height);
-        texture.updateUvs();
-    }
     sprite.visible = height > 0;
-    sprite.x = game.maxMapX + (137 + HEALTH_BAR_WIDTH);
-    sprite.y = 160 + HEALTH_BAR_HEIGHT;
+    sprite.x = Math.round(game.maxMapX + (137 + HEALTH_BAR_WIDTH));
+    sprite.y = Math.round(160 + HEALTH_BAR_HEIGHT);
     if (!sprite.parent) {
         stage.addChild(sprite);
     } else if (sprite.parent !== stage) {
         sprite.parent.removeChild(sprite);
         stage.addChild(sprite);
+    }
+
+    if (state.mask) {
+        state.mask.clear();
+        if (height > 0) {
+            state.mask.rect(0, 0, HEALTH_BAR_WIDTH, height).fill(0xffffff);
+            // Position mask to align with the sprite's bottom-right anchor
+            state.mask.x = sprite.x - HEALTH_BAR_WIDTH;
+            state.mask.y = sprite.y - height;
+            state.mask.visible = true;
+            if (!state.mask.parent) {
+                stage.addChild(state.mask);
+            } else if (state.mask.parent !== stage) {
+                state.mask.parent.removeChild(state.mask);
+                stage.addChild(state.mask);
+            }
+        } else {
+            state.mask.visible = false;
+        }
     }
 };
 

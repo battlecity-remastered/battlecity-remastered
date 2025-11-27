@@ -24,7 +24,7 @@ const REDRAW_RADIUS_TILES = 24;
 const VIEW_RADIUS_TILES = 40;
 const BUILDING_ANIM_STRIDE = 144; // width per animation frame in imgBuildings
 const BUILDING_ANIM_FRAMES = 3;   // three columns across the spritesheet
-const BUILDING_ANIM_DIVISOR = 6;  // slow the animation so it isn't flickering every frame
+const BUILDING_ANIM_DIVISOR = 4;  // animation cadence (lower = faster)
 const COMMAND_CENTER_LABEL_STYLE = Object.freeze({
     fontFamily: 'Arial',
     fontSize: 14,
@@ -516,7 +516,8 @@ export const drawTiles = (game, backgroundTiles) => {
     var offTileY = Math.floor(modulo(camera.pixelY, TILE_SIZE));
 
     // Drive @pixi/tilemap animation frames (houses/CC/research use animated rows)
-    const animFrame = Math.floor((game.tick || 0) / BUILDING_ANIM_DIVISOR);
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const animFrame = Math.floor(now / (BUILDING_ANIM_DIVISOR * 16)); // ~60 FPS baseline
     tileLayer.tileAnim = [animFrame, 0];
 
 

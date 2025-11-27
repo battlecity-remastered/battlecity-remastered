@@ -12,6 +12,9 @@ if (MutablePIXI.AbstractRenderer) {
     // Use string 'nearest' instead of PIXI.SCALE_MODES.NEAREST
     MutablePIXI.AbstractRenderer.defaultOptions.scaleMode = 'nearest';
 }
+if (MutablePIXI.settings) {
+    MutablePIXI.settings.ROUND_PIXELS = true;
+}
 if (MutablePIXI.TextureStyle?.defaultOptions) {
     MutablePIXI.TextureStyle.defaultOptions.scaleMode = 'nearest';
 }

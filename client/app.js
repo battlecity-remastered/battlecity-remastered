@@ -1403,12 +1403,25 @@ for (const item of resourcesToLoad) {
             height: window.innerHeight,
             antialias: false,
             preference: 'webgl', // v8 uses 'preference' instead of powerPreference
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
             backgroundAlpha: 1
         });
 
         appCanvas = app.canvas;
         // Append canvas to DOM
         document.getElementById("game").appendChild(app.canvas);
+        app.canvas.style.imageRendering = 'pixelated';
+
+        // Custom cursors (matches legacy orange pointer + demolish)
+        if (app.renderer?.events?.cursorStyles) {
+            const cursorStyles = app.renderer.events.cursorStyles;
+            const baseCursor = `url(${assetUrl('imgCursor.png')}), auto`;
+            cursorStyles.default = baseCursor;
+            cursorStyles.cursor = baseCursor;
+            cursorStyles.pointer = baseCursor;
+            cursorStyles.demolish = `url(${assetUrl('imgDemolish.png')}), auto`;
+        }
 
         // Initial resize now that renderer is ready
         game.resizeToWindow();
