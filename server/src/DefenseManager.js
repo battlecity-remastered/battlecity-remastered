@@ -2,6 +2,7 @@
 
 const { TILE_SIZE } = require("./gameplay/constants");
 const { normalizeItemType } = require("./items");
+const { getPlayerRect } = require("./gameplay/geometry");
 
 const ALLOWED_DEFENSE_TYPES = new Set([8, 9, 10, 11]);
 
@@ -36,9 +37,10 @@ const clampAngle = (angle) => {
 
 class DefenseManager {
 
-    constructor({ game, playerFactory }) {
+    constructor({ game, playerFactory, hazardManager = null }) {
         this.game = game;
         this.playerFactory = playerFactory;
+        this.hazardManager = hazardManager || null;
         this.io = null;
         this.defensesByCity = new Map();
         this.defensesById = new Map();
@@ -54,6 +56,157 @@ class DefenseManager {
             this.defensesByCity.set(cityId, new Map());
         }
         return this.defensesByCity.get(cityId);
+    }
+
+    getPlayerDominantTile(player) {
+        if (!player || !player.offset) {
+            return null;
+        }
+        const rect = getPlayerRect(player);
+        const startX = Math.floor(rect.x / TILE_SIZE);
+        const endX = Math.floor((rect.x + rect.w - 1) / TILE_SIZE);
+        const startY = Math.floor(rect.y / TILE_SIZE);
+        const endY = Math.floor((rect.y + rect.h - 1) / TILE_SIZE);
+
+        let best = null;
+        const playerCenterTileX = Math.floor((player.offset.x + TILE_SIZE / 2) / TILE_SIZE);
+        const playerCenterTileY = Math.floor((player.offset.y + TILE_SIZE / 2) / TILE_SIZE);
+
+        for (let tx = startX; tx <= endX; tx += 1) {
+            for (let ty = startY; ty <= endY; ty += 1) {
+                const tileRect = {
+                    x: tx * TILE_SIZE,
+                    y: ty * TILE_SIZE,
+                    w: TILE_SIZE,
+                    h: TILE_SIZE
+                };
+                const overlapW = Math.max(0, Math.min(rect.x + rect.w, tileRect.x + tileRect.w) - Math.max(rect.x, tileRect.x));
+                const overlapH = Math.max(0, Math.min(rect.y + rect.h, tileRect.y + tileRect.h) - Math.max(rect.y, tileRect.y));
+                const area = overlapW * overlapH;
+                if (area <= 0) {
+                    continue;
+                }
+                if (!best || area > best.area ||
+                    (area === best.area && tx === playerCenterTileX && ty === playerCenterTileY)) {
+                    best = { x: tx, y: ty, area };
+                }
+            }
+        }
+
+        if (best) {
+            return { x: best.x, y: best.y };
+        }
+        return {
+            x: playerCenterTileX,
+            y: playerCenterTileY
+        };
+    }
+
+    isTileBlocked(tileX, tileY) {
+        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+            return true;
+        }
+        if (tileX < 0 || tileY < 0 || tileX > 512 || tileY > 512) {
+            return true;
+        }
+
+        // Buildings occupy a 3x3 footprint starting at (x, y)
+        if (this.game?.buildingFactory?.buildings) {
+            for (const building of this.game.buildingFactory.buildings.values()) {
+                if (!building) {
+                    continue;
+                }
+                const footprintX = building.x;
+                const footprintY = building.y;
+                if (tileX >= footprintX && tileX < footprintX + 3 &&
+                    tileY >= footprintY && tileY < footprintY + 3) {
+                    return true;
+                }
+            }
+        }
+
+        // Existing defenses
+        for (const defense of this.defensesById.values()) {
+            if (!defense) {
+                continue;
+            }
+            const defenseTileX = Math.floor(defense.x / TILE_SIZE);
+            const defenseTileY = Math.floor(defense.y / TILE_SIZE);
+            if (defenseTileX === tileX && defenseTileY === tileY) {
+                return true;
+            }
+        }
+
+        // Hazards (mines/bombs/dfg) occupy a single tile
+        if (this.hazardManager && this.hazardManager.hazards) {
+            for (const hazard of this.hazardManager.hazards.values()) {
+                if (!hazard) {
+                    continue;
+                }
+                const hazardTileX = Math.floor(hazard.x / TILE_SIZE);
+                const hazardTileY = Math.floor(hazard.y / TILE_SIZE);
+                if (hazardTileX === tileX && hazardTileY === tileY) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    findNearestFreeTile(preferredTile, searchRadius = 2) {
+        if (!preferredTile) {
+            return null;
+        }
+        const visited = new Set();
+        const queue = [{ x: preferredTile.x, y: preferredTile.y, dist: 0 }];
+
+        while (queue.length) {
+            const current = queue.shift();
+            const key = `${current.x},${current.y}`;
+            if (visited.has(key)) {
+                continue;
+            }
+            visited.add(key);
+
+            if (!this.isTileBlocked(current.x, current.y)) {
+                return { x: current.x, y: current.y, adjusted: current.dist > 0 };
+            }
+
+            if (current.dist >= searchRadius) {
+                continue;
+            }
+
+            const nextDist = current.dist + 1;
+            const offsets = [
+                { dx: 1, dy: 0 },
+                { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 },
+                { dx: 0, dy: -1 },
+            ];
+            for (const offset of offsets) {
+                queue.push({ x: current.x + offset.dx, y: current.y + offset.dy, dist: nextDist });
+            }
+        }
+
+        return null;
+    }
+
+    resolvePlacementForPlayer(player) {
+        const preferred = this.getPlayerDominantTile(player);
+        if (!preferred) {
+            return null;
+        }
+        const free = this.findNearestFreeTile(preferred);
+        if (!free) {
+            return null;
+        }
+        return {
+            tileX: free.x,
+            tileY: free.y,
+            adjusted: !!free.adjusted,
+            preferred
+        };
     }
 
     parsePayload(payload) {
@@ -341,7 +494,17 @@ class DefenseManager {
         if (playerCity !== null && requestedCity !== playerCity) {
             return;
         }
-        const record = this.sanitiseDefenseRecord(parsed, {
+        const placement = this.resolvePlacementForPlayer(player);
+        if (!placement) {
+            return;
+        }
+
+        const snappedInput = Object.assign({}, parsed, {
+            x: placement.tileX * TILE_SIZE,
+            y: placement.tileY * TILE_SIZE
+        });
+
+        const record = this.sanitiseDefenseRecord(snappedInput, {
             cityId: playerCity,
             teamId: playerCity,
             ownerId: player.id || socket.id,

@@ -51,10 +51,6 @@ const dropInventoryItem = (game, dropInfo) => {
 
     const { x, y } = computeDropPosition(game, dropInfo);
     const item = game.itemFactory?.newItem?.(dropInfo, x, y, dropInfo.type);
-    if (item) {
-        game.player.offset.x += 30;
-        game.player.offset.x += 30;
-    }
 
     if (!item) {
         const icon = game.iconFactory?.newIcon?.(null, parseInt(x, 10), parseInt(y, 10), dropInfo.type, {

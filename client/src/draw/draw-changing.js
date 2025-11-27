@@ -340,14 +340,17 @@ var drawBullets = (game, stage) => {
     while (bullet) {
 
         var bulletTexture = game.textures['bulletTexture'];
-        if (!bulletTexture) {
+        if (!bulletTexture || !bulletTexture.source) {
             return;
         }
-        var spriteRows = 1;
-        if (bulletTexture.source && Number.isFinite(bulletTexture.source.height)) {
+        let spriteRow = Number.isFinite(bullet.type) ? bullet.type : 0;
+        if (spriteRow < 0) {
+            spriteRow = 0;
+        }
+        let spriteRows = 1;
+        if (Number.isFinite(bulletTexture.source.height)) {
             spriteRows = Math.max(1, Math.floor(bulletTexture.source.height / 8));
         }
-        let spriteRow = 0;
         if (spriteRow >= spriteRows) {
             spriteRow = spriteRows - 1;
         }

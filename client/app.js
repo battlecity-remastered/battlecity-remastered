@@ -1153,6 +1153,8 @@ game.resetForLobby = () => {
     player.frozenUntil = 0;
     player.frozenBy = null;
     player.health = MAX_HEALTH;
+    player.awaitingServerDeath = false;
+    player.botDeathConfirmSent = false;
     player.collidedItem = null;
     player.bombsArmed = false;
     player.isMoving = 0;
@@ -1175,6 +1177,50 @@ game.resetForLobby = () => {
             game.audio.setLoopState(SOUND_IDS.ENGINE, false);
         }
     }
+    game.forceDraw = true;
+};
+
+game.evictToLobbyAfterDeath = (details = {}) => {
+    if (!game || !game.player) {
+        return;
+    }
+    const now = game.tick || Date.now();
+    if (Number.isFinite(game.lastDeathHandledAt) && now - game.lastDeathHandledAt < 1500) {
+        return;
+    }
+    game.lastDeathHandledAt = now;
+
+    const reason = typeof details.reason === 'string' ? details.reason : 'death';
+    const city = normaliseCityId(details.city ?? game.player.city, null);
+    const attackerCity = normaliseCityId(details.attackerCity, null);
+    const points = Number.isFinite(details.points) ? details.points : null;
+
+    if (game.socketListener && typeof game.socketListener.leaveGame === 'function') {
+        try {
+            game.socketListener.leaveGame({ reason });
+        } catch (_error) {
+            // ignore leave errors
+        }
+    }
+
+    game.resetForLobby();
+
+    if (game.lobby && typeof game.lobby.handleEviction === 'function') {
+        game.lobby.handleEviction({
+            reason,
+            city,
+            attackerCity,
+            points
+        });
+    } else if (game.lobby && typeof game.lobby.show === 'function') {
+        game.lobby.show();
+        game.lobby.setStatus('Returned to the lobby after death.', { type: 'error' });
+    }
+
+    if (game.audio) {
+        game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+    }
+
     game.forceDraw = true;
 };
 
@@ -1921,6 +1967,15 @@ function setup(resources) {
             variant,
             timeout: 5200
         });
+
+        if (isLocal && typeof game.evictToLobbyAfterDeath === 'function') {
+            game.evictToLobbyAfterDeath({
+                reason: 'death',
+                city: victimCityId,
+                attackerCity: killerCity ?? fallbackTeamId ?? null,
+                points: data.points ?? null
+            });
+        }
     });
     game.socketListener.on('build:denied', (payload) => {
         let data = payload;

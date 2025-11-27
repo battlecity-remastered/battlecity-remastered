@@ -483,26 +483,22 @@ var killPlayer = (game) => {
         return;
     }
 
-    const now = game.tick || Date.now();
-
-    // Respawn at city spawn with fresh health to avoid getting stuck at zero HP.
-    movePlayerToCitySpawn(game);
-    game.player.health = MAX_HEALTH;
     game.player.isMoving = 0;
     game.player.isTurning = 0;
+    game.player.awaitingServerDeath = false;
+    game.player.botDeathConfirmSent = false;
     game.player.isFrozen = false;
     game.player.frozenUntil = 0;
     game.player.frozenBy = null;
-    game.player.direction = normaliseDirection(game.player.direction);
-    game.player.lastRespawnAt = now;
-    game.player.awaitingServerDeath = false;
-    game.player.botDeathConfirmSent = false;
+    game.player.engineLoopActive = false;
 
-    if (game.player.engineLoopActive) {
-        game.player.engineLoopActive = false;
-    }
     if (game.audio) {
+        if (game.player.engineLoopActive) {
+            game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+            game.player.engineLoopActive = false;
+        }
         game.audio.setLoopState(SOUND_IDS.ENGINE, false);
+        game.audio.playEffect(SOUND_IDS.DIE, { volume: 0.8 });
     }
 
     // Surface a local death event so the lobby/notifications react like server-driven deaths.
@@ -517,24 +513,13 @@ var killPlayer = (game) => {
         game.lobby.handleEviction({ reason: 'death', city: game.player.city, attackerCity: null });
     }
 
-    // Keep server in sync so it does not think we're still dead.
-    const socketListener = game.socketListener;
-    if (socketListener?.io?.connected && typeof socketListener.createPlayerPayload === 'function') {
-        socketListener.sequenceCounter = (socketListener.sequenceCounter || 0) + 1;
-        game.player.sequence = socketListener.sequenceCounter;
-        const payload = socketListener.createPlayerPayload();
-        if (payload) {
-            payload.health = game.player.health;
-            payload.sequence = socketListener.sequenceCounter;
-            try {
-                socketListener.io.emit("player", JSON.stringify(payload));
-            } catch (_error) {
-                // ignore send errors
-            }
-        }
+    if (typeof game.evictToLobbyAfterDeath === 'function') {
+        game.evictToLobbyAfterDeath({
+            reason: 'death',
+            city: game.player.city,
+            attackerCity: null
+        });
     }
-
-    updateLastSafeOffset(game);
     game.forceDraw = true;
 };
 
