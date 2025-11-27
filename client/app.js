@@ -147,6 +147,23 @@ var stats = new Stats();
 stats.showPanel(0);
 stats.dom.style.display = 'none'; // Hidden by default, shown when debug mode is enabled
 document.getElementById("game").appendChild(stats.dom);
+const debugHud = document.createElement('pre');
+debugHud.id = 'debug-hud';
+debugHud.style.position = 'fixed';
+debugHud.style.left = '8px';
+debugHud.style.top = '8px';
+debugHud.style.padding = '6px 8px';
+debugHud.style.margin = '0';
+debugHud.style.font = '12px "Courier New", monospace';
+debugHud.style.background = 'rgba(0, 0, 0, 0.6)';
+debugHud.style.color = '#b0fffe';
+debugHud.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+debugHud.style.borderRadius = '4px';
+debugHud.style.pointerEvents = 'none';
+debugHud.style.whiteSpace = 'pre';
+debugHud.style.zIndex = '10';
+debugHud.style.display = 'none';
+document.getElementById("game").appendChild(debugHud);
 
 const gameContainer = document.getElementById("game");
 
@@ -243,6 +260,8 @@ const game = {
     gBotDebug: null,
     debugMode: false,
     stats: stats,
+    debugHud,
+    debugHudTick: 0,
 };
 
 game.audio = new AudioManager();
@@ -1898,6 +1917,48 @@ function setup() {
     gameLoop();
 }
 
+const updateDebugHud = (g) => {
+    if (!g || !g.debugHud) {
+        return;
+    }
+    if (!g.debugMode) {
+        if (g.debugHud.style.display !== 'none') {
+            g.debugHud.style.display = 'none';
+        }
+        return;
+    }
+    const stats = g.socketListener && typeof g.socketListener.getLatencyStats === 'function'
+        ? g.socketListener.getLatencyStats()
+        : null;
+    const lines = [];
+    if (stats && stats.latest !== null && stats.latest !== undefined) {
+        const latest = Math.round(stats.latest);
+        const avg = Math.round((stats.avg !== null && stats.avg !== undefined) ? stats.avg : latest);
+        const jitter = Math.round((stats.jitter !== null && stats.jitter !== undefined) ? stats.jitter : 0);
+        const min = Math.round((stats.min !== null && stats.min !== undefined) ? stats.min : latest);
+        const max = Math.round((stats.max !== null && stats.max !== undefined) ? stats.max : latest);
+        const count = stats.count ?? stats.samples?.length ?? 0;
+        lines.push(`Ping: ${latest} ms (avg ${avg}, jitter ${jitter}, min ${min}, max ${max}, n=${count})`);
+        if (stats.updatedAt) {
+            lines.push(`Last pong: ${Math.max(0, Date.now() - stats.updatedAt)} ms ago`);
+        }
+    } else {
+        lines.push('Ping: n/a');
+    }
+    const net = g.debugNet || {};
+    if (net.sendHz || net.sendAvgMs) {
+        const hz = net.sendHz ? net.sendHz.toFixed(1) : 'n/a';
+        const avg = net.sendAvgMs ? net.sendAvgMs.toFixed(1) : 'n/a';
+        lines.push(`Client sends: ${hz} Hz (avg ${avg} ms)`);
+    }
+    if (net.sendRejections) {
+        const ago = net.lastRejectionAt ? `${Math.max(0, Date.now() - net.lastRejectionAt)} ms ago` : '';
+        lines.push(`Rejections: ${net.sendRejections} ${net.lastRejection ? `last=${net.lastRejection} ${ago}` : ''}`.trim());
+    }
+    g.debugHud.textContent = lines.join('\n');
+    g.debugHud.style.display = 'block';
+};
+
 
 var tileAnim = 0;
 var tileAnimationTick = 0;
@@ -1957,6 +2018,7 @@ function gameLoop() {
     game.forceDraw = false;
 
 
+    updateDebugHud(game);
     stats.end();
     requestAnimationFrame(gameLoop);
 

@@ -199,6 +199,7 @@ var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
 var { LoopMonitor } = require('./src/utils/LoopMonitor');
 var { DiscordNotifier } = require('./src/utils/DiscordNotifier');
+var { formatJoinNotification, formatOrbNotification } = require('./src/utils/discordMessages.js');
 
 const shortenId = (value) => {
     if (!value || typeof value !== 'string') {
@@ -288,7 +289,32 @@ const handlePlayerAssigned = (event) => {
     const cityName = event && event.cityName ? event.cityName : resolveCityName(player.city);
     const roleLabel = event && event.role === 'mayor' ? 'Mayor' : 'Recruit';
     const playerName = formatPlayerDisplayName(player);
-    sendDiscordNotification(`${playerName} joined ${cityName} as ${roleLabel}.`);
+    const content = formatJoinNotification({
+        playerName,
+        cityName,
+        roleLabel,
+        rankTitle: player.rankTitle
+    });
+    sendDiscordNotification(content);
+};
+
+const handleCityOrbed = (event) => {
+    if (!discordNotifier) {
+        return;
+    }
+    const player = event && event.player;
+    if (!player || player.isFake || player.isSystemControlled || player.isFakeRecruit) {
+        return;
+    }
+    const playerName = formatPlayerDisplayName(player);
+    const content = formatOrbNotification({
+        playerName,
+        attackerCityName: resolveCityName(event && event.attackerCityId),
+        targetCityName: resolveCityName(event && event.targetCityId),
+        rankTitle: player.rankTitle,
+        points: event && event.points
+    });
+    sendDiscordNotification(content);
 };
 
 const loopLogger = (message) => {
@@ -419,6 +445,7 @@ const orbManager = new OrbManager({
     hazardManager,
     defenseManager,
     iconDropManager,
+    onCityOrbed: handleCityOrbed,
 });
 orbManager.setIo(io);
 const fakeCityManager = new FakeCityManager({

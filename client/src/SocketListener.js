@@ -61,6 +61,29 @@ class SocketListener extends EventEmitter2 {
         this.sequenceCounter = 0;
         this.lastServerSequence = 0;
         this.localShotCache = new Map();
+        this.latencyStats = {
+            samples: [],
+            latest: null,
+            avg: null,
+            min: null,
+            max: null,
+            jitter: null,
+            updatedAt: 0
+        };
+        this._pingListenersAttached = false;
+        this._lastPingAt = null;
+        this.sendStats = {
+            lastSentAt: null,
+            intervals: [],
+            avgMs: null,
+            hz: null,
+            rejections: 0,
+            lastRejection: null,
+            lastRejectionAt: null
+        };
+        this.sendIntervalMs = 33; // ~30 Hz network tick
+        this.nextSendAt = 0;
+        this.lastInterpolateAt = null;
 
         this.on('bot:debug', (data) => {
             updateBotWaypoints(data);
@@ -70,11 +93,18 @@ class SocketListener extends EventEmitter2 {
         });
     }
 
+    now() {
+        return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+            ? performance.now()
+            : Date.now();
+    }
+
     listen() {
         const socketUrl = resolveSocketUrl();
         this.io = io(socketUrl, {
             transports: ['websocket']
         });
+        this.attachPingListeners();
         this.io.on("connect", () => {
             console.log("connected");
             this.sequenceCounter = 0;
@@ -193,6 +223,10 @@ class SocketListener extends EventEmitter2 {
             if (!rejection) {
                 return;
             }
+            const reasons = Array.isArray(rejection.reasons) ? rejection.reasons.join(',') : (rejection.reasons || 'unknown');
+            this.sendStats.rejections += 1;
+            this.sendStats.lastRejection = reasons;
+            this.sendStats.lastRejectionAt = Date.now();
             if (Array.isArray(rejection.reasons) && rejection.reasons.length) {
                 console.warn("Authoritative server rejected player update", rejection.reasons);
             }
@@ -468,6 +502,124 @@ class SocketListener extends EventEmitter2 {
         });
     }
 
+    attachPingListeners() {
+        if (this._pingListenersAttached || !this.io || !this.io.io) {
+            return;
+        }
+        const manager = this.io.io;
+        manager.on("ping", () => {
+            this._lastPingAt = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+                ? performance.now()
+                : Date.now();
+        });
+        manager.on("pong", (latency) => {
+            const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+                ? performance.now()
+                : Date.now();
+            const measured = Number.isFinite(latency)
+                ? latency
+                : (this._lastPingAt ? (now - this._lastPingAt) : null);
+            this.recordLatency(measured);
+        });
+        this._pingListenersAttached = true;
+    }
+
+    recordLatency(latencyMs) {
+        if (!Number.isFinite(latencyMs)) {
+            return;
+        }
+        const stats = this.latencyStats;
+        stats.latest = latencyMs;
+        stats.samples.push(latencyMs);
+        if (stats.samples.length > 40) {
+            stats.samples.shift();
+        }
+        const count = stats.samples.length;
+        const sum = stats.samples.reduce((acc, val) => acc + val, 0);
+        const avg = sum / count;
+        const min = Math.min(...stats.samples);
+        const max = Math.max(...stats.samples);
+        const jitter = stats.samples.reduce((acc, val) => acc + Math.abs(val - avg), 0) / count;
+        stats.avg = avg;
+        stats.min = min;
+        stats.max = max;
+        stats.jitter = jitter;
+        stats.updatedAt = Date.now();
+        if (this.game) {
+            this.game.debugNet = {
+                latencyLatest: latencyMs,
+                latencyAvg: avg,
+                latencyMin: min,
+                latencyMax: max,
+                latencyJitter: jitter,
+                samples: count,
+                updatedAt: stats.updatedAt
+            };
+        }
+    }
+
+    getLatencyStats() {
+        return {
+            ...this.latencyStats,
+            count: this.latencyStats.samples.length
+        };
+    }
+
+    updateRemotePlayers() {
+        if (!this.game || !this.game.otherPlayers) {
+            return;
+        }
+        const now = this.now();
+        const dt = this.lastInterpolateAt ? (now - this.lastInterpolateAt) : 16;
+        this.lastInterpolateAt = now;
+        const alpha = Math.min(1, dt / 120); // close the gap over ~120ms
+        Object.keys(this.game.otherPlayers).forEach((id) => {
+            const player = this.game.otherPlayers[id];
+            if (!player || !player.targetOffset || !player.offset) {
+                return;
+            }
+            const dx = player.targetOffset.x - player.offset.x;
+            const dy = player.targetOffset.y - player.offset.y;
+            if (!Number.isFinite(dx) || !Number.isFinite(dy)) {
+                return;
+            }
+            if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
+                player.offset.x = player.targetOffset.x;
+                player.offset.y = player.targetOffset.y;
+                return;
+            }
+            player.offset.x += dx * alpha;
+            player.offset.y += dy * alpha;
+        });
+    }
+
+    recordSendInterval() {
+        const now = this.now();
+        const stats = this.sendStats;
+        if (stats.lastSentAt !== null) {
+            const interval = now - stats.lastSentAt;
+            if (interval > 0 && Number.isFinite(interval)) {
+                stats.intervals.push(interval);
+                if (stats.intervals.length > 60) {
+                    stats.intervals.shift();
+                }
+                const count = stats.intervals.length;
+                const sum = stats.intervals.reduce((acc, val) => acc + val, 0);
+                stats.avgMs = sum / count;
+                stats.hz = stats.avgMs > 0 ? (1000 / stats.avgMs) : null;
+            }
+        }
+        stats.lastSentAt = now;
+        if (this.game) {
+            this.game.debugNet = this.game.debugNet || {};
+            this.game.debugNet.sendAvgMs = stats.avgMs;
+            this.game.debugNet.sendHz = stats.hz;
+            this.game.debugNet.sendRejections = stats.rejections;
+            this.game.debugNet.lastRejection = stats.lastRejection;
+            this.game.debugNet.lastRejectionAt = stats.lastRejectionAt;
+        }
+    }
+
     disconnectSocket() {
         if (!this.io) {
             return;
@@ -484,6 +636,8 @@ class SocketListener extends EventEmitter2 {
             this.io.disconnect();
         }
         this.io = null;
+        this._pingListenersAttached = false;
+        this._lastPingAt = null;
     }
 
     reconnect() {
@@ -682,8 +836,17 @@ class SocketListener extends EventEmitter2 {
             this.sequenceCounter += 1;
             this.game.player.sequence = this.sequenceCounter;
             const payload = this.createPlayerPayload();
-            this.io.emit("player", JSON.stringify(payload));
+            const now = this.now();
+            if (!this.nextSendAt) {
+                this.nextSendAt = now;
+            }
+            if (now >= this.nextSendAt) {
+                this.recordSendInterval();
+                this.io.emit("player", JSON.stringify(payload));
+                this.nextSendAt = now + this.sendIntervalMs;
+            }
         }
+        this.updateRemotePlayers();
     }
 
     spawnHazard(hazard) {
@@ -844,6 +1007,16 @@ class SocketListener extends EventEmitter2 {
             }
         }
         const updated = existing ? Object.assign({}, existing, player) : Object.assign({}, player);
+        const targetX = this.toFiniteNumber(player.offset?.x, updated.offset?.x ?? 0);
+        const targetY = this.toFiniteNumber(player.offset?.y, updated.offset?.y ?? 0);
+        if (!updated.offset) {
+            updated.offset = { x: targetX, y: targetY };
+        }
+        updated.targetOffset = {
+            x: Number.isFinite(targetX) ? targetX : (updated.offset.x ?? 0),
+            y: Number.isFinite(targetY) ? targetY : (updated.offset.y ?? 0)
+        };
+        updated.lastServerAt = this.now();
         if (!updated.callsign && existing && existing.callsign) {
             updated.callsign = existing.callsign;
         }

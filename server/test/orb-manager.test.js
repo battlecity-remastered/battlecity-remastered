@@ -106,6 +106,64 @@ test("orb detonation consumes active orb count and frees production slot", () =>
     assert.strictEqual(payload.targetCity, targetCityId);
 });
 
+test("onCityOrbed callback receives attacker, target, and player details", () => {
+    const game = { players: {}, cities: [] };
+    const cityManager = new CityManager(game);
+    const buildingFactory = {
+        destroyCity() { },
+        cityManager
+    };
+    const hazardManager = { removeHazardsForTeam() { } };
+    const defenseManager = { clearCity() { } };
+
+    const attackerCityId = 0;
+    const targetCityId = 1;
+    const player = { id: "player-1", city: attackerCityId, rankTitle: "Captain" };
+    const socket = createSocket("socket-1");
+    game.players[socket.id] = player;
+
+    cityManager.ensureCity(attackerCityId);
+    const targetCity = cityManager.ensureCity(targetCityId);
+    targetCity.maxBuildings = ORBABLE_SIZE;
+    targetCity.currentBuildings = ORBABLE_SIZE;
+    cityManager.updateOrbableState(targetCity);
+
+    const events = [];
+    const playerFactory = {
+        getPlayer: (socketId) => (socketId === socket.id ? player : null),
+        recordOrbVictoryForCity() { },
+        evictCityPlayers() { }
+    };
+
+    const orbManager = new OrbManager({
+        game,
+        cityManager,
+        playerFactory,
+        buildingFactory,
+        hazardManager,
+        defenseManager,
+        onCityOrbed: (payload) => events.push(payload)
+    });
+    orbManager.setIo(createIo());
+
+    cityManager.registerOrbProduced(attackerCityId);
+    cityManager.registerOrbHolder(socket.id, attackerCityId);
+
+    const spawn = citySpawns[String(targetCityId)];
+    const dropPayload = {
+        x: spawn.tileX * TILE_SIZE,
+        y: (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE
+    };
+
+    orbManager.handleDrop(socket, dropPayload);
+
+    assert.equal(events.length, 1);
+    assert.strictEqual(events[0].attackerCityId, attackerCityId);
+    assert.strictEqual(events[0].targetCityId, targetCityId);
+    assert.ok(Number.isFinite(events[0].points));
+    assert.strictEqual(events[0].player, player);
+});
+
 test("orb drop detection only matches the command center front strip", () => {
     const orbManager = new OrbManager({
         game: {},

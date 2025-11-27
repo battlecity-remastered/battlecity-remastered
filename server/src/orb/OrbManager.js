@@ -24,7 +24,16 @@ const toNumber = (value, fallback = null) => {
 };
 
 class OrbManager {
-    constructor({ game, cityManager, playerFactory, buildingFactory, hazardManager, defenseManager, iconDropManager = null }) {
+    constructor({
+        game,
+        cityManager,
+        playerFactory,
+        buildingFactory,
+        hazardManager,
+        defenseManager,
+        iconDropManager = null,
+        onCityOrbed = null
+    }) {
         this.game = game;
         this.cityManager = cityManager;
         this.playerFactory = playerFactory;
@@ -33,6 +42,7 @@ class OrbManager {
         this.defenseManager = defenseManager;
         this.iconDropManager = iconDropManager;
         this.io = null;
+        this.onCityOrbed = typeof onCityOrbed === 'function' ? onCityOrbed : null;
     }
 
     setIo(io) {
@@ -151,6 +161,19 @@ class OrbManager {
 
         if (this.io) {
             this.io.emit(CITY_ORBED_EVENT, broadcastPayload);
+        }
+
+        if (this.onCityOrbed) {
+            try {
+                this.onCityOrbed({
+                    attackerCityId: playerCity,
+                    targetCityId: targetCity,
+                    points,
+                    player
+                });
+            } catch (_error) {
+                // Ignore notification failures to keep the game flow intact.
+            }
         }
 
         this.emitDropResult(socket, {

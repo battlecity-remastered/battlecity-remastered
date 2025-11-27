@@ -326,6 +326,9 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
         if (game.stats && game.stats.dom) {
             game.stats.dom.style.display = game.debugMode ? 'block' : 'none';
         }
+        if (game.debugHud) {
+            game.debugHud.style.display = game.debugMode ? 'block' : 'none';
+        }
 
         console.log('Debug mode:', game.debugMode ? 'enabled' : 'disabled');
     };
