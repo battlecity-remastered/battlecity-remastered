@@ -33,7 +33,7 @@ export const scheduleDestroy = (displayObject, options = {}) => {
             displayObject.destroy({
                 children: destroyChildren,
                 texture: destroyTexture,
-                baseTexture: destroyBaseTexture
+                source: destroyBaseTexture // PixiJS v8: baseTexture -> source
             });
         } catch (error) {
             if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {

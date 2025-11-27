@@ -1,19 +1,19 @@
 import PIXI from '../pixi';
 
-import {MAX_HEALTH} from "../constants";
-import {ITEM_TYPE_TURRET} from "../constants";
-import {ITEM_TYPE_LASER} from "../constants";
-import {ITEM_TYPE_MINE} from "../constants";
-import {ITEM_TYPE_MEDKIT} from "../constants";
-import {ITEM_TYPE_ROCKET} from "../constants";
-import {ITEM_TYPE_BOMB} from "../constants";
-import {ITEM_TYPE_ORB} from "../constants";
-import {ITEM_TYPE_CLOAK} from "../constants";
-import {ITEM_TYPE_DFG} from "../constants";
-import {ITEM_TYPE_WALL} from "../constants";
-import {ITEM_TYPE_SLEEPER} from "../constants";
-import {ITEM_TYPE_PLASMA} from "../constants";
-import {ITEM_TYPE_FLARE} from "../constants";
+import { MAX_HEALTH } from "../constants";
+import { ITEM_TYPE_TURRET } from "../constants";
+import { ITEM_TYPE_LASER } from "../constants";
+import { ITEM_TYPE_MINE } from "../constants";
+import { ITEM_TYPE_MEDKIT } from "../constants";
+import { ITEM_TYPE_ROCKET } from "../constants";
+import { ITEM_TYPE_BOMB } from "../constants";
+import { ITEM_TYPE_ORB } from "../constants";
+import { ITEM_TYPE_CLOAK } from "../constants";
+import { ITEM_TYPE_DFG } from "../constants";
+import { ITEM_TYPE_WALL } from "../constants";
+import { ITEM_TYPE_SLEEPER } from "../constants";
+import { ITEM_TYPE_PLASMA } from "../constants";
+import { ITEM_TYPE_FLARE } from "../constants";
 import {
     RADAR_RANGE_PX,
     RADAR_RATIO,
@@ -38,36 +38,34 @@ const PANEL_HEADING_STYLE = Object.freeze({
     fontSize: 14,
     fontWeight: 'bold',
     fill: 0xF4D03F,
-    stroke: 0x000000,
-    strokeThickness: 2,
+    stroke: { color: 0x000000, width: 2 },
 });
 
 const PANEL_BODY_STYLE = Object.freeze({
     fontFamily: 'Arial',
     fontSize: 12,
     fill: 0xFDFEFE,
-    stroke: 0x000000,
-    strokeThickness: 2,
+    stroke: { color: 0x000000, width: 2 },
 });
 
 const INVENTORY_SLOTS = {
-    [ITEM_TYPE_LASER]: {x: 7, y: 267},
-    [ITEM_TYPE_ROCKET]: {x: 42, y: 267},
-    [ITEM_TYPE_MEDKIT]: {x: 77, y: 267},
-    [ITEM_TYPE_BOMB]: {x: 7, y: 302},
-    [ITEM_TYPE_MINE]: {x: 42, y: 302},
-    [ITEM_TYPE_ORB]: {x: 77, y: 302},
-    [ITEM_TYPE_FLARE]: {x: 7, y: 337},
-    [ITEM_TYPE_DFG]: {x: 42, y: 337},
-    [ITEM_TYPE_WALL]: {x: 77, y: 337},
-    [ITEM_TYPE_TURRET]: {x: 7, y: 372},
-    [ITEM_TYPE_SLEEPER]: {x: 42, y: 372},
-    [ITEM_TYPE_PLASMA]: {x: 77, y: 372},
-    [ITEM_TYPE_CLOAK]: {x: 7, y: 372},
+    [ITEM_TYPE_LASER]: { x: 7, y: 267 },
+    [ITEM_TYPE_ROCKET]: { x: 42, y: 267 },
+    [ITEM_TYPE_MEDKIT]: { x: 77, y: 267 },
+    [ITEM_TYPE_BOMB]: { x: 7, y: 302 },
+    [ITEM_TYPE_MINE]: { x: 42, y: 302 },
+    [ITEM_TYPE_ORB]: { x: 77, y: 302 },
+    [ITEM_TYPE_FLARE]: { x: 7, y: 337 },
+    [ITEM_TYPE_DFG]: { x: 42, y: 337 },
+    [ITEM_TYPE_WALL]: { x: 77, y: 337 },
+    [ITEM_TYPE_TURRET]: { x: 7, y: 372 },
+    [ITEM_TYPE_SLEEPER]: { x: 42, y: 372 },
+    [ITEM_TYPE_PLASMA]: { x: 77, y: 372 },
+    [ITEM_TYPE_CLOAK]: { x: 7, y: 372 },
 };
 
 const resolveSlotPosition = (type, defaultX, defaultY) => {
-    return INVENTORY_SLOTS[type] ?? {x: defaultX, y: defaultY};
+    return INVENTORY_SLOTS[type] ?? { x: defaultX, y: defaultY };
 };
 
 const PANEL_BUTTON_DEFINITIONS = [
@@ -144,12 +142,11 @@ const attachPanelButtons = (game, stage) => {
     const baseX = game.maxMapX || 0;
     PANEL_BUTTON_DEFINITIONS.forEach((definition) => {
         const graphics = new PIXI.Graphics();
-        graphics.beginFill(0xffffff, 0.001);
-        graphics.drawRect(baseX + definition.offsetX, definition.y, definition.width, definition.height);
-        graphics.endFill();
+        // PixiJS v8: Use rect().fill() instead of beginFill/drawRect/endFill
+        graphics.rect(baseX + definition.offsetX, definition.y, definition.width, definition.height)
+            .fill({ color: 0xffffff, alpha: 0.001 });
         graphics.interactive = true;
-        graphics.buttonMode = true;
-        graphics.cursor = 'pointer';
+        graphics.cursor = 'pointer'; // v8: buttonMode removed, use cursor directly
         graphics.on('pointertap', (event) => {
             event.stopPropagation();
             if (typeof definition.handler === 'function') {
@@ -204,10 +201,14 @@ const toFiniteNumber = (value, fallback = null) => {
 };
 
 const createTextureSlice = (texture, column) => {
-    if (!texture || !texture.baseTexture) {
+    if (!texture || !texture.source) {
         return null;
     }
-    return new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(column * RADAR_TEXTURE_SIZE, 0, RADAR_TEXTURE_SIZE, RADAR_TEXTURE_SIZE));
+    // PixiJS v8: Use texture.source instead of baseTexture
+    return new PIXI.Texture({
+        source: texture.source,
+        frame: new PIXI.Rectangle(column * RADAR_TEXTURE_SIZE, 0, RADAR_TEXTURE_SIZE, RADAR_TEXTURE_SIZE)
+    });
 };
 
 const buildRadarTextures = (game) => {
@@ -225,8 +226,11 @@ const buildRadarTextures = (game) => {
         ally: createTextureSlice(base, 3),
     };
     const mini = game.textures.imgMiniMapColors;
-    if (mini && mini.baseTexture) {
-        textures.dead = new PIXI.Texture(mini.baseTexture, new PIXI.Rectangle(15 * RADAR_TEXTURE_SIZE, 0, RADAR_TEXTURE_SIZE, RADAR_TEXTURE_SIZE));
+    if (mini && mini.source) {
+        textures.dead = new PIXI.Texture({
+            source: mini.source,
+            frame: new PIXI.Rectangle(15 * RADAR_TEXTURE_SIZE, 0, RADAR_TEXTURE_SIZE, RADAR_TEXTURE_SIZE)
+        });
     }
     return textures;
 };
@@ -249,16 +253,15 @@ const ensureHealthSpriteState = (game) => {
         return null;
     }
     if (!game[PANEL_HEALTH_STATE_KEY]) {
-        const baseTexture = game.textures?.health?.baseTexture;
-        if (!baseTexture) {
+        const healthTexture = game.textures?.health;
+        if (!healthTexture) {
             return null;
         }
-        const texture = new PIXI.Texture(baseTexture);
-        const sprite = new PIXI.Sprite(texture);
+        const sprite = new PIXI.Sprite(healthTexture);
         sprite.anchor.set(1, 1);
         game[PANEL_HEALTH_STATE_KEY] = {
             sprite,
-            texture
+            texture: healthTexture
         };
     }
     return game[PANEL_HEALTH_STATE_KEY];
@@ -266,13 +269,13 @@ const ensureHealthSpriteState = (game) => {
 
 const buildHomeArrowTextures = (game) => {
     const texture = game?.textures?.imgArrows;
-    if (!texture || !texture.baseTexture) {
+    if (!texture || !texture.source) {
         return [];
     }
     const frames = [];
     for (let i = 0; i < 8; i += 1) {
         const rect = new PIXI.Rectangle(i * HOME_ARROW_FRAME_SIZE, 0, HOME_ARROW_FRAME_SIZE, HOME_ARROW_FRAME_SIZE);
-        frames.push(new PIXI.Texture(texture.baseTexture, rect));
+        frames.push(new PIXI.Texture({ source: texture.source, frame: rect }));
     }
     return frames;
 };
@@ -289,7 +292,7 @@ const ensureHomeArrowState = (game, stage) => {
             return null;
         }
         const container = new PIXI.Container();
-        container.name = 'home-arrow';
+        container.label = 'home-arrow';
         container.position.set((game.maxMapX || 0) + HOME_ARROW_OFFSET_X, HOME_ARROW_OFFSET_Y);
         const sprite = new PIXI.Sprite(textures[0]);
         container.addChild(sprite);
@@ -392,9 +395,9 @@ const ensureRadarState = (game, stage) => {
     let state = stage[RADAR_STATE_KEY];
     if (!state) {
         const container = new PIXI.Container();
-        container.name = 'radar-container';
+        container.label = 'radar-container';
         const pointsLayer = new PIXI.Container();
-        pointsLayer.name = 'radar-points';
+        pointsLayer.label = 'radar-points';
         container.addChild(pointsLayer);
         state = {
             container,
@@ -657,13 +660,16 @@ var drawFinance = (game, stage) => {
         stage.addChild(indicator);
     }
 
-    const cashText = new PIXI.Text(formatCash(city.cash ?? 0), {
-        fontFamily: 'Arial',
-        fontSize: 13,
-        fontWeight: 'bold',
-        fill: gross < 0 ? 0xE74C3C : 0x2ECC71,
-        stroke: 0x000000,
-        strokeThickness: 1,
+    // PixiJS v8: Text constructor uses object format
+    const cashText = new PIXI.Text({
+        text: formatCash(city.cash ?? 0),
+        style: {
+            fontFamily: 'Arial',
+            fontSize: 13,
+            fontWeight: 'bold',
+            fill: gross < 0 ? 0xE74C3C : 0x2ECC71,
+            stroke: { color: 0x000000, width: 1 },
+        }
     });
     cashText.x = game.maxMapX + 24;
     cashText.y = 226;
@@ -697,10 +703,10 @@ var drawItems = (game, stage) => {
                 frameY = 89;
             }
 
-            var tmpText = new PIXI.Texture(
-                game.textures['imageItems'].baseTexture,
-                new PIXI.Rectangle(frameX, frameY, 32, 32)
-            );
+            var tmpText = new PIXI.Texture({
+                source: game.textures['imageItems'].source,
+                frame: new PIXI.Rectangle(frameX, frameY, 32, 32)
+            });
 
             var iconSprite = new PIXI.Sprite(tmpText);
 
@@ -720,7 +726,7 @@ var drawItems = (game, stage) => {
             iconSprite.y = y;
 
             iconSprite.interactive = true;
-            iconSprite.buttonMode = true;
+            iconSprite.cursor = 'pointer'; // v8: buttonMode removed
 
             const iconClosure = icon;
             iconSprite.on('mousedown', (event) => {
@@ -743,13 +749,15 @@ var drawItems = (game, stage) => {
 
             const quantity = icon.quantity ?? 1;
             if (quantity > 1) {
-                const qtyText = new PIXI.Text(`${quantity}`, {
-                    fontFamily: 'Arial',
-                    fontSize: 12,
-                    fill: 0xFFFFFF,
-                    fontWeight: 'bold',
-                    stroke: 0x000000,
-                    strokeThickness: 3,
+                const qtyText = new PIXI.Text({
+                    text: `${quantity}`,
+                    style: {
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        fill: 0xFFFFFF,
+                        fontWeight: 'bold',
+                        stroke: { color: 0x000000, width: 3 },
+                    }
                 });
                 qtyText.x = x + 22;
                 qtyText.y = y + 12;
@@ -782,7 +790,10 @@ const drawPanelMessages = (game, stage) => {
             return null;
         }
         if (!state.heading) {
-            state.heading = new PIXI.Text('', PANEL_HEADING_STYLE);
+            state.heading = new PIXI.Text({
+                text: '',
+                style: { ...PANEL_HEADING_STYLE }
+            });
         }
         return state.heading;
     })();
@@ -813,7 +824,10 @@ const drawPanelMessages = (game, stage) => {
         }
         let textSprite = lineSprites[lineIndex];
         if (!textSprite) {
-            textSprite = new PIXI.Text('', PANEL_BODY_STYLE);
+            textSprite = new PIXI.Text({
+                text: '',
+                style: { ...PANEL_BODY_STYLE }
+            });
             lineSprites[lineIndex] = textSprite;
         }
         textSprite.visible = true;

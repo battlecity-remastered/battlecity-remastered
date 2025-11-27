@@ -13,18 +13,19 @@ import { getOrbAnimationFrame } from '../utils/orbAnimation';
 var drawTick = 0;
 const textureCache = new Map();
 
-const getItemTexture = (baseTexture, cacheKey, x, y, width, height) => {
-    if (!baseTexture) {
+const getItemTexture = (textureOrSource, cacheKey, x, y, width, height) => {
+    if (!textureOrSource) {
         return null;
     }
-    const baseId = baseTexture.uid || baseTexture.cacheId || 'base';
+    const source = textureOrSource.source || textureOrSource;
+    const baseId = source.uid || source.cacheId || 'base';
     const key = `${baseId}:${cacheKey}:${x}:${y}:${width}:${height}`;
     let cached = textureCache.get(key);
     if (!cached) {
-        cached = new PIXI.Texture(
-            baseTexture,
-            new PIXI.Rectangle(x, y, width, height)
-        );
+        cached = new PIXI.Texture({
+            source,
+            frame: new PIXI.Rectangle(x, y, width, height)
+        });
         textureCache.set(key, cached);
     }
     return cached;
@@ -113,7 +114,7 @@ var drawMine = (game, itemTiles, item, offTileX, offTileY) => {
         return;
     }
     const texture = getItemTexture(
-        game.textures['imageItems']?.baseTexture,
+        game.textures['imageItems'],
         `mine:${ITEM_TYPE_MINE}`,
         ITEM_TYPE_MINE * 32,
         0,
@@ -134,7 +135,7 @@ var drawDFG = (game, itemTiles, item, offTileX, offTileY) => {
     if (item.active && dfgTeam !== null && dfgTeam !== playerTeam) {
         return;
     }
-    const baseTexture = game.textures['imageItems']?.baseTexture;
+    const baseTexture = game.textures['imageItems'];
     if (!baseTexture) {
         return;
     }
@@ -155,7 +156,7 @@ var drawDFG = (game, itemTiles, item, offTileX, offTileY) => {
 };
 
 var drawBomb = (game, itemTiles, item, offTileX, offTileY) => {
-    const baseTexture = game.textures['imageItems']?.baseTexture;
+    const baseTexture = game.textures['imageItems'];
     if (!baseTexture) {
         return;
     }
@@ -182,7 +183,7 @@ var drawBomb = (game, itemTiles, item, offTileX, offTileY) => {
 };
 
 const drawWall = (game, itemTiles, item, offTileX, offTileY) => {
-    const baseTexture = game.textures['imageItems']?.baseTexture;
+    const baseTexture = game.textures['imageItems'];
     if (!baseTexture) {
         return;
     }
@@ -213,7 +214,7 @@ const drawSleeper = (game, itemTiles, item, offTileX, offTileY) => {
 };
 
 const drawGenericItem = (game, itemTiles, item, offTileX, offTileY) => {
-    const baseTexture = game.textures['imageItems']?.baseTexture;
+    const baseTexture = game.textures['imageItems'];
     if (!baseTexture) {
         return;
     }
@@ -237,7 +238,7 @@ const drawGenericItem = (game, itemTiles, item, offTileX, offTileY) => {
 const ORB_WORLD_OFFSET_X = 4;
 
 const drawOrb = (game, itemTiles, item, offTileX, offTileY) => {
-    const baseTexture = game.textures['imageItems']?.baseTexture;
+    const baseTexture = game.textures['imageItems'];
     if (!baseTexture) {
         return;
     }

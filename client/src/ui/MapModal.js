@@ -554,7 +554,7 @@ class MapModal {
         const map = Array.isArray(this.game?.map) ? this.game.map : null;
         const width = Array.isArray(map) ? map.length : 0;
         const height = width > 0 && Array.isArray(map[0]) ? map[0].length : 0;
-        const context = this.canvas.getContext('2d');
+        const context = this.canvas.getContext('2d', { willReadFrequently: true });
         if (!context) {
             return;
         }
