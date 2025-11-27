@@ -21,7 +21,6 @@ import {ITEM_BURN_THRESHOLDS} from "../constants.js";
 import { SOUND_IDS } from '../audio/AudioManager.js';
 import spawnMuzzleFlash from "../effects/muzzleFlash.js";
 import { applyHazardMetadata } from './hazardMetadata.js';
-import { TILE_SIZE } from "../constants.js";
 import { getPlayerRect } from "../collision/collision-helpers.js";
 
 const STRUCTURE_ITEM_TYPES = new Set([
@@ -61,6 +60,8 @@ const getInitialLife = (type) => {
     }
     return null;
 };
+
+const TILE_SIZE = 48;
 
 const getBurnThreshold = (type) => {
     if (Object.prototype.hasOwnProperty.call(ITEM_BURN_THRESHOLDS, type)) {
