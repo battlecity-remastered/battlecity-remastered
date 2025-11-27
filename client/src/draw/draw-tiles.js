@@ -562,12 +562,12 @@ export const drawTiles = (game, backgroundTiles) => {
         }
 
         backgroundTiles.position.set(
-            game.player.defaultOffset.x + camera.pixelX - offTileX,
-            game.player.defaultOffset.y + camera.pixelY - offTileY
+            Math.round(game.player.defaultOffset.x + camera.pixelX - offTileX),
+            Math.round(game.player.defaultOffset.y + camera.pixelY - offTileY)
         );
     }
 
-    backgroundTiles.pivot.set(camera.pixelX, camera.pixelY);
+    backgroundTiles.pivot.set(Math.round(camera.pixelX), Math.round(camera.pixelY));
     updateCommandCenterLabelVisibility(game, camera);
     pruneCommandCenterLabels(game);
 };

@@ -1405,7 +1405,8 @@ for (const item of resourcesToLoad) {
             preference: 'webgl', // v8 uses 'preference' instead of powerPreference
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
-            backgroundAlpha: 1
+            backgroundAlpha: 1,
+            mipmapTextures: 'off'
         });
 
         appCanvas = app.canvas;
