@@ -28,6 +28,7 @@ const MAX_LIFETIME = 240000;
 const WANDER_RADIUS = TILE_SIZE * 7;
 const ROGUE_ENGAGE_RADIUS = TILE_SIZE * 11;
 const ROGUE_MIN_SPAWN_RADIUS = TILE_SIZE * 13;
+const ROGUE_SPAWN_CITY_BUFFER = TILE_SIZE * 16;
 const ROGUE_SPAWN_RADIUS_VARIANCE = TILE_SIZE * 7;
 const ROGUE_SPAWN_MAX_ATTEMPTS = 20;
 const RESPAWN_BASE_DELAY = 60000;
@@ -240,8 +241,10 @@ class RogueTankManager {
         const cityY = toFinite(city?.y, 0);
         const centerX = cityX + (TILE_SIZE * 1.5);
         const centerY = cityY + (TILE_SIZE * 1.5);
-        const minDistance = ROGUE_MIN_SPAWN_RADIUS;
-        const maxDistance = ROGUE_MIN_SPAWN_RADIUS + ROGUE_SPAWN_RADIUS_VARIANCE;
+        const timestamp = Number.isFinite(now) ? now : (this.game.tick || Date.now());
+        const engageRadius = this.getCityEngageRadius(cityId, timestamp);
+        const minDistance = Math.max(ROGUE_MIN_SPAWN_RADIUS, engageRadius + ROGUE_SPAWN_CITY_BUFFER);
+        const maxDistance = minDistance + ROGUE_SPAWN_RADIUS_VARIANCE;
 
         for (let attempt = 0; attempt < ROGUE_SPAWN_MAX_ATTEMPTS; attempt += 1) {
             const angle = Math.random() * Math.PI * 2;
@@ -250,13 +253,14 @@ class RogueTankManager {
             let spawnY = centerY + Math.sin(angle) * distance;
             spawnX = Math.max(HALF_TILE, Math.min((512 * TILE_SIZE) - HALF_TILE, spawnX));
             spawnY = Math.max(HALF_TILE, Math.min((512 * TILE_SIZE) - HALF_TILE, spawnY));
+            if (distanceSquared(spawnX, spawnY, centerX, centerY) < (minDistance * minDistance)) {
+                continue;
+            }
             if (this.blocking.isBlocked(spawnX, spawnY)) {
                 continue;
             }
 
             const tankId = this.createTankId();
-            const timestamp = Number.isFinite(now) ? now : (this.game.tick || Date.now());
-            const engageRadius = this.getCityEngageRadius(cityId, timestamp);
             const tank = {
                 id: tankId,
                 offset: { x: spawnX, y: spawnY },
