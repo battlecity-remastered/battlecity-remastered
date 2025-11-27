@@ -22,14 +22,16 @@ var maxTY = 0;
 const TILE_SIZE = 48;
 const REDRAW_RADIUS_TILES = 24;
 const VIEW_RADIUS_TILES = 40;
+const BUILDING_ANIM_STRIDE = 144; // width per animation frame in imgBuildings
+const BUILDING_ANIM_FRAMES = 3;   // three columns across the spritesheet
+const BUILDING_ANIM_DIVISOR = 4;  // animation cadence (lower = faster)
 const COMMAND_CENTER_LABEL_STYLE = Object.freeze({
     fontFamily: 'Arial',
     fontSize: 14,
     fontWeight: 'bold',
     fill: 0xF2F6FF,
     align: 'center',
-    stroke: 0x000000,
-    strokeThickness: 4,
+    stroke: { color: 0x000000, width: 4 },
     lineHeight: 16,
     wordWrap: true,
     wordWrapWidth: 120,
@@ -38,18 +40,19 @@ const COMMAND_CENTER_LABEL_RESOLUTION = 2;
 const COMMAND_CENTER_LABEL_OFFSET_Y = -32;
 const textureCache = new Map();
 
-const getSubTexture = (baseTexture, cacheKey, x, y, width, height) => {
-    if (!baseTexture) {
+const getSubTexture = (texture, cacheKey, x, y, width, height) => {
+    if (!texture || !texture.source) {
         return null;
     }
-    const baseId = baseTexture.uid || baseTexture.cacheId || 'base';
+    // PixiJS v8: Use source.uid instead of baseTexture.uid
+    const baseId = texture.source.uid || texture.uid || 'base';
     const key = `${baseId}:${cacheKey}:${x}:${y}:${width}:${height}`;
     let cached = textureCache.get(key);
     if (!cached) {
-        cached = new PIXI.Texture(
-            baseTexture,
-            new PIXI.Rectangle(x, y, width, height)
-        );
+        cached = new PIXI.Texture({
+            source: texture.source,
+            frame: new PIXI.Rectangle(x, y, width, height)
+        });
         textureCache.set(key, cached);
     }
     return cached;
@@ -73,7 +76,7 @@ const modulo = (value, divisor) => {
 
 const ensureLayers = (backgroundTiles) => {
     if (!backgroundTiles.tileLayer) {
-        backgroundTiles.tileLayer = new PIXI.tilemap.CompositeRectTileLayer(0, null, true);
+        backgroundTiles.tileLayer = new PIXI.tilemap.CompositeTilemap();
         backgroundTiles.addChild(backgroundTiles.tileLayer);
     }
     if (!backgroundTiles.edgeOverlay) {
@@ -86,7 +89,7 @@ const ensureLayers = (backgroundTiles) => {
     }
     if (!backgroundTiles.commandCenterLabelLayer) {
         const labels = new PIXI.Container();
-        labels.name = 'commandCenterLabelLayer';
+        labels.label = 'commandCenterLabelLayer';
         backgroundTiles.commandCenterLabelLayer = labels;
         backgroundTiles.addChild(labels);
     }
@@ -94,7 +97,7 @@ const ensureLayers = (backgroundTiles) => {
 
 var drawLava = (game, tileLayer, i, j, tileX, tileY) => {
     const texture = getSubTexture(
-        game.textures['lavaTexture']?.baseTexture,
+        game.textures['lavaTexture'],
         `lava:${game.tiles[tileX][tileY]}`,
         game.tiles[tileX][tileY],
         0,
@@ -110,7 +113,7 @@ var drawLava = (game, tileLayer, i, j, tileX, tileY) => {
 
 var drawRocks = (game, tileLayer, i, j, tileX, tileY) => {
     const texture = getSubTexture(
-        game.textures['rockTexture']?.baseTexture,
+        game.textures['rockTexture'],
         `rock:${game.tiles[tileX][tileY]}`,
         game.tiles[tileX][tileY],
         0,
@@ -136,7 +139,7 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
 
 
     const baseTexture = getSubTexture(
-        game.textures['buildings']?.baseTexture,
+        game.textures['buildings'],
         `building:${baseType}`,
         0,
         baseType * 144,
@@ -161,32 +164,47 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
 
         if (researchTextureName && game.textures[researchTextureName]) {
             // Create scaled and cropped texture
-            const baseTexture = game.textures[researchTextureName].baseTexture;
-
             // Crop 5px from top and bottom (original height 144px, cropped to 134px)
             const cropTop = 5;
             const cropBottom = 5;
             const croppedHeight = 144 - cropTop - cropBottom; // 134px
 
-            const researchTexture = new PIXI.Texture(
-                baseTexture,
-                new PIXI.Rectangle(0, cropTop, baseTexture.width, croppedHeight)
-            );
+            // PixiJS v8: Texture constructor update
+            const resTexture = game.textures[researchTextureName];
+            const researchTexture = new PIXI.Texture({
+                source: resTexture.source,
+                frame: new PIXI.Rectangle(0, cropTop, resTexture.width, croppedHeight)
+            });
 
             // Scale to 90% of cropped size
             const scaledWidth = 9;  // 10px * 0.9
             const scaledHeight = Math.floor(croppedHeight * 0.9); // 134px * 0.9 ≈ 121px
+            const sourceWidth = resTexture.source?.width || resTexture.width || 144;
 
             // Position 2px more left (x+130), moved up 5px
             const researchX = (i * TILE_SIZE) + 130;
             const researchY = (j * TILE_SIZE) + Math.floor((144 - scaledHeight) / 2) - 5;
 
             // Add the scaled sprite to the tile layer
-            tileLayer.addFrame(researchTexture, researchX, researchY, scaledWidth / baseTexture.width, scaledHeight / croppedHeight);
+            tileLayer.addFrame(researchTexture, researchX, researchY, scaledWidth / sourceWidth, scaledHeight / croppedHeight);
         }
     }
 
-    tileLayer.addFrame(baseTexture, i * TILE_SIZE, j * TILE_SIZE, 1, 0);
+    tileLayer.tile(
+        baseTexture,
+        i * TILE_SIZE,
+        j * TILE_SIZE,
+        {
+            u: baseTexture.frame?.x ?? 0,
+            v: baseTexture.frame?.y ?? 0,
+            tileWidth: baseTexture.frame?.width ?? 144,
+            tileHeight: baseTexture.frame?.height ?? 144,
+            animX: BUILDING_ANIM_STRIDE,
+            animCountX: BUILDING_ANIM_FRAMES,
+            animCountY: 1,
+            animDivisor: BUILDING_ANIM_DIVISOR
+        }
+    );
 
     let buildingOverlayTexture = null;
     const typeLookupKey = TYPE_LABEL_LOOKUP?.[Number(building?.type)];
@@ -195,7 +213,7 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
         : subType;
     try {
         buildingOverlayTexture = getSubTexture(
-            game.textures['imageItems']?.baseTexture,
+            game.textures['imageItems'],
             `buildingOverlay:${overlayIcon}`,
             overlayIcon * 32,
             0,
@@ -209,10 +227,30 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
     if (buildingOverlayTexture) {
         switch (baseType) {
             case BUILDING_RESEARCH:
-                tileLayer.addFrame(buildingOverlayTexture, (i * TILE_SIZE) + 14, (j * TILE_SIZE) + 98);
+                tileLayer.tile(
+                    buildingOverlayTexture,
+                    (i * TILE_SIZE) + 14,
+                    (j * TILE_SIZE) + 98,
+                    {
+                        u: buildingOverlayTexture.frame.x,
+                        v: buildingOverlayTexture.frame.y,
+                        tileWidth: buildingOverlayTexture.frame.width,
+                        tileHeight: buildingOverlayTexture.frame.height
+                    }
+                );
                 break;
             case BUILDING_FACTORY:
-                tileLayer.addFrame(buildingOverlayTexture, (i * TILE_SIZE) + 56, (j * TILE_SIZE) + 52);
+                tileLayer.tile(
+                    buildingOverlayTexture,
+                    (i * TILE_SIZE) + 56,
+                    (j * TILE_SIZE) + 52,
+                    {
+                        u: buildingOverlayTexture.frame.x,
+                        v: buildingOverlayTexture.frame.y,
+                        tileWidth: buildingOverlayTexture.frame.width,
+                        tileHeight: buildingOverlayTexture.frame.height
+                    }
+                );
                 break;
         }
     }
@@ -233,7 +271,7 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
             const frameRow = isCommandCenter ? 1 : 0;
 
             const populationTexture = getSubTexture(
-                game.textures['population']?.baseTexture,
+                game.textures['population'],
                 `population:${frameRow}:${frameColumn}`,
                 frameColumn * frameWidth,
                 frameRow * frameHeight,
@@ -267,7 +305,7 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
     if (baseType === BUILDING_FACTORY && building && building.smokeActive && game.textures['smoke']) {
         const smokeFrame = Math.max(0, (building.smokeFrame || 1) - 1);
         const smokeTexture = getSubTexture(
-            game.textures['smoke']?.baseTexture,
+            game.textures['smoke'],
             `smoke:${smokeFrame}`,
             0,
             smokeFrame * 60,
@@ -288,7 +326,7 @@ var drawBuilding = (game, tileLayer, i, j, tileX, tileY) => {
 
         const addDigit = (digit, offsetX) => {
             const digitTexture = getSubTexture(
-                game.textures['blackNumbers']?.baseTexture,
+                game.textures['blackNumbers'],
                 `digit:${digit}`,
                 digit * 16,
                 0,
@@ -346,7 +384,11 @@ const syncCommandCenterLabels = (game) => {
 
             let record = cache.get(key);
             if (!record) {
-                const label = new PIXI.Text(cityName, COMMAND_CENTER_LABEL_STYLE);
+                // PixiJS v8: Text constructor
+                const label = new PIXI.Text({
+                    text: cityName,
+                    style: { ...COMMAND_CENTER_LABEL_STYLE } // Clone frozen object
+                });
                 label.anchor.set(0.5);
                 label.resolution = COMMAND_CENTER_LABEL_RESOLUTION;
                 labelLayer.addChild(label);
@@ -473,14 +515,19 @@ export const drawTiles = (game, backgroundTiles) => {
     var offTileX = Math.floor(modulo(camera.pixelX, TILE_SIZE));
     var offTileY = Math.floor(modulo(camera.pixelY, TILE_SIZE));
 
+    // Drive @pixi/tilemap animation frames (houses/CC/research use animated rows)
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const animFrame = Math.floor(now / (BUILDING_ANIM_DIVISOR * 16)); // ~60 FPS baseline
+    tileLayer.tileAnim = [animFrame, 0];
+
 
     if (needToRedraw(game)) {
 
         setRedrawBoundaries(game);
 
         tileLayer.clear();
+        // PixiJS v8: Graphics will draw black rects individually
         edgeOverlay.clear();
-        edgeOverlay.beginFill(0x000000, 1);
 
         var exactX = Math.floor(camera.rawX / TILE_SIZE);
         var exactY = Math.floor(camera.rawY / TILE_SIZE);
@@ -495,7 +542,8 @@ export const drawTiles = (game, backgroundTiles) => {
 
 
                 if (tileX < 0 || tileY < 0 || tileX >= mapWidth || tileY >= mapHeight) {
-                    edgeOverlay.drawRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    // PixiJS v8: Draw each rect separately
+                    edgeOverlay.rect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE).fill({ color: 0x000000, alpha: 1 });
                     continue;
                 }
 
@@ -512,15 +560,14 @@ export const drawTiles = (game, backgroundTiles) => {
                 }
             }
         }
-        edgeOverlay.endFill();
 
         backgroundTiles.position.set(
-            game.player.defaultOffset.x + camera.pixelX - offTileX,
-            game.player.defaultOffset.y + camera.pixelY - offTileY
+            Math.round(game.player.defaultOffset.x + camera.pixelX - offTileX),
+            Math.round(game.player.defaultOffset.y + camera.pixelY - offTileY)
         );
     }
 
-    backgroundTiles.pivot.set(camera.pixelX, camera.pixelY);
+    backgroundTiles.pivot.set(Math.round(camera.pixelX), Math.round(camera.pixelY));
     updateCommandCenterLabelVisibility(game, camera);
     pruneCommandCenterLabels(game);
 };

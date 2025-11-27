@@ -42,9 +42,8 @@ import HelpModal from "./src/ui/HelpModal";
 import MapModal from "./src/ui/MapModal";
 
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
-const LoaderResource = PIXI.LoaderResource || (PIXI.loaders && PIXI.loaders.Resource);
-const LOAD_TYPE = LoaderResource ? LoaderResource.LOAD_TYPE : {};
-const XHR_RESPONSE_TYPE = LoaderResource ? LoaderResource.XHR_RESPONSE_TYPE : {};
+// PixiJS v8: Loader has been replaced with Assets API
+// LOAD_TYPE and XHR_RESPONSE_TYPE are no longer needed
 const COLOR_KEY_MAGENTA = { r: 255, g: 0, b: 255 };
 const TILE_SIZE_PX = 48;
 const DEFAULT_PANEL_MESSAGE = {
@@ -57,20 +56,20 @@ const applyColorKey = (resource, color = COLOR_KEY_MAGENTA) => {
         return;
     }
 
-    const source = resource.data;
-    const width = source.width;
-    const height = source.height;
+    const imageSource = resource.data;
+    const width = imageSource.width;
+    const height = imageSource.height;
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
 
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) {
         return;
     }
 
-    context.drawImage(source, 0, 0);
+    context.drawImage(imageSource, 0, 0);
     const imageData = context.getImageData(0, 0, width, height);
     const data = imageData.data;
 
@@ -82,17 +81,16 @@ const applyColorKey = (resource, color = COLOR_KEY_MAGENTA) => {
 
     context.putImageData(imageData, 0, 0);
 
-    if (resource.texture) {
-        resource.texture.destroy(true);
-    }
-
-    const baseTexture = PIXI.BaseTexture.from(canvas);
-    baseTexture.alphaMode = PIXI.ALPHA_MODES.NO_PREMULTIPLIED_ALPHA;
-    baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+    // Create a fresh texture without destroying the Assets-managed source to avoid warnings
+    const textureSource = new PIXI.ImageSource({
+        resource: canvas,
+        alphaMode: 'no-premultiply-alpha',
+        scaleMode: 'nearest'
+    });
 
     resource.data = canvas;
-    resource.texture = new PIXI.Texture(baseTexture);
-    resource.baseTexture = baseTexture;
+    resource.texture = new PIXI.Texture({ source: textureSource });
+    resource.source = textureSource;
 };
 
 const toFiniteNumber = (value, fallback = 0) => {
@@ -127,21 +125,12 @@ const shortenId = (value) => {
 };
 
 
-var app = new PIXI.Application({
-    width: window.innerWidth,
-    height: window.innerHeight,
-    antialias: false,
-    useContextAlpha: false,
-    powerPreference: 'high-performance',
-    backgroundAlpha: 1
-});
+// PixiJS v8: Application initialization is now async
+// We'll initialize it in the async init function below
+var app = new PIXI.Application();
 
-app.renderer.plugins.interaction.cursorStyles = {
-    demolish: `url(${assetUrl('imgDemolish.png')}), auto`,
-    cursor: `url(${assetUrl('imgCursor.png')}), auto`,
-};
-
-document.getElementById("game").appendChild(app.view);
+// Placeholder - will be set after app.init()
+var appCanvas = null;
 
 var stats = new Stats();
 stats.showPanel(0);
@@ -180,7 +169,8 @@ var groundTiles = null;
 var backgroundTiles = null;
 var iconTiles = null;
 var itemTiles = null;
-const loader = PIXI.Loader.shared;
+// PixiJS v8: Loader removed, using Assets API instead
+// Asset loading will be done in async init function
 
 const game = {
     map: [],
@@ -1220,8 +1210,12 @@ game.clearPanelMessage();
 game.isFullscreen = false;
 
 game.resizeToFullscreen = () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = window.screen.width;
+    const height = window.screen.height;
+
+    if (!app.renderer) {
+        return;
+    }
 
     app.renderer.resize(width, height);
     game.maxMapX = width - 200;
@@ -1272,6 +1266,10 @@ game.resizeToWindow = () => {
     }
     const width = window.innerWidth;
     const height = window.innerHeight;
+
+    if (!app.renderer) {
+        return;
+    }
 
     app.renderer.resize(width, height);
     game.maxMapX = width - 200;
@@ -1380,38 +1378,113 @@ const resourcesToLoad = [
     { name: 'imgResearchComplete', url: assetUrl('imgResearchComplete.png') },
     {
         name: 'mapData',
-        url: assetUrl('map.dat'),
-        loadType: LOAD_TYPE.XHR !== undefined ? LOAD_TYPE.XHR : 1,
-        xhrType: XHR_RESPONSE_TYPE.BUFFER || 'arraybuffer'
+        url: assetUrl('map.dat')
     },
     {
         name: 'cityDemo',
-        url: assetUrl('cities/Balkh/demo.city'),
-        loadType: LOAD_TYPE.XHR !== undefined ? LOAD_TYPE.XHR : 1,
-        xhrType: XHR_RESPONSE_TYPE.TEXT || 'text'
+        url: assetUrl('cities/Balkh/demo.city')
     }
 ];
 
-loader.add(resourcesToLoad);
-
-loader.onProgress.add(loadProgressHandler);
-loader.load(setup);
-
-
-function loadProgressHandler(targetLoader, resource) {
-
-    if (resource) {
-        console.log("loading: " + resource.url);
-    }
-    console.log("progress: " + targetLoader.progress + "%");
+// PixiJS v8: Convert resources to Assets API format
+const assetsToLoad = {};
+for (const item of resourcesToLoad) {
+    // Map old loadType to new format
+    // XHR resources (map data, city data) need to be loaded separately
+    assetsToLoad[item.name] = item.url;
 }
 
+// Async initialization function for PixiJS v8
+(async () => {
+    try {
+        // Initialize application
+        await app.init({
+            width: window.innerWidth,
+            height: window.innerHeight,
+            antialias: false,
+            preference: 'webgl', // v8 uses 'preference' instead of powerPreference
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+            backgroundAlpha: 1,
+            mipmapTextures: 'off'
+        });
 
-function setup() {
+        appCanvas = app.canvas;
+        // Append canvas to DOM
+        document.getElementById("game").appendChild(app.canvas);
+        app.canvas.style.imageRendering = 'pixelated';
+
+        // Custom cursors (matches legacy orange pointer + demolish)
+        if (app.renderer?.events?.cursorStyles) {
+            const cursorStyles = app.renderer.events.cursorStyles;
+            const baseCursor = `url(${assetUrl('imgCursor.png')}), auto`;
+            cursorStyles.default = baseCursor;
+            cursorStyles.cursor = baseCursor;
+            cursorStyles.pointer = baseCursor;
+            cursorStyles.demolish = `url(${assetUrl('imgDemolish.png')}), auto`;
+        }
+
+        // Initial resize now that renderer is ready
+        game.resizeToWindow();
+
+        console.log("Loading assets...");
+
+        // Load image/texture assets
+        const textureAssets = Object.fromEntries(
+            Object.entries(assetsToLoad).filter(([name]) =>
+                !['mapData', 'cityDemo'].includes(name)
+            )
+        );
+
+        await PIXI.Assets.load(Object.values(textureAssets));
+
+        // Load binary/text assets separately using fetch
+        const mapDataResponse = await fetch(assetUrl('map.dat'));
+        const mapDataBuffer = await mapDataResponse.arrayBuffer();
+
+        const cityDemoResponse = await fetch(assetUrl('cities/Balkh/demo.city'));
+        const cityDemoText = await cityDemoResponse.text();
+
+        // Create a resources object similar to the old loader format
+        const resources = {};
+
+        for (const [name, url] of Object.entries(textureAssets)) {
+            const texture = PIXI.Assets.get(url);
+            resources[name] = {
+                name,
+                url,
+                texture,
+                data: texture?.source?.resource || null
+            };
+        }
+
+        // Add non-texture resources
+        resources.mapData = {
+            name: 'mapData',
+            url: assetUrl('map.dat'),
+            data: mapDataBuffer
+        };
+
+        resources.cityDemo = {
+            name: 'cityDemo',
+            url: assetUrl('cities/Balkh/demo.city'),
+            data: cityDemoText
+        };
+
+        console.log("Assets loaded");
+
+        // Call setup with loaded resources
+        setup(resources);
+    } catch (error) {
+        console.error("Failed to initialize application:", error);
+    }
+})();
+
+
+function setup(resources) {
     console.log("loaded");
 
 
-    const resources = loader.resources;
     var mapData = resources.mapData.data;
     mapBuilder.build(game, mapData);
     cityBuilder.build(game);
@@ -1865,7 +1938,7 @@ function setup() {
     });
 
 
-    groundTiles = new PIXI.tilemap.CompositeRectTileLayer(0, game.textures['groundTexture'], true);
+    groundTiles = new PIXI.tilemap.CompositeTilemap();
     groundTiles.interactive = false;
     groundTiles.interactiveChildren = false;
 
@@ -1873,11 +1946,11 @@ function setup() {
     backgroundTiles.interactive = false;
     backgroundTiles.interactiveChildren = false;
 
-    iconTiles = new PIXI.tilemap.CompositeRectTileLayer(0, game.textures['imageItems'], true);
+    iconTiles = new PIXI.tilemap.CompositeTilemap();
     iconTiles.interactive = false;
     iconTiles.interactiveChildren = false;
 
-    itemTiles = new PIXI.tilemap.CompositeRectTileLayer(0, null, true);
+    itemTiles = new PIXI.tilemap.CompositeTilemap();
     itemTiles.interactive = false;
     itemTiles.interactiveChildren = false;
     commandCenterLabelLayer.removeChildren();
@@ -2013,7 +2086,11 @@ function gameLoop() {
         }
     }
 
-    app.renderer.plugins.tilemap.tileAnim[0] = tileAnim * 144;
+    // PixiJS v8: plugins is deprecated, check app.renderer.tilemap
+    const tilemapRenderer = app.renderer.tilemap || (app.renderer.plugins && app.renderer.plugins.tilemap);
+    if (tilemapRenderer && tilemapRenderer.tileAnim) {
+        tilemapRenderer.tileAnim[0] = tileAnim * 144;
+    }
 
     game.forceDraw = false;
 

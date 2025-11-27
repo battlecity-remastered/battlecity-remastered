@@ -1,26 +1,29 @@
-import * as PIXICore from 'pixi.js';
-import { installTilemap } from '../pixi-tilemap.js';
+import * as PIXI from 'pixi.js';
+import * as tilemap from '@pixi/tilemap';
 
-const PIXI = { ...PIXICore };
+// Create a mutable object that includes all PIXI exports
+const MutablePIXI = { ...PIXI };
 
-installTilemap(PIXI);
+// Attach tilemap to our mutable PIXI object
+MutablePIXI.tilemap = tilemap;
 
-if (PIXI.settings) {
-    PIXI.settings.CREATE_IMAGE_BITMAP = false;
-    if (PIXI.SCALE_MODES) {
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-    }
-    if (typeof PIXI.settings.SPRITE_MAX_TEXTURES === 'number') {
-        PIXI.settings.SPRITE_MAX_TEXTURES = Math.min(PIXI.settings.SPRITE_MAX_TEXTURES, 16);
-    }
+// PixiJS v8: Settings moved to AbstractRenderer.defaultOptions
+if (MutablePIXI.AbstractRenderer) {
+    // Use string 'nearest' instead of PIXI.SCALE_MODES.NEAREST
+    MutablePIXI.AbstractRenderer.defaultOptions.scaleMode = 'nearest';
 }
-
-if (PIXI.Text) {
-    PIXI.Text.defaultResolution = 1;
+if (MutablePIXI.settings) {
+    MutablePIXI.settings.ROUND_PIXELS = true;
+}
+if (MutablePIXI.TextureStyle?.defaultOptions) {
+    MutablePIXI.TextureStyle.defaultOptions.scaleMode = 'nearest';
+}
+if (MutablePIXI.ImageSource?.defaultOptions) {
+    MutablePIXI.ImageSource.defaultOptions.scaleMode = 'nearest';
 }
 
 if (typeof window !== 'undefined') {
-    window.PIXI = PIXI;
+    window.PIXI = MutablePIXI;
 }
 
-export default PIXI;
+export default MutablePIXI;

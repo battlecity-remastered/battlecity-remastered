@@ -122,14 +122,16 @@ const createNameLabel = (game, entity, options = {}) => {
     }
     let record = cache.get(cacheKey);
     if (!record) {
-        const label = new PIXI.Text(text, {
-            fontFamily: 'Arial',
-            fontSize: 12,
-            fontWeight: 'bold',
-            fill: fillColor,
-            align: 'center',
-            stroke: 0x000000,
-            strokeThickness: 3
+        const label = new PIXI.Text({
+            text,
+            style: {
+                fontFamily: 'Arial',
+                fontSize: 12,
+                fontWeight: 'bold',
+                fill: fillColor,
+                align: 'center',
+                stroke: { color: 0x000000, width: 3 }
+            }
         });
         label.anchor.set(0.5, 1);
         label.alpha = alpha;
@@ -167,11 +169,13 @@ const maybeAddNameLabel = (game, entity, sprite, options = {}) => {
     if (!label) {
         return;
     }
-    if (label.parent !== sprite) {
-        sprite.addChild(label);
+    const parent = sprite;
+    if (label.parent !== parent) {
+        parent.addChild(label);
     }
-    label.x = sprite.width / 2;
-    label.y = (-sprite.height / 2) - NAME_LABEL_OFFSET_Y;
+    const baseSprite = parent.__baseSprite || parent;
+    label.x = baseSprite.width / 2;
+    label.y = (-baseSprite.height / 2) - NAME_LABEL_OFFSET_Y;
 };
 
 const getTankRow = (player, me) => {
@@ -202,7 +206,7 @@ const getTankRow = (player, me) => {
 const tankTextureCache = new Map();
 
 const getTankTexture = (game, row, column) => {
-    const baseTexture = game.textures['tankTexture']?.baseTexture;
+    const baseTexture = game.textures['tankTexture'];
     if (!baseTexture) {
         return null;
     }
@@ -210,10 +214,10 @@ const getTankTexture = (game, row, column) => {
     const key = `${baseId}:${row}:${column}`;
     let texture = tankTextureCache.get(key);
     if (!texture) {
-        texture = new PIXI.Texture(
-            baseTexture,
-            new PIXI.Rectangle(column * 48, row * 48, 48, 48)
-        );
+        texture = new PIXI.Texture({
+            source: baseTexture.source,
+            frame: new PIXI.Rectangle(column * 48, row * 48, 48, 48)
+        });
         tankTextureCache.set(key, texture);
     }
     return texture;
@@ -224,10 +228,12 @@ const createTankSprite = (game, player, me) => {
     const row = getTankRow(player, me);
     const column = Math.floor(direction / 2);
     const texture = getTankTexture(game, row, column);
-    if (!texture) {
-        return new PIXI.Sprite();
-    }
-    return new PIXI.Sprite(texture);
+    const container = new PIXI.Container();
+    const sprite = texture ? new PIXI.Sprite(texture) : new PIXI.Sprite();
+    container.addChild(sprite);
+    // Keep a reference so sizing math stays consistent when we add labels
+    container.__baseSprite = sprite;
+    return container;
 };
 
 var drawPlayer = (game, stage) => {
@@ -337,20 +343,20 @@ var drawBullets = (game, stage) => {
         if (!bulletTexture) {
             return;
         }
-        var tmpText = bulletTexture.clone();
-        var spriteRow = bullet && Number.isFinite(bullet.type) ? bullet.type : 0;
-        if (spriteRow < 0) {
-            spriteRow = 0;
-        }
         var spriteRows = 1;
-        if (bulletTexture.baseTexture && Number.isFinite(bulletTexture.baseTexture.height)) {
-            spriteRows = Math.max(1, Math.floor(bulletTexture.baseTexture.height / 8));
+        if (bulletTexture.source && Number.isFinite(bulletTexture.source.height)) {
+            spriteRows = Math.max(1, Math.floor(bulletTexture.source.height / 8));
         }
+        let spriteRow = 0;
         if (spriteRow >= spriteRows) {
             spriteRow = spriteRows - 1;
         }
         var bulletRect = new PIXI.Rectangle(bullet.animation * 8, spriteRow * 8, 8, 8);
-        tmpText.frame = bulletRect;
+
+        var tmpText = new PIXI.Texture({
+            source: bulletTexture.source,
+            frame: bulletRect
+        });
 
         var sprite = new PIXI.Sprite(tmpText);
         sprite.x = ((bullet.x) + (game.player.defaultOffset.x - (game.player.offset.x)));
@@ -382,14 +388,14 @@ const drawExplosions = (game, stage) => {
         const variantKey = explosion.variant || 'large';
         const variant = EXPLOSION_VARIANTS[variantKey] || EXPLOSION_VARIANTS.large;
         const texture = game.textures[variant.textureKey] || game.textures[variant.fallbackKey];
-        if (!texture || !texture.baseTexture) {
+        if (!texture || !texture.source) {
             continue;
         }
         const frameSize = variant.frameSize;
         const totalFrames = variant.totalFrames;
         const frameDuration = variant.duration ?? EXPLOSION_FRAME_DURATION;
-        const framesPerRow = Math.max(1, Math.floor(texture.baseTexture.width / frameSize));
-        const rows = Math.max(1, Math.floor(texture.baseTexture.height / frameSize));
+        const framesPerRow = Math.max(1, Math.floor(texture.source.width / frameSize));
+        const rows = Math.max(1, Math.floor(texture.source.height / frameSize));
         const availableFrames = Math.min(totalFrames, framesPerRow * rows);
         if (availableFrames <= 0) {
             continue;
@@ -407,15 +413,15 @@ const drawExplosions = (game, stage) => {
         }
 
         const frameIndex = Math.max(0, explosion.frame || 0);
-        const spriteTexture = new PIXI.Texture(
-            texture.baseTexture,
-            new PIXI.Rectangle(
+        const spriteTexture = new PIXI.Texture({
+            source: texture.source,
+            frame: new PIXI.Rectangle(
                 (frameIndex % framesPerRow) * frameSize,
                 Math.floor(frameIndex / framesPerRow) * frameSize,
                 frameSize,
                 frameSize
             )
-        );
+        });
 
         const sprite = new PIXI.Sprite(spriteTexture);
         const offsetX = game.player.defaultOffset.x - game.player.offset.x;

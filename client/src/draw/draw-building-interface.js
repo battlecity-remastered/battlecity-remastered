@@ -19,10 +19,10 @@ function buildDemolishMenuItem(game) {
         }
     };
 
-    var tmpText = new PIXI.Texture(
-        game.textures["buildingIcons"].baseTexture,
-        new PIXI.Rectangle(13 * 16, 0, 16, 16),
-    );
+    var tmpText = new PIXI.Texture({
+        source: game.textures["buildingIcons"].source,
+        frame: new PIXI.Rectangle(13 * 16, 0, 16, 16)
+    });
 
     var buildIcon = new PIXI.Sprite(tmpText);
     buildIcon.x = game.buildMenuOffset.x - 16;
@@ -31,9 +31,12 @@ function buildDemolishMenuItem(game) {
     buildIcon.iconType = 13;
     buildIcon.on("mousedown", click);
 
-    var basicText = new PIXI.Text("Demolish building", {
-        fontSize: 12,
-        fill: 0xffffff,
+    var basicText = new PIXI.Text({
+        text: "Demolish building",
+        style: {
+            fontSize: 12,
+            fill: 0xffffff,
+        }
     });
     basicText.x = game.buildMenuOffset.x;
     basicText.y = game.buildMenuOffset.y;
@@ -70,15 +73,14 @@ const startGhostBuilding = (game, buildingType, pointerData) => {
     game.showBuildMenu = false;
     menuContainer.visible = false;
 
-    const tmpText = new PIXI.Texture(
-        game.textures["buildings"].baseTexture,
-        new PIXI.Rectangle(0, parseInt(game.isBuilding / 100) * 144, 144, 144),
-    );
+    const tmpText = new PIXI.Texture({
+        source: game.textures["buildings"].source,
+        frame: new PIXI.Rectangle(0, parseInt(game.isBuilding / 100) * 144, 144, 144)
+    });
 
     const building = new PIXI.Sprite(tmpText);
     building.alpha = 0.5;
     building.interactive = false;
-    building.buttonMode = false;
     // Center the sprite anchor so cursor is in the middle of the building
     building.anchor.set(0.5, 0.5);
 
@@ -91,9 +93,9 @@ const startGhostBuilding = (game, buildingType, pointerData) => {
             global = interactionData.global;
         } else if (
             game.app &&
-      game.app.renderer &&
-      game.app.renderer.plugins &&
-      game.app.renderer.plugins.interaction
+            game.app.renderer &&
+            game.app.renderer.plugins &&
+            game.app.renderer.plugins.interaction
         ) {
             const interaction = game.app.renderer.plugins.interaction;
             const pointer = interaction.pointer || interaction.mouse;
@@ -118,17 +120,17 @@ const startGhostBuilding = (game, buildingType, pointerData) => {
         const offTileY = Math.floor(game.player.offset.y % 48);
         const tileX = Math.floor(
             (game.player.offset.x -
-        game.player.defaultOffset.x +
-        offTileX +
-        adjustedGlobalX) /
-        48,
+                game.player.defaultOffset.x +
+                offTileX +
+                adjustedGlobalX) /
+            48,
         );
         const tileY = Math.floor(
             (game.player.offset.y -
-        game.player.defaultOffset.y +
-        offTileY +
-        adjustedGlobalY) /
-        48,
+                game.player.defaultOffset.y +
+                offTileY +
+                adjustedGlobalY) /
+            48,
         );
 
         // Convert tile coordinates back to world pixel coordinates for rendering
@@ -141,9 +143,9 @@ const startGhostBuilding = (game, buildingType, pointerData) => {
 
         // Transform world coordinates back to screen coordinates
         const screenX =
-      centeredWorldX - game.player.offset.x + game.player.defaultOffset.x;
+            centeredWorldX - game.player.offset.x + game.player.defaultOffset.x;
         const screenY =
-      centeredWorldY - game.player.offset.y + game.player.defaultOffset.y;
+            centeredWorldY - game.player.offset.y + game.player.defaultOffset.y;
 
         // Set position directly in screen space
         building.position.set(screenX, screenY);
@@ -177,9 +179,9 @@ export const setupBuildingMenu = (game) => {
         ? game.player.city
         : null;
     const cityState =
-    playerCity !== null && Array.isArray(game?.cities)
-        ? game.cities[playerCity]
-        : null;
+        playerCity !== null && Array.isArray(game?.cities)
+            ? game.cities[playerCity]
+            : null;
     const canBuild = cityState?.canBuild;
 
     if (!canBuild) {
@@ -209,7 +211,7 @@ export const setupBuildingMenu = (game) => {
                 y++;
                 const isPending = canBuild[id] === RESEARCH_PENDING;
                 const label = isPending ? `${LABELS[id].LABEL} (researching)` : LABELS[id].LABEL;
-                const metrics = PIXI.TextMetrics.measureText(label, textStyle);
+                const metrics = PIXI.CanvasTextMetrics.measureText(label, textStyle);
                 longestLabelWidth = Math.max(longestLabelWidth, metrics.width);
             }
         });
@@ -217,15 +219,13 @@ export const setupBuildingMenu = (game) => {
         menuWidth = Math.max(menuWidth, longestLabelWidth + 32);
 
         var graphics = new PIXI.Graphics();
-        graphics.lineStyle(2, 0x00000, 0);
-        graphics.beginFill(0x000000, 1);
-        graphics.drawRect(
+        // PixiJS v8: Graphics API update
+        graphics.rect(
             game.buildMenuOffset.x,
             game.buildMenuOffset.y,
             menuWidth,
-            y * 16,
-        );
-        graphics.endFill();
+            y * 16
+        ).fill({ color: 0x000000, alpha: 1 });
         menuContainer.addChild(graphics);
 
         buildDemolishMenuItem(game);
@@ -255,10 +255,10 @@ export const setupBuildingMenu = (game) => {
                     };
                 }
 
-                var tmpText = new PIXI.Texture(
-                    game.textures["buildingIcons"].baseTexture,
-                    new PIXI.Rectangle((LABELS[id].MENU_ICON ?? LABELS[id].ICON) * 16, 0, 16, 16),
-                );
+                var tmpText = new PIXI.Texture({
+                    source: game.textures["buildingIcons"].source,
+                    frame: new PIXI.Rectangle((LABELS[id].MENU_ICON ?? LABELS[id].ICON) * 16, 0, 16, 16)
+                });
 
                 var buildIcon = new PIXI.Sprite(tmpText);
                 buildIcon.x = game.buildMenuOffset.x - 16;
@@ -272,7 +272,10 @@ export const setupBuildingMenu = (game) => {
                     fontSize: 12,
                     fill: isPending ? 0xaaaaaa : 0xffffff,
                 });
-                var basicText = new PIXI.Text(label, effectiveStyle);
+                var basicText = new PIXI.Text({
+                    text: label,
+                    style: effectiveStyle
+                });
                 basicText.x = game.buildMenuOffset.x;
                 basicText.y = game.buildMenuOffset.y + y * 16;
                 basicText.interactive = true;

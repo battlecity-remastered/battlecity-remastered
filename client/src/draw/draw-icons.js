@@ -26,18 +26,19 @@ var getIconsWithinRange = function (iconFactory, player) {
 };
 
 const textureCache = new Map();
-const getIconTexture = (baseTexture, cacheKey, x, y, width, height) => {
-    if (!baseTexture) {
+const getIconTexture = (textureOrSource, cacheKey, x, y, width, height) => {
+    if (!textureOrSource) {
         return null;
     }
-    const baseId = baseTexture.uid || baseTexture.cacheId || 'base';
+    const source = textureOrSource.source || textureOrSource;
+    const baseId = source.uid || source.cacheId || 'base';
     const key = `${baseId}:${cacheKey}:${x}:${y}:${width}:${height}`;
     let cached = textureCache.get(key);
     if (!cached) {
-        cached = new PIXI.Texture(
-            baseTexture,
-            new PIXI.Rectangle(x, y, width, height)
-        );
+        cached = new PIXI.Texture({
+            source,
+            frame: new PIXI.Rectangle(x, y, width, height)
+        });
         textureCache.set(key, cached);
     }
     return cached;
@@ -61,7 +62,7 @@ export const drawIcons = (game, iconTiles) => {
 
         var foundItems = getIconsWithinRange(game.iconFactory, game.player);
         foundItems.forEach((icon) => {
-            const baseTexture = game.textures['imageItems'].baseTexture;
+            const baseTexture = game.textures['imageItems'];
             if (!baseTexture) {
                 return;
             }
