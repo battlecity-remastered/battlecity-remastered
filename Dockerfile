@@ -26,6 +26,8 @@ RUN apk add --no-cache sqlite
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/client/data ./client/data
+# Standalone city builder HTML
+COPY --from=builder /app/city-builder.html ./city-builder.html
 
 # Install server production dependencies without bringing over builder node_modules
 WORKDIR /app/server
