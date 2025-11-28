@@ -272,7 +272,6 @@
 </div>
 <script>
 const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing","icon":0,"menuIcon":0,"buildingIcon":0,"image":3,"parent":0,"initial":1},{"key":"CAN_BUILD_LASER_RESEARCH","type":412,"label":"Laser Research","icon":12,"menuIcon":1,"buildingIcon":12,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_LASER_FACTORY","type":112,"label":"Laser Factory","icon":12,"menuIcon":1,"buildingIcon":12,"image":2,"parent":412,"initial":0},{"key":"CAN_BUILD_BAZOOKA_RESEARCH","type":401,"label":"Bazooka Research","icon":2,"menuIcon":2,"buildingIcon":1,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_BAZOOKA_FACTORY","type":101,"label":"Bazooka Factory","icon":2,"menuIcon":2,"buildingIcon":1,"image":1,"parent":401,"initial":0},{"key":"CAN_BUILD_TURRET_RESEARCH","type":409,"label":"Turret Research","icon":9,"menuIcon":9,"buildingIcon":9,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_TURRET_FACTORY","type":109,"label":"Turret Factory","icon":9,"menuIcon":9,"buildingIcon":9,"image":1,"parent":409,"initial":0},{"key":"CAN_BUILD_CLOAK_RESEARCH","type":400,"label":"Cloak Research","icon":1,"menuIcon":1,"buildingIcon":0,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_CLOAK_FACTORY","type":100,"label":"Cloak Factory","icon":1,"menuIcon":1,"buildingIcon":0,"image":1,"parent":400,"initial":0},{"key":"CAN_BUILD_MEDKIT_RESEARCH","type":402,"label":"MedKit Research","icon":3,"menuIcon":3,"buildingIcon":2,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_MEDKIT_FACTORY","type":102,"label":"MedKit Factory","icon":3,"menuIcon":3,"buildingIcon":2,"image":1,"parent":402,"initial":0},{"key":"CAN_BUILD_HOSPITAL","type":200,"label":"Hospital","icon":12,"menuIcon":12,"buildingIcon":12,"image":2,"parent":402,"initial":0},{"key":"CAN_BUILD_PLASMA_RESEARCH","type":411,"label":"Plasma Turret Research","icon":10,"menuIcon":10,"buildingIcon":11,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_PLASMA_FACTORY","type":111,"label":"Plasma Turret Factory","icon":10,"menuIcon":10,"buildingIcon":11,"image":1,"parent":411,"initial":0},{"key":"CAN_BUILD_MINE_RESEARCH","type":404,"label":"Mine Research","icon":5,"menuIcon":5,"buildingIcon":4,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_MINE_FACTORY","type":104,"label":"Mine Factory","icon":5,"menuIcon":5,"buildingIcon":4,"image":1,"parent":404,"initial":0},{"key":"CAN_BUILD_ORB_RESEARCH","type":405,"label":"Orb Research","icon":6,"menuIcon":6,"buildingIcon":5,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_ORB_FACTORY","type":105,"label":"Orb Factory","icon":6,"menuIcon":6,"buildingIcon":5,"image":1,"parent":405,"initial":0},{"key":"CAN_BUILD_BOMB_RESEARCH","type":403,"label":"Time Bomb Research","icon":4,"menuIcon":4,"buildingIcon":3,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_BOMB_FACTORY","type":103,"label":"Time Bomb Factory","icon":4,"menuIcon":4,"buildingIcon":3,"image":1,"parent":403,"initial":0},{"key":"CAN_BUILD_SLEEPER_RESEARCH","type":410,"label":"Sleeper Research","icon":8,"menuIcon":8,"buildingIcon":10,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_SLEEPER_FACTORY","type":110,"label":"Sleeper Factory","icon":8,"menuIcon":8,"buildingIcon":10,"image":1,"parent":410,"initial":0},{"key":"CAN_BUILD_WALL_RESEARCH","type":413,"label":"Wall Research","icon":11,"menuIcon":11,"buildingIcon":8,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_WALL_FACTORY","type":108,"label":"Wall Factory","icon":11,"menuIcon":11,"buildingIcon":8,"image":1,"parent":413,"initial":0},{"key":"CAN_BUILD_DFG_RESEARCH","type":407,"label":"DFG Research","icon":8,"menuIcon":8,"buildingIcon":7,"image":4,"parent":404,"initial":0},{"key":"CAN_BUILD_DFG_FACTORY","type":107,"label":"DFG Factory","icon":8,"menuIcon":8,"buildingIcon":7,"image":1,"parent":407,"initial":0},{"key":"CAN_BUILD_FLARE_RESEARCH","type":406,"label":"Flare Gun Research","icon":7,"menuIcon":1,"buildingIcon":6,"image":4,"parent":405,"initial":0},{"key":"CAN_BUILD_FLARE_FACTORY","type":106,"label":"Flare Gun Factory","icon":7,"menuIcon":1,"buildingIcon":6,"image":1,"parent":406,"initial":0}];
-const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing","icon":0,"menuIcon":0,"buildingIcon":0,"image":3,"parent":0,"initial":1},{"key":"CAN_BUILD_LASER_RESEARCH","type":412,"label":"Laser Research","icon":12,"menuIcon":1,"buildingIcon":12,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_LASER_FACTORY","type":112,"label":"Laser Factory","icon":12,"menuIcon":1,"buildingIcon":12,"image":2,"parent":412,"initial":0},{"key":"CAN_BUILD_BAZOOKA_RESEARCH","type":401,"label":"Bazooka Research","icon":2,"menuIcon":2,"buildingIcon":1,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_BAZOOKA_FACTORY","type":101,"label":"Bazooka Factory","icon":2,"menuIcon":2,"buildingIcon":1,"image":1,"parent":401,"initial":0},{"key":"CAN_BUILD_TURRET_RESEARCH","type":409,"label":"Turret Research","icon":9,"menuIcon":9,"buildingIcon":9,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_TURRET_FACTORY","type":109,"label":"Turret Factory","icon":9,"menuIcon":9,"buildingIcon":9,"image":1,"parent":409,"initial":0},{"key":"CAN_BUILD_CLOAK_RESEARCH","type":400,"label":"Cloak Research","icon":1,"menuIcon":1,"buildingIcon":0,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_CLOAK_FACTORY","type":100,"label":"Cloak Factory","icon":1,"menuIcon":1,"buildingIcon":0,"image":1,"parent":400,"initial":0},{"key":"CAN_BUILD_MEDKIT_RESEARCH","type":402,"label":"MedKit Research","icon":3,"menuIcon":3,"buildingIcon":2,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_MEDKIT_FACTORY","type":102,"label":"MedKit Factory","icon":3,"menuIcon":3,"buildingIcon":2,"image":1,"parent":402,"initial":0},{"key":"CAN_BUILD_HOSPITAL","type":200,"label":"Hospital","icon":12,"menuIcon":12,"buildingIcon":12,"image":2,"parent":402,"initial":0},{"key":"CAN_BUILD_PLASMA_RESEARCH","type":411,"label":"Plasma Turret Research","icon":10,"menuIcon":10,"buildingIcon":11,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_PLASMA_FACTORY","type":111,"label":"Plasma Turret Factory","icon":10,"menuIcon":10,"buildingIcon":11,"image":1,"parent":411,"initial":0},{"key":"CAN_BUILD_MINE_RESEARCH","type":404,"label":"Mine Research","icon":5,"menuIcon":5,"buildingIcon":4,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_MINE_FACTORY","type":104,"label":"Mine Factory","icon":5,"menuIcon":5,"buildingIcon":4,"image":1,"parent":404,"initial":0},{"key":"CAN_BUILD_ORB_RESEARCH","type":405,"label":"Orb Research","icon":6,"menuIcon":6,"buildingIcon":5,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_ORB_FACTORY","type":105,"label":"Orb Factory","icon":6,"menuIcon":6,"buildingIcon":5,"image":1,"parent":405,"initial":0},{"key":"CAN_BUILD_BOMB_RESEARCH","type":403,"label":"Time Bomb Research","icon":4,"menuIcon":4,"buildingIcon":3,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_BOMB_FACTORY","type":103,"label":"Time Bomb Factory","icon":4,"menuIcon":4,"buildingIcon":3,"image":1,"parent":403,"initial":0},{"key":"CAN_BUILD_SLEEPER_RESEARCH","type":410,"label":"Sleeper Research","icon":8,"menuIcon":8,"buildingIcon":10,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_SLEEPER_FACTORY","type":110,"label":"Sleeper Factory","icon":8,"menuIcon":8,"buildingIcon":10,"image":1,"parent":410,"initial":0},{"key":"CAN_BUILD_WALL_RESEARCH","type":413,"label":"Wall Research","icon":11,"menuIcon":11,"buildingIcon":8,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_WALL_FACTORY","type":108,"label":"Wall Factory","icon":11,"menuIcon":11,"buildingIcon":8,"image":1,"parent":413,"initial":0},{"key":"CAN_BUILD_DFG_RESEARCH","type":407,"label":"DFG Research","icon":8,"menuIcon":8,"buildingIcon":7,"image":4,"parent":404,"initial":0},{"key":"CAN_BUILD_DFG_FACTORY","type":107,"label":"DFG Factory","icon":8,"menuIcon":8,"buildingIcon":7,"image":1,"parent":407,"initial":0},{"key":"CAN_BUILD_FLARE_RESEARCH","type":406,"label":"Flare Gun Research","icon":7,"menuIcon":1,"buildingIcon":6,"image":4,"parent":405,"initial":0},{"key":"CAN_BUILD_FLARE_FACTORY","type":106,"label":"Flare Gun Factory","icon":7,"menuIcon":1,"buildingIcon":6,"image":1,"parent":406,"initial":0}];
 </script>
 <script>
 (function() {
@@ -292,15 +291,16 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         { key: 'plasma', label: 'Plasma', exportType: 'plasma', typeId: 11 }
     ];
 
+    const SKIN_PATH = '/client/data/skins/BattleCityDX';
     const assets = {
-        ground: '/client/data/imgGround.png',
-        lava: '/client/data/imgLava.png',
-        rocks: '/client/data/imgRocks.png',
-        buildings: '/client/data/imgBuildings.png',
-        buildIcons: '/client/data/imgBuildIcons.png',
-        items: '/client/data/imgItems.png',
-        turretBase: '/client/data/imgTurretBase.png',
-        turretHead: '/client/data/imgTurretHead.png'
+        ground: `${SKIN_PATH}/imgGround.png`,
+        lava: `${SKIN_PATH}/imgLava.png`,
+        rocks: `${SKIN_PATH}/imgRocks.png`,
+        buildings: `${SKIN_PATH}/imgBuildings.png`,
+        buildIcons: `${SKIN_PATH}/imgBuildIcons.png`,
+        items: `${SKIN_PATH}/imgItems.png`,
+        turretBase: `${SKIN_PATH}/imgTurretBase.png`,
+        turretHead: `${SKIN_PATH}/imgTurretHead.png`
     };
 
     const images = {};
@@ -354,8 +354,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         cityDesigns: new Map(),
         selectedCity: null,
         selection: null,
-        citySpawns: {},
-        fakeCityConfig: {}
+        citySpawns: {}
     };
 
     function buildMap(mapData) {
@@ -419,7 +418,6 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             fetchJson('/city-builder/data/meta', 'city metadata')
         ]);
         state.citySpawns = metaPayload?.citySpawns || {};
-        state.fakeCityConfig = metaPayload?.fakeCityConfig || {};
         buildMap(mapPayload?.map);
     }
 
@@ -452,10 +450,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             citySelect.appendChild(opt);
         });
         if (entries.length) {
-            const preferred = Array.isArray(state.fakeCityConfig?.cities) && state.fakeCityConfig.cities.length
-                ? state.fakeCityConfig.cities[0].cityId
-                : null;
-            const defaultId = entries.find((entry) => entry.id === preferred)?.id ?? entries[0].id;
+            const defaultId = entries[0].id;
             citySelect.value = defaultId;
             state.selectedCity = defaultId;
         }
@@ -477,36 +472,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         const base = getCityBase(cityId);
         const layout = [];
         layout.push({ id: `cc_${cityId}`, type: 0, tileX: base.tileX, tileY: base.tileY, rotation: 0, cityId, locked: true });
-        const template = Array.isArray(state.fakeCityConfig?.layout) ? state.fakeCityConfig.layout : [];
-        template.forEach((entry, index) => {
-            const type = Number(entry?.type);
-            if (!Number.isFinite(type) || type === 0) { return; }
-            layout.push({
-                id: `tmpl_${cityId}_${index}`,
-                type,
-                tileX: base.tileX + (Number(entry.dx) || 0),
-                tileY: base.tileY + (Number(entry.dy) || 0),
-                rotation: 0,
-                cityId,
-                locked: false
-            });
-        });
-        const defenses = [];
-        const defaults = Array.isArray(state.fakeCityConfig?.defaultDefenses) ? state.fakeCityConfig.defaultDefenses : [];
-        defaults.forEach((entry, index) => {
-            if (!entry || entry.type === undefined) return;
-            const dx = Number(entry.dx) || 0;
-            const dy = Number(entry.dy) || 0;
-            defenses.push({
-                id: `def_${cityId}_${index}`,
-                hazardKey: String(entry.type),
-                tileX: base.tileX + dx,
-                tileY: base.tileY + dy,
-                rotation: Number(entry.angle) || 0,
-                allowOverlap: entry.allowOverlap === true
-            });
-        });
-        return { buildings: layout, hazards: defenses, base };
+        return { buildings: layout, hazards: [], base };
     }
 
     function ensureCityDesign(cityId) {
