@@ -37,6 +37,13 @@
             font-size: 12px;
             opacity: 0.8;
         }
+        #runHint {
+            padding: 8px 14px;
+            background: #0d1016;
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 12px;
+            color: #9fb2c5;
+        }
         #container {
             display: grid;
             grid-template-columns: 280px 1fr 260px;
@@ -212,6 +219,7 @@
     <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
     <span id="status">Ready.</span>
 </div>
+<div id="runHint">Open this file directly from the repo root (file://) or with any static server; assets are loaded via relative paths under <code>client/data</code>.</div>
 <div id="container">
     <aside id="palette">
         <h3>Buildings</h3>
@@ -292,7 +300,7 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         rocks: 'client/data/imgRocks.png',
         buildings: 'client/data/imgBuildings.png',
         buildIcons: 'client/data/imgBuildIcons.png',
-        items: 'client/data/imgitems.png',
+        items: 'client/data/imgItems.png',
         turretBase: 'client/data/imgTurretBase.png',
         turretHead: 'client/data/imgTurretHead.png'
     };
@@ -644,21 +652,20 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         const worldY = building.tileY * TILE_SIZE;
         const baseType = Math.floor(building.type / 100);
         const spriteY = baseType * 144;
-        ctx.save();
-        ctx.translate((worldX + state.view.offsetX) * state.view.scale, (worldY + state.view.offsetY) * state.view.scale);
-        ctx.scale(state.view.scale, state.view.scale);
+
         if (images.buildings) {
-            ctx.drawImage(images.buildings, 0, spriteY, 144, 144, 0, 0, 144, 144);
+            ctx.drawImage(images.buildings, 0, spriteY, 144, 144, worldX, worldY, 144, 144);
         } else {
             ctx.fillStyle = '#2f8bff';
-            ctx.fillRect(0, 0, 144, 144);
+            ctx.fillRect(worldX, worldY, 144, 144);
         }
         if (state.selection?.id === building.id) {
+            ctx.save();
             ctx.strokeStyle = 'rgba(255,255,255,0.7)';
             ctx.lineWidth = 3 / state.view.scale;
-            ctx.strokeRect(0, 0, 144, 144);
+            ctx.strokeRect(worldX, worldY, 144, 144);
+            ctx.restore();
         }
-        ctx.restore();
     }
 
     function drawHazard(hazard) {
@@ -670,37 +677,33 @@ const FAKE_CITY_CONFIG = {"minPlayers": 16, "maxActive": 6, "evaluationIntervalM
         if (!typeDef) return;
         const angle = hazard.rotation || 0;
 
-        ctx.save();
-        const screen = worldToScreen(worldX, worldY);
-        ctx.translate(screen.x, screen.y);
-        ctx.scale(state.view.scale, state.view.scale);
-
         if (typeDef.key === 'mine') {
             if (images.items) {
-                ctx.drawImage(images.items, typeDef.typeId * 32, 0, 32, 32, 8, 8, 32, 32);
+                ctx.drawImage(images.items, typeDef.typeId * 32, 0, 32, 32, worldX + 8, worldY + 8, 32, 32);
             }
         } else if (typeDef.key === 'wall' || typeDef.key === 'dfg') {
             if (images.items) {
-                ctx.drawImage(images.items, typeDef.typeId * 48, 42, 48, 48, 0, 0, 48, 48);
+                ctx.drawImage(images.items, typeDef.typeId * 48, 42, 48, 48, worldX, worldY, 48, 48);
             }
         } else if (typeDef.key === 'turret' || typeDef.key === 'plasma' || typeDef.key === 'sleeper') {
             const typeIndex = Math.max(0, Math.min(2, typeDef.typeId - 9));
             if (images.turretBase) {
-                ctx.drawImage(images.turretBase, 0, typeIndex * 48, 48, 48, 0, 0, 48, 48);
+                ctx.drawImage(images.turretBase, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
             }
             if (images.turretHead) {
                 let orientation = parseInt((angle / 22.5) + 1, 10);
                 if (orientation >= 16 || orientation < 0) orientation = 0;
-                ctx.drawImage(images.turretHead, orientation * 48, (typeDef.typeId - 9) * 48, 48, 48, 0, 0, 48, 48);
+                ctx.drawImage(images.turretHead, orientation * 48, (typeDef.typeId - 9) * 48, 48, 48, worldX, worldY, 48, 48);
             }
         }
 
         if (state.selection?.id === hazard.id) {
+            ctx.save();
             ctx.strokeStyle = 'rgba(255,255,255,0.8)';
             ctx.lineWidth = 2 / state.view.scale;
-            ctx.strokeRect(0, 0, TILE_SIZE, TILE_SIZE);
+            ctx.strokeRect(worldX, worldY, TILE_SIZE, TILE_SIZE);
+            ctx.restore();
         }
-        ctx.restore();
     }
 
     function buildPalette() {
