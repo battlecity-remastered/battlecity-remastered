@@ -385,7 +385,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         selection: null,
         citySpawns: {},
         activePaletteKey: null,
-        pinch: null
+        pinch: null,
+        touchPlacementActive: false
     };
     const debugLoggedTypes = new Set();
     const overlayLogTypes = new Set();
@@ -1336,6 +1337,14 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         }
         state.pinch = null;
         const touch = ev.touches[0];
+        const isMobile = window.innerWidth <= 1100;
+        if (isMobile && state.armedPlacement) {
+            state.touchPlacementActive = true;
+            updateHoverFromPoint(touch.clientX, touch.clientY);
+            render();
+            return;
+        }
+        state.touchPlacementActive = false;
         startPan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
     }
 
@@ -1354,6 +1363,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             return;
         }
         const touch = ev.touches[0];
+        if (state.touchPlacementActive) {
+            updateHoverFromPoint(touch.clientX, touch.clientY);
+            render();
+            return;
+        }
         movePan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
     }
 
@@ -1364,6 +1378,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             return;
         }
         const touch = ev.changedTouches[0];
+        if (state.touchPlacementActive && state.hoverTile) {
+            placeEntity(state.hoverTile.tileX, state.hoverTile.tileY);
+            state.touchPlacementActive = false;
+            return;
+        }
         const moved = state.panMoved;
         endPan({ pointerId: touch.identifier });
         if (!moved) {
