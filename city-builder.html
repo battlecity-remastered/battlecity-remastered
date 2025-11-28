@@ -162,6 +162,22 @@
             font-family: Consolas, "SFMono-Regular", monospace;
             font-size: 12px;
         }
+        #shareLinkRow {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        #shareLinkRow.hidden { display: none; }
+        #shareLink {
+            flex: 1;
+            background: #111722;
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            border-radius: 4px;
+            padding: 6px;
+            box-sizing: border-box;
+        }
         button, select {
             background: #1a2130;
             color: var(--text);
@@ -248,6 +264,8 @@
     <input type="range" id="zoom" min="0.4" max="2" value="0.85" step="0.05">
     <button id="resetView">Center on City</button>
     <button id="toggleExport">Export Layout</button>
+    <button id="importLayout">Import Layout</button>
+    <button id="shareDesign">Share Your Design</button>
     <button id="resetCity">Reset City Layout</button>
     <button id="paletteToggle" class="mobile-toggle">Palette</button>
     <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
@@ -269,6 +287,15 @@
                 <button id="copyExport" style="margin-left:auto;">Copy</button>
             </div>
             <textarea id="exportOutput" readonly></textarea>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap: wrap;">
+                <button id="importFromFile">Import from File</button>
+                <input type="file" id="importFile" accept="application/json" style="display:none;">
+                <button id="importFromText">Import from JSON</button>
+            </div>
+            <div id="shareLinkRow" class="hidden">
+                <input type="text" id="shareLink" readonly>
+                <button id="copyShareLink">Copy Link</button>
+            </div>
         </div>
     </div>
     <aside id="inspector">
@@ -348,6 +375,14 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     const exportPanel = document.getElementById('exportPanel');
     const exportOutput = document.getElementById('exportOutput');
     const copyExportBtn = document.getElementById('copyExport');
+    const importLayoutBtn = document.getElementById('importLayout');
+    const importFromFileBtn = document.getElementById('importFromFile');
+    const importFromTextBtn = document.getElementById('importFromText');
+    const importFileInput = document.getElementById('importFile');
+    const shareDesignBtn = document.getElementById('shareDesign');
+    const shareLinkRow = document.getElementById('shareLinkRow');
+    const shareLinkInput = document.getElementById('shareLink');
+    const copyShareLinkBtn = document.getElementById('copyShareLink');
     const resetCityBtn = document.getElementById('resetCity');
     const paletteToggle = document.getElementById('paletteToggle');
     const inspectorToggle = document.getElementById('inspectorToggle');
@@ -1192,8 +1227,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
                     iconIndex: getBuildingIconIndex(building.type)
                 });
                 statusEl.textContent = 'Placed building.';
-                clearArmedPlacement();
                 updatePaletteAvailability();
+                const isMultiPlaceBuilding = !state.armedPlacement.existingId && (building.type === 300 || building.type === 200);
+                if (!isMultiPlaceBuilding) {
+                    clearArmedPlacement();
+                }
             } else {
                 statusEl.textContent = 'Placement blocked by terrain or spacing rules.';
             }
@@ -1403,9 +1441,9 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         render();
     }
 
-    function exportLayout() {
-        const design = ensureCityDesign(state.selectedCity);
-        const base = getCityBase(state.selectedCity);
+    function buildExportPayload(cityId) {
+        const design = ensureCityDesign(cityId);
+        const base = getCityBase(cityId);
         const layout = design.buildings.map((b) => ({
             type: b.type,
             dx: b.tileX - base.tileX,
@@ -1421,18 +1459,161 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             if (h.allowOverlap) entry.allowOverlap = true;
             return entry;
         });
-        const payload = {
-            cityId: state.selectedCity,
+        return {
+            cityId,
             baseTileX: base.tileX,
             baseTileY: base.tileY,
             layout,
             defenses
         };
+    }
+
+    function encodeDesignPayload(payload) {
+        const json = JSON.stringify(payload);
+        const bytes = new TextEncoder().encode(json);
+        let binary = '';
+        for (const byte of bytes) {
+            binary += String.fromCharCode(byte);
+        }
+        return btoa(binary);
+    }
+
+    function decodeDesignPayload(encoded) {
+        const binary = atob(encoded);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        const json = new TextDecoder().decode(bytes);
+        return JSON.parse(json);
+    }
+
+    function importDesignPayload(payload, sourceLabel = 'import') {
+        if (!payload || typeof payload !== 'object') {
+            throw new Error('Invalid design payload');
+        }
+        const cityId = Number.isFinite(Number(payload.cityId)) ? Number(payload.cityId) : state.selectedCity;
+        const base = getCityBase(cityId);
+        const design = createDefaultLayout(cityId);
+        let placedBuildings = 0;
+        let skippedBuildings = 0;
+        let placedHazards = 0;
+        let skippedHazards = 0;
+
+        const layoutEntries = Array.isArray(payload.layout) ? payload.layout : [];
+        layoutEntries.forEach((entry, index) => {
+            const type = Number(entry.type);
+            const dx = Number(entry.dx);
+            const dy = Number(entry.dy);
+            if (!Number.isFinite(type) || !Number.isFinite(dx) || !Number.isFinite(dy)) {
+                skippedBuildings += 1;
+                console.warn('[CityBuilder] Skipping malformed building entry', { entry, index });
+                return;
+            }
+            if (type === 0) {
+                return;
+            }
+            const building = {
+                id: `imp_b_${cityId}_${index}_${Date.now()}`,
+                type,
+                tileX: base.tileX + dx,
+                tileY: base.tileY + dy,
+                rotation: 0,
+                cityId,
+                locked: false
+            };
+            if (canPlaceBuilding(design, building)) {
+                design.buildings.push(building);
+                placedBuildings += 1;
+            } else {
+                skippedBuildings += 1;
+            }
+        });
+
+        const defenseEntries = Array.isArray(payload.defenses) ? payload.defenses : [];
+        defenseEntries.forEach((entry, index) => {
+            const hazardKey = entry.type || entry.hazardKey || entry.exportType;
+            const dx = Number(entry.dx);
+            const dy = Number(entry.dy);
+            if (!hazardKey || !Number.isFinite(dx) || !Number.isFinite(dy)) {
+                skippedHazards += 1;
+                console.warn('[CityBuilder] Skipping malformed hazard entry', { entry, index });
+                return;
+            }
+            const hazard = {
+                id: `imp_h_${cityId}_${index}_${Date.now()}`,
+                hazardKey,
+                tileX: base.tileX + dx,
+                tileY: base.tileY + dy,
+                rotation: Number(entry.angle) || 0,
+                allowOverlap: entry.allowOverlap === true
+            };
+            if (canPlaceHazard(design, hazard)) {
+                design.hazards.push(hazard);
+                placedHazards += 1;
+            } else {
+                skippedHazards += 1;
+            }
+        });
+
+        state.cityDesigns.set(cityId, design);
+        state.selectedCity = cityId;
+        if (state.citySpawns?.[String(cityId)]) {
+            citySelect.value = String(cityId);
+        }
+        setSelection(null);
+        render();
+        updatePaletteAvailability();
+        centerOnCity();
+
+        let summary = `Imported layout from ${sourceLabel} (${placedBuildings} buildings, ${placedHazards} hazards).`;
+        const skippedTotal = skippedBuildings + skippedHazards;
+        if (skippedTotal > 0) {
+            summary += ` Skipped ${skippedTotal} entries that failed validation.`;
+        }
+        statusEl.textContent = summary;
+    }
+
+    function exportLayout() {
+        const payload = buildExportPayload(state.selectedCity);
+        shareLinkRow.classList.add('hidden');
+        shareLinkInput.value = '';
         exportOutput.value = JSON.stringify(payload, null, 2);
         exportPanel.classList.remove('hidden');
     }
 
+    function shareLayout() {
+        const payload = buildExportPayload(state.selectedCity);
+        const encoded = encodeDesignPayload(payload);
+        const link = `${window.location.origin}${window.location.pathname}?design=${encodeURIComponent(encoded)}`;
+        exportOutput.value = JSON.stringify(payload, null, 2);
+        shareLinkInput.value = link;
+        shareLinkRow.classList.remove('hidden');
+        exportPanel.classList.remove('hidden');
+        statusEl.textContent = 'Share link ready. Copy it to share your city design.';
+    }
+
+    function applySharedDesignFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('design');
+        if (!encoded) return;
+        try {
+            const payload = decodeDesignPayload(encoded);
+            importDesignPayload(payload, 'shared link');
+            statusEl.textContent = 'Loaded shared design from link.';
+        } catch (error) {
+            console.error('[CityBuilder] Failed to import shared design', error);
+            statusEl.textContent = 'Failed to load shared design link.';
+        }
+    }
+
     function resetCity() {
+        const base = getCityBase(state.selectedCity);
+        const cityName = base?.name || `City ${state.selectedCity}`;
+        const confirmed = window.confirm(`Are you sure you want to reset the layout for ${cityName}? This will clear all placed buildings and hazards.`);
+        if (!confirmed) {
+            return;
+        }
         state.cityDesigns.set(state.selectedCity, createDefaultLayout(state.selectedCity));
         setSelection(null);
         render();
@@ -1453,6 +1634,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             populateCitySelect();
             buildPalette();
             updatePaletteAvailability();
+            applySharedDesignFromUrl();
             centerOnCity();
             render();
             statusEl.textContent = 'Ready.';
@@ -1494,6 +1676,54 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         resetViewBtn.addEventListener('click', () => centerOnCity());
         toggleExportBtn.addEventListener('click', () => {
             exportLayout();
+        });
+        importLayoutBtn.addEventListener('click', () => {
+            exportPanel.classList.remove('hidden');
+            shareLinkRow.classList.add('hidden');
+            shareLinkInput.value = '';
+            importFileInput.value = '';
+            importFileInput.click();
+        });
+        importFromFileBtn.addEventListener('click', () => {
+            importFileInput.value = '';
+            importFileInput.click();
+        });
+        importFromTextBtn.addEventListener('click', () => {
+            const text = window.prompt('Paste exported layout JSON:');
+            if (!text) return;
+            try {
+                const payload = JSON.parse(text);
+                importDesignPayload(payload, 'pasted JSON');
+                exportLayout();
+            } catch (err) {
+                console.error('[CityBuilder] Failed to import pasted JSON', err);
+                statusEl.textContent = 'Failed to import pasted JSON.';
+            }
+        });
+        importFileInput.addEventListener('change', (event) => {
+            const [file] = event.target.files || [];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const payload = JSON.parse(reader.result);
+                    importDesignPayload(payload, file.name || 'file');
+                    exportLayout();
+                } catch (err) {
+                    console.error('[CityBuilder] Failed to import file', err);
+                    statusEl.textContent = 'Failed to import file contents.';
+                }
+            };
+            reader.readAsText(file);
+        });
+        shareDesignBtn.addEventListener('click', () => {
+            shareLayout();
+        });
+        copyShareLinkBtn.addEventListener('click', () => {
+            if (!shareLinkInput.value) return;
+            navigator.clipboard.writeText(shareLinkInput.value).then(() => {
+                statusEl.textContent = 'Copied share link to clipboard.';
+            });
         });
         copyExportBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(exportOutput.value || '').then(() => {
