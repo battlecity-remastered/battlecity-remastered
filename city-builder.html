@@ -729,7 +729,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         paletteItemRefs.building.forEach((el, type) => {
             if (!el) return;
             const isPlaced = isBuildingTypePlaced(design, type);
-            if (isPlaced) {
+            const allowMultiple = type === 300 || type === 200;
+            if (isPlaced && !allowMultiple) {
                 el.classList.add('disabled');
                 el.draggable = false;
             } else {
