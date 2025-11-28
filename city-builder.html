@@ -560,7 +560,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         if (building.tileX < 0 || building.tileY < 0 || building.tileX + w > MAP_SIZE || building.tileY + h > MAP_SIZE) {
             return false;
         }
-        if (isBuildingTypePlaced(cityDesign, building.type, ignoreId)) {
+        if (building.type !== 300 && isBuildingTypePlaced(cityDesign, building.type, ignoreId)) {
             return false;
         }
         for (let x = building.tileX; x < building.tileX + w; x++) {
