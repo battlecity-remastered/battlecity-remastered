@@ -18,9 +18,11 @@ var isProduction = process.env.NODE_ENV === 'production' || isRender;
 var CLIENT_DIST_DIR = path.join(__dirname, '..', 'client', 'dist');
 var CLIENT_INDEX_FILE = path.join(CLIENT_DIST_DIR, 'index.html');
 var CLIENT_PUBLIC_DIR = path.join(__dirname, '..', 'client', 'data');
+var CITY_BUILDER_FILE = path.join(__dirname, '..', 'city-builder.html');
 var hasBuiltClient = fs.existsSync(CLIENT_INDEX_FILE);
 
 var citySpawns = require('../shared/citySpawns.json');
+var fakeCityConfig = require('../shared/fakeCities.json');
 var UserStore = require('./src/users/UserStore');
 var ScoreService = require('./src/users/ScoreService');
 
@@ -187,6 +189,8 @@ if (hasBuiltClient) {
     app.use(express.static(CLIENT_DIST_DIR, staticOptions));
 }
 
+app.use('/client/data', express.static(CLIENT_PUBLIC_DIR, staticOptions));
+
 var PlayerFactory = require('./src/PlayerFactory');
 var BulletFactory = require('./src/BulletFactory');
 var BuildingFactory = require('./src/BuildingFactory');
@@ -198,8 +202,28 @@ var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
 var { LoopMonitor } = require('./src/utils/LoopMonitor');
+var cityBuilderMapData = loadMapData();
 var { DiscordNotifier } = require('./src/utils/DiscordNotifier');
 var { formatJoinNotification, formatOrbNotification } = require('./src/utils/discordMessages.js');
+
+app.get(['/city-builder', '/city-builder.html'], (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(CITY_BUILDER_FILE, (error) => {
+        if (error) {
+            next(error);
+        }
+    });
+});
+
+app.get('/city-builder/data/meta', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json({ citySpawns, fakeCityConfig });
+});
+
+app.get('/city-builder/data/map', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json(cityBuilderMapData);
+});
 
 const shortenId = (value) => {
     if (!value || typeof value !== 'string') {
