@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <title>BattleCity City Builder</title>
+    <style>
+        :root {
+            --panel-bg: #0f1115;
+            --panel-border: #2a3039;
+            --accent: #5bd0ff;
+            --text: #e9edf5;
+        }
+        body {
+            margin: 0;
+            background: #0a0c0f;
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 14px;
+            background: #0d1016;
+            border-bottom: 1px solid var(--panel-border);
+            position: sticky;
+            top: 0;
+            z-index: 4;
+        }
+        #status {
+            margin-left: auto;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        #runHint {
+            padding: 8px 14px;
+            background: #0d1016;
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 12px;
+            color: #9fb2c5;
+        }
+        #container {
+            display: grid;
+            grid-template-columns: 280px 1fr 260px;
+            flex: 1;
+            overflow: hidden;
+        }
+        #palette, #inspector {
+            background: var(--panel-bg);
+            border-right: 1px solid var(--panel-border);
+            padding: 12px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        #inspector {
+            border-left: 1px solid var(--panel-border);
+            border-right: none;
+        }
+        #canvasHolder {
+            position: relative;
+            background: radial-gradient(#0f1218 0%, #0a0c0f 55%);
+        }
+        #mapCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #0c0f14;
+            cursor: grab;
+            touch-action: none;
+        }
+        h3 {
+            margin: 10px 0 6px;
+            font-size: 14px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: #9fb2c5;
+        }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        .palette-item {
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 6px;
+            background: #131722;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: grab;
+            user-select: none;
+        }
+        .palette-item.disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .palette-item img {
+            width: 32px;
+            height: 32px;
+            image-rendering: pixelated;
+        }
+        .palette-icon {
+            width: 32px;
+            height: 32px;
+            background-repeat: no-repeat;
+            background-size: auto;
+            image-rendering: pixelated;
+            flex-shrink: 0;
+        }
+        .palette-item span {
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        .palette-item.no-icon {
+            padding-left: 10px;
+        }
+        .palette-item.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(91, 208, 255, 0.35);
+            background: #161b26;
+        }
+        .count-badge {
+            margin-left: auto;
+            background: #1f2634;
+            border: 1px solid #2f3846;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            color: #dce6f5;
+            min-width: 24px;
+            text-align: center;
+        }
+        #exportPanel {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 360px;
+            background: rgba(10,12,15,0.92);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+        }
+        #exportPanel.hidden { display: none; }
+        #exportOutput {
+            width: 100%;
+            height: 180px;
+            background: #0c1016;
+            color: var(--text);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+            font-family: Consolas, "SFMono-Regular", monospace;
+            font-size: 12px;
+        }
+        button, select {
+            background: #1a2130;
+            color: var(--text);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 6px 10px;
+        }
+        button:hover, select:hover {
+            border-color: var(--accent);
+        }
+        #inspector .row { margin-bottom: 10px; }
+        #inspector label { display: block; font-size: 12px; margin-bottom: 4px; color: #9fb2c5; }
+        #inspector input[type="number"], #inspector input[type="text"] {
+            width: 100%;
+            background: #111722;
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            border-radius: 4px;
+            padding: 6px;
+            box-sizing: border-box;
+        }
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 4px;
+            background: #1e2735;
+            margin-right: 6px;
+        }
+        .mobile-toggle {
+            display: none;
+        }
+        @media (max-width: 1100px) {
+            #container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+            }
+            #palette, #inspector {
+                position: fixed;
+                top: 56px;
+                bottom: 0;
+                width: 320px;
+                max-width: 88vw;
+                z-index: 6;
+                box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+                transition: transform 0.25s ease, opacity 0.25s ease;
+                background: rgba(12, 15, 20, 0.96);
+            }
+            #palette {
+                left: 0;
+                transform: translateX(-105%);
+                border-right: 1px solid var(--panel-border);
+            }
+            #palette.open { transform: translateX(0); }
+            #inspector {
+                right: 0;
+                transform: translateX(105%);
+                border-left: 1px solid var(--panel-border);
+            }
+            #inspector.open { transform: translateX(0); }
+            #canvasHolder { min-height: 60vh; }
+            .mobile-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            #exportPanel {
+                position: fixed;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="toolbar">
+    <label for="citySelect">City</label>
+    <select id="citySelect"></select>
+    <label for="zoom">Zoom</label>
+    <input type="range" id="zoom" min="0.4" max="2" value="0.85" step="0.05">
+    <button id="resetView">Center on City</button>
+    <button id="toggleExport">Export Layout</button>
+    <button id="resetCity">Reset City Layout</button>
+    <button id="paletteToggle" class="mobile-toggle">Palette</button>
+    <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
+    <span id="status">Ready.</span>
+</div>
+<div id="runHint">Run <code>npm start</code> and open <code>http://localhost:8021/city-builder</code> to load the builder with server-hosted assets and map data.</div>
+<div id="container">
+    <aside id="palette">
+        <h3>Buildings</h3>
+        <div id="buildingPalette" class="palette-grid"></div>
+        <h3>Hazards &amp; Defenses</h3>
+        <div id="hazardPalette" class="palette-grid"></div>
+    </aside>
+    <div id="canvasHolder">
+        <canvas id="mapCanvas" width="1280" height="840"></canvas>
+        <div id="exportPanel" class="hidden">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                <strong>Exported fake-city entry</strong>
+                <span style="font-size:12px; opacity:0.8;">Paste into shared/fakeCities.json</span>
+                <button id="copyExport" style="margin-left:auto;">Copy</button>
+            </div>
+            <textarea id="exportOutput" readonly></textarea>
+        </div>
+    </div>
+    <aside id="inspector">
+        <h3>Selection</h3>
+        <div id="selectionInfo">Click a placed building or hazard to edit.</div>
+        <div class="row" id="editControls" style="display:none;">
+            <label>Type</label>
+            <div id="selectionType" class="pill"></div>
+            <label>Tile Position</label>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="tileX" step="1">
+                <input type="number" id="tileY" step="1">
+            </div>
+            <button id="nudgeUp">▲</button>
+            <button id="nudgeDown">▼</button>
+            <button id="nudgeLeft">◀</button>
+            <button id="nudgeRight">▶</button>
+            <button id="deleteSelection" style="margin-top:10px; background:#3a1b1b;">Delete</button>
+        </div>
+        <h3>Tips</h3>
+        <ul style="padding-left:18px; margin-top:6px; color:#9fb2c5; font-size:12px; line-height:1.4;">
+            <li>Drag a palette item onto the grid, or click to arm placement then click the map.</li>
+            <li>Objects snap to the 48px world grid used in-game.</li>
+            <li>Placement respects lava/rock blocking tiles and 3×3 building footprints.</li>
+            <li>Exported JSON matches the fake-city generator (layout + defenses).</li>
+        </ul>
+    </aside>
+</div>
+<script>
+const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing","icon":0,"menuIcon":0,"buildingIcon":0,"image":3,"parent":0,"initial":1},{"key":"CAN_BUILD_LASER_RESEARCH","type":412,"label":"Laser Research","icon":12,"menuIcon":1,"buildingIcon":12,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_LASER_FACTORY","type":112,"label":"Laser Factory","icon":12,"menuIcon":1,"buildingIcon":12,"image":2,"parent":412,"initial":0},{"key":"CAN_BUILD_BAZOOKA_RESEARCH","type":401,"label":"Bazooka Research","icon":2,"menuIcon":2,"buildingIcon":1,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_BAZOOKA_FACTORY","type":101,"label":"Bazooka Factory","icon":2,"menuIcon":2,"buildingIcon":1,"image":1,"parent":401,"initial":0},{"key":"CAN_BUILD_TURRET_RESEARCH","type":409,"label":"Turret Research","icon":9,"menuIcon":9,"buildingIcon":9,"image":4,"parent":300,"initial":1},{"key":"CAN_BUILD_TURRET_FACTORY","type":109,"label":"Turret Factory","icon":9,"menuIcon":9,"buildingIcon":9,"image":1,"parent":409,"initial":0},{"key":"CAN_BUILD_CLOAK_RESEARCH","type":400,"label":"Cloak Research","icon":1,"menuIcon":1,"buildingIcon":0,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_CLOAK_FACTORY","type":100,"label":"Cloak Factory","icon":1,"menuIcon":1,"buildingIcon":0,"image":1,"parent":400,"initial":0},{"key":"CAN_BUILD_MEDKIT_RESEARCH","type":402,"label":"MedKit Research","icon":3,"menuIcon":3,"buildingIcon":2,"image":4,"parent":401,"initial":0},{"key":"CAN_BUILD_MEDKIT_FACTORY","type":102,"label":"MedKit Factory","icon":3,"menuIcon":3,"buildingIcon":2,"image":1,"parent":402,"initial":0},{"key":"CAN_BUILD_HOSPITAL","type":200,"label":"Hospital","icon":12,"menuIcon":12,"buildingIcon":12,"image":2,"parent":402,"initial":0},{"key":"CAN_BUILD_PLASMA_RESEARCH","type":411,"label":"Plasma Turret Research","icon":10,"menuIcon":10,"buildingIcon":11,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_PLASMA_FACTORY","type":111,"label":"Plasma Turret Factory","icon":10,"menuIcon":10,"buildingIcon":11,"image":1,"parent":411,"initial":0},{"key":"CAN_BUILD_MINE_RESEARCH","type":404,"label":"Mine Research","icon":5,"menuIcon":5,"buildingIcon":4,"image":4,"parent":409,"initial":0},{"key":"CAN_BUILD_MINE_FACTORY","type":104,"label":"Mine Factory","icon":5,"menuIcon":5,"buildingIcon":4,"image":1,"parent":404,"initial":0},{"key":"CAN_BUILD_ORB_RESEARCH","type":405,"label":"Orb Research","icon":6,"menuIcon":6,"buildingIcon":5,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_ORB_FACTORY","type":105,"label":"Orb Factory","icon":6,"menuIcon":6,"buildingIcon":5,"image":1,"parent":405,"initial":0},{"key":"CAN_BUILD_BOMB_RESEARCH","type":403,"label":"Time Bomb Research","icon":4,"menuIcon":4,"buildingIcon":3,"image":4,"parent":400,"initial":0},{"key":"CAN_BUILD_BOMB_FACTORY","type":103,"label":"Time Bomb Factory","icon":4,"menuIcon":4,"buildingIcon":3,"image":1,"parent":403,"initial":0},{"key":"CAN_BUILD_SLEEPER_RESEARCH","type":410,"label":"Sleeper Research","icon":8,"menuIcon":8,"buildingIcon":10,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_SLEEPER_FACTORY","type":110,"label":"Sleeper Factory","icon":8,"menuIcon":8,"buildingIcon":10,"image":1,"parent":410,"initial":0},{"key":"CAN_BUILD_WALL_RESEARCH","type":413,"label":"Wall Research","icon":11,"menuIcon":11,"buildingIcon":8,"image":4,"parent":411,"initial":0},{"key":"CAN_BUILD_WALL_FACTORY","type":108,"label":"Wall Factory","icon":11,"menuIcon":11,"buildingIcon":8,"image":1,"parent":413,"initial":0},{"key":"CAN_BUILD_DFG_RESEARCH","type":407,"label":"DFG Research","icon":8,"menuIcon":8,"buildingIcon":7,"image":4,"parent":404,"initial":0},{"key":"CAN_BUILD_DFG_FACTORY","type":107,"label":"DFG Factory","icon":8,"menuIcon":8,"buildingIcon":7,"image":1,"parent":407,"initial":0},{"key":"CAN_BUILD_FLARE_RESEARCH","type":406,"label":"Flare Gun Research","icon":7,"menuIcon":1,"buildingIcon":6,"image":4,"parent":405,"initial":0},{"key":"CAN_BUILD_FLARE_FACTORY","type":106,"label":"Flare Gun Factory","icon":7,"menuIcon":1,"buildingIcon":6,"image":1,"parent":406,"initial":0}];
+</script>
+<script>
+(function() {
+    const TILE_SIZE = 48;
+    const MAP_SIZE = 512;
+    const BLOCKING_TILES = new Set([1, 2]);
+    const BUILDING_FOOTPRINT = (type) => (type === 0 ? { w: 3, h: 3 } : { w: 3, h: 3 });
+    const MAX_BUILDING_CHAIN_DISTANCE = TILE_SIZE * 20;
+    const MAX_BUILDING_CHAIN_DISTANCE_SQ = MAX_BUILDING_CHAIN_DISTANCE * MAX_BUILDING_CHAIN_DISTANCE;
+
+    const hazardDefinitions = [
+        { key: 'mine', label: 'Mine', exportType: 'mine', typeId: 4, limit: 10, iconFrame: { x: 4 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'dfg', label: 'DFG', exportType: 'dfg', typeId: 7, limit: 5, iconFrame: { x: 7 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'wall', label: 'Wall', exportType: 'wall', typeId: 8, limit: 20, iconFrame: { x: 8 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'turret', label: 'Turret', exportType: 'turret', typeId: 9, limit: 10, iconFrame: { x: 9 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'sleeper', label: 'Sleeper', exportType: 'sleeper', typeId: 10, limit: 5, iconFrame: { x: 10 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'plasma', label: 'Plasma', exportType: 'plasma', typeId: 11, limit: 5, iconFrame: { x: 11 * 32, y: 0, w: 32, h: 32 } }
+    ];
+
+    const SKIN_PATH = '/client/data/skins/BattleCityDX';
+    const assets = {
+        ground: `${SKIN_PATH}/imgGround.png`,
+        lava: `${SKIN_PATH}/imgLava.png`,
+        rocks: `${SKIN_PATH}/imgRocks.png`,
+        buildings: `${SKIN_PATH}/imgBuildings.png`,
+        buildIcons: `${SKIN_PATH}/imgBuildIcons.png`,
+        items: `/client/data/imgItems.png`,
+        turretBase: `${SKIN_PATH}/imgTurretBase.png`,
+        turretHead: `${SKIN_PATH}/imgTurretHead.png`
+    };
+
+    const images = {};
+    let groundPattern = null;
+    const buildingLookupByType = new Map(BUILD_TREE_CONFIG.map((entry) => [entry.type, entry]));
+
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const palettePanel = document.getElementById('palette');
+    const inspectorPanel = document.getElementById('inspector');
+    const citySelect = document.getElementById('citySelect');
+    const buildingPalette = document.getElementById('buildingPalette');
+    const hazardPalette = document.getElementById('hazardPalette');
+    const statusEl = document.getElementById('status');
+    const zoomSlider = document.getElementById('zoom');
+    const resetViewBtn = document.getElementById('resetView');
+    const toggleExportBtn = document.getElementById('toggleExport');
+    const exportPanel = document.getElementById('exportPanel');
+    const exportOutput = document.getElementById('exportOutput');
+    const copyExportBtn = document.getElementById('copyExport');
+    const resetCityBtn = document.getElementById('resetCity');
+    const paletteToggle = document.getElementById('paletteToggle');
+    const inspectorToggle = document.getElementById('inspectorToggle');
+
+    const selectionInfo = document.getElementById('selectionInfo');
+    const editControls = document.getElementById('editControls');
+    const selectionTypeEl = document.getElementById('selectionType');
+    const tileXInput = document.getElementById('tileX');
+    const tileYInput = document.getElementById('tileY');
+    const deleteSelectionBtn = document.getElementById('deleteSelection');
+    const nudgeBtns = {
+        up: document.getElementById('nudgeUp'),
+        down: document.getElementById('nudgeDown'),
+        left: document.getElementById('nudgeLeft'),
+        right: document.getElementById('nudgeRight')
+    };
+    const paletteItemRefs = {
+        building: new Map(),
+        hazard: new Map()
+    };
+
+    const state = {
+        map: [],
+        tiles: [],
+        view: { scale: parseFloat(zoomSlider.value), offsetX: 0, offsetY: 0 },
+        dragging: null,
+        armedPlacement: null,
+        panning: false,
+        panOrigin: null,
+        panPointerId: null,
+        panMoved: false,
+        hoverTile: null,
+        cityDesigns: new Map(),
+        selectedCity: null,
+        selection: null,
+        citySpawns: {},
+        activePaletteKey: null
+    };
+    const debugLoggedTypes = new Set();
+    const overlayLogTypes = new Set();
+    const iconBlankCache = new Map();
+
+    function buildMap(mapData) {
+        const size = MAP_SIZE;
+        const total = size * size;
+        state.map = Array.from({ length: size }, () => Array(size).fill(0));
+        state.tiles = Array.from({ length: size }, () => Array(size).fill(0));
+
+        if (!mapData) {
+            return;
+        }
+
+        if (Array.isArray(mapData?.[0])) {
+            for (let x = 0; x < size; x++) {
+                for (let y = 0; y < size; y++) {
+                    state.map[x][y] = Number(mapData?.[x]?.[y]) || 0;
+                }
+            }
+        } else {
+            const view = mapData instanceof ArrayBuffer
+                ? new Uint8Array(mapData)
+                : (ArrayBuffer.isView(mapData) ? new Uint8Array(mapData.buffer) : null);
+            if (!view || view.length < total) {
+                return;
+            }
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    const sourceX = (size - 1) - j;
+                    const sourceY = (size - 1) - i;
+                    state.map[i][j] = view[sourceX + (sourceY * size)];
+                }
+            }
+        }
+
+        for (let j = 0; j < size; j++) {
+            for (let i = 0; i < size; i++) {
+                if (state.map[i][j] === 1 || state.map[i][j] === 2) {
+                    const current = state.map[i][j];
+                    const isLeft = (i === 0 || state.map[i - 1][j] !== current) ? 1 : 0;
+                    const isRight = (i === (size - 1) || state.map[i + 1][j] !== current) ? 1 : 0;
+                    const isUp = (j === 0 || state.map[i][j - 1] !== current) ? 1 : 0;
+                    const isDown = (j === (size - 1) || state.map[i][j + 1] !== current) ? 1 : 0;
+                    state.tiles[i][j] = (isLeft + (isRight * 2) + (isDown * 4) + (isUp * 8)) * TILE_SIZE;
+                }
+            }
+        }
+    }
+
+    async function fetchJson(url, label) {
+        const response = await fetch(url, { cache: 'no-cache' });
+        if (!response.ok) {
+            throw new Error(`Failed to load ${label || url}: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    }
+
+    async function loadCityData() {
+        statusEl.textContent = 'Loading map and city data...';
+        const [mapPayload, metaPayload] = await Promise.all([
+            fetchJson('/city-builder/data/map', 'map'),
+            fetchJson('/city-builder/data/meta', 'city metadata')
+        ]);
+        state.citySpawns = metaPayload?.citySpawns || {};
+        buildMap(mapPayload?.map);
+    }
+
+    function loadImages() {
+        const entries = Object.entries(assets);
+        const promises = entries.map(([key, src]) => new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                images[key] = img;
+                resolve();
+            };
+            img.onerror = () => reject(new Error(`Failed to load ${src}`));
+            img.src = src;
+        }));
+        return Promise.all(promises).then(() => {
+            if (images.ground) {
+                groundPattern = ctx.createPattern(images.ground, 'repeat');
+            }
+        });
+    }
+
+    function populateCitySelect() {
+        citySelect.innerHTML = '';
+        const entries = Object.entries(state.citySpawns || {}).map(([key, value]) => ({ id: Number(key), ...value }));
+        entries.sort((a, b) => a.id - b.id);
+        entries.forEach((entry) => {
+            const opt = document.createElement('option');
+            opt.value = entry.id;
+            opt.textContent = `${entry.id}: ${entry.name}`;
+            citySelect.appendChild(opt);
+        });
+        if (entries.length) {
+            const defaultId = entries[0].id;
+            citySelect.value = defaultId;
+            state.selectedCity = defaultId;
+        }
+    }
+
+    function distanceSquared(ax, ay, bx, by) {
+        const dx = ax - bx;
+        const dy = ay - by;
+        return (dx * dx) + (dy * dy);
+    }
+
+    function getCityBase(cityId) {
+        const entry = state.citySpawns?.[String(cityId)];
+        if (!entry) return { tileX: 0, tileY: 0, name: `City ${cityId}` };
+        return { tileX: Number(entry.tileX) || 0, tileY: Number(entry.tileY) || 0, name: entry.name || `City ${cityId}` };
+    }
+
+    function createDefaultLayout(cityId) {
+        const base = getCityBase(cityId);
+        const layout = [];
+        layout.push({ id: `cc_${cityId}`, type: 0, tileX: base.tileX, tileY: base.tileY, rotation: 0, cityId, locked: true });
+        return { buildings: layout, hazards: [], base };
+    }
+
+    function ensureCityDesign(cityId) {
+        if (!state.cityDesigns.has(cityId)) {
+            state.cityDesigns.set(cityId, createDefaultLayout(cityId));
+        }
+        return state.cityDesigns.get(cityId);
+    }
+
+    function worldToScreen(x, y) {
+        return {
+            x: (x + state.view.offsetX) * state.view.scale,
+            y: (y + state.view.offsetY) * state.view.scale
+        };
+    }
+
+    function screenToWorld(x, y) {
+        return {
+            x: (x / state.view.scale) - state.view.offsetX,
+            y: (y / state.view.scale) - state.view.offsetY
+        };
+    }
+
+    function screenToTile(x, y) {
+        const world = screenToWorld(x, y);
+        return {
+            tileX: Math.floor(world.x / TILE_SIZE),
+            tileY: Math.floor(world.y / TILE_SIZE)
+        };
+    }
+
+    function canPlaceBuilding(cityDesign, building, ignoreId = null) {
+        if (!cityDesign) return false;
+        const { w, h } = BUILDING_FOOTPRINT(building.type);
+        if (building.tileX < 0 || building.tileY < 0 || building.tileX + w > MAP_SIZE || building.tileY + h > MAP_SIZE) {
+            return false;
+        }
+        if (isBuildingTypePlaced(cityDesign, building.type, ignoreId)) {
+            return false;
+        }
+        for (let x = building.tileX; x < building.tileX + w; x++) {
+            for (let y = building.tileY; y < building.tileY + h; y++) {
+                const value = state.map?.[x]?.[y];
+                if (value === undefined) return false;
+                if (BLOCKING_TILES.has(value)) return false;
+            }
+        }
+        const checkRect = {
+            x: building.tileX * TILE_SIZE,
+            y: building.tileY * TILE_SIZE,
+            w: w * TILE_SIZE,
+            h: h * TILE_SIZE
+        };
+        const intersects = (rectA, rectB) => rectA.x < rectB.x + rectB.w && rectA.x + rectA.w > rectB.x && rectA.y < rectB.y + rectB.h && rectA.y + rectA.h > rectB.y;
+        for (const other of cityDesign.buildings) {
+            if (other.id === ignoreId) continue;
+            const footprint = BUILDING_FOOTPRINT(other.type);
+            const otherRect = { x: other.tileX * TILE_SIZE, y: other.tileY * TILE_SIZE, w: footprint.w * TILE_SIZE, h: footprint.h * TILE_SIZE };
+            if (intersects(checkRect, otherRect)) {
+                return false;
+            }
+        }
+        const center = { x: (building.tileX + 1.5) * TILE_SIZE, y: (building.tileY + 1.5) * TILE_SIZE };
+        let nearestSq = null;
+        let count = 0;
+        for (const other of cityDesign.buildings) {
+            if (other.id === ignoreId) continue;
+            if (other.cityId !== building.cityId) continue;
+            const oc = { x: (other.tileX + 1.5) * TILE_SIZE, y: (other.tileY + 1.5) * TILE_SIZE };
+            const distSq = distanceSquared(center.x, center.y, oc.x, oc.y);
+            if (nearestSq === null || distSq < nearestSq) {
+                nearestSq = distSq;
+            }
+            count += 1;
+        }
+        if (count > 0 && nearestSq !== null && nearestSq > MAX_BUILDING_CHAIN_DISTANCE_SQ) {
+            return false;
+        }
+        return true;
+    }
+
+    function canPlaceHazard(cityDesign, hazard, ignoreId = null) {
+        const tileX = hazard.tileX;
+        const tileY = hazard.tileY;
+        if (tileX < 0 || tileY < 0 || tileX >= MAP_SIZE || tileY >= MAP_SIZE) return false;
+        const tileValue = state.map?.[tileX]?.[tileY];
+        if (tileValue === undefined || BLOCKING_TILES.has(tileValue) || tileValue === 3) return false;
+        const key = `${tileX}_${tileY}`;
+        for (const existing of cityDesign.hazards) {
+            if (existing.id === ignoreId) continue;
+            const sameTile = Math.floor(existing.tileX) === Math.floor(tileX) && Math.floor(existing.tileY) === Math.floor(tileY);
+            if (sameTile && existing.allowOverlap !== true && hazard.allowOverlap !== true) {
+                return false;
+            }
+        }
+        const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+        if (def?.limit) {
+            const currentCount = cityDesign.hazards.filter((h) => (h.hazardKey === def.key || h.exportType === def.exportType) && h.id !== ignoreId).length;
+            if (currentCount >= def.limit) return false;
+        }
+        for (const building of cityDesign.buildings) {
+            const fp = BUILDING_FOOTPRINT(building.type);
+            const withinX = tileX >= building.tileX && tileX < (building.tileX + fp.w);
+            const withinY = tileY >= building.tileY && tileY < (building.tileY + fp.h);
+            if (withinX && withinY) {
+                const baseType = Math.floor(building.type / 100);
+                const isRearRow = Math.floor(tileY) === (building.tileY + fp.h - 1);
+                const rearRowAllowed = isRearRow && (baseType === 0 || baseType === 1 || baseType === 2);
+                if (!rearRowAllowed) return false;
+            }
+        }
+        return true;
+    }
+
+    function getBuildingConfig(type) {
+        return buildingLookupByType.get(type) || null;
+    }
+
+    function getBuildingLabel(type) {
+        const config = getBuildingConfig(type);
+        return config?.label || `Building ${type}`;
+    }
+
+    function getBuildingIconIndex(type) {
+        const config = getBuildingConfig(type);
+        if (!config) return null;
+        const buildingIcon = Number(config.buildingIcon);
+        const fallbackIcon = Number(config.icon);
+        if (Number.isFinite(buildingIcon)) return buildingIcon;
+        if (Number.isFinite(fallbackIcon)) return fallbackIcon;
+        return 0;
+    }
+
+    function getBuildingImageIndex(type) {
+        const config = getBuildingConfig(type);
+        const baseType = Math.floor(type / 100);
+        const image = Number(config?.image);
+        return Number.isFinite(image) ? image : baseType;
+    }
+
+    function drawBuildingOverlay(type, worldX, worldY) {
+        const baseType = Math.floor(type / 100);
+        if (baseType !== 1 && baseType !== 4) return;
+        if (!images.items) return;
+        const iconIndex = getBuildingIconIndex(type);
+        if (!Number.isFinite(iconIndex)) return;
+        const target = baseType === 4
+            ? { x: worldX + 14, y: worldY + 98 }
+            : { x: worldX + 56, y: worldY + 52 };
+        const sourceX = iconIndex * 32;
+        ctx.drawImage(images.items, sourceX, 0, 32, 32, target.x, target.y, 32, 32);
+    }
+
+    function isBuildingTypePlaced(design, type, ignoreId = null) {
+        return design.buildings.some((b) => b.type === type && b.id !== ignoreId);
+    }
+
+    function getHazardLimit(hazardKey) {
+        const def = hazardDefinitions.find((h) => h.key === hazardKey || h.exportType === hazardKey);
+        return def?.limit ?? null;
+    }
+
+    function getHazardRemaining(design, hazardKey) {
+        const def = hazardDefinitions.find((h) => h.key === hazardKey || h.exportType === hazardKey);
+        if (!def || !def.limit) return null;
+        const currentCount = design.hazards.filter((h) => h.hazardKey === def.key || h.exportType === def.exportType).length;
+        return Math.max(0, def.limit - currentCount);
+    }
+
+    function createPaletteIcon(sprite, frame, renderSize = null) {
+        const icon = document.createElement('div');
+        icon.className = 'palette-icon';
+        const width = renderSize?.w ?? renderSize ?? frame.w;
+        const height = renderSize?.h ?? renderSize ?? frame.h;
+        icon.style.width = `${width}px`;
+        icon.style.height = `${height}px`;
+        icon.style.backgroundImage = `url(${sprite})`;
+        icon.style.backgroundPosition = `${-frame.x}px ${-frame.y}px`;
+        icon.style.backgroundRepeat = 'no-repeat';
+        icon.style.imageRendering = 'pixelated';
+        return icon;
+    }
+
+    function setActivePaletteKey(key) {
+        state.activePaletteKey = key;
+        ['building', 'hazard'].forEach((kind) => {
+            const entries = paletteItemRefs[kind];
+            entries.forEach((el, entryKey) => {
+                if (!el) return;
+                const matchKey = `${kind}:${entryKey}`;
+                if (matchKey === key) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    function updatePaletteAvailability() {
+        const design = ensureCityDesign(state.selectedCity);
+        paletteItemRefs.building.forEach((el, type) => {
+            if (!el) return;
+            const isPlaced = isBuildingTypePlaced(design, type);
+            if (isPlaced) {
+                el.classList.add('disabled');
+                el.draggable = false;
+            } else {
+                el.classList.remove('disabled');
+                el.draggable = true;
+            }
+        });
+        paletteItemRefs.hazard.forEach((entry, key) => {
+            const { el, countEl } = entry;
+            if (!el) return;
+            const remaining = getHazardRemaining(design, key);
+            if (remaining !== null && countEl) {
+                countEl.textContent = remaining;
+            }
+            const disabled = remaining !== null && remaining <= 0;
+            if (disabled) {
+                el.classList.add('disabled');
+                el.draggable = false;
+            } else {
+                el.classList.remove('disabled');
+                el.draggable = true;
+            }
+        });
+    }
+
+    function armPlacement(payload, label, paletteKey = null) {
+        state.armedPlacement = payload;
+        setActivePaletteKey(paletteKey);
+        if (label) {
+            statusEl.textContent = `Armed ${label}. Click map to place.`;
+        }
+    }
+
+    function clearArmedPlacement() {
+        state.armedPlacement = null;
+        setActivePaletteKey(null);
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (groundPattern) {
+            ctx.save();
+            ctx.scale(state.view.scale, state.view.scale);
+            ctx.translate(state.view.offsetX, state.view.offsetY);
+            ctx.fillStyle = groundPattern;
+            ctx.fillRect(-state.view.offsetX, -state.view.offsetY, canvas.width / state.view.scale, canvas.height / state.view.scale);
+            ctx.restore();
+        }
+
+        const visible = {
+            minX: Math.max(0, Math.floor((-state.view.offsetX) / TILE_SIZE)),
+            maxX: Math.min(MAP_SIZE - 1, Math.ceil((canvas.width / state.view.scale - state.view.offsetX) / TILE_SIZE)),
+            minY: Math.max(0, Math.floor((-state.view.offsetY) / TILE_SIZE)),
+            maxY: Math.min(MAP_SIZE - 1, Math.ceil((canvas.height / state.view.scale - state.view.offsetY) / TILE_SIZE))
+        };
+
+        ctx.save();
+        ctx.scale(state.view.scale, state.view.scale);
+        ctx.translate(state.view.offsetX, state.view.offsetY);
+
+        for (let x = visible.minX; x <= visible.maxX; x++) {
+            for (let y = visible.minY; y <= visible.maxY; y++) {
+                const worldX = x * TILE_SIZE;
+                const worldY = y * TILE_SIZE;
+                const value = state.map?.[x]?.[y] ?? 0;
+                if (value === 1) {
+                    const sx = state.tiles[x][y];
+                    ctx.drawImage(images.lava, sx, 0, TILE_SIZE, TILE_SIZE, worldX, worldY, TILE_SIZE, TILE_SIZE);
+                } else if (value === 2) {
+                    const sx = state.tiles[x][y];
+                    ctx.drawImage(images.rocks, sx, 0, TILE_SIZE, TILE_SIZE, worldX, worldY, TILE_SIZE, TILE_SIZE);
+                }
+            }
+        }
+
+        ctx.lineWidth = 1 / state.view.scale;
+        ctx.strokeStyle = 'rgba(180,180,180,0.18)';
+        for (let x = visible.minX; x <= visible.maxX; x++) {
+            const worldX = x * TILE_SIZE;
+            ctx.beginPath();
+            ctx.moveTo(worldX, visible.minY * TILE_SIZE);
+            ctx.lineTo(worldX, (visible.maxY + 1) * TILE_SIZE);
+            ctx.stroke();
+        }
+        for (let y = visible.minY; y <= visible.maxY; y++) {
+            const worldY = y * TILE_SIZE;
+            ctx.beginPath();
+            ctx.moveTo(visible.minX * TILE_SIZE, worldY);
+            ctx.lineTo((visible.maxX + 1) * TILE_SIZE, worldY);
+            ctx.stroke();
+        }
+
+        const design = ensureCityDesign(state.selectedCity);
+        design.buildings.forEach((building) => drawBuilding(building));
+        design.hazards.forEach((hazard) => drawHazard(hazard));
+
+        drawPlacementGhost(design);
+
+        ctx.restore();
+    }
+
+    function drawPlacementGhost(design) {
+        if (!state.armedPlacement) return;
+        const { tileX, tileY } = state.hoverTile || {};
+        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) return;
+        const placementRect = state.armedPlacement.kind === 'building'
+            ? BUILDING_FOOTPRINT(state.armedPlacement.type)
+            : { w: 1, h: 1 };
+
+        let isValid = false;
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+
+        if (state.armedPlacement.kind === 'building') {
+            const building = {
+                id: 'ghost',
+                type: state.armedPlacement.type,
+                tileX,
+                tileY,
+                rotation: 0,
+                cityId: state.selectedCity
+            };
+            isValid = canPlaceBuilding(design, building);
+            const baseType = Math.floor(building.type / 100);
+            const spriteY = baseType * 144;
+            if (images.buildings) {
+                ctx.drawImage(images.buildings, 0, spriteY, 144, 144, tileX * TILE_SIZE, tileY * TILE_SIZE, 144, 144);
+            } else {
+                ctx.fillStyle = '#2f8bff';
+                ctx.fillRect(tileX * TILE_SIZE, tileY * TILE_SIZE, placementRect.w * TILE_SIZE, placementRect.h * TILE_SIZE);
+            }
+            drawBuildingOverlay(building.type, tileX * TILE_SIZE, tileY * TILE_SIZE);
+        } else if (state.armedPlacement.kind === 'hazard') {
+            const hazard = {
+                id: 'ghost',
+                hazardKey: state.armedPlacement.key,
+                tileX,
+                tileY,
+                rotation: 0
+            };
+            isValid = canPlaceHazard(design, hazard);
+            const typeDef = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+            const worldX = tileX * TILE_SIZE;
+            const worldY = tileY * TILE_SIZE;
+            if (typeDef?.key === 'mine' && images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 32, 0, 32, 32, worldX + 8, worldY + 8, 32, 32);
+            } else if ((typeDef?.key === 'wall' || typeDef?.key === 'dfg') && images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 48, 42, 48, 48, worldX, worldY, 48, 48);
+            } else if (typeDef && images.turretBase) {
+                const typeIndex = Math.max(0, Math.min(2, typeDef.typeId - 9));
+                ctx.drawImage(images.turretBase, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
+                if (images.turretHead) {
+                    ctx.drawImage(images.turretHead, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
+                }
+            } else {
+                ctx.fillStyle = '#ffcc4d';
+                ctx.fillRect(worldX, worldY, TILE_SIZE, TILE_SIZE);
+            }
+        }
+
+        ctx.restore();
+        ctx.save();
+        ctx.lineWidth = 2 / state.view.scale;
+        ctx.strokeStyle = isValid ? 'rgba(91, 208, 255, 0.9)' : 'rgba(220, 96, 96, 0.9)';
+        ctx.strokeRect(tileX * TILE_SIZE, tileY * TILE_SIZE, placementRect.w * TILE_SIZE, placementRect.h * TILE_SIZE);
+        ctx.restore();
+    }
+
+    function drawBuilding(building) {
+        const worldX = building.tileX * TILE_SIZE;
+        const worldY = building.tileY * TILE_SIZE;
+        const baseType = Math.floor(building.type / 100);
+        const spriteRow = baseType;
+        const spriteY = spriteRow * 144;
+
+        if (images.buildings) {
+            ctx.drawImage(images.buildings, 0, spriteY, 144, 144, worldX, worldY, 144, 144);
+        } else {
+            ctx.fillStyle = '#2f8bff';
+            ctx.fillRect(worldX, worldY, 144, 144);
+        }
+        drawBuildingOverlay(building.type, worldX, worldY);
+
+        const config = getBuildingConfig(building.type);
+        const configImage = Number.isFinite(config?.image) ? config.image : baseType;
+        if (!debugLoggedTypes.has(building.type) && configImage !== baseType) {
+            debugLoggedTypes.add(building.type);
+            console.warn('[CityBuilder] Sprite row differs from config image', {
+                type: building.type,
+                baseType,
+                spriteRow,
+                configImage,
+                iconIndex,
+                config
+            });
+        }
+        if (state.selection?.id === building.id) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+            ctx.lineWidth = 3 / state.view.scale;
+            ctx.strokeRect(worldX, worldY, 144, 144);
+            ctx.restore();
+        }
+    }
+
+    function drawHazard(hazard) {
+        const tileX = hazard.tileX;
+        const tileY = hazard.tileY;
+        const worldX = tileX * TILE_SIZE;
+        const worldY = tileY * TILE_SIZE;
+        const typeDef = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+        if (!typeDef) return;
+        const angle = hazard.rotation || 0;
+
+        if (typeDef.key === 'mine') {
+            if (images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 32, 0, 32, 32, worldX + 8, worldY + 8, 32, 32);
+            }
+        } else if (typeDef.key === 'wall' || typeDef.key === 'dfg') {
+            if (images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 48, 42, 48, 48, worldX, worldY, 48, 48);
+            }
+        } else if (typeDef.key === 'turret' || typeDef.key === 'plasma' || typeDef.key === 'sleeper') {
+            const typeIndex = Math.max(0, Math.min(2, typeDef.typeId - 9));
+            if (images.turretBase) {
+                ctx.drawImage(images.turretBase, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
+            }
+            if (images.turretHead) {
+                let orientation = parseInt((angle / 22.5) + 1, 10);
+                if (orientation >= 16 || orientation < 0) orientation = 0;
+                ctx.drawImage(images.turretHead, orientation * 48, (typeDef.typeId - 9) * 48, 48, 48, worldX, worldY, 48, 48);
+            }
+        }
+
+        if (state.selection?.id === hazard.id) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 2 / state.view.scale;
+            ctx.strokeRect(worldX, worldY, TILE_SIZE, TILE_SIZE);
+            ctx.restore();
+        }
+    }
+
+    function buildPalette() {
+        const buildingOptions = BUILD_TREE_CONFIG.map((entry) => ({
+            type: entry.type,
+            label: entry.label,
+            icon: entry.menuIcon ?? entry.icon ?? 0
+        }));
+        buildingOptions.forEach((entry) => {
+            const item = document.createElement('div');
+            item.className = 'palette-item no-icon';
+            item.draggable = true;
+            const paletteKey = `building:${entry.type}`;
+            const span = document.createElement('span');
+            span.textContent = entry.label;
+            item.appendChild(span);
+            paletteItemRefs.building.set(entry.type, item);
+            item.addEventListener('dragstart', (ev) => {
+                state.dragging = { kind: 'building', type: entry.type };
+                ev.dataTransfer.setData('text/plain', `building:${entry.type}`);
+                setActivePaletteKey(paletteKey);
+            });
+            item.addEventListener('click', () => {
+                armPlacement({ kind: 'building', type: entry.type }, entry.label, paletteKey);
+                closeMobileDrawers();
+            });
+            buildingPalette.appendChild(item);
+        });
+
+        hazardDefinitions.forEach((entry) => {
+            const item = document.createElement('div');
+            item.className = 'palette-item';
+            item.draggable = true;
+            const paletteKey = `hazard:${entry.key}`;
+            const frame = entry.iconFrame || { x: entry.typeId * 32, y: 0, w: 32, h: 32 };
+            const icon = createPaletteIcon(assets.items, frame, 32);
+            const span = document.createElement('span');
+            span.textContent = entry.label;
+            const count = document.createElement('span');
+            count.className = 'count-badge';
+            item.appendChild(icon);
+            item.appendChild(span);
+            item.appendChild(count);
+            paletteItemRefs.hazard.set(entry.key, { el: item, countEl: count });
+            item.addEventListener('dragstart', (ev) => {
+                state.dragging = { kind: 'hazard', key: entry.key };
+                ev.dataTransfer.setData('text/plain', `hazard:${entry.key}`);
+                setActivePaletteKey(paletteKey);
+            });
+            item.addEventListener('click', () => {
+                armPlacement({ kind: 'hazard', key: entry.key }, entry.label, paletteKey);
+                closeMobileDrawers();
+            });
+            hazardPalette.appendChild(item);
+        });
+    }
+
+    function setSelection(selection) {
+        state.selection = selection;
+        if (!selection) {
+            editControls.style.display = 'none';
+            selectionInfo.textContent = 'Click a placed building or hazard to edit.';
+            render();
+            return;
+        }
+        inspectorPanel.classList.add('open');
+        editControls.style.display = 'block';
+        selectionInfo.textContent = '';
+        selectionTypeEl.textContent = `${selection.kind}: ${selection.label}`;
+        tileXInput.value = selection.tileX;
+        tileYInput.value = selection.tileY;
+        render();
+    }
+
+    function pickSelection(worldX, worldY) {
+        const design = ensureCityDesign(state.selectedCity);
+        const pt = { x: worldX, y: worldY };
+        const hitRect = (rect) => pt.x >= rect.x && pt.x <= rect.x + rect.w && pt.y >= rect.y && pt.y <= rect.y + rect.h;
+        for (const building of design.buildings) {
+            const fp = BUILDING_FOOTPRINT(building.type);
+            const rect = { x: building.tileX * TILE_SIZE, y: building.tileY * TILE_SIZE, w: fp.w * TILE_SIZE, h: fp.h * TILE_SIZE };
+            if (hitRect(rect)) {
+                if (building.type === 0) {
+                    return;
+                }
+                setSelection({ kind: 'building', id: building.id, label: getBuildingLabel(building.type), tileX: building.tileX, tileY: building.tileY, rotation: building.rotation || 0, locked: building.locked, type: building.type });
+                pickUpSelection();
+                return;
+            }
+        }
+        for (const hazard of design.hazards) {
+            const rect = { x: hazard.tileX * TILE_SIZE, y: hazard.tileY * TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE };
+            if (hitRect(rect)) {
+                const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+                const label = def ? def.label : 'Hazard';
+                setSelection({ kind: 'hazard', id: hazard.id, label, tileX: hazard.tileX, tileY: hazard.tileY, rotation: hazard.rotation || 0, allowOverlap: hazard.allowOverlap, hazardKey: hazard.hazardKey });
+                pickUpSelection();
+                return;
+            }
+        }
+        setSelection(null);
+    }
+
+    function applySelectionEdits() {
+        if (!state.selection) return;
+        const design = ensureCityDesign(state.selectedCity);
+        if (state.selection.kind === 'building') {
+            const building = design.buildings.find((b) => b.id === state.selection.id);
+            if (!building || building.locked) return;
+            const next = { ...building };
+            next.tileX = parseInt(tileXInput.value, 10) || 0;
+            next.tileY = parseInt(tileYInput.value, 10) || 0;
+            next.rotation = 0;
+            if (canPlaceBuilding(design, next, building.id)) {
+                Object.assign(building, next);
+            }
+        } else if (state.selection.kind === 'hazard') {
+            const hazard = design.hazards.find((h) => h.id === state.selection.id);
+            if (!hazard) return;
+            const next = { ...hazard };
+            next.tileX = parseInt(tileXInput.value, 10) || 0;
+            next.tileY = parseInt(tileYInput.value, 10) || 0;
+            next.rotation = 0;
+            if (canPlaceHazard(design, next, hazard.id)) {
+                Object.assign(hazard, next);
+            }
+        }
+        render();
+        updatePaletteAvailability();
+    }
+
+    function deleteSelection() {
+        if (!state.selection) return;
+        const design = ensureCityDesign(state.selectedCity);
+        if (state.selection.kind === 'building') {
+            const idx = design.buildings.findIndex((b) => b.id === state.selection.id);
+            if (idx !== -1 && !design.buildings[idx].locked) {
+                design.buildings.splice(idx, 1);
+            }
+        } else {
+            const idx = design.hazards.findIndex((h) => h.id === state.selection.id);
+            if (idx !== -1) design.hazards.splice(idx, 1);
+        }
+        setSelection(null);
+        render();
+        updatePaletteAvailability();
+    }
+
+    function pickUpSelection() {
+        if (!state.selection) return;
+        const design = ensureCityDesign(state.selectedCity);
+        if (state.selection.kind === 'building') {
+            const idx = design.buildings.findIndex((b) => b.id === state.selection.id);
+            if (idx === -1 || design.buildings[idx].locked) return;
+            const building = design.buildings.splice(idx, 1)[0];
+            armPlacement({
+                kind: 'building',
+                type: building.type,
+                existingId: building.id,
+                rotation: building.rotation || 0
+            }, getBuildingLabel(building.type), `building:${building.type}`);
+            statusEl.textContent = `Picked up ${getBuildingLabel(building.type)}. Choose a new tile.`;
+            updatePaletteAvailability();
+        } else {
+            const idx = design.hazards.findIndex((h) => h.id === state.selection.id);
+            if (idx === -1) return;
+            const hazard = design.hazards.splice(idx, 1)[0];
+            const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+            armPlacement({
+                kind: 'hazard',
+                key: hazard.hazardKey,
+                existingId: hazard.id,
+                rotation: hazard.rotation || 0
+            }, def?.label || 'Hazard', `hazard:${hazard.hazardKey}`);
+            statusEl.textContent = `Picked up ${def?.label || 'Hazard'}. Choose a new tile.`;
+        }
+        setSelection(null);
+        render();
+        updatePaletteAvailability();
+    }
+
+    function placeEntity(tileX, tileY) {
+        const design = ensureCityDesign(state.selectedCity);
+        if (!state.armedPlacement) return;
+        if (state.armedPlacement.kind === 'building') {
+            const building = {
+                id: state.armedPlacement.existingId || `b_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                type: state.armedPlacement.type,
+                tileX,
+                tileY,
+                rotation: 0,
+                cityId: state.selectedCity,
+                locked: false
+            };
+            if (canPlaceBuilding(design, building)) {
+                const existingIndex = design.buildings.findIndex((b) => b.id === building.id);
+                if (existingIndex !== -1) {
+                    design.buildings[existingIndex] = building;
+                } else {
+                    design.buildings.push(building);
+                }
+                const cfg = getBuildingConfig(building.type);
+                console.info('[CityBuilder] Placed building', {
+                    id: building.id,
+                    type: building.type,
+                    label: cfg?.label || getBuildingLabel(building.type),
+                    baseType: Math.floor(building.type / 100),
+                    configImage: cfg?.image,
+                    configIcon: cfg?.buildingIcon ?? cfg?.icon,
+                    iconIndex: getBuildingIconIndex(building.type)
+                });
+                statusEl.textContent = 'Placed building.';
+                clearArmedPlacement();
+                updatePaletteAvailability();
+            } else {
+                statusEl.textContent = 'Placement blocked by terrain or spacing rules.';
+            }
+        } else if (state.armedPlacement.kind === 'hazard') {
+            const hazard = {
+                id: state.armedPlacement.existingId || `h_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                hazardKey: state.armedPlacement.key,
+                tileX,
+                tileY,
+                rotation: 0,
+                allowOverlap: false
+            };
+            if (canPlaceHazard(design, hazard)) {
+                const existingIndex = design.hazards.findIndex((h) => h.id === hazard.id);
+                if (existingIndex !== -1) {
+                    design.hazards[existingIndex] = hazard;
+                } else {
+                    design.hazards.push(hazard);
+                }
+                console.info('[CityBuilder] Placed hazard', {
+                    id: hazard.id,
+                    key: hazard.hazardKey,
+                    baseType: 'hazard',
+                    typeId: hazardDefinitions.find((h) => h.key === hazard.hazardKey)?.typeId
+                });
+                statusEl.textContent = 'Placed hazard.';
+                updatePaletteAvailability();
+                if (!state.armedPlacement.existingId) {
+                    // keep arming to allow rapid placement until limit reached
+                    if (!canPlaceHazard(design, { ...hazard, id: 'test' }, hazard.id)) {
+                        clearArmedPlacement();
+                    }
+                } else {
+                    clearArmedPlacement();
+                }
+            } else {
+                statusEl.textContent = 'Hazard placement blocked by terrain or overlap rules.';
+            }
+        }
+        render();
+    }
+
+    function updateHoverFromPoint(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        state.hoverTile = screenToTile(x, y);
+        return { x, y };
+    }
+
+    function handleCanvasInteraction(clientX, clientY) {
+        const { x, y } = updateHoverFromPoint(clientX, clientY);
+        const world = screenToWorld(x, y);
+        const tile = state.hoverTile || screenToTile(x, y);
+        if (state.armedPlacement) {
+            placeEntity(tile.tileX, tile.tileY);
+            return;
+        }
+        pickSelection(world.x, world.y);
+    }
+
+    function handleCanvasClick(ev) {
+        ev.preventDefault();
+        handleCanvasInteraction(ev.clientX, ev.clientY);
+    }
+
+    function handleDragOver(ev) {
+        ev.preventDefault();
+        updateHoverFromPoint(ev.clientX, ev.clientY);
+        render();
+    }
+
+    function handleDrop(ev) {
+        ev.preventDefault();
+        const { x, y } = updateHoverFromPoint(ev.clientX, ev.clientY);
+        const { tileX, tileY } = screenToTile(x, y);
+        const data = ev.dataTransfer.getData('text/plain');
+        if (data.startsWith('building:')) {
+            const type = Number(data.split(':')[1]);
+            armPlacement({ kind: 'building', type }, getBuildingLabel(type), `building:${type}`);
+        } else if (data.startsWith('hazard:')) {
+            const key = data.split(':')[1];
+            const def = hazardDefinitions.find((h) => h.key === key);
+            armPlacement({ kind: 'hazard', key }, def?.label, `hazard:${key}`);
+        }
+        placeEntity(tileX, tileY);
+    }
+
+    function handleHoverMove(ev) {
+        if (state.panning) return;
+        updateHoverFromPoint(ev.clientX, ev.clientY);
+        render();
+    }
+
+    function handleContextMenu(ev) {
+        ev.preventDefault();
+        clearArmedPlacement();
+        setSelection(null);
+    }
+
+    function startPan(ev) {
+        state.panning = true;
+        state.panPointerId = ev.pointerId ?? ev.identifier ?? null;
+        state.panMoved = false;
+        canvas.style.cursor = 'grabbing';
+        state.panOrigin = { x: ev.clientX, y: ev.clientY, offsetX: state.view.offsetX, offsetY: state.view.offsetY };
+    }
+
+    function movePan(ev) {
+        if (!state.panning || !state.panOrigin) return;
+        if (state.panPointerId !== null && ev.pointerId !== undefined && ev.pointerId !== state.panPointerId) return;
+        const dx = (ev.clientX - state.panOrigin.x) / state.view.scale;
+        const dy = (ev.clientY - state.panOrigin.y) / state.view.scale;
+        if (Math.abs(ev.clientX - state.panOrigin.x) > 4 || Math.abs(ev.clientY - state.panOrigin.y) > 4) {
+            state.panMoved = true;
+        }
+        state.view.offsetX = state.panOrigin.offsetX + dx;
+        state.view.offsetY = state.panOrigin.offsetY + dy;
+        render();
+    }
+
+    function endPan(ev) {
+        if (state.panPointerId !== null && ev && ev.pointerId !== undefined && ev.pointerId !== state.panPointerId) return;
+        state.panning = false;
+        state.panOrigin = null;
+        state.panPointerId = null;
+        state.panMoved = false;
+        canvas.style.cursor = 'grab';
+    }
+
+    function handleTouchStart(ev) {
+        if (!ev.touches.length) return;
+        ev.preventDefault();
+        const touch = ev.touches[0];
+        startPan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
+    }
+
+    function handleTouchMove(ev) {
+        if (!ev.touches.length) return;
+        ev.preventDefault();
+        const touch = ev.touches[0];
+        movePan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
+    }
+
+    function handleTouchEnd(ev) {
+        if (!ev.changedTouches.length) return;
+        const touch = ev.changedTouches[0];
+        const moved = state.panMoved;
+        endPan({ pointerId: touch.identifier });
+        if (!moved) {
+            handleCanvasInteraction(touch.clientX, touch.clientY);
+        }
+    }
+
+    function centerOnCity() {
+        const base = getCityBase(state.selectedCity);
+        const targetX = base.tileX * TILE_SIZE;
+        const targetY = base.tileY * TILE_SIZE;
+        const visibleWidth = canvas.width / state.view.scale;
+        const visibleHeight = canvas.height / state.view.scale;
+        state.view.offsetX = -(targetX) + (visibleWidth / 2) - (1.5 * TILE_SIZE);
+        state.view.offsetY = -(targetY) + (visibleHeight / 2) - (1.5 * TILE_SIZE);
+        render();
+    }
+
+    function exportLayout() {
+        const design = ensureCityDesign(state.selectedCity);
+        const base = getCityBase(state.selectedCity);
+        const layout = design.buildings.map((b) => ({
+            type: b.type,
+            dx: b.tileX - base.tileX,
+            dy: b.tileY - base.tileY
+        }));
+        const defenses = design.hazards.map((h) => {
+            const entry = {
+                type: h.hazardKey,
+                dx: h.tileX - base.tileX,
+                dy: h.tileY - base.tileY
+            };
+            if (h.rotation) entry.angle = h.rotation;
+            if (h.allowOverlap) entry.allowOverlap = true;
+            return entry;
+        });
+        const payload = {
+            cityId: state.selectedCity,
+            baseTileX: base.tileX,
+            baseTileY: base.tileY,
+            layout,
+            defenses
+        };
+        exportOutput.value = JSON.stringify(payload, null, 2);
+        exportPanel.classList.remove('hidden');
+    }
+
+    function resetCity() {
+        state.cityDesigns.set(state.selectedCity, createDefaultLayout(state.selectedCity));
+        setSelection(null);
+        render();
+    }
+
+    function closeMobileDrawers() {
+        palettePanel.classList.remove('open');
+        inspectorPanel.classList.remove('open');
+    }
+
+    async function init() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        try {
+            await loadCityData();
+            statusEl.textContent = 'Loading art...';
+            await loadImages();
+            populateCitySelect();
+            buildPalette();
+            updatePaletteAvailability();
+            centerOnCity();
+            render();
+            statusEl.textContent = 'Ready.';
+        } catch (error) {
+            console.error(error);
+            statusEl.textContent = `Failed to load builder data: ${error.message}`;
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            if (window.innerWidth > 1100) {
+                closeMobileDrawers();
+            }
+            render();
+        });
+
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('mousemove', handleHoverMove);
+        canvas.addEventListener('mousedown', startPan);
+        window.addEventListener('mousemove', movePan);
+        window.addEventListener('mouseup', endPan);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchEnd);
+        canvas.addEventListener('dragover', handleDragOver);
+        canvas.addEventListener('drop', handleDrop);
+        canvas.addEventListener('mouseleave', () => {
+            state.hoverTile = null;
+            render();
+        });
+        canvas.addEventListener('contextmenu', handleContextMenu);
+
+        zoomSlider.addEventListener('input', () => {
+            state.view.scale = parseFloat(zoomSlider.value);
+            render();
+        });
+        resetViewBtn.addEventListener('click', () => centerOnCity());
+        toggleExportBtn.addEventListener('click', () => {
+            exportLayout();
+        });
+        copyExportBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(exportOutput.value || '').then(() => {
+                statusEl.textContent = 'Copied exported JSON to clipboard.';
+            });
+        });
+        resetCityBtn.addEventListener('click', resetCity);
+
+        paletteToggle.addEventListener('click', () => {
+            const opened = palettePanel.classList.toggle('open');
+            if (opened) {
+                inspectorPanel.classList.remove('open');
+            }
+        });
+        inspectorToggle.addEventListener('click', () => {
+            const opened = inspectorPanel.classList.toggle('open');
+            if (opened) {
+                palettePanel.classList.remove('open');
+            }
+        });
+
+        tileXInput.addEventListener('change', applySelectionEdits);
+        tileYInput.addEventListener('change', applySelectionEdits);
+        Object.entries(nudgeBtns).forEach(([dir, btn]) => {
+            btn.addEventListener('click', () => {
+                const delta = dir === 'left' ? [-1, 0] : dir === 'right' ? [1, 0] : dir === 'up' ? [0, -1] : [0, 1];
+                tileXInput.value = (parseInt(tileXInput.value, 10) || 0) + delta[0];
+                tileYInput.value = (parseInt(tileYInput.value, 10) || 0) + delta[1];
+                applySelectionEdits();
+            });
+        });
+        deleteSelectionBtn.addEventListener('click', deleteSelection);
+        deleteSelectionBtn.insertAdjacentHTML('beforebegin', '<button id="pickupSelection" style="margin-top:10px;">Pick Up</button>');
+        document.getElementById('pickupSelection').addEventListener('click', pickUpSelection);
+
+        citySelect.addEventListener('change', () => {
+            state.selectedCity = Number(citySelect.value);
+            centerOnCity();
+            setSelection(null);
+            closeMobileDrawers();
+            render();
+            updatePaletteAvailability();
+        });
+    }
+
+    init();
+})();
+</script>
+</body>
+</html>
