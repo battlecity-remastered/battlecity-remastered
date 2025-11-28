@@ -222,6 +222,8 @@
                 border-left: 1px solid var(--panel-border);
             }
             #inspector.open { transform: translateX(0); }
+            #inspectorToggle { display: none !important; }
+            #inspector { display: none !important; }
             #canvasHolder { min-height: 60vh; }
             .mobile-toggle {
                 display: inline-flex;
@@ -251,7 +253,6 @@
     <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
     <span id="status">Ready.</span>
 </div>
-<div id="runHint">Run <code>npm start</code> and open <code>http://localhost:8021/city-builder</code> to load the builder with server-hosted assets and map data.</div>
 <div id="container">
     <aside id="palette">
         <h3>Buildings</h3>
@@ -383,7 +384,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         selectedCity: null,
         selection: null,
         citySpawns: {},
-        activePaletteKey: null
+        activePaletteKey: null,
+        pinch: null
     };
     const debugLoggedTypes = new Set();
     const overlayLogTypes = new Set();
@@ -534,6 +536,21 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             tileX: Math.floor(world.x / TILE_SIZE),
             tileY: Math.floor(world.y / TILE_SIZE)
         };
+    }
+
+    function clampScale(scale) {
+        const min = Number(zoomSlider.min) || 0.4;
+        const max = Number(zoomSlider.max) || 2;
+        const step = Number(zoomSlider.step) || 0.05;
+        const clamped = Math.min(max, Math.max(min, scale));
+        const snapped = Math.round(clamped / step) * step;
+        return Math.min(max, Math.max(min, snapped));
+    }
+
+    function applyScale(scale) {
+        state.view.scale = clampScale(scale);
+        zoomSlider.value = state.view.scale;
+        render();
     }
 
     function canPlaceBuilding(cityDesign, building, ignoreId = null) {
@@ -1017,20 +1034,21 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         if (!selection) {
             editControls.style.display = 'none';
             selectionInfo.textContent = 'Click a placed building or hazard to edit.';
+            if (window.innerWidth <= 1100) {
+                inspectorPanel.classList.remove('open');
+            }
             render();
             return;
         }
-        inspectorPanel.classList.add('open');
-        editControls.style.display = 'block';
-        selectionInfo.textContent = '';
-        selectionTypeEl.textContent = `${selection.kind}: ${selection.label}`;
-        tileXInput.value = selection.tileX;
-        tileYInput.value = selection.tileY;
-        render();
-        if (window.innerWidth <= 1100) {
-            palettePanel.classList.remove('open');
+        if (window.innerWidth > 1100) {
             inspectorPanel.classList.add('open');
+            editControls.style.display = 'block';
+            selectionInfo.textContent = '';
+            selectionTypeEl.textContent = `${selection.kind}: ${selection.label}`;
+            tileXInput.value = selection.tileX;
+            tileYInput.value = selection.tileY;
         }
+        render();
     }
 
     function pickSelection(worldX, worldY) {
@@ -1306,6 +1324,17 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     function handleTouchStart(ev) {
         if (!ev.touches.length) return;
         ev.preventDefault();
+        if (ev.touches.length === 2) {
+            const [t1, t2] = ev.touches;
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            state.pinch = {
+                startDistance: Math.hypot(dx, dy),
+                startScale: state.view.scale
+            };
+            return;
+        }
+        state.pinch = null;
         const touch = ev.touches[0];
         startPan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
     }
@@ -1313,12 +1342,27 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     function handleTouchMove(ev) {
         if (!ev.touches.length) return;
         ev.preventDefault();
+        if (ev.touches.length === 2) {
+            const [t1, t2] = ev.touches;
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            const dist = Math.hypot(dx, dy);
+            if (state.pinch && state.pinch.startDistance > 0) {
+                const factor = dist / state.pinch.startDistance;
+                applyScale(state.pinch.startScale * factor);
+            }
+            return;
+        }
         const touch = ev.touches[0];
         movePan({ clientX: touch.clientX, clientY: touch.clientY, identifier: touch.identifier });
     }
 
     function handleTouchEnd(ev) {
         if (!ev.changedTouches.length) return;
+        if (ev.touches.length === 1 && state.pinch) {
+            state.pinch = null;
+            return;
+        }
         const touch = ev.changedTouches[0];
         const moved = state.panMoved;
         endPan({ pointerId: touch.identifier });
