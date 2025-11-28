@@ -96,14 +96,46 @@
             cursor: grab;
             user-select: none;
         }
+        .palette-item.disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .palette-item img {
             width: 32px;
             height: 32px;
             image-rendering: pixelated;
         }
+        .palette-icon {
+            width: 32px;
+            height: 32px;
+            background-repeat: no-repeat;
+            background-size: auto;
+            image-rendering: pixelated;
+            flex-shrink: 0;
+        }
         .palette-item span {
             font-size: 12px;
             line-height: 1.2;
+        }
+        .palette-item.no-icon {
+            padding-left: 10px;
+        }
+        .palette-item.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(91, 208, 255, 0.35);
+            background: #161b26;
+        }
+        .count-badge {
+            margin-left: auto;
+            background: #1f2634;
+            border: 1px solid #2f3846;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            color: #dce6f5;
+            min-width: 24px;
+            text-align: center;
         }
         #exportPanel {
             position: absolute;
@@ -249,16 +281,10 @@
                 <input type="number" id="tileX" step="1">
                 <input type="number" id="tileY" step="1">
             </div>
-            <label>Rotation (deg)</label>
-            <input type="number" id="rotation" step="1">
             <button id="nudgeUp">▲</button>
             <button id="nudgeDown">▼</button>
             <button id="nudgeLeft">◀</button>
             <button id="nudgeRight">▶</button>
-            <div style="margin-top:8px; display:flex; gap:8px;">
-                <button id="rotateLeft">Rotate -45°</button>
-                <button id="rotateRight">Rotate +45°</button>
-            </div>
             <button id="deleteSelection" style="margin-top:10px; background:#3a1b1b;">Delete</button>
         </div>
         <h3>Tips</h3>
@@ -283,12 +309,12 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     const MAX_BUILDING_CHAIN_DISTANCE_SQ = MAX_BUILDING_CHAIN_DISTANCE * MAX_BUILDING_CHAIN_DISTANCE;
 
     const hazardDefinitions = [
-        { key: 'mine', label: 'Mine', exportType: 'mine', typeId: 4 },
-        { key: 'dfg', label: 'DFG', exportType: 'dfg', typeId: 7 },
-        { key: 'wall', label: 'Wall', exportType: 'wall', typeId: 8 },
-        { key: 'turret', label: 'Turret', exportType: 'turret', typeId: 9 },
-        { key: 'sleeper', label: 'Sleeper', exportType: 'sleeper', typeId: 10 },
-        { key: 'plasma', label: 'Plasma', exportType: 'plasma', typeId: 11 }
+        { key: 'mine', label: 'Mine', exportType: 'mine', typeId: 4, limit: 10, iconFrame: { x: 4 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'dfg', label: 'DFG', exportType: 'dfg', typeId: 7, limit: 5, iconFrame: { x: 7 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'wall', label: 'Wall', exportType: 'wall', typeId: 8, limit: 20, iconFrame: { x: 8 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'turret', label: 'Turret', exportType: 'turret', typeId: 9, limit: 10, iconFrame: { x: 9 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'sleeper', label: 'Sleeper', exportType: 'sleeper', typeId: 10, limit: 5, iconFrame: { x: 10 * 32, y: 0, w: 32, h: 32 } },
+        { key: 'plasma', label: 'Plasma', exportType: 'plasma', typeId: 11, limit: 5, iconFrame: { x: 11 * 32, y: 0, w: 32, h: 32 } }
     ];
 
     const SKIN_PATH = '/client/data/skins/BattleCityDX';
@@ -298,13 +324,14 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         rocks: `${SKIN_PATH}/imgRocks.png`,
         buildings: `${SKIN_PATH}/imgBuildings.png`,
         buildIcons: `${SKIN_PATH}/imgBuildIcons.png`,
-        items: `${SKIN_PATH}/imgItems.png`,
+        items: `/client/data/imgItems.png`,
         turretBase: `${SKIN_PATH}/imgTurretBase.png`,
         turretHead: `${SKIN_PATH}/imgTurretHead.png`
     };
 
     const images = {};
     let groundPattern = null;
+    const buildingLookupByType = new Map(BUILD_TREE_CONFIG.map((entry) => [entry.type, entry]));
 
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
@@ -329,15 +356,16 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     const selectionTypeEl = document.getElementById('selectionType');
     const tileXInput = document.getElementById('tileX');
     const tileYInput = document.getElementById('tileY');
-    const rotationInput = document.getElementById('rotation');
-    const rotateLeftBtn = document.getElementById('rotateLeft');
-    const rotateRightBtn = document.getElementById('rotateRight');
     const deleteSelectionBtn = document.getElementById('deleteSelection');
     const nudgeBtns = {
         up: document.getElementById('nudgeUp'),
         down: document.getElementById('nudgeDown'),
         left: document.getElementById('nudgeLeft'),
         right: document.getElementById('nudgeRight')
+    };
+    const paletteItemRefs = {
+        building: new Map(),
+        hazard: new Map()
     };
 
     const state = {
@@ -354,8 +382,12 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         cityDesigns: new Map(),
         selectedCity: null,
         selection: null,
-        citySpawns: {}
+        citySpawns: {},
+        activePaletteKey: null
     };
+    const debugLoggedTypes = new Set();
+    const overlayLogTypes = new Set();
+    const iconBlankCache = new Map();
 
     function buildMap(mapData) {
         const size = MAP_SIZE;
@@ -510,6 +542,9 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         if (building.tileX < 0 || building.tileY < 0 || building.tileX + w > MAP_SIZE || building.tileY + h > MAP_SIZE) {
             return false;
         }
+        if (isBuildingTypePlaced(cityDesign, building.type, ignoreId)) {
+            return false;
+        }
         for (let x = building.tileX; x < building.tileX + w; x++) {
             for (let y = building.tileY; y < building.tileY + h; y++) {
                 const value = state.map?.[x]?.[y];
@@ -565,13 +600,152 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
                 return false;
             }
         }
+        const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+        if (def?.limit) {
+            const currentCount = cityDesign.hazards.filter((h) => (h.hazardKey === def.key || h.exportType === def.exportType) && h.id !== ignoreId).length;
+            if (currentCount >= def.limit) return false;
+        }
         for (const building of cityDesign.buildings) {
             const fp = BUILDING_FOOTPRINT(building.type);
             const withinX = tileX >= building.tileX && tileX < (building.tileX + fp.w);
             const withinY = tileY >= building.tileY && tileY < (building.tileY + fp.h);
-            if (withinX && withinY) return false;
+            if (withinX && withinY) {
+                const baseType = Math.floor(building.type / 100);
+                const isRearRow = Math.floor(tileY) === (building.tileY + fp.h - 1);
+                const rearRowAllowed = isRearRow && (baseType === 0 || baseType === 1 || baseType === 2);
+                if (!rearRowAllowed) return false;
+            }
         }
         return true;
+    }
+
+    function getBuildingConfig(type) {
+        return buildingLookupByType.get(type) || null;
+    }
+
+    function getBuildingLabel(type) {
+        const config = getBuildingConfig(type);
+        return config?.label || `Building ${type}`;
+    }
+
+    function getBuildingIconIndex(type) {
+        const config = getBuildingConfig(type);
+        if (!config) return null;
+        const buildingIcon = Number(config.buildingIcon);
+        const fallbackIcon = Number(config.icon);
+        if (Number.isFinite(buildingIcon)) return buildingIcon;
+        if (Number.isFinite(fallbackIcon)) return fallbackIcon;
+        return 0;
+    }
+
+    function getBuildingImageIndex(type) {
+        const config = getBuildingConfig(type);
+        const baseType = Math.floor(type / 100);
+        const image = Number(config?.image);
+        return Number.isFinite(image) ? image : baseType;
+    }
+
+    function drawBuildingOverlay(type, worldX, worldY) {
+        const baseType = Math.floor(type / 100);
+        if (baseType !== 1 && baseType !== 4) return;
+        if (!images.items) return;
+        const iconIndex = getBuildingIconIndex(type);
+        if (!Number.isFinite(iconIndex)) return;
+        const target = baseType === 4
+            ? { x: worldX + 14, y: worldY + 98 }
+            : { x: worldX + 56, y: worldY + 52 };
+        const sourceX = iconIndex * 32;
+        ctx.drawImage(images.items, sourceX, 0, 32, 32, target.x, target.y, 32, 32);
+    }
+
+    function isBuildingTypePlaced(design, type, ignoreId = null) {
+        return design.buildings.some((b) => b.type === type && b.id !== ignoreId);
+    }
+
+    function getHazardLimit(hazardKey) {
+        const def = hazardDefinitions.find((h) => h.key === hazardKey || h.exportType === hazardKey);
+        return def?.limit ?? null;
+    }
+
+    function getHazardRemaining(design, hazardKey) {
+        const def = hazardDefinitions.find((h) => h.key === hazardKey || h.exportType === hazardKey);
+        if (!def || !def.limit) return null;
+        const currentCount = design.hazards.filter((h) => h.hazardKey === def.key || h.exportType === def.exportType).length;
+        return Math.max(0, def.limit - currentCount);
+    }
+
+    function createPaletteIcon(sprite, frame, renderSize = null) {
+        const icon = document.createElement('div');
+        icon.className = 'palette-icon';
+        const width = renderSize?.w ?? renderSize ?? frame.w;
+        const height = renderSize?.h ?? renderSize ?? frame.h;
+        icon.style.width = `${width}px`;
+        icon.style.height = `${height}px`;
+        icon.style.backgroundImage = `url(${sprite})`;
+        icon.style.backgroundPosition = `${-frame.x}px ${-frame.y}px`;
+        icon.style.backgroundRepeat = 'no-repeat';
+        icon.style.imageRendering = 'pixelated';
+        return icon;
+    }
+
+    function setActivePaletteKey(key) {
+        state.activePaletteKey = key;
+        ['building', 'hazard'].forEach((kind) => {
+            const entries = paletteItemRefs[kind];
+            entries.forEach((el, entryKey) => {
+                if (!el) return;
+                const matchKey = `${kind}:${entryKey}`;
+                if (matchKey === key) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    function updatePaletteAvailability() {
+        const design = ensureCityDesign(state.selectedCity);
+        paletteItemRefs.building.forEach((el, type) => {
+            if (!el) return;
+            const isPlaced = isBuildingTypePlaced(design, type);
+            if (isPlaced) {
+                el.classList.add('disabled');
+                el.draggable = false;
+            } else {
+                el.classList.remove('disabled');
+                el.draggable = true;
+            }
+        });
+        paletteItemRefs.hazard.forEach((entry, key) => {
+            const { el, countEl } = entry;
+            if (!el) return;
+            const remaining = getHazardRemaining(design, key);
+            if (remaining !== null && countEl) {
+                countEl.textContent = remaining;
+            }
+            const disabled = remaining !== null && remaining <= 0;
+            if (disabled) {
+                el.classList.add('disabled');
+                el.draggable = false;
+            } else {
+                el.classList.remove('disabled');
+                el.draggable = true;
+            }
+        });
+    }
+
+    function armPlacement(payload, label, paletteKey = null) {
+        state.armedPlacement = payload;
+        setActivePaletteKey(paletteKey);
+        if (label) {
+            statusEl.textContent = `Armed ${label}. Click map to place.`;
+        }
+    }
+
+    function clearArmedPlacement() {
+        state.armedPlacement = null;
+        setActivePaletteKey(null);
     }
 
     function render() {
@@ -632,17 +806,75 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         design.buildings.forEach((building) => drawBuilding(building));
         design.hazards.forEach((hazard) => drawHazard(hazard));
 
-        if (state.armedPlacement) {
-            const { tileX, tileY } = state.hoverTile || {};
-            if (tileX !== undefined) {
-                const { w, h } = state.armedPlacement.kind === 'building'
-                    ? BUILDING_FOOTPRINT(state.armedPlacement.type)
-                    : { w: 1, h: 1 };
-                ctx.fillStyle = 'rgba(91, 208, 255, 0.15)';
-                ctx.fillRect(tileX * TILE_SIZE, tileY * TILE_SIZE, w * TILE_SIZE, h * TILE_SIZE);
+        drawPlacementGhost(design);
+
+        ctx.restore();
+    }
+
+    function drawPlacementGhost(design) {
+        if (!state.armedPlacement) return;
+        const { tileX, tileY } = state.hoverTile || {};
+        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) return;
+        const placementRect = state.armedPlacement.kind === 'building'
+            ? BUILDING_FOOTPRINT(state.armedPlacement.type)
+            : { w: 1, h: 1 };
+
+        let isValid = false;
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+
+        if (state.armedPlacement.kind === 'building') {
+            const building = {
+                id: 'ghost',
+                type: state.armedPlacement.type,
+                tileX,
+                tileY,
+                rotation: 0,
+                cityId: state.selectedCity
+            };
+            isValid = canPlaceBuilding(design, building);
+            const baseType = Math.floor(building.type / 100);
+            const spriteY = baseType * 144;
+            if (images.buildings) {
+                ctx.drawImage(images.buildings, 0, spriteY, 144, 144, tileX * TILE_SIZE, tileY * TILE_SIZE, 144, 144);
+            } else {
+                ctx.fillStyle = '#2f8bff';
+                ctx.fillRect(tileX * TILE_SIZE, tileY * TILE_SIZE, placementRect.w * TILE_SIZE, placementRect.h * TILE_SIZE);
+            }
+            drawBuildingOverlay(building.type, tileX * TILE_SIZE, tileY * TILE_SIZE);
+        } else if (state.armedPlacement.kind === 'hazard') {
+            const hazard = {
+                id: 'ghost',
+                hazardKey: state.armedPlacement.key,
+                tileX,
+                tileY,
+                rotation: 0
+            };
+            isValid = canPlaceHazard(design, hazard);
+            const typeDef = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+            const worldX = tileX * TILE_SIZE;
+            const worldY = tileY * TILE_SIZE;
+            if (typeDef?.key === 'mine' && images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 32, 0, 32, 32, worldX + 8, worldY + 8, 32, 32);
+            } else if ((typeDef?.key === 'wall' || typeDef?.key === 'dfg') && images.items) {
+                ctx.drawImage(images.items, typeDef.typeId * 48, 42, 48, 48, worldX, worldY, 48, 48);
+            } else if (typeDef && images.turretBase) {
+                const typeIndex = Math.max(0, Math.min(2, typeDef.typeId - 9));
+                ctx.drawImage(images.turretBase, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
+                if (images.turretHead) {
+                    ctx.drawImage(images.turretHead, 0, typeIndex * 48, 48, 48, worldX, worldY, 48, 48);
+                }
+            } else {
+                ctx.fillStyle = '#ffcc4d';
+                ctx.fillRect(worldX, worldY, TILE_SIZE, TILE_SIZE);
             }
         }
 
+        ctx.restore();
+        ctx.save();
+        ctx.lineWidth = 2 / state.view.scale;
+        ctx.strokeStyle = isValid ? 'rgba(91, 208, 255, 0.9)' : 'rgba(220, 96, 96, 0.9)';
+        ctx.strokeRect(tileX * TILE_SIZE, tileY * TILE_SIZE, placementRect.w * TILE_SIZE, placementRect.h * TILE_SIZE);
         ctx.restore();
     }
 
@@ -650,13 +882,29 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         const worldX = building.tileX * TILE_SIZE;
         const worldY = building.tileY * TILE_SIZE;
         const baseType = Math.floor(building.type / 100);
-        const spriteY = baseType * 144;
+        const spriteRow = baseType;
+        const spriteY = spriteRow * 144;
 
         if (images.buildings) {
             ctx.drawImage(images.buildings, 0, spriteY, 144, 144, worldX, worldY, 144, 144);
         } else {
             ctx.fillStyle = '#2f8bff';
             ctx.fillRect(worldX, worldY, 144, 144);
+        }
+        drawBuildingOverlay(building.type, worldX, worldY);
+
+        const config = getBuildingConfig(building.type);
+        const configImage = Number.isFinite(config?.image) ? config.image : baseType;
+        if (!debugLoggedTypes.has(building.type) && configImage !== baseType) {
+            debugLoggedTypes.add(building.type);
+            console.warn('[CityBuilder] Sprite row differs from config image', {
+                type: building.type,
+                baseType,
+                spriteRow,
+                configImage,
+                iconIndex,
+                config
+            });
         }
         if (state.selection?.id === building.id) {
             ctx.save();
@@ -706,28 +954,27 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     }
 
     function buildPalette() {
-        const buildingOptions = [{ type: 0, label: 'Command Center', icon: 0, menuIcon: 0 }, ...BUILD_TREE_CONFIG.map((entry) => ({ type: entry.type, label: entry.label, icon: entry.menuIcon ?? entry.icon ?? 0 }))];
+        const buildingOptions = BUILD_TREE_CONFIG.map((entry) => ({
+            type: entry.type,
+            label: entry.label,
+            icon: entry.menuIcon ?? entry.icon ?? 0
+        }));
         buildingOptions.forEach((entry) => {
             const item = document.createElement('div');
-            item.className = 'palette-item';
-            const img = document.createElement('img');
-            img.src = assets.buildIcons;
-            img.style.objectFit = 'none';
-            img.style.objectPosition = `${-entry.icon * 16}px 0`;
-            img.width = 32;
-            img.height = 32;
-            img.draggable = true;
+            item.className = 'palette-item no-icon';
+            item.draggable = true;
+            const paletteKey = `building:${entry.type}`;
             const span = document.createElement('span');
             span.textContent = entry.label;
-            item.appendChild(img);
             item.appendChild(span);
+            paletteItemRefs.building.set(entry.type, item);
             item.addEventListener('dragstart', (ev) => {
                 state.dragging = { kind: 'building', type: entry.type };
                 ev.dataTransfer.setData('text/plain', `building:${entry.type}`);
+                setActivePaletteKey(paletteKey);
             });
             item.addEventListener('click', () => {
-                state.armedPlacement = { kind: 'building', type: entry.type };
-                statusEl.textContent = `Armed ${entry.label}. Click map to place.`;
+                armPlacement({ kind: 'building', type: entry.type }, entry.label, paletteKey);
                 closeMobileDrawers();
             });
             buildingPalette.appendChild(item);
@@ -736,24 +983,25 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         hazardDefinitions.forEach((entry) => {
             const item = document.createElement('div');
             item.className = 'palette-item';
-            const img = document.createElement('img');
-            img.src = assets.items;
-            img.style.objectFit = 'none';
-            img.style.objectPosition = `${-entry.typeId * 16}px 0`;
-            img.width = 32;
-            img.height = 32;
-            img.draggable = true;
+            item.draggable = true;
+            const paletteKey = `hazard:${entry.key}`;
+            const frame = entry.iconFrame || { x: entry.typeId * 32, y: 0, w: 32, h: 32 };
+            const icon = createPaletteIcon(assets.items, frame, 32);
             const span = document.createElement('span');
             span.textContent = entry.label;
-            item.appendChild(img);
+            const count = document.createElement('span');
+            count.className = 'count-badge';
+            item.appendChild(icon);
             item.appendChild(span);
+            item.appendChild(count);
+            paletteItemRefs.hazard.set(entry.key, { el: item, countEl: count });
             item.addEventListener('dragstart', (ev) => {
                 state.dragging = { kind: 'hazard', key: entry.key };
                 ev.dataTransfer.setData('text/plain', `hazard:${entry.key}`);
+                setActivePaletteKey(paletteKey);
             });
             item.addEventListener('click', () => {
-                state.armedPlacement = { kind: 'hazard', key: entry.key };
-                statusEl.textContent = `Armed ${entry.label}. Click map to place.`;
+                armPlacement({ kind: 'hazard', key: entry.key }, entry.label, paletteKey);
                 closeMobileDrawers();
             });
             hazardPalette.appendChild(item);
@@ -774,7 +1022,6 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         selectionTypeEl.textContent = `${selection.kind}: ${selection.label}`;
         tileXInput.value = selection.tileX;
         tileYInput.value = selection.tileY;
-        rotationInput.value = selection.rotation || 0;
         render();
     }
 
@@ -786,7 +1033,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             const fp = BUILDING_FOOTPRINT(building.type);
             const rect = { x: building.tileX * TILE_SIZE, y: building.tileY * TILE_SIZE, w: fp.w * TILE_SIZE, h: fp.h * TILE_SIZE };
             if (hitRect(rect)) {
-                setSelection({ kind: 'building', id: building.id, label: `Building ${building.type}`, tileX: building.tileX, tileY: building.tileY, rotation: building.rotation || 0, locked: building.locked });
+                if (building.type === 0) {
+                    return;
+                }
+                setSelection({ kind: 'building', id: building.id, label: getBuildingLabel(building.type), tileX: building.tileX, tileY: building.tileY, rotation: building.rotation || 0, locked: building.locked, type: building.type });
+                pickUpSelection();
                 return;
             }
         }
@@ -795,7 +1046,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             if (hitRect(rect)) {
                 const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
                 const label = def ? def.label : 'Hazard';
-                setSelection({ kind: 'hazard', id: hazard.id, label, tileX: hazard.tileX, tileY: hazard.tileY, rotation: hazard.rotation || 0, allowOverlap: hazard.allowOverlap });
+                setSelection({ kind: 'hazard', id: hazard.id, label, tileX: hazard.tileX, tileY: hazard.tileY, rotation: hazard.rotation || 0, allowOverlap: hazard.allowOverlap, hazardKey: hazard.hazardKey });
+                pickUpSelection();
                 return;
             }
         }
@@ -811,7 +1063,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             const next = { ...building };
             next.tileX = parseInt(tileXInput.value, 10) || 0;
             next.tileY = parseInt(tileYInput.value, 10) || 0;
-            next.rotation = parseFloat(rotationInput.value) || 0;
+            next.rotation = 0;
             if (canPlaceBuilding(design, next, building.id)) {
                 Object.assign(building, next);
             }
@@ -821,12 +1073,13 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             const next = { ...hazard };
             next.tileX = parseInt(tileXInput.value, 10) || 0;
             next.tileY = parseInt(tileYInput.value, 10) || 0;
-            next.rotation = parseFloat(rotationInput.value) || 0;
+            next.rotation = 0;
             if (canPlaceHazard(design, next, hazard.id)) {
                 Object.assign(hazard, next);
             }
         }
         render();
+        updatePaletteAvailability();
     }
 
     function deleteSelection() {
@@ -843,6 +1096,40 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         }
         setSelection(null);
         render();
+        updatePaletteAvailability();
+    }
+
+    function pickUpSelection() {
+        if (!state.selection) return;
+        const design = ensureCityDesign(state.selectedCity);
+        if (state.selection.kind === 'building') {
+            const idx = design.buildings.findIndex((b) => b.id === state.selection.id);
+            if (idx === -1 || design.buildings[idx].locked) return;
+            const building = design.buildings.splice(idx, 1)[0];
+            armPlacement({
+                kind: 'building',
+                type: building.type,
+                existingId: building.id,
+                rotation: building.rotation || 0
+            }, getBuildingLabel(building.type), `building:${building.type}`);
+            statusEl.textContent = `Picked up ${getBuildingLabel(building.type)}. Choose a new tile.`;
+            updatePaletteAvailability();
+        } else {
+            const idx = design.hazards.findIndex((h) => h.id === state.selection.id);
+            if (idx === -1) return;
+            const hazard = design.hazards.splice(idx, 1)[0];
+            const def = hazardDefinitions.find((h) => h.key === hazard.hazardKey || h.exportType === hazard.hazardKey);
+            armPlacement({
+                kind: 'hazard',
+                key: hazard.hazardKey,
+                existingId: hazard.id,
+                rotation: hazard.rotation || 0
+            }, def?.label || 'Hazard', `hazard:${hazard.hazardKey}`);
+            statusEl.textContent = `Picked up ${def?.label || 'Hazard'}. Choose a new tile.`;
+        }
+        setSelection(null);
+        render();
+        updatePaletteAvailability();
     }
 
     function placeEntity(tileX, tileY) {
@@ -850,7 +1137,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         if (!state.armedPlacement) return;
         if (state.armedPlacement.kind === 'building') {
             const building = {
-                id: `b_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                id: state.armedPlacement.existingId || `b_${Date.now()}_${Math.random().toString(16).slice(2)}`,
                 type: state.armedPlacement.type,
                 tileX,
                 tileY,
@@ -859,14 +1146,31 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
                 locked: false
             };
             if (canPlaceBuilding(design, building)) {
-                design.buildings.push(building);
+                const existingIndex = design.buildings.findIndex((b) => b.id === building.id);
+                if (existingIndex !== -1) {
+                    design.buildings[existingIndex] = building;
+                } else {
+                    design.buildings.push(building);
+                }
+                const cfg = getBuildingConfig(building.type);
+                console.info('[CityBuilder] Placed building', {
+                    id: building.id,
+                    type: building.type,
+                    label: cfg?.label || getBuildingLabel(building.type),
+                    baseType: Math.floor(building.type / 100),
+                    configImage: cfg?.image,
+                    configIcon: cfg?.buildingIcon ?? cfg?.icon,
+                    iconIndex: getBuildingIconIndex(building.type)
+                });
                 statusEl.textContent = 'Placed building.';
+                clearArmedPlacement();
+                updatePaletteAvailability();
             } else {
                 statusEl.textContent = 'Placement blocked by terrain or spacing rules.';
             }
         } else if (state.armedPlacement.kind === 'hazard') {
             const hazard = {
-                id: `h_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                id: state.armedPlacement.existingId || `h_${Date.now()}_${Math.random().toString(16).slice(2)}`,
                 hazardKey: state.armedPlacement.key,
                 tileX,
                 tileY,
@@ -874,8 +1178,28 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
                 allowOverlap: false
             };
             if (canPlaceHazard(design, hazard)) {
-                design.hazards.push(hazard);
+                const existingIndex = design.hazards.findIndex((h) => h.id === hazard.id);
+                if (existingIndex !== -1) {
+                    design.hazards[existingIndex] = hazard;
+                } else {
+                    design.hazards.push(hazard);
+                }
+                console.info('[CityBuilder] Placed hazard', {
+                    id: hazard.id,
+                    key: hazard.hazardKey,
+                    baseType: 'hazard',
+                    typeId: hazardDefinitions.find((h) => h.key === hazard.hazardKey)?.typeId
+                });
                 statusEl.textContent = 'Placed hazard.';
+                updatePaletteAvailability();
+                if (!state.armedPlacement.existingId) {
+                    // keep arming to allow rapid placement until limit reached
+                    if (!canPlaceHazard(design, { ...hazard, id: 'test' }, hazard.id)) {
+                        clearArmedPlacement();
+                    }
+                } else {
+                    clearArmedPlacement();
+                }
             } else {
                 statusEl.textContent = 'Hazard placement blocked by terrain or overlap rules.';
             }
@@ -883,12 +1207,18 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         render();
     }
 
-    function handleCanvasInteraction(clientX, clientY) {
+    function updateHoverFromPoint(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         const x = clientX - rect.left;
         const y = clientY - rect.top;
+        state.hoverTile = screenToTile(x, y);
+        return { x, y };
+    }
+
+    function handleCanvasInteraction(clientX, clientY) {
+        const { x, y } = updateHoverFromPoint(clientX, clientY);
         const world = screenToWorld(x, y);
-        const tile = screenToTile(x, y);
+        const tile = state.hoverTile || screenToTile(x, y);
         if (state.armedPlacement) {
             placeEntity(tile.tileX, tile.tileY);
             return;
@@ -903,28 +1233,36 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
 
     function handleDragOver(ev) {
         ev.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
-        state.hoverTile = screenToTile(x, y);
+        updateHoverFromPoint(ev.clientX, ev.clientY);
         render();
     }
 
     function handleDrop(ev) {
         ev.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
+        const { x, y } = updateHoverFromPoint(ev.clientX, ev.clientY);
         const { tileX, tileY } = screenToTile(x, y);
         const data = ev.dataTransfer.getData('text/plain');
         if (data.startsWith('building:')) {
             const type = Number(data.split(':')[1]);
-            state.armedPlacement = { kind: 'building', type };
+            armPlacement({ kind: 'building', type }, getBuildingLabel(type), `building:${type}`);
         } else if (data.startsWith('hazard:')) {
             const key = data.split(':')[1];
-            state.armedPlacement = { kind: 'hazard', key };
+            const def = hazardDefinitions.find((h) => h.key === key);
+            armPlacement({ kind: 'hazard', key }, def?.label, `hazard:${key}`);
         }
         placeEntity(tileX, tileY);
+    }
+
+    function handleHoverMove(ev) {
+        if (state.panning) return;
+        updateHoverFromPoint(ev.clientX, ev.clientY);
+        render();
+    }
+
+    function handleContextMenu(ev) {
+        ev.preventDefault();
+        clearArmedPlacement();
+        setSelection(null);
     }
 
     function startPan(ev) {
@@ -1041,6 +1379,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             await loadImages();
             populateCitySelect();
             buildPalette();
+            updatePaletteAvailability();
             centerOnCity();
             render();
             statusEl.textContent = 'Ready.';
@@ -1059,6 +1398,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         });
 
         canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('mousemove', handleHoverMove);
         canvas.addEventListener('mousedown', startPan);
         window.addEventListener('mousemove', movePan);
         window.addEventListener('mouseup', endPan);
@@ -1068,6 +1408,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         canvas.addEventListener('touchcancel', handleTouchEnd);
         canvas.addEventListener('dragover', handleDragOver);
         canvas.addEventListener('drop', handleDrop);
+        canvas.addEventListener('mouseleave', () => {
+            state.hoverTile = null;
+            render();
+        });
+        canvas.addEventListener('contextmenu', handleContextMenu);
 
         zoomSlider.addEventListener('input', () => {
             state.view.scale = parseFloat(zoomSlider.value);
@@ -1099,15 +1444,6 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
 
         tileXInput.addEventListener('change', applySelectionEdits);
         tileYInput.addEventListener('change', applySelectionEdits);
-        rotationInput.addEventListener('change', applySelectionEdits);
-        rotateLeftBtn.addEventListener('click', () => {
-            rotationInput.value = (parseFloat(rotationInput.value) || 0) - 45;
-            applySelectionEdits();
-        });
-        rotateRightBtn.addEventListener('click', () => {
-            rotationInput.value = (parseFloat(rotationInput.value) || 0) + 45;
-            applySelectionEdits();
-        });
         Object.entries(nudgeBtns).forEach(([dir, btn]) => {
             btn.addEventListener('click', () => {
                 const delta = dir === 'left' ? [-1, 0] : dir === 'right' ? [1, 0] : dir === 'up' ? [0, -1] : [0, 1];
@@ -1117,6 +1453,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             });
         });
         deleteSelectionBtn.addEventListener('click', deleteSelection);
+        deleteSelectionBtn.insertAdjacentHTML('beforebegin', '<button id="pickupSelection" style="margin-top:10px;">Pick Up</button>');
+        document.getElementById('pickupSelection').addEventListener('click', pickUpSelection);
 
         citySelect.addEventListener('change', () => {
             state.selectedCity = Number(citySelect.value);
@@ -1124,6 +1462,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             setSelection(null);
             closeMobileDrawers();
             render();
+            updatePaletteAvailability();
         });
     }
 
