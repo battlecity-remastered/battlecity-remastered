@@ -351,11 +351,11 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     const paletteToggle = document.getElementById('paletteToggle');
     const inspectorToggle = document.getElementById('inspectorToggle');
 
-    const selectionInfo = document.getElementById('selectionInfo');
-    const editControls = document.getElementById('editControls');
-    const selectionTypeEl = document.getElementById('selectionType');
-    const tileXInput = document.getElementById('tileX');
-    const tileYInput = document.getElementById('tileY');
+        const selectionInfo = document.getElementById('selectionInfo');
+        const editControls = document.getElementById('editControls');
+        const selectionTypeEl = document.getElementById('selectionType');
+        const tileXInput = document.getElementById('tileX');
+        const tileYInput = document.getElementById('tileY');
     const deleteSelectionBtn = document.getElementById('deleteSelection');
     const nudgeBtns = {
         up: document.getElementById('nudgeUp'),
@@ -692,7 +692,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         state.activePaletteKey = key;
         ['building', 'hazard'].forEach((kind) => {
             const entries = paletteItemRefs[kind];
-            entries.forEach((el, entryKey) => {
+            entries.forEach((value, entryKey) => {
+                const el = value?.el || value;
                 if (!el) return;
                 const matchKey = `${kind}:${entryKey}`;
                 if (matchKey === key) {
@@ -731,6 +732,9 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             } else {
                 el.classList.remove('disabled');
                 el.draggable = true;
+            }
+            if (state.activePaletteKey === `hazard:${key}`) {
+                el.classList.add('active');
             }
         });
     }
@@ -1023,6 +1027,10 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
         tileXInput.value = selection.tileX;
         tileYInput.value = selection.tileY;
         render();
+        if (window.innerWidth <= 1100) {
+            palettePanel.classList.remove('open');
+            inspectorPanel.classList.add('open');
+        }
     }
 
     function pickSelection(worldX, worldY) {
