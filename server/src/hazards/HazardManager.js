@@ -109,11 +109,13 @@ class HazardManager {
         if (!type) {
             return null;
         }
-        const x = Number(payload.x);
-        const y = Number(payload.y);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const rawX = Number(payload.x);
+        const rawY = Number(payload.y);
+        if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
             return null;
         }
+        const x = Math.floor(rawX / TILE_SIZE) * TILE_SIZE;
+        const y = Math.floor(rawY / TILE_SIZE) * TILE_SIZE;
         const hazard = {
             id: (typeof payload.id === "string" && payload.id.length > 0) ? payload.id : `${socket.id}_${Date.now()}`,
             ownerId: socket.id,
@@ -196,11 +198,13 @@ class HazardManager {
         if (!type) {
             return null;
         }
-        const x = Number(payload.x);
-        const y = Number(payload.y);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const rawX = Number(payload.x);
+        const rawY = Number(payload.y);
+        if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
             return null;
         }
+        const x = Math.floor(rawX / TILE_SIZE) * TILE_SIZE;
+        const y = Math.floor(rawY / TILE_SIZE) * TILE_SIZE;
         const hazard = {
             id: (typeof payload.id === "string" && payload.id.length > 0)
                 ? payload.id
