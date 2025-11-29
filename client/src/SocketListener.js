@@ -1558,6 +1558,30 @@ class SocketListener extends EventEmitter2 {
         }
     }
 
+    importCityLayout(jsonText) {
+        if (!jsonText || typeof jsonText !== 'string' || !jsonText.trim().length) {
+            return Promise.reject(new Error('Paste exported layout JSON to import a map.'));
+        }
+        if (!this.io || this.io.disconnected) {
+            return Promise.reject(new Error('Connect to the server before importing a layout.'));
+        }
+        const payload = jsonText.trim();
+        return new Promise((resolve, reject) => {
+            try {
+                this.io.emit('city:layout:import', payload, (response) => {
+                    const data = this.safeParse(response);
+                    if (data && data.error) {
+                        reject(new Error(data.error));
+                        return;
+                    }
+                    resolve(data || {});
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
     sendChatMessage(payload = {}) {
         if (!this.io || !this.io.connected) {
             return false;

@@ -41,8 +41,6 @@ import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
 import MapModal from "./src/ui/MapModal.js";
 import OptionsModal from "./src/ui/OptionsModal.js";
-import importCityLayoutFromJson from "./src/utils/cityLayoutLoader.js";
-
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
 // LOAD_TYPE and XHR_RESPONSE_TYPE are no longer needed
@@ -937,7 +935,12 @@ game.showCityInfo = (cityOrData, overrides = {}) => {
     applyPanelMessage(message);
 };
 
-game.importCityLayoutFromJson = (jsonText) => importCityLayoutFromJson(game, jsonText);
+game.importCityLayoutFromJson = (jsonText) => {
+    if (game?.socketListener?.importCityLayout) {
+        return game.socketListener.importCityLayout(jsonText);
+    }
+    throw new Error('Connect to the server before importing a layout.');
+};
 
 game.openOptionsPanel = () => {
     if (activeOptionsModal) {

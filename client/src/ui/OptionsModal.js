@@ -1,5 +1,3 @@
-import importCityLayoutFromJson from '../utils/cityLayoutLoader.js';
-
 class OptionsModal {
     constructor(game, options = {}) {
         this.game = game;
@@ -194,48 +192,65 @@ class OptionsModal {
             this.setStatus('Paste exported layout JSON to import a map.');
             return;
         }
-        try {
-            const importer = (typeof this.game?.importCityLayoutFromJson === 'function')
-                ? this.game.importCityLayoutFromJson
-                : (text) => importCityLayoutFromJson(this.game, text);
-            const result = importer(payloadText);
-            const summary = `Loaded ${result.placedBuildings} buildings and ${result.placedInstallations} hazards/defenses.`;
-            const cleanup = [];
-            if (result.removedBuildings) {
-                cleanup.push(`${result.removedBuildings} existing buildings removed`);
-            }
-            if (result.removedInstallations) {
-                cleanup.push(`${result.removedInstallations} hazards cleared`);
-            }
-            const skippedTotal = (result.skippedBuildings || 0) + (result.skippedInstallations || 0);
-            const statusParts = [summary];
-            if (cleanup.length) {
-                statusParts.push(cleanup.join(', ') + '.');
-            }
-            if (skippedTotal > 0) {
-                statusParts.push(`${skippedTotal} placements skipped due to validation.`);
-            }
-            this.setStatus(statusParts.join(' '));
-            if (typeof this.game?.notify === 'function') {
-                this.game.notify({
-                    title: 'Map Imported',
-                    message: summary,
-                    variant: 'info',
-                    timeout: 4200
-                });
-            }
-        } catch (error) {
-            const message = error?.message || 'Failed to import layout.';
-            this.setStatus(message);
-            if (typeof this.game?.notify === 'function') {
-                this.game.notify({
-                    title: 'Import failed',
-                    message,
-                    variant: 'warn',
-                    timeout: 4800
-                });
-            }
+
+        const importer = (typeof this.game?.importCityLayoutFromJson === 'function')
+            ? this.game.importCityLayoutFromJson
+            : null;
+
+        if (!importer) {
+            this.setStatus('Layout import is not available.');
+            return;
         }
+
+        this.setStatus('Sending layout to the server...');
+
+        Promise.resolve(importer(payloadText))
+            .then((result = {}) => {
+                const placedInstallations = (result.placedHazards || 0) + (result.placedDefenses || 0);
+                const removedInstallations = (result.removedHazards || 0) + (result.removedDefenses || 0);
+                const summary = `Loaded ${result.placedBuildings || 0} buildings and ${placedInstallations} hazards/defenses.`;
+                const cleanup = [];
+                if (result.removedBuildings) {
+                    cleanup.push(`${result.removedBuildings} existing buildings removed`);
+                }
+                if (removedInstallations) {
+                    cleanup.push(`${removedInstallations} hazards cleared`);
+                }
+                const skippedTotal = (result.skippedBuildings || 0)
+                    + (result.skippedHazards || 0)
+                    + (result.skippedDefenses || 0);
+                const statusParts = [summary];
+                if (cleanup.length) {
+                    statusParts.push(cleanup.join(', ') + '.');
+                }
+                if (skippedTotal > 0) {
+                    statusParts.push(`${skippedTotal} placements skipped due to validation.`);
+                }
+                this.setStatus(statusParts.join(' '));
+                if (typeof this.game?.notify === 'function') {
+                    this.game.notify({
+                        title: 'Map Imported',
+                        message: summary,
+                        variant: 'info',
+                        timeout: 4200
+                    });
+                }
+                if (this.game?.forceDraw !== undefined) {
+                    this.game.forceDraw = true;
+                }
+            })
+            .catch((error) => {
+                const message = error?.message || 'Failed to import layout.';
+                this.setStatus(message);
+                if (typeof this.game?.notify === 'function') {
+                    this.game.notify({
+                        title: 'Import failed',
+                        message,
+                        variant: 'warn',
+                        timeout: 4800
+                    });
+                }
+            });
     }
 
     setStatus(message) {
