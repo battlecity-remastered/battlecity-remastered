@@ -198,6 +198,7 @@ var HazardManager = require('./src/hazards/HazardManager');
 var OrbManager = require('./src/orb/OrbManager');
 var FakeCityManager = require('./src/FakeCityManager');
 var DefenseManager = require('./src/DefenseManager');
+var CityLayoutImporter = require('./src/cityLayoutImporter');
 var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
@@ -482,6 +483,12 @@ const fakeCityManager = new FakeCityManager({
     enabled: !disableFakeCities,
 });
 fakeCityManager.setIo(io);
+const cityLayoutImporter = new CityLayoutImporter({
+    game,
+    buildingFactory,
+    hazardManager,
+    defenseManager,
+});
 
 const chatManager = new ChatManager({
     game,
@@ -789,6 +796,9 @@ const collectCityInfo = (cityId) => {
 };
 
 io.on('connection', (socket) => {
+    socket.on('city:layout:import', (payload, respond) => {
+        cityLayoutImporter.handleImport(socket, payload, respond);
+    });
     socket.on('hazard:spawn', (payload) => {
         hazardManager.spawnHazard(socket, payload);
     });

@@ -39,8 +39,8 @@ import AudioManager, { SOUND_IDS } from './src/audio/AudioManager';
 import MusicManager from './src/audio/MusicManager';
 import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
-import MapModal from "./src/ui/MapModal";
-
+import MapModal from "./src/ui/MapModal.js";
+import OptionsModal from "./src/ui/OptionsModal.js";
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
 // LOAD_TYPE and XHR_RESPONSE_TYPE are no longer needed
@@ -130,7 +130,7 @@ const shortenId = (value) => {
 var app = new PIXI.Application();
 
 // Placeholder - will be set after app.init()
-var appCanvas = null;
+var _appCanvas = null;
 
 var stats = new Stats();
 stats.showPanel(0);
@@ -508,6 +508,7 @@ game.describeKillSource = (details = {}) => {
 game.cityFinanceFlags = new Map();
 game.mapOverlayActive = false;
 let activeMapModal = null;
+let activeOptionsModal = null;
 
 const describeDirection = (dx, dy, threshold = TILE_SIZE_PX) => {
     let horizontal = '';
@@ -934,6 +935,30 @@ game.showCityInfo = (cityOrData, overrides = {}) => {
     applyPanelMessage(message);
 };
 
+game.importCityLayoutFromJson = (jsonText) => {
+    if (game?.socketListener?.importCityLayout) {
+        return game.socketListener.importCityLayout(jsonText);
+    }
+    throw new Error('Connect to the server before importing a layout.');
+};
+
+game.openOptionsPanel = () => {
+    if (activeOptionsModal) {
+        activeOptionsModal.close();
+        return;
+    }
+    const modal = new OptionsModal(game, {
+        onClose: () => {
+            if (activeOptionsModal === modal) {
+                activeOptionsModal = null;
+            }
+            game.forceDraw = true;
+        }
+    });
+    activeOptionsModal = modal;
+    game.forceDraw = true;
+};
+
 game.showStaffSummary = () => {
     const cityId = normaliseCityId(game.player && game.player.city, null);
     if (cityId === null) {
@@ -1073,25 +1098,6 @@ game.showPointsSummary = () => {
             message: `${getCityDisplayName(cityId)} currently holds ${score} points.`,
             variant: 'info',
             timeout: 4000
-        });
-    }
-    game.forceDraw = true;
-};
-
-game.openOptionsPanel = () => {
-    game.setPanelMessage({
-        heading: 'Options (Preview)',
-        lines: [
-            'In-game configuration UI is still on the roadmap.',
-            'Use the lobby overlay to change cities or roles.',
-            'See AGENTS.md for developer setup and tweaks.'
-        ]
-    });
-    if (game.notify) {
-        game.notify({
-            title: 'Options',
-            message: 'Configuration controls are coming soon. The panel lists available workarounds.',
-            variant: 'warn'
         });
     }
     game.forceDraw = true;
@@ -1455,7 +1461,7 @@ for (const item of resourcesToLoad) {
             mipmapTextures: 'off'
         });
 
-        appCanvas = app.canvas;
+        _appCanvas = app.canvas;
         // Append canvas to DOM
         document.getElementById("game").appendChild(app.canvas);
         app.canvas.style.imageRendering = 'pixelated';

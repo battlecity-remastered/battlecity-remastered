@@ -638,6 +638,13 @@ class ItemFactory {
 
         item.isDefense = isDefense;
 
+        if (options.angle !== undefined) {
+            const angle = Number(options.angle);
+            if (Number.isFinite(angle)) {
+                item.angle = angle;
+            }
+        }
+
         this.ensureItemDurability(item, type);
 
         this.insertItem(item);
