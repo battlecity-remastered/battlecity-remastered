@@ -18,6 +18,7 @@ import { triggerCameraShake } from "../effects/camera-shake.js";
 import IntroModal from "./IntroModal.js";
 
 const TILE_SIZE_PX = 48;
+const { clearTimeout } = globalThis;
 const TRAINING_MAP_SIZE = 64;
 const clampTile = (value, max) => {
     if (!Number.isFinite(value)) {
@@ -1022,8 +1023,6 @@ class TutorialManager {
         const orbFactoryTile = { x: anchor.x + 6, y: anchor.y + 14 };
         const bombFactoryTile = { x: anchor.x + 14, y: anchor.y + 6 };
         const targetTile = { x: anchor.x + 12, y: anchor.y + 12 };
-        const orbTile = { x: orbFactoryTile.x + 1, y: orbFactoryTile.y + 1 };
-
         if (this.game?.buildingFactory?.newBuilding) {
             const orbFactory = this.game.buildingFactory.newBuilding(null, orbFactoryTile.x, orbFactoryTile.y, CAN_BUILD_ORB_FACTORY, {
                 notifyServer: false,

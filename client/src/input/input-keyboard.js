@@ -11,7 +11,6 @@ import {
     ITEM_TYPE_WALL,
     ITEM_TYPE_SLEEPER,
     ITEM_TYPE_BOMB,
-    ITEM_TYPE_ORB,
 } from "../constants.js";
 import { SOUND_IDS } from "../audio/AudioManager";
 import spawnMuzzleFlash, { computeTankMuzzlePosition, normaliseDirection } from "../effects/muzzleFlash";

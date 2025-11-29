@@ -9,7 +9,6 @@ import {ITEM_TYPE_MEDKIT} from "../constants.js";
 import {ITEM_TYPE_CLOAK} from "../constants.js";
 import {ITEM_TYPE_ROCKET} from "../constants.js";
 import {BOMB_EXPLOSION_TILE_RADIUS} from "../constants.js";
-import {BOMB_ITEM_TILE_RADIUS} from "../constants.js";
 import {ITEM_TYPE_ORB} from "../constants.js";
 import {ITEM_TYPE_FLARE} from "../constants.js";
 import {BUILDING_COMMAND_CENTER} from "../constants.js";
