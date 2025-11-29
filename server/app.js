@@ -199,6 +199,8 @@ var OrbManager = require('./src/orb/OrbManager');
 var FakeCityManager = require('./src/FakeCityManager');
 var DefenseManager = require('./src/DefenseManager');
 var CityLayoutImporter = require('./src/cityLayoutImporter');
+var DefenderBotManager = require('./src/bots/DefenderBotManager');
+var RogueBotManager = require('./src/bots/RogueBotManager');
 var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
@@ -488,6 +490,18 @@ const cityLayoutImporter = new CityLayoutImporter({
     buildingFactory,
     hazardManager,
     defenseManager,
+});
+const defenderBotManager = new DefenderBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
+});
+const rogueBotManager = new RogueBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
 });
 
 const chatManager = new ChatManager({
@@ -869,6 +883,8 @@ var loop = () => {
     hazardManager.update(delta);
     playerFactory.cycle(now);
     fakeCityManager.update(now);
+    defenderBotManager.update(now);
+    rogueBotManager.update(now);
 
     buildingAccumulator += delta;
     if (buildingAccumulator >= BUILDING_UPDATE_INTERVAL) {
