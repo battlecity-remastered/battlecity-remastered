@@ -88,8 +88,15 @@ class SimplePathfinder {
         this.mask = this.navMask.getMask();
     }
 
-    findPath(startX, startY, goalX, goalY, maxNodes = 1500) {
-        this.mask = this.navMask.getMask(2000, this.getMaskOptions(goalX, goalY));
+    findPath(startX, startY, goalX, goalY, options = {}) {
+        const maxNodes = typeof options === 'number'
+            ? options
+            : (Number.isFinite(options.maxNodes) ? options.maxNodes : 4000);
+        const radiusTiles = typeof options === 'object' && options.radiusTiles !== undefined
+            ? options.radiusTiles
+            : 80;
+
+        this.mask = this.navMask.getMask(2000, this.getMaskOptions(goalX, goalY, radiusTiles));
 
         let startTileX = Math.floor(startX / TILE_SIZE);
         let startTileY = Math.floor(startY / TILE_SIZE);
@@ -244,11 +251,21 @@ class SimplePathfinder {
         return octileCost(x2 - x1, y2 - y1);
     }
 
-    findNearestPassable(tileX, tileY, maxRadius = 20) {
+    hasFreeNeighbor(tileX, tileY) {
+        const neighbors = [
+            { x: tileX + 1, y: tileY },
+            { x: tileX - 1, y: tileY },
+            { x: tileX, y: tileY + 1 },
+            { x: tileX, y: tileY - 1 },
+        ];
+        return neighbors.some((n) => !this.isBlockedTile(n.x, n.y));
+    }
+
+    findNearestPassable(tileX, tileY, maxRadius = 60, { requireNeighbor = false } = {}) {
         if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
             return null;
         }
-        if (!this.isBlockedTile(tileX, tileY)) {
+        if (!this.isBlockedTile(tileX, tileY) && (!requireNeighbor || this.hasFreeNeighbor(tileX, tileY))) {
             return { x: tileX, y: tileY };
         }
         for (let radius = 1; radius <= maxRadius; radius += 1) {
@@ -259,7 +276,7 @@ class SimplePathfinder {
                     if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) {
                         continue;
                     }
-                    if (!this.isBlockedTile(nx, ny)) {
+                    if (!this.isBlockedTile(nx, ny) && (!requireNeighbor || this.hasFreeNeighbor(nx, ny))) {
                         return { x: nx, y: ny };
                     }
                 }
@@ -285,4 +302,3 @@ class SimplePathfinder {
 }
 
 module.exports = SimplePathfinder;
-

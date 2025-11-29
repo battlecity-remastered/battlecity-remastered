@@ -208,6 +208,7 @@ class RogueBotManager {
             rogue.player.offset.y + HALF_TILE,
             centerX,
             centerY,
+            { radiusTiles: 80 }
         );
         rogue.path = Array.isArray(path) ? path : null;
         rogue.pathIndex = 0;
@@ -273,4 +274,3 @@ class RogueBotManager {
 }
 
 module.exports = RogueBotManager;
-

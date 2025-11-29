@@ -199,6 +199,8 @@ var OrbManager = require('./src/orb/OrbManager');
 var FakeCityManager = require('./src/FakeCityManager');
 var DefenseManager = require('./src/DefenseManager');
 var CityLayoutImporter = require('./src/cityLayoutImporter');
+var DefenderBotManager = require('./src/bots/DefenderBotManager');
+var RogueBotManager = require('./src/bots/RogueBotManager');
 var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
@@ -483,15 +485,12 @@ const fakeCityManager = new FakeCityManager({
     enabled: !disableFakeCities,
 });
 fakeCityManager.setIo(io);
-<<<<<<< HEAD
 const cityLayoutImporter = new CityLayoutImporter({
     game,
     buildingFactory,
     hazardManager,
     defenseManager,
 });
-||||||| parent of a7163de6 (Optimize bot pathfinding with wasm octile heuristic)
-=======
 const defenderBotManager = new DefenderBotManager({
     game,
     playerFactory,
@@ -504,7 +503,6 @@ const rogueBotManager = new RogueBotManager({
     bulletFactory,
     buildingFactory
 });
->>>>>>> a7163de6 (Optimize bot pathfinding with wasm octile heuristic)
 
 const chatManager = new ChatManager({
     game,

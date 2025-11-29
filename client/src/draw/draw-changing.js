@@ -282,6 +282,14 @@ var drawOtherPlayers = (game, stage) => {
             cacheKey: player.id || id
         });
 
+        if (game.debugMode && player.isSystemControlled) {
+            const marker = new PIXI.Graphics();
+            marker.beginFill(0x00ff88, 0.9);
+            marker.drawRect(-6, -6, 12, 12);
+            marker.endFill();
+            playerTank.addChild(marker);
+        }
+
 
         stage.addChild(playerTank);
     });
