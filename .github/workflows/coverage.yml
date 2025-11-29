@@ -35,9 +35,9 @@ jobs:
         run: npx --yes c8 report --reporter=cobertura --reporter=lcov --temp-dir=client/coverage --report-dir=client/coverage
 
       - name: Code Coverage Summary
-        uses: irongut/code-coverage-summary@v1.3.0
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          files: |
+          filename: |
             server/coverage/cobertura-coverage.xml
             client/coverage/cobertura-coverage.xml
           format: markdown
