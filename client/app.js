@@ -282,8 +282,8 @@ game.orbHintElement = orbHintElement;
 
 const menuToggleButton = document.createElement('button');
 menuToggleButton.id = 'menu-toggle-button';
-menuToggleButton.innerHTML = '&#9776;'; // Hamburger menu icon
-menuToggleButton.title = 'Toggle Menu';
+menuToggleButton.textContent = '💬';
+menuToggleButton.title = 'Toggle Chat';
 const menuToggleStyle = menuToggleButton.style;
 menuToggleStyle.position = 'fixed';
 menuToggleStyle.bottom = '24px';
@@ -303,6 +303,21 @@ menuToggleStyle.display = 'flex';
 menuToggleStyle.alignItems = 'center';
 menuToggleStyle.justifyContent = 'center';
 menuToggleStyle.fontFamily = 'Arial, sans-serif';
+
+const resetMenuToggleVisuals = (isHover = false) => {
+    if (game.chatAlertActive) {
+        menuToggleStyle.background = isHover ? 'rgba(255, 221, 160, 0.98)' : 'rgba(255, 213, 128, 0.95)';
+        menuToggleStyle.border = '1px solid rgba(255, 186, 99, 0.9)';
+        menuToggleStyle.color = '#0a1220';
+        menuToggleStyle.boxShadow = '0 10px 22px rgba(0, 0, 0, 0.6)';
+    } else {
+        menuToggleStyle.background = isHover ? 'rgba(15, 28, 72, 0.92)' : 'rgba(10, 18, 52, 0.82)';
+        menuToggleStyle.border = '1px solid rgba(123, 152, 255, 0.35)';
+        menuToggleStyle.color = '#f0f6ff';
+        menuToggleStyle.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.45)';
+    }
+};
+resetMenuToggleVisuals();
 
 const fullscreenButton = document.createElement('button');
 fullscreenButton.id = 'fullscreen-button';
@@ -355,13 +370,31 @@ game.menuOpen = false;
 game.menuToggleButton = menuToggleButton;
 game.fullscreenButton = fullscreenButton;
 game.menuContainer = menuContainer;
+game.chatAlertActive = false;
+game.showChatAlert = () => {
+    if (game.menuOpen) {
+        return;
+    }
+    game.chatAlertActive = true;
+    resetMenuToggleVisuals();
+    menuToggleButton.title = 'New chat messages – open chat';
+};
+game.clearChatAlert = () => {
+    if (!game.chatAlertActive) {
+        return;
+    }
+    game.chatAlertActive = false;
+    resetMenuToggleVisuals();
+    menuToggleButton.title = game.menuOpen ? 'Close Chat' : 'Toggle Chat';
+};
 
 game.toggleMenu = () => {
     game.menuOpen = !game.menuOpen;
 
     if (game.menuOpen) {
         menuToggleButton.innerHTML = '&#10005;'; // X icon
-        menuToggleButton.title = 'Close Menu';
+        menuToggleButton.title = 'Close Chat';
+        game.clearChatAlert();
 
         // Show chat input controls first
         if (game.chatManager && typeof game.chatManager.showControls === 'function') {
@@ -381,8 +414,8 @@ game.toggleMenu = () => {
     } else {
         // Hide menu
         menuContainerStyle.display = 'none';
-        menuToggleButton.innerHTML = '&#9776;'; // Hamburger icon
-        menuToggleButton.title = 'Toggle Menu';
+        menuToggleButton.textContent = '💬';
+        menuToggleButton.title = 'Toggle Chat';
 
         // Hide chat input controls
         if (game.chatManager && typeof game.chatManager.hideControls === 'function') {
@@ -392,11 +425,11 @@ game.toggleMenu = () => {
 };
 
 menuToggleButton.addEventListener('mouseenter', () => {
-    menuToggleStyle.background = 'rgba(15, 28, 72, 0.92)';
+    resetMenuToggleVisuals(true);
     menuToggleStyle.transform = 'scale(1.05)';
 });
 menuToggleButton.addEventListener('mouseleave', () => {
-    menuToggleStyle.background = 'rgba(10, 18, 52, 0.82)';
+    resetMenuToggleVisuals(false);
     menuToggleStyle.transform = 'scale(1)';
 });
 menuToggleButton.addEventListener('click', () => {
