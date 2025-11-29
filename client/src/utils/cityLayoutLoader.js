@@ -135,6 +135,9 @@ export const importCityLayoutPayload = (game, payload) => {
     if (!game) {
         throw new Error('Game state is unavailable.');
     }
+    if (!game.socketListener || !game.socketListener.io || game.socketListener.io.disconnected) {
+        throw new Error('Connect to the server before importing a layout so it can remain authoritative.');
+    }
     const cityId = normaliseCityId(game.player?.city);
     if (cityId === null) {
         throw new Error('Join a city before loading a layout.');
