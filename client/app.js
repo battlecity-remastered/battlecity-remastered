@@ -1103,25 +1103,6 @@ game.showPointsSummary = () => {
     game.forceDraw = true;
 };
 
-game.openOptionsPanel = () => {
-    game.setPanelMessage({
-        heading: 'Options (Preview)',
-        lines: [
-            'In-game configuration UI is still on the roadmap.',
-            'Use the lobby overlay to change cities or roles.',
-            'See AGENTS.md for developer setup and tweaks.'
-        ]
-    });
-    if (game.notify) {
-        game.notify({
-            title: 'Options',
-            message: 'Configuration controls are coming soon. The panel lists available workarounds.',
-            variant: 'warn'
-        });
-    }
-    game.forceDraw = true;
-};
-
 let activeHelpModal = null;
 game.showHelpMessage = () => {
     if (activeHelpModal) {
