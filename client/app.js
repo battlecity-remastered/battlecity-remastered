@@ -2113,7 +2113,9 @@ function gameLoop() {
     }
 
     game.bulletFactory.cycle();
-    if (!game.lobby || game.lobby.isInGame()) {
+    const offlineTraining = !!(game.tutorialManager && typeof game.tutorialManager.isOfflineTrainingActive === 'function'
+        && game.tutorialManager.isOfflineTrainingActive());
+    if ((!game.lobby || game.lobby.isInGame()) && !offlineTraining) {
         game.socketListener.cycle();
     }
     game.itemFactory.cycle();

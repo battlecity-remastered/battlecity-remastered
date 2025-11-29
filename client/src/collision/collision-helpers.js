@@ -108,6 +108,14 @@ export const checkTiles = (game, rect) => {
     var right = Math.floor((rect.x + rect.w) / 48);
     var top = Math.floor((rect.y) / 48);
     var bottom = Math.floor((rect.y + rect.h) / 48);
+    const mapWidth = Array.isArray(map) ? map.length : 0;
+    const mapHeight = mapWidth > 0 && Array.isArray(map[0]) ? map[0].length : 0;
+    if (
+        left < 0 || right < 0 || top < 0 || bottom < 0 ||
+        left >= mapWidth || right >= mapWidth || top >= mapHeight || bottom >= mapHeight
+    ) {
+        return COLLISION_BLOCKING;
+    }
 
     /*
      console.log("left, top ", left + "," + top );
@@ -125,14 +133,10 @@ export const checkTiles = (game, rect) => {
 
     if (left && right && top && bottom) {
         //Map Terrain (lava, rocks)
-        try {
-            if (map[left][top] != 0 && map[left][top] != 3) return COLLISION_BLOCKING;
-            if (map[left][bottom] != 0 && map[left][bottom] != 3) return COLLISION_BLOCKING;
-            if (map[right][top] != 0 && map[right][top] != 3) return COLLISION_BLOCKING;
-            if (map[right][bottom] != 0 && map[right][bottom] != 3) return COLLISION_BLOCKING;
-        } catch (_ex) {
-            console.error("Invalid map reference")
-        }
+        if (map[left][top] != 0 && map[left][top] != 3) return COLLISION_BLOCKING;
+        if (map[left][bottom] != 0 && map[left][bottom] != 3) return COLLISION_BLOCKING;
+        if (map[right][top] != 0 && map[right][top] != 3) return COLLISION_BLOCKING;
+        if (map[right][bottom] != 0 && map[right][bottom] != 3) return COLLISION_BLOCKING;
     }
 
     return false;

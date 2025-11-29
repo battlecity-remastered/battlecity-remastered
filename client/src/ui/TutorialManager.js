@@ -5,14 +5,20 @@ import {
     CAN_BUILD_LASER_FACTORY,
     CAN_BUILD_LASER_RESEARCH,
     CAN_BUILD_ORB_FACTORY,
+    CAN_BUILD,
+    CANT_BUILD,
+    DEFAULT_CITY_CAN_BUILD,
+    ITEM_TYPE_BOMB,
     ITEM_TYPE_LASER,
     ITEM_TYPE_ORB,
     ITEM_TYPE_ROCKET,
     ITEM_TYPE_TURRET,
 } from "../constants.js";
 import { triggerCameraShake } from "../effects/camera-shake.js";
+import IntroModal from "./IntroModal.js";
 
 const TILE_SIZE_PX = 48;
+const TRAINING_MAP_SIZE = 64;
 const clampTile = (value, max) => {
     if (!Number.isFinite(value)) {
         return 0;
@@ -28,6 +34,12 @@ class TutorialManager {
         this.autoShowDelayMs = Number.isFinite(options.autoShowDelayMs) ? options.autoShowDelayMs : 1200;
         this.steps = [
             {
+                id: 'move_keys',
+                title: 'Move your tank',
+                detail: 'Press the arrow keys to move.',
+                event: 'move_keys',
+            },
+            {
                 id: 'build_menu',
                 title: 'Open the build menu',
                 detail: 'Left-click the map to reveal your city build menu.',
@@ -42,31 +54,31 @@ class TutorialManager {
             {
                 id: 'laser_factory',
                 title: 'Place the laser factory',
-                detail: 'Follow up with a laser factory to start manufacturing the gun.',
+                detail: 'Wait for the research to complete, and then build a lazer factory.',
                 event: 'laser_factory_built',
             },
             {
                 id: 'pickup_laser',
                 title: 'Pick up the laser',
-                detail: 'Collect the laser drop from your factory to arm up.',
+                detail: 'Drive onto the laser factory and press U to load it into your tank.',
                 event: 'laser_picked_up',
             },
             {
                 id: 'destroy_training_turret',
                 title: 'Destroy the practice turret',
-                detail: 'Circle strafe the turret, time Shift shots between its salvo, and blow it up.',
+                detail: 'Point at the turret and press shift to shoot; tutorial turrets are defenseless.',
                 event: 'training_turret_destroyed',
             },
             {
                 id: 'pickup_orb',
-                title: 'Pick up the practice orb',
-                detail: 'Grab the orb output from the tutorial factory.',
+                title: 'Pick up the orbing essentials',
+                detail: 'Grab the Orb and bombs so you can level the city.',
                 event: 'tutorial_orb_collected',
             },
             {
                 id: 'fake_orb',
                 title: 'Orb a dummy command center',
-                detail: 'Pick up the tutorial orb and drop it on the marked CC to trigger the detonation and screen shake.',
+                detail: 'Drop a bomb next to a house with B, then drive onto the CC and press O.',
                 event: 'tutorial_orb_detonated',
             }
         ];
@@ -81,25 +93,25 @@ class TutorialManager {
             orbFactoryId: null,
             bombFactoryId: null,
             anchorTile: null,
+            offline: false,
+            networkPaused: false,
             cleanup: {
                 icons: [],
                 items: [],
                 buildings: [],
+                timers: [],
+            },
+            pickups: {
+                orb: false,
+                bomb: false,
             }
         };
 
-        // Only auto-pop the card for brand-new players; returning sessions keep the toggle hidden
-        // state intact until the player explicitly opens it again.
-        this.pendingAutoShow = !this.state.hidden
-            && this.state.completed instanceof Set
-            && this.state.completed.size === 0;
-
-        if (this.pendingAutoShow) {
-            this.state.hidden = true;
-        }
+        // Always start hidden; surface a toggle for players who haven't finished the tutorial.
+        this.pendingAutoShow = false;
+        this.state.hidden = true;
 
         this.render();
-        this.scheduleAutoShow();
     }
 
     loadState() {
@@ -264,7 +276,7 @@ class TutorialManager {
             }
             #battlecity-tutorial-toggle {
                 position: fixed;
-                left: 18px;
+                right: 18px;
                 bottom: 18px;
                 z-index: 1299;
                 padding: 10px 14px;
@@ -276,9 +288,24 @@ class TutorialManager {
                 font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
                 letter-spacing: 0.3px;
                 display: none;
+                animation: battlecity-tutorial-pulse 1.4s ease-in-out infinite;
             }
             #battlecity-tutorial-toggle[data-visible="true"] {
                 display: block;
+            }
+            @keyframes battlecity-tutorial-pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(118, 143, 212, 0.65);
+                    transform: translateY(0);
+                }
+                55% {
+                    box-shadow: 0 0 0 12px rgba(118, 143, 212, 0);
+                    transform: translateY(-1px);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(118, 143, 212, 0);
+                    transform: translateY(0);
+                }
             }
         `;
         document.head.appendChild(style);
@@ -326,6 +353,21 @@ class TutorialManager {
         return this.state.completed instanceof Set && this.state.completed.has(stepId);
     }
 
+    hasFinishedTutorial() {
+        if (!Array.isArray(this.steps) || !(this.state.completed instanceof Set)) {
+            return false;
+        }
+        return this.steps.every((step) => this.state.completed.has(step.id));
+    }
+
+    shouldShowToggle() {
+        return true;
+    }
+
+    isOfflineTrainingActive() {
+        return !!(this.trainingScenario?.active && this.trainingScenario.offline);
+    }
+
     recordEvent(eventName) {
         if (!eventName) {
             return;
@@ -367,13 +409,37 @@ class TutorialManager {
     }
 
     reset() {
-        this.state = { completed: new Set(), hidden: false };
-        this.pendingAutoShow = true;
+        this.state = { completed: new Set(), hidden: true };
+        this.pendingAutoShow = false;
         this.cleanupTrainingEntities();
         this.trainingScenario.active = false;
         this.saveState();
         this.render();
-        this.scheduleAutoShow();
+    }
+
+    pauseNetworking() {
+        if (!this.game?.socketListener) {
+            return;
+        }
+        if (this.trainingScenario.networkPaused) {
+            return;
+        }
+        this.trainingScenario.networkPaused = true;
+        if (typeof this.game.socketListener.disconnectSocket === 'function') {
+            this.game.socketListener.disconnectSocket();
+        }
+        this.hideHud();
+    }
+
+    resumeNetworking() {
+        if (!this.trainingScenario.networkPaused || !this.game?.socketListener) {
+            return;
+        }
+        this.trainingScenario.networkPaused = false;
+        if (typeof this.game.socketListener.reconnect === 'function') {
+            this.game.socketListener.reconnect();
+        }
+        this.restoreHud();
     }
 
     shouldAutoShow() {
@@ -432,12 +498,13 @@ class TutorialManager {
         }
         const toggle = this.getToggleButton();
         const allComplete = this.steps.every((step) => this.isComplete(step.id));
+        const shouldShowToggle = this.shouldShowToggle();
 
         this.container.innerHTML = '';
 
         if (this.state.hidden) {
             if (toggle) {
-                toggle.dataset.visible = 'true';
+                toggle.dataset.visible = shouldShowToggle ? 'true' : 'false';
             }
             return;
         }
@@ -452,10 +519,6 @@ class TutorialManager {
         const heading = document.createElement('h3');
         heading.textContent = allComplete ? 'Tutorial complete' : 'New Commander Tutorial';
 
-        const chip = document.createElement('div');
-        chip.className = 'battlecity-tutorial-chip';
-        chip.textContent = allComplete ? 'You are mission-ready' : 'Build • Fight • Orb';
-
         const intro = document.createElement('p');
         intro.textContent = allComplete
             ? 'Nice work. You opened the build menu, built the laser research + factory chain, armed a laser, shredded the turret, and executed a fake orb detonation.'
@@ -468,31 +531,18 @@ class TutorialManager {
         const actions = document.createElement('div');
         actions.className = 'battlecity-tutorial-actions';
 
-        const startButton = document.createElement('button');
-        startButton.className = 'battlecity-tutorial-button';
-        startButton.textContent = this.trainingScenario.active ? 'Return to training' : 'Start tutorial run';
-        startButton.addEventListener('click', () => this.startTrainingSession());
+        const restartButton = document.createElement('button');
+        restartButton.className = 'battlecity-tutorial-button';
+        restartButton.textContent = 'Restart Tutorial';
+        restartButton.addEventListener('click', () => this.reset());
 
-        const skipButton = document.createElement('button');
-        skipButton.className = 'battlecity-tutorial-button';
-        skipButton.textContent = 'Skip tutorial';
-        skipButton.addEventListener('click', () => this.skipTutorial());
+        const exitButton = document.createElement('button');
+        exitButton.className = 'battlecity-tutorial-button';
+        exitButton.textContent = 'Exit Tutorial';
+        exitButton.addEventListener('click', () => this.returnToLobby('Exiting tutorial...'));
 
-        const resetButton = document.createElement('button');
-        resetButton.className = 'battlecity-tutorial-button';
-        resetButton.textContent = 'Restart';
-        resetButton.addEventListener('click', () => this.reset());
-
-        const hideButton = document.createElement('button');
-        hideButton.className = 'battlecity-tutorial-button';
-        hideButton.textContent = allComplete ? 'Hide card' : 'Hide';
-        hideButton.addEventListener('click', () => this.hide());
-
-        actions.appendChild(chip);
-        actions.appendChild(startButton);
-        actions.appendChild(resetButton);
-        actions.appendChild(skipButton);
-        actions.appendChild(hideButton);
+        actions.appendChild(restartButton);
+        actions.appendChild(exitButton);
 
         card.appendChild(heading);
         card.appendChild(intro);
@@ -505,9 +555,6 @@ class TutorialManager {
     handleStepProgression(stepId) {
         if (!stepId) {
             return;
-        }
-        if (stepId === 'laser_factory') {
-            this.spawnCombatDrops();
         }
         if (stepId === 'pickup_laser') {
             this.spawnCombatTurret();
@@ -527,38 +574,94 @@ class TutorialManager {
 
     finishTutorial() {
         this.trainingScenario.active = false;
+        this.state.hidden = true;
+        this.saveState();
         this.returnToLobby('Tutorial complete. Returning to the lobby.');
+        const timerId = (typeof window !== 'undefined')
+            ? window.setTimeout(() => this.showCompletionModal(), 1100)
+            : null;
+        if (timerId) {
+            this.registerTrainingTimer(timerId);
+        }
+        this.resumeNetworking();
+        this.render();
     }
 
     startTrainingSession() {
         this.state.hidden = false;
         this.trainingScenario.active = true;
+        this.trainingScenario.offline = true;
         this.pendingAutoShow = false;
         if (this.game?.player) {
             this.game.player.isMayor = true;
         }
+        this.cleanupTrainingEntities();
         this.saveState();
         this.render();
         this.runWhenReady(() => {
-            if (this.game?.socketListener?.leaveGame) {
-                this.game.socketListener.leaveGame({ reason: 'tutorial_training' });
+            this.pauseNetworking();
+            if (this.game?.lobby?.hide) {
+                this.game.lobby.hide();
             }
+            this.enterOfflineTrainingMap();
             this.prepareTrainingGround();
         });
+    }
+
+    hideHud() {
+        if (typeof document === 'undefined') {
+            return;
+        }
+        const chat = document.getElementById('battlecity-chat-container');
+        if (chat) {
+            chat.dataset.hiddenByTutorial = 'true';
+            chat.style.display = 'none';
+        }
+        if (this.game) {
+            if (this.game.orbHintElement) {
+                this.trainingScenario.cachedOrbHintDisplay = this.game.orbHintElement.style.display;
+                this.game.orbHintElement.style.display = 'none';
+            }
+            if (typeof this.game.updateOrbHint === 'function') {
+                this.trainingScenario.originalUpdateOrbHint = this.game.updateOrbHint;
+                this.game.updateOrbHint = () => {};
+            }
+        }
+    }
+
+    restoreHud() {
+        if (typeof document === 'undefined') {
+            return;
+        }
+        const chat = document.getElementById('battlecity-chat-container');
+        if (chat && chat.dataset.hiddenByTutorial === 'true') {
+            delete chat.dataset.hiddenByTutorial;
+            chat.style.display = '';
+        }
+        if (this.game) {
+            if (this.game.orbHintElement) {
+                this.game.orbHintElement.style.display = this.trainingScenario.cachedOrbHintDisplay || 'none';
+            }
+            if (this.trainingScenario.originalUpdateOrbHint) {
+                this.game.updateOrbHint = this.trainingScenario.originalUpdateOrbHint;
+                this.trainingScenario.originalUpdateOrbHint = null;
+            }
+        }
     }
 
     skipTutorial() {
         this.returnToLobby('Tutorial skipped. Returning to the lobby.');
         this.state.hidden = true;
+        this.saveState();
         this.render();
     }
 
     returnToLobby(message = 'Returning to the lobby...') {
         this.cleanupTrainingEntities();
         this.trainingScenario.active = false;
-        if (this.game?.socketListener?.leaveGame) {
-            this.game.socketListener.leaveGame({ reason: 'tutorial' });
-        }
+        this.trainingScenario.offline = false;
+        this.resumeNetworking();
+        this.restoreHud();
         if (this.game?.lobby?.completeReturnToLobby) {
             this.game.lobby.completeReturnToLobby({ message, type: 'info' });
         }
@@ -603,12 +706,164 @@ class TutorialManager {
                 }
             });
         }
-        this.trainingScenario.cleanup = { icons: [], items: [], buildings: [] };
+        if (Array.isArray(registry.timers)) {
+            registry.timers.forEach((timerId) => {
+                if (timerId) {
+                    clearTimeout(timerId);
+                }
+            });
+        }
+        this.trainingScenario.cleanup = { icons: [], items: [], buildings: [], timers: [] };
         this.trainingScenario.turretId = null;
         this.trainingScenario.orbTargetCenter = null;
         this.trainingScenario.orbTargetTile = null;
         this.trainingScenario.orbFactoryId = null;
         this.trainingScenario.bombFactoryId = null;
+        this.restoreHud();
+        this.trainingScenario.pickups = { orb: false, bomb: false };
+    }
+
+    incrementCityPopulation(cityId, population = 0, housing = 0) {
+        const cityIndex = Number.isFinite(cityId) ? cityId : parseInt(cityId, 10) || 0;
+        const cityState = Array.isArray(this.game?.cities) ? this.game.cities[cityIndex] : null;
+        if (!cityState) {
+            return;
+        }
+        const popIncrement = Number.isFinite(population) ? population : 0;
+        const housingIncrement = Number.isFinite(housing) ? housing : 0;
+        cityState.population = Math.max(0, (Number.isFinite(cityState.population) ? cityState.population : 0) + popIncrement);
+        cityState.housing = Math.max(0, (Number.isFinite(cityState.housing) ? cityState.housing : 0) + housingIncrement);
+    }
+
+    seedFactoryProduction(building, { intervalMs = 2800, maxItems = 3 } = {}) {
+        if (!building || !this.isOfflineTrainingActive() || typeof window === 'undefined') {
+            return;
+        }
+        const productionTick = () => {
+            if (!this.isOfflineTrainingActive()) {
+                return;
+            }
+            const current = Number.isFinite(building.itemsLeft) ? building.itemsLeft : 0;
+            if (current < maxItems) {
+                building.itemsLeft = current + 1;
+                if (typeof this.game?.buildingFactory?.syncFactoryItems === 'function') {
+                    this.game.buildingFactory.syncFactoryItems(building);
+                }
+            }
+            const timerId = window.setTimeout(productionTick, intervalMs);
+            this.registerTrainingTimer(timerId);
+        };
+        const initialTimer = window.setTimeout(productionTick, intervalMs);
+        this.registerTrainingTimer(initialTimer);
+    }
+
+    simulateResearchProgress(researchType, delayMs = 1600) {
+        if (!this.isOfflineTrainingActive() || !this.game?.buildingFactory || typeof window === 'undefined') {
+            return;
+        }
+        const cityId = this.game.player?.city ?? 0;
+        const state = typeof this.game.buildingFactory.getResearchState === 'function'
+            ? this.game.buildingFactory.getResearchState(cityId, researchType, { create: true })
+            : null;
+        const completeAt = Date.now() + delayMs;
+        if (state) {
+            state.state = 'pending';
+            state.completeAt = completeAt;
+            state.seenPending = true;
+            state.notifiedComplete = false;
+        }
+        if (typeof this.game.buildingFactory.applyResearchState === 'function') {
+            this.game.buildingFactory.applyResearchState(cityId, researchType, 'pending');
+        }
+        const timerId = window.setTimeout(() => {
+            if (typeof this.game.buildingFactory.applyResearchState === 'function') {
+                this.game.buildingFactory.applyResearchState(cityId, researchType, 'complete');
+            }
+            this.game.forceDraw = true;
+        }, delayMs);
+        this.registerTrainingTimer(timerId);
+    }
+
+    bootstrapOfflineCityState() {
+        if (!this.game) {
+            return;
+        }
+        const canBuild = {};
+        Object.keys(DEFAULT_CITY_CAN_BUILD).forEach((key) => {
+            const base = DEFAULT_CITY_CAN_BUILD[key];
+            const isResearch = key.includes('_RESEARCH');
+            const isFactory = key.includes('_FACTORY');
+            if (isResearch) {
+                canBuild[key] = CAN_BUILD;
+            } else if (isFactory) {
+                canBuild[key] = CANT_BUILD;
+            } else {
+                canBuild[key] = base;
+            }
+        });
+        const cityState = {
+            id: 0,
+            name: 'Tutorial City',
+            canBuild,
+            cash: Number.MAX_SAFE_INTEGER,
+            construction: 0,
+            population: 50,
+            housing: 50,
+            updatedAt: Date.now(),
+        };
+        this.game.cities = [cityState];
+        this.game.maxCities = 1;
+        if (this.game.player) {
+            this.game.player.city = 0;
+        }
+        if (this.game.buildingFactory) {
+            this.game.buildingFactory.researchStatus = new Map();
+            this.game.buildingFactory.researchTimers = new Map();
+            if (typeof this.game.buildingFactory.recomputeCityBuildPermissions === 'function') {
+                this.game.buildingFactory.recomputeCityBuildPermissions(0);
+            }
+        }
+        this.game.otherPlayers = {};
+        if (this.game.iconFactory?.removeUnownedIconsNear) {
+            const anchor = this.getTrainingAnchorTile();
+            const center = this.toWorldFromTile(anchor.x, anchor.y);
+            this.game.iconFactory.removeUnownedIconsNear(center.x, center.y, ITEM_TYPE_LASER, 999, 720, null);
+            this.game.iconFactory.removeUnownedIconsNear(center.x, center.y, ITEM_TYPE_BOMB, 999, 720, null);
+            this.game.iconFactory.removeUnownedIconsNear(center.x, center.y, ITEM_TYPE_ORB, 999, 720, null);
+            this.game.iconFactory.removeUnownedIconsNear(center.x, center.y, ITEM_TYPE_ROCKET, 999, 720, null);
+        }
+    }
+
+    enterOfflineTrainingMap() {
+        if (!this.game) {
+            return;
+        }
+        this.bootstrapOfflineCityState();
+        const dimension = TRAINING_MAP_SIZE;
+        const map = [];
+        const tiles = [];
+        for (let x = 0; x < dimension; x += 1) {
+            map[x] = [];
+            tiles[x] = [];
+            for (let y = 0; y < dimension; y += 1) {
+                map[x][y] = 0;
+                tiles[x][y] = 0;
+            }
+        }
+        this.game.map = map;
+        this.game.tiles = tiles;
+        this.game.maxMapX = Math.max(window.innerWidth - 200, 0);
+        this.game.maxMapY = Math.max(window.innerHeight, 0);
+        if (typeof this.game.updateInteractionHitArea === 'function') {
+            this.game.updateInteractionHitArea();
+        }
+        if (this.game.player) {
+            const centerTile = Math.floor(dimension / 2);
+            const center = this.toCenterFromTile(centerTile, centerTile);
+            this.game.player.offset = { x: center.x, y: center.y };
+            this.game.player.lastSafeOffset = { x: center.x, y: center.y };
+        }
+        this.game.forceDraw = true;
     }
 
     registerTrainingIcon(icon) {
@@ -641,12 +896,21 @@ class TutorialManager {
         this.trainingScenario.cleanup.buildings.push(building.id);
     }
 
+    registerTrainingTimer(timerId) {
+        if (!timerId) {
+            return;
+        }
+        if (!Array.isArray(this.trainingScenario.cleanup.timers)) {
+            this.trainingScenario.cleanup.timers = [];
+        }
+        this.trainingScenario.cleanup.timers.push(timerId);
+    }
+
     getTrainingAnchorTile() {
         const mapWidth = Array.isArray(this.game?.map) ? this.game.map.length : 512;
         const mapHeight = Array.isArray(this.game?.map?.[0]) ? this.game.map[0].length : 512;
-        const buffer = 24;
-        const baseTileX = clampTile(mapWidth - buffer, mapWidth - 3);
-        const baseTileY = clampTile(mapHeight - buffer, mapHeight - 3);
+        const baseTileX = clampTile(Math.floor(mapWidth / 2), mapWidth - 1);
+        const baseTileY = clampTile(Math.floor(mapHeight / 2), mapHeight - 1);
         return { x: baseTileX, y: baseTileY };
     }
 
@@ -755,8 +1019,8 @@ class TutorialManager {
 
     spawnOrbDrill() {
         const anchor = this.trainingScenario.anchorTile || this.getTrainingAnchorTile();
-        const orbFactoryTile = { x: anchor.x + 6, y: anchor.y + 12 };
-        const bombFactoryTile = { x: anchor.x + 9, y: anchor.y + 12 };
+        const orbFactoryTile = { x: anchor.x + 6, y: anchor.y + 14 };
+        const bombFactoryTile = { x: anchor.x + 14, y: anchor.y + 6 };
         const targetTile = { x: anchor.x + 12, y: anchor.y + 12 };
         const orbTile = { x: orbFactoryTile.x + 1, y: orbFactoryTile.y + 1 };
 
@@ -765,9 +1029,14 @@ class TutorialManager {
                 notifyServer: false,
                 id: 'tutorial_orb_factory',
                 city: this.game.player?.city ?? 0,
+                itemsLeft: 1,
             });
             if (orbFactory) {
                 orbFactory.tutorialTag = 'tutorial_orb_factory';
+                orbFactory.itemsLeft = 1;
+                if (typeof this.game.buildingFactory.syncFactoryItems === 'function') {
+                    this.game.buildingFactory.syncFactoryItems(orbFactory);
+                }
                 this.trainingScenario.orbFactoryId = orbFactory.id;
                 this.registerTrainingBuilding(orbFactory);
             }
@@ -776,9 +1045,14 @@ class TutorialManager {
                 notifyServer: false,
                 id: 'tutorial_bomb_factory',
                 city: this.game.player?.city ?? 0,
+                itemsLeft: 1,
             });
             if (bombFactory) {
                 bombFactory.tutorialTag = 'tutorial_bomb_factory';
+                bombFactory.itemsLeft = 1;
+                if (typeof this.game.buildingFactory.syncFactoryItems === 'function') {
+                    this.game.buildingFactory.syncFactoryItems(bombFactory);
+                }
                 this.trainingScenario.bombFactoryId = bombFactory.id;
                 this.registerTrainingBuilding(bombFactory);
             }
@@ -786,7 +1060,7 @@ class TutorialManager {
             const cc = this.game.buildingFactory.newBuilding(null, targetTile.x, targetTile.y, BUILDING_COMMAND_CENTER, {
                 notifyServer: false,
                 id: 'tutorial_orb_target',
-                city: 99,
+                city: this.game.player?.city ?? 0,
             });
             if (cc) {
                 cc.tutorialTag = 'tutorial_orb_target';
@@ -796,14 +1070,10 @@ class TutorialManager {
             }
 
             const houseOffsets = [
-                { dx: -4, dy: -1 },
-                { dx: -4, dy: 2 },
-                { dx: -1, dy: -4 },
-                { dx: 2, dy: -4 },
-                { dx: 4, dy: -1 },
-                { dx: 4, dy: 2 },
-                { dx: -1, dy: 4 },
-                { dx: 2, dy: 4 },
+                { dx: -3, dy: 0 },
+                { dx: 3, dy: 0 },
+                { dx: 0, dy: -3 },
+                { dx: 0, dy: 3 },
             ];
             houseOffsets.forEach((offset) => {
                 const houseTileX = targetTile.x + offset.dx;
@@ -811,30 +1081,18 @@ class TutorialManager {
                 const house = this.game.buildingFactory.newBuilding(null, houseTileX, houseTileY, CAN_BUILD_HOUSE, {
                     notifyServer: false,
                     id: `tutorial_house_${houseTileX}_${houseTileY}`,
-                    city: 99,
+                    city: this.game.player?.city ?? 0,
                 });
                 if (house) {
                     house.tutorialTag = 'tutorial_orb_house';
+                    house.population = 20;
+                    this.incrementCityPopulation(this.game.player?.city ?? 0, house.population, house.population);
                     this.registerTrainingBuilding(house);
                 }
             });
         }
 
-        if (this.game?.iconFactory?.newIcon) {
-            const orbPosition = this.toWorldFromTile(orbTile.x, orbTile.y);
-            const orb = this.game.iconFactory.newIcon(this.game.player?.id ?? null, orbPosition.x, orbPosition.y, ITEM_TYPE_ORB, {
-                quantity: 1,
-                selected: true,
-                skipProductionUpdate: true,
-                city: this.game.player?.city ?? null,
-                teamId: this.game.player?.city ?? null,
-                synced: false,
-            });
-            if (orb) {
-                orb.tutorialTag = 'tutorial_orb';
-                this.registerTrainingIcon(orb);
-            }
-        }
+        // Icon drops are handled by itemsLeft via syncFactoryItems; no manual spawns here.
     }
 
     handleBuildingPlaced(building) {
@@ -842,10 +1100,20 @@ class TutorialManager {
             return;
         }
         if (building.type === CAN_BUILD_LASER_RESEARCH) {
+            this.simulateResearchProgress(CAN_BUILD_LASER_RESEARCH);
             this.recordEvent('laser_research_built');
         }
         if (building.type === CAN_BUILD_LASER_FACTORY) {
+            building.itemsLeft = 1;
+            if (typeof this.game?.buildingFactory?.syncFactoryItems === 'function') {
+                this.game.buildingFactory.syncFactoryItems(building);
+            }
             this.recordEvent('laser_factory_built');
+        }
+        if (building.type === CAN_BUILD_HOUSE) {
+            const pop = Number.isFinite(building.population) ? building.population : 6;
+            building.population = pop;
+            this.incrementCityPopulation(building.city ?? this.game.player?.city ?? 0, pop, pop);
         }
     }
 
@@ -856,9 +1124,7 @@ class TutorialManager {
         if (icon.type === ITEM_TYPE_LASER) {
             this.recordEvent('laser_picked_up');
         }
-        if (icon.tutorialTag === 'tutorial_orb') {
-            this.recordEvent('tutorial_orb_collected');
-        }
+        this.registerPickup(icon);
     }
 
     handleItemDestroyed(item) {
@@ -875,25 +1141,76 @@ class TutorialManager {
         if (!dropInfo || !position || !this.trainingScenario.orbTargetCenter || !this.trainingScenario.active) {
             return;
         }
-        if (dropInfo.type !== ITEM_TYPE_ORB) {
-            return;
-        }
-        const dx = position.x - this.trainingScenario.orbTargetCenter.x;
-        const dy = position.y - this.trainingScenario.orbTargetCenter.y;
-        const distanceSq = (dx * dx) + (dy * dy);
-        const maxDistanceSq = 80 * 80;
-        if (distanceSq > maxDistanceSq) {
+        if (dropInfo.type === ITEM_TYPE_ORB) {
+            const dx = position.x - this.trainingScenario.orbTargetCenter.x;
+            const dy = position.y - this.trainingScenario.orbTargetCenter.y;
+            const distanceSq = (dx * dx) + (dy * dy);
+            const maxDistanceSq = 80 * 80;
+            if (distanceSq > maxDistanceSq) {
+                return;
+            }
+
+            if (this.game?.itemFactory?.spawnExplosion) {
+                this.game.itemFactory.spawnExplosion(this.trainingScenario.orbTargetCenter.x, this.trainingScenario.orbTargetCenter.y);
+            }
+            triggerCameraShake(this.game, { intensity: 11, duration: 900 });
+            this.recordEvent('tutorial_orb_detonated');
+            if (item && this.game?.itemFactory?.deleteItem) {
+                this.game.itemFactory.deleteItem(item, { notifyServer: false, reason: 'orb_detonated' });
+            }
             return;
         }
 
-        if (this.game?.itemFactory?.spawnExplosion) {
-            this.game.itemFactory.spawnExplosion(this.trainingScenario.orbTargetCenter.x, this.trainingScenario.orbTargetCenter.y);
+        if (dropInfo.type === ITEM_TYPE_BOMB && this.isOfflineTrainingActive()) {
+            const centerTileX = Math.floor((position.x + 24) / 48);
+            const centerTileY = Math.floor((position.y + 24) / 48);
+            if (this.game?.itemFactory?.detonateBombAt) {
+                const timerId = window.setTimeout(() => {
+                    this.game.itemFactory.detonateBombAt(centerTileX, centerTileY, {
+                        notifyServer: false,
+                        reportDemolish: false,
+                        radiusOverride: 3,
+                        spawnExplosion: true,
+                    });
+                }, 900);
+                this.registerTrainingTimer(timerId);
+            }
         }
-        triggerCameraShake(this.game, { intensity: 11, duration: 900 });
-        this.recordEvent('tutorial_orb_detonated');
-        if (item && this.game?.itemFactory?.deleteItem) {
-            this.game.itemFactory.deleteItem(item, { notifyServer: false, reason: 'orb_detonated' });
+    }
+
+    registerPickup(payload) {
+        if (!payload) {
+            return;
         }
+        const isOrb = payload.type === ITEM_TYPE_ORB || payload.tutorialTag === 'tutorial_orb';
+        const isBomb = payload.type === ITEM_TYPE_BOMB || payload.tutorialTag === 'tutorial_bomb';
+        if (isOrb) {
+            this.trainingScenario.pickups.orb = true;
+        }
+        if (isBomb) {
+            this.trainingScenario.pickups.bomb = true;
+        }
+        if (this.trainingScenario.pickups.orb && this.trainingScenario.pickups.bomb) {
+            this.recordEvent('tutorial_orb_collected');
+        }
+    }
+
+    showCompletionModal() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        const onStart = async () => {
+            this.restoreHud();
+            if (typeof window.location?.reload === 'function') {
+                window.location.reload();
+            }
+        };
+        new IntroModal({
+            heading: "First city destroyed!",
+            blurb: 'Use the Help button in-game to see every keyboard shortcut.',
+            buttonLabel: 'Play Now',
+            onStart,
+        });
     }
 }
 

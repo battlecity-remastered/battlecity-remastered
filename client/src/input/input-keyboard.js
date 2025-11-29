@@ -9,8 +9,10 @@ import {
     ITEM_TYPE_TURRET,
     ITEM_TYPE_PLASMA,
     ITEM_TYPE_WALL,
-    ITEM_TYPE_SLEEPER
-} from "../constants";
+    ITEM_TYPE_SLEEPER,
+    ITEM_TYPE_BOMB,
+    ITEM_TYPE_ORB,
+} from "../constants.js";
 import { SOUND_IDS } from "../audio/AudioManager";
 import spawnMuzzleFlash, { computeTankMuzzlePosition, normaliseDirection } from "../effects/muzzleFlash";
 
@@ -49,21 +51,42 @@ const dropInventoryItem = (game, dropInfo) => {
         return false;
     }
 
-    const { x, y } = computeDropPosition(game, dropInfo);
+    const offlineTutorial = !!(game.tutorialManager && typeof game.tutorialManager.isOfflineTrainingActive === 'function'
+        && game.tutorialManager.isOfflineTrainingActive());
+    if (offlineTutorial) {
+        dropInfo.notifyServer = false;
+    }
+
+    let dropX = null;
+    let dropY = null;
+    if (game?.itemFactory?.getPlayerDominantTile) {
+        const tile = game.itemFactory.getPlayerDominantTile(game.player);
+        if (tile) {
+            dropX = tile.x * 48;
+            dropY = tile.y * 48;
+        }
+    }
+    if (dropX === null || dropY === null) {
+        const { x, y } = computeDropPosition(game, dropInfo);
+        dropX = x;
+        dropY = y;
+    }
     let item = null;
     if (game.itemFactory?.newItem) {
-        item = game.itemFactory.newItem(dropInfo, x, y, dropInfo.type);
+        item = game.itemFactory.newItem(dropInfo, dropX, dropY, dropInfo.type, {
+            notifyServer: !offlineTutorial,
+        });
     }
 
     if (!item) {
-        const icon = game.iconFactory?.newIcon?.(null, parseInt(x, 10), parseInt(y, 10), dropInfo.type, {
+        const icon = game.iconFactory?.newIcon?.(null, parseInt(dropX, 10), parseInt(dropY, 10), dropInfo.type, {
             skipProductionUpdate: true,
             teamId: game.player?.city ?? null,
             city: game.player?.city ?? null,
             isSharedDrop: true,
-            synced: false,
+            synced: true,
         });
-        if (icon && game.socketListener && typeof game.socketListener.dropIcon === 'function') {
+        if (!offlineTutorial && icon && game.socketListener && typeof game.socketListener.dropIcon === 'function') {
             game.socketListener.dropIcon({
                 id: icon.id,
                 type: icon.type,
@@ -78,11 +101,24 @@ const dropInventoryItem = (game, dropInfo) => {
 
     if (game?.tutorialManager) {
         if (typeof game.tutorialManager.handleItemDrop === 'function') {
-            game.tutorialManager.handleItemDrop(dropInfo, { x, y }, item);
+            game.tutorialManager.handleItemDrop(dropInfo, { x: dropX, y: dropY }, item);
         }
         if (typeof game.tutorialManager.recordEvent === 'function') {
             game.tutorialManager.recordEvent('item_deployed');
         }
+    }
+
+    if (offlineTutorial && dropInfo.type === ITEM_TYPE_BOMB && game?.itemFactory?.detonateBombAt) {
+        const centerTileX = Math.floor((dropX + 24) / 48);
+        const centerTileY = Math.floor((dropY + 24) / 48);
+        window.setTimeout(() => {
+            game.itemFactory.detonateBombAt(centerTileX, centerTileY, {
+                notifyServer: false,
+                reportDemolish: false,
+                radiusOverride: 3,
+                spawnExplosion: true,
+            });
+        }, 900);
     }
 
     return true;
@@ -207,6 +243,9 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
 
     left.press = function () {
         game.player.isTurning = -1;
+        if (game?.tutorialManager?.recordEvent) {
+            game.tutorialManager.recordEvent('move_keys');
+        }
     };
 
     left.release = function () {
@@ -215,6 +254,9 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
 
     right.press = function () {
         game.player.isTurning = 1;
+        if (game?.tutorialManager?.recordEvent) {
+            game.tutorialManager.recordEvent('move_keys');
+        }
     };
     right.release = function () {
         game.player.isTurning = 0;
@@ -222,6 +264,9 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
 
     up.press = function () {
         game.player.isMoving = -1;
+        if (game?.tutorialManager?.recordEvent) {
+            game.tutorialManager.recordEvent('move_keys');
+        }
     };
     up.release = function () {
         game.player.isMoving = 0;
@@ -229,6 +274,9 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
 
     down.press = function () {
         game.player.isMoving = +1;
+        if (game?.tutorialManager?.recordEvent) {
+            game.tutorialManager.recordEvent('move_keys');
+        }
     };
     down.release = function () {
         game.player.isMoving = 0;
