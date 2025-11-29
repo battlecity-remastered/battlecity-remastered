@@ -483,12 +483,28 @@ const fakeCityManager = new FakeCityManager({
     enabled: !disableFakeCities,
 });
 fakeCityManager.setIo(io);
+<<<<<<< HEAD
 const cityLayoutImporter = new CityLayoutImporter({
     game,
     buildingFactory,
     hazardManager,
     defenseManager,
 });
+||||||| parent of a7163de6 (Optimize bot pathfinding with wasm octile heuristic)
+=======
+const defenderBotManager = new DefenderBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
+});
+const rogueBotManager = new RogueBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
+});
+>>>>>>> a7163de6 (Optimize bot pathfinding with wasm octile heuristic)
 
 const chatManager = new ChatManager({
     game,
@@ -869,6 +885,8 @@ var loop = () => {
     hazardManager.update(delta);
     playerFactory.cycle(now);
     fakeCityManager.update(now);
+    defenderBotManager.update(now);
+    rogueBotManager.update(now);
 
     buildingAccumulator += delta;
     if (buildingAccumulator >= BUILDING_UPDATE_INTERVAL) {
