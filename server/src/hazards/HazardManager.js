@@ -315,6 +315,19 @@ class HazardManager {
         this.pendingIdsBySocket.delete(socketId);
     }
 
+    onPlayerDeath(socketId) {
+        if (!socketId) {
+            return;
+        }
+
+        const owned = Array.from(this.hazards.values()).filter((hazard) => hazard.ownerId === socketId);
+        owned.forEach((hazard) => {
+            if (hazard.type === HAZARD_TYPES.BOMB && hazard.armed && hazard.active) {
+                this.detonateBomb(hazard);
+            }
+        });
+    }
+
     removeHazard(id, reason) {
         const hazard = this.hazards.get(id);
         if (!hazard) {
