@@ -18,6 +18,7 @@ const HAZARD_TYPES = {
 };
 
 const HAZARD_REVEAL_DURATION_MS = 750;
+const HAZARD_REFRESH_INTERVAL_MS = 2000;
 
 const ITEM_TYPE_MAP = {
     3: HAZARD_TYPES.BOMB,
@@ -52,6 +53,7 @@ class HazardManager {
         this.io = null;
         this.hazards = new Map();
         this.pendingIdsBySocket = new Map();
+        this.lastSnapshotBroadcast = 0;
     }
 
     setIo(io) {
@@ -63,21 +65,37 @@ class HazardManager {
             return;
         }
         for (const hazard of this.hazards.values()) {
-            socket.emit('hazard:spawn', JSON.stringify({
-                id: hazard.id,
-                type: hazard.type,
-                x: hazard.x,
-                y: hazard.y,
-                ownerId: hazard.ownerId,
-                teamId: hazard.teamId,
-                active: !!hazard.active,
-                armed: !!hazard.armed,
-                detonateAt: hazard.detonateAt || null,
-                revealedAt: hazard.revealedAt || null,
-                triggeredBy: hazard.triggeredBy || null,
-                triggeredTeam: hazard.triggeredTeam ?? null
-            }));
+            this.emitHazardSnapshot(socket, hazard);
         }
+    }
+
+    broadcastSnapshot() {
+        if (!this.io || this.hazards.size === 0) {
+            return;
+        }
+        for (const hazard of this.hazards.values()) {
+            this.emitHazardSnapshot(this.io, hazard);
+        }
+    }
+
+    emitHazardSnapshot(target, hazard) {
+        if (!target || !hazard || typeof target.emit !== "function") {
+            return;
+        }
+        target.emit('hazard:spawn', JSON.stringify({
+            id: hazard.id,
+            type: hazard.type,
+            x: hazard.x,
+            y: hazard.y,
+            ownerId: hazard.ownerId,
+            teamId: hazard.teamId,
+            active: !!hazard.active,
+            armed: !!hazard.armed,
+            detonateAt: hazard.detonateAt || null,
+            revealedAt: hazard.revealedAt || null,
+            triggeredBy: hazard.triggeredBy || null,
+            triggeredTeam: hazard.triggeredTeam ?? null
+        }));
     }
 
     parsePayload(payload) {
@@ -109,11 +127,13 @@ class HazardManager {
         if (!type) {
             return null;
         }
-        const x = Number(payload.x);
-        const y = Number(payload.y);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const rawX = Number(payload.x);
+        const rawY = Number(payload.y);
+        if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
             return null;
         }
+        const x = Math.floor(rawX / TILE_SIZE) * TILE_SIZE;
+        const y = Math.floor(rawY / TILE_SIZE) * TILE_SIZE;
         const hazard = {
             id: (typeof payload.id === "string" && payload.id.length > 0) ? payload.id : `${socket.id}_${Date.now()}`,
             ownerId: socket.id,
@@ -196,11 +216,13 @@ class HazardManager {
         if (!type) {
             return null;
         }
-        const x = Number(payload.x);
-        const y = Number(payload.y);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const rawX = Number(payload.x);
+        const rawY = Number(payload.y);
+        if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
             return null;
         }
+        const x = Math.floor(rawX / TILE_SIZE) * TILE_SIZE;
+        const y = Math.floor(rawY / TILE_SIZE) * TILE_SIZE;
         const hazard = {
             id: (typeof payload.id === "string" && payload.id.length > 0)
                 ? payload.id
@@ -297,6 +319,19 @@ class HazardManager {
         this.pendingIdsBySocket.delete(socketId);
     }
 
+    onPlayerDeath(socketId) {
+        if (!socketId) {
+            return;
+        }
+
+        const owned = Array.from(this.hazards.values()).filter((hazard) => hazard.ownerId === socketId);
+        owned.forEach((hazard) => {
+            if (hazard.type === HAZARD_TYPES.BOMB && hazard.armed && hazard.active) {
+                this.detonateBomb(hazard);
+            }
+        });
+    }
+
     removeHazard(id, reason) {
         const hazard = this.hazards.get(id);
         if (!hazard) {
@@ -388,6 +423,11 @@ class HazardManager {
         }
 
         const now = Date.now();
+
+        if (this.io && now - this.lastSnapshotBroadcast >= HAZARD_REFRESH_INTERVAL_MS) {
+            this.broadcastSnapshot();
+            this.lastSnapshotBroadcast = now;
+        }
 
         for (const hazard of Array.from(this.hazards.values())) {
             if (!hazard.active && hazard.cleanupAt && now >= hazard.cleanupAt) {

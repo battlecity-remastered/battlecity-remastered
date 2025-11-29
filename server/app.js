@@ -198,6 +198,9 @@ var HazardManager = require('./src/hazards/HazardManager');
 var OrbManager = require('./src/orb/OrbManager');
 var FakeCityManager = require('./src/FakeCityManager');
 var DefenseManager = require('./src/DefenseManager');
+var CityLayoutImporter = require('./src/cityLayoutImporter');
+var DefenderBotManager = require('./src/bots/DefenderBotManager');
+var RogueBotManager = require('./src/bots/RogueBotManager');
 var IconDropManager = require('./src/IconDropManager');
 var { loadMapData } = require('./src/utils/mapLoader');
 var ChatManager = require('./src/chat/ChatManager');
@@ -453,6 +456,7 @@ buildingFactory.listen(io);
 game.buildingFactory = buildingFactory;
 const hazardManager = new HazardManager(game, playerFactory);
 hazardManager.setIo(io);
+playerFactory.setHazardManager(hazardManager);
 const defenseManager = new DefenseManager({ game, playerFactory, hazardManager });
 defenseManager.setIo(io);
 const iconDropManager = new IconDropManager({
@@ -482,6 +486,24 @@ const fakeCityManager = new FakeCityManager({
     enabled: !disableFakeCities,
 });
 fakeCityManager.setIo(io);
+const cityLayoutImporter = new CityLayoutImporter({
+    game,
+    buildingFactory,
+    hazardManager,
+    defenseManager,
+});
+const defenderBotManager = new DefenderBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
+});
+const rogueBotManager = new RogueBotManager({
+    game,
+    playerFactory,
+    bulletFactory,
+    buildingFactory
+});
 
 const chatManager = new ChatManager({
     game,
@@ -789,6 +811,9 @@ const collectCityInfo = (cityId) => {
 };
 
 io.on('connection', (socket) => {
+    socket.on('city:layout:import', (payload, respond) => {
+        cityLayoutImporter.handleImport(socket, payload, respond);
+    });
     socket.on('hazard:spawn', (payload) => {
         hazardManager.spawnHazard(socket, payload);
     });
@@ -859,6 +884,8 @@ var loop = () => {
     hazardManager.update(delta);
     playerFactory.cycle(now);
     fakeCityManager.update(now);
+    defenderBotManager.update(now);
+    rogueBotManager.update(now);
 
     buildingAccumulator += delta;
     if (buildingAccumulator >= BUILDING_UPDATE_INTERVAL) {

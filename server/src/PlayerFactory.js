@@ -161,6 +161,7 @@ class PlayerFactory {
         this.chatManager = null;
         this.userStore = options.userStore || null;
         this.scoreService = options.scoreService || null;
+        this.hazardManager = options.hazardManager || null;
         this.onPlayerAssigned = typeof options.onPlayerAssigned === 'function' ? options.onPlayerAssigned : null;
     }
 
@@ -542,6 +543,10 @@ class PlayerFactory {
 
     setScoreService(scoreService) {
         this.scoreService = scoreService || null;
+    }
+
+    setHazardManager(hazardManager) {
+        this.hazardManager = hazardManager || null;
     }
 
     getPlayerTeam(socketId) {
@@ -1158,6 +1163,10 @@ class PlayerFactory {
                 sourceType: killSummary.sourceType,
                 hazardType: killSummary.hazardType
             }));
+        }
+
+        if (this.hazardManager && typeof this.hazardManager.onPlayerDeath === 'function') {
+            this.hazardManager.onPlayerDeath(socketId);
         }
 
         const socket = this.getSocket(socketId);

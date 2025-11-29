@@ -298,6 +298,26 @@ test("enemy players cannot pick up another city's bomb", () => {
     assert.equal(removeCalls.length, 0, "no removal broadcast should occur");
 });
 
+test("active bombs detonate when the owner dies", () => {
+    const { manager, io } = setupManager();
+
+    const hazard = placeHazard(manager, {
+        id: "bomb_owner_death",
+        type: "bomb",
+        armed: true,
+        active: true,
+        detonateAt: Date.now() + 1000,
+    });
+
+    manager.onPlayerDeath(hazard.ownerId);
+
+    assert.equal(manager.hazards.has(hazard.id), false, "bomb should be removed after detonation");
+    const removeCalls = io.emit.calls.filter(([event]) => event === "hazard:remove");
+    assert.equal(removeCalls.length, 1, "detonation should broadcast a removal");
+    const removePayload = JSON.parse(removeCalls[0][1]);
+    assert.equal(removePayload.reason, "bomb_detonated");
+});
+
 test("dfgs freeze enemy players and share reveal metadata", () => {
     const enemySocket = "enemy_socket";
     const { manager, playerFactory, io } = setupManager({

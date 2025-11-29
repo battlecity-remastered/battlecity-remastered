@@ -593,7 +593,8 @@ class ItemFactory {
         let adjustedY = y;
 
         const shouldSnapDefense = DEFENSE_ITEM_TYPES.has(type) && options.snapToPlayer !== false && options.notifyServer !== false;
-        if (shouldSnapDefense) {
+        const shouldSnapHazard = HAZARD_ITEM_TYPES.has(type) && options.snapToPlayer !== false && options.notifyServer !== false;
+        if (shouldSnapDefense || shouldSnapHazard) {
             const dominantTile = this.getPlayerDominantTile(this.game?.player);
             if (dominantTile) {
                 adjustedX = dominantTile.x * TILE_SIZE;
@@ -641,6 +642,13 @@ class ItemFactory {
         };
 
         item.isDefense = isDefense;
+
+        if (options.angle !== undefined) {
+            const angle = Number(options.angle);
+            if (Number.isFinite(angle)) {
+                item.angle = angle;
+            }
+        }
 
         this.ensureItemDurability(item, type);
 

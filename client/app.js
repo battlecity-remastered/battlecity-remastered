@@ -21,8 +21,6 @@ import BuildingFactory from "./src/factories/BuildingFactory";
 import BulletFactory from "./src/factories/BulletFactory"
 import IconFactory from "./src/factories/IconFactory";
 import ItemFactory from "./src/factories/ItemFactory";
-import RogueTankManager from "./src/rogue/RogueTankManager";
-import DefenderBotManager from "./src/defenders/DefenderBotManager";
 import SocketListener from "./src/SocketListener"
 import { setupBuildingMenu } from "./src/draw/draw-building-interface";
 import { drawBuilding } from "./src/draw/draw-building-interface";
@@ -39,9 +37,9 @@ import AudioManager, { SOUND_IDS } from './src/audio/AudioManager';
 import MusicManager from './src/audio/MusicManager';
 import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
-import MapModal from "./src/ui/MapModal";
-import TutorialManager from "./src/ui/TutorialManager";
-
+import MapModal from "./src/ui/MapModal.js";
+import OptionsModal from "./src/ui/OptionsModal.js";
+import TutorialManager from "./src/ui/TutorialManager.js";
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
 // LOAD_TYPE and XHR_RESPONSE_TYPE are no longer needed
@@ -285,8 +283,8 @@ game.orbHintElement = orbHintElement;
 
 const menuToggleButton = document.createElement('button');
 menuToggleButton.id = 'menu-toggle-button';
-menuToggleButton.innerHTML = '&#9776;'; // Hamburger menu icon
-menuToggleButton.title = 'Toggle Menu';
+menuToggleButton.textContent = '💬';
+menuToggleButton.title = 'Toggle Chat';
 const menuToggleStyle = menuToggleButton.style;
 menuToggleStyle.position = 'fixed';
 menuToggleStyle.bottom = '24px';
@@ -306,6 +304,21 @@ menuToggleStyle.display = 'flex';
 menuToggleStyle.alignItems = 'center';
 menuToggleStyle.justifyContent = 'center';
 menuToggleStyle.fontFamily = 'Arial, sans-serif';
+
+const resetMenuToggleVisuals = (isHover = false) => {
+    if (game.chatAlertActive) {
+        menuToggleStyle.background = isHover ? 'rgba(255, 221, 160, 0.98)' : 'rgba(255, 213, 128, 0.95)';
+        menuToggleStyle.border = '1px solid rgba(255, 186, 99, 0.9)';
+        menuToggleStyle.color = '#0a1220';
+        menuToggleStyle.boxShadow = '0 10px 22px rgba(0, 0, 0, 0.6)';
+    } else {
+        menuToggleStyle.background = isHover ? 'rgba(15, 28, 72, 0.92)' : 'rgba(10, 18, 52, 0.82)';
+        menuToggleStyle.border = '1px solid rgba(123, 152, 255, 0.35)';
+        menuToggleStyle.color = '#f0f6ff';
+        menuToggleStyle.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.45)';
+    }
+};
+resetMenuToggleVisuals();
 
 const fullscreenButton = document.createElement('button');
 fullscreenButton.id = 'fullscreen-button';
@@ -358,13 +371,31 @@ game.menuOpen = false;
 game.menuToggleButton = menuToggleButton;
 game.fullscreenButton = fullscreenButton;
 game.menuContainer = menuContainer;
+game.chatAlertActive = false;
+game.showChatAlert = () => {
+    if (game.menuOpen) {
+        return;
+    }
+    game.chatAlertActive = true;
+    resetMenuToggleVisuals();
+    menuToggleButton.title = 'New chat messages – open chat';
+};
+game.clearChatAlert = () => {
+    if (!game.chatAlertActive) {
+        return;
+    }
+    game.chatAlertActive = false;
+    resetMenuToggleVisuals();
+    menuToggleButton.title = game.menuOpen ? 'Close Chat' : 'Toggle Chat';
+};
 
 game.toggleMenu = () => {
     game.menuOpen = !game.menuOpen;
 
     if (game.menuOpen) {
         menuToggleButton.innerHTML = '&#10005;'; // X icon
-        menuToggleButton.title = 'Close Menu';
+        menuToggleButton.title = 'Close Chat';
+        game.clearChatAlert();
 
         // Show chat input controls first
         if (game.chatManager && typeof game.chatManager.showControls === 'function') {
@@ -384,8 +415,8 @@ game.toggleMenu = () => {
     } else {
         // Hide menu
         menuContainerStyle.display = 'none';
-        menuToggleButton.innerHTML = '&#9776;'; // Hamburger icon
-        menuToggleButton.title = 'Toggle Menu';
+        menuToggleButton.textContent = '💬';
+        menuToggleButton.title = 'Toggle Chat';
 
         // Hide chat input controls
         if (game.chatManager && typeof game.chatManager.hideControls === 'function') {
@@ -395,11 +426,11 @@ game.toggleMenu = () => {
 };
 
 menuToggleButton.addEventListener('mouseenter', () => {
-    menuToggleStyle.background = 'rgba(15, 28, 72, 0.92)';
+    resetMenuToggleVisuals(true);
     menuToggleStyle.transform = 'scale(1.05)';
 });
 menuToggleButton.addEventListener('mouseleave', () => {
-    menuToggleStyle.background = 'rgba(10, 18, 52, 0.82)';
+    resetMenuToggleVisuals(false);
     menuToggleStyle.transform = 'scale(1)';
 });
 menuToggleButton.addEventListener('click', () => {
@@ -511,6 +542,7 @@ game.describeKillSource = (details = {}) => {
 game.cityFinanceFlags = new Map();
 game.mapOverlayActive = false;
 let activeMapModal = null;
+let activeOptionsModal = null;
 
 const describeDirection = (dx, dy, threshold = TILE_SIZE_PX) => {
     let horizontal = '';
@@ -937,6 +969,30 @@ game.showCityInfo = (cityOrData, overrides = {}) => {
     applyPanelMessage(message);
 };
 
+game.importCityLayoutFromJson = (jsonText) => {
+    if (game?.socketListener?.importCityLayout) {
+        return game.socketListener.importCityLayout(jsonText);
+    }
+    throw new Error('Connect to the server before importing a layout.');
+};
+
+game.openOptionsPanel = () => {
+    if (activeOptionsModal) {
+        activeOptionsModal.close();
+        return;
+    }
+    const modal = new OptionsModal(game, {
+        onClose: () => {
+            if (activeOptionsModal === modal) {
+                activeOptionsModal = null;
+            }
+            game.forceDraw = true;
+        }
+    });
+    activeOptionsModal = modal;
+    game.forceDraw = true;
+};
+
 game.showStaffSummary = () => {
     const cityId = normaliseCityId(game.player && game.player.city, null);
     if (cityId === null) {
@@ -1076,25 +1132,6 @@ game.showPointsSummary = () => {
             message: `${getCityDisplayName(cityId)} currently holds ${score} points.`,
             variant: 'info',
             timeout: 4000
-        });
-    }
-    game.forceDraw = true;
-};
-
-game.openOptionsPanel = () => {
-    game.setPanelMessage({
-        heading: 'Options (Preview)',
-        lines: [
-            'In-game configuration UI is still on the roadmap.',
-            'Use the lobby overlay to change cities or roles.',
-            'See AGENTS.md for developer setup and tweaks.'
-        ]
-    });
-    if (game.notify) {
-        game.notify({
-            title: 'Options',
-            message: 'Configuration controls are coming soon. The panel lists available workarounds.',
-            variant: 'warn'
         });
     }
     game.forceDraw = true;
@@ -1374,8 +1411,8 @@ if (game.identityManager) {
 }
 game.iconFactory = new IconFactory(game);
 game.itemFactory = new ItemFactory(game);
-game.rogueTankManager = new RogueTankManager(game);
-game.defenderBotManager = new DefenderBotManager(game);
+game.rogueTankManager = null;
+game.defenderBotManager = null;
 
 game.introModal = new IntroModal({
     heading: 'Battle City Remastered',
