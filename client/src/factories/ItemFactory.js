@@ -496,6 +496,10 @@ class ItemFactory {
             this.spawnExplosion(impactX, impactY);
         }
 
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.handleItemDestroyed === 'function') {
+            this.game.tutorialManager.handleItemDestroyed(item);
+        }
+
         this.deleteItem(item, {
             notifyServer: options.notifyServer,
             reason: options.reason || 'destroyed'
@@ -895,6 +899,9 @@ class ItemFactory {
         this.deleteItem(orbItem, { notifyServer: false, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
         return true;
     }
 
@@ -969,6 +976,9 @@ class ItemFactory {
         this.deleteItem(bomb, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
         return true;
     }
 
@@ -1041,6 +1051,9 @@ class ItemFactory {
         this.deleteItem(mine, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
         return true;
     }
 

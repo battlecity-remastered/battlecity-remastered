@@ -279,6 +279,12 @@ class IconFactory {
             }
 
             this.game.forceDraw = true;
+            if (this.game?.tutorialManager && typeof this.game.tutorialManager.handleIconPickup === 'function') {
+                this.game.tutorialManager.handleIconPickup(icon);
+            }
+            if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+                this.game.tutorialManager.recordEvent('item_picked');
+            }
         }
     }
 

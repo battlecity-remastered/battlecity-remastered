@@ -50,7 +50,10 @@ const dropInventoryItem = (game, dropInfo) => {
     }
 
     const { x, y } = computeDropPosition(game, dropInfo);
-    const item = game.itemFactory?.newItem?.(dropInfo, x, y, dropInfo.type);
+    let item = null;
+    if (game.itemFactory?.newItem) {
+        item = game.itemFactory.newItem(dropInfo, x, y, dropInfo.type);
+    }
 
     if (!item) {
         const icon = game.iconFactory?.newIcon?.(null, parseInt(x, 10), parseInt(y, 10), dropInfo.type, {
@@ -70,6 +73,15 @@ const dropInventoryItem = (game, dropInfo) => {
                 teamId: icon.teamId ?? null,
                 quantity: icon.quantity ?? 1,
             });
+        }
+    }
+
+    if (game?.tutorialManager) {
+        if (typeof game.tutorialManager.handleItemDrop === 'function') {
+            game.tutorialManager.handleItemDrop(dropInfo, { x, y }, item);
+        }
+        if (typeof game.tutorialManager.recordEvent === 'function') {
+            game.tutorialManager.recordEvent('item_deployed');
         }
     }
 

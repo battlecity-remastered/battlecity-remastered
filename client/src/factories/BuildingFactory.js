@@ -503,6 +503,10 @@ class BuildingFactory {
             }
         }
 
+        if (isLocalPlacement && this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('building_placed');
+        }
+
         return building;
     }
 

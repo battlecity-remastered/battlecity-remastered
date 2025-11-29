@@ -88,6 +88,9 @@ export const setupMouseInputsWithPixi = (game, pixiInstance) => {
                 x: event.data.global.x,
                 y: event.data.global.y,
             };
+            if (game.showBuildMenu && game.tutorialManager && typeof game.tutorialManager.recordEvent === 'function') {
+                game.tutorialManager.recordEvent('build_menu_opened');
+            }
         }
         if (game.isDemolishing) {
             console.log("Trying to demolish building");

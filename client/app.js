@@ -40,6 +40,7 @@ import MusicManager from './src/audio/MusicManager';
 import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
 import MapModal from "./src/ui/MapModal";
+import TutorialManager from "./src/ui/TutorialManager";
 
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
@@ -130,7 +131,7 @@ const shortenId = (value) => {
 var app = new PIXI.Application();
 
 // Placeholder - will be set after app.init()
-var appCanvas = null;
+var _appCanvas = null;
 
 var stats = new Stats();
 stats.showPanel(0);
@@ -423,6 +424,8 @@ game.notify = (payload) => {
 game.chatManager = new ChatManager({ game });
 game.identityManager = new IdentityManager(game);
 game.identityManager.loadFromStorage();
+// The tutorial stays hidden for returning players and auto-pops for brand new sessions.
+game.tutorialManager = new TutorialManager({ game });
 game.resolveCallsign = (id) => {
     if (id === undefined || id === null) {
         return null;
@@ -1455,7 +1458,7 @@ for (const item of resourcesToLoad) {
             mipmapTextures: 'off'
         });
 
-        appCanvas = app.canvas;
+        _appCanvas = app.canvas;
         // Append canvas to DOM
         document.getElementById("game").appendChild(app.canvas);
         app.canvas.style.imageRendering = 'pixelated';
