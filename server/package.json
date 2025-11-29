@@ -7,7 +7,8 @@
     "start": "node app.js",
     "start:prod": "NODE_ENV=production node app.js",
     "dev": "nodemon app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "coverage": "rm -rf coverage && mkdir -p coverage && NODE_V8_COVERAGE=coverage node --test --experimental-test-coverage | tee coverage/coverage-report.txt"
   },
   "author": "",
   "license": "ISC",

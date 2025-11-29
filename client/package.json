@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "deploy-client": "npm run build && ./node_modules/.bin/gh-pages -d dist",
     "test": "node --test --experimental-specifier-resolution=node",
+    "coverage": "rm -rf coverage && mkdir -p coverage && NODE_V8_COVERAGE=coverage node --test --experimental-specifier-resolution=node --experimental-test-coverage | tee coverage/coverage-report.txt",
     "build:wasm": "node ./scripts/build-astar-wasm.mjs"
   },
   "author": "",

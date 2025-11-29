@@ -1,11 +1,4 @@
 node_modules/
-.idea
-npm-debug.log
-original/
-server/data/*.db
-.env
-.env.local
-.cache/
-.venv/
-client/.direnv/
-.direnv/
+**/node_modules/
+coverage/
+**/coverage/
