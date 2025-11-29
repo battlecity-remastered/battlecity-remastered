@@ -267,6 +267,7 @@
     <button id="importLayout">Import Layout</button>
     <button id="shareDesign">Share Your Design</button>
     <button id="resetCity">Reset City Layout</button>
+    <button id="removeSelectionToolbar" style="display:none;">Remove Selected</button>
     <button id="paletteToggle" class="mobile-toggle">Palette</button>
     <button id="inspectorToggle" class="mobile-toggle">Inspector</button>
     <span id="status">Ready.</span>
@@ -384,14 +385,15 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     const shareLinkInput = document.getElementById('shareLink');
     const copyShareLinkBtn = document.getElementById('copyShareLink');
     const resetCityBtn = document.getElementById('resetCity');
+    const removeSelectionToolbarBtn = document.getElementById('removeSelectionToolbar');
     const paletteToggle = document.getElementById('paletteToggle');
     const inspectorToggle = document.getElementById('inspectorToggle');
 
-        const selectionInfo = document.getElementById('selectionInfo');
-        const editControls = document.getElementById('editControls');
-        const selectionTypeEl = document.getElementById('selectionType');
-        const tileXInput = document.getElementById('tileX');
-        const tileYInput = document.getElementById('tileY');
+    const selectionInfo = document.getElementById('selectionInfo');
+    const editControls = document.getElementById('editControls');
+    const selectionTypeEl = document.getElementById('selectionType');
+    const tileXInput = document.getElementById('tileX');
+    const tileYInput = document.getElementById('tileY');
     const deleteSelectionBtn = document.getElementById('deleteSelection');
     const nudgeBtns = {
         up: document.getElementById('nudgeUp'),
@@ -1069,6 +1071,8 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
 
     function setSelection(selection) {
         state.selection = selection;
+        const hasSelection = Boolean(selection);
+        removeSelectionToolbarBtn.style.display = hasSelection ? 'inline-block' : 'none';
         if (!selection) {
             editControls.style.display = 'none';
             selectionInfo.textContent = 'Click a placed building or hazard to edit.';
@@ -1149,18 +1153,26 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
     function deleteSelection() {
         if (!state.selection) return;
         const design = ensureCityDesign(state.selectedCity);
+        let removed = false;
         if (state.selection.kind === 'building') {
             const idx = design.buildings.findIndex((b) => b.id === state.selection.id);
             if (idx !== -1 && !design.buildings[idx].locked) {
                 design.buildings.splice(idx, 1);
+                removed = true;
             }
         } else {
             const idx = design.hazards.findIndex((h) => h.id === state.selection.id);
-            if (idx !== -1) design.hazards.splice(idx, 1);
+            if (idx !== -1) {
+                design.hazards.splice(idx, 1);
+                removed = true;
+            }
         }
         setSelection(null);
         render();
         updatePaletteAvailability();
+        if (removed) {
+            statusEl.textContent = 'Removed selection.';
+        }
     }
 
     function pickUpSelection() {
@@ -1731,6 +1743,7 @@ const BUILD_TREE_CONFIG = [{"key":"CAN_BUILD_HOUSE","type":300,"label":"Housing"
             });
         });
         resetCityBtn.addEventListener('click', resetCity);
+        removeSelectionToolbarBtn.addEventListener('click', deleteSelection);
 
         paletteToggle.addEventListener('click', () => {
             const opened = palettePanel.classList.toggle('open');
