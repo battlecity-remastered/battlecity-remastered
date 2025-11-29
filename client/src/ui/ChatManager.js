@@ -314,6 +314,13 @@ class ChatManager {
             this.messages.splice(0, this.messages.length - this.maxMessages);
         }
         this.appendMessage(normalised);
+        if (this.game && typeof this.game.showChatAlert === 'function') {
+            if (this.game.menuOpen && typeof this.game.clearChatAlert === 'function') {
+                this.game.clearChatAlert();
+            } else if (!this.game.menuOpen) {
+                this.game.showChatAlert();
+            }
+        }
     }
 
     applyHistory(history) {
@@ -517,6 +524,9 @@ class ChatManager {
             this.logElement.style.display = 'flex'; // Always show log when menu is open
         }
         this.showAllMessages(); // Show all messages when menu opens
+        if (this.game && typeof this.game.clearChatAlert === 'function') {
+            this.game.clearChatAlert();
+        }
     }
 
     hideControls() {
