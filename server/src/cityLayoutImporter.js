@@ -5,6 +5,7 @@ const { TILE_SIZE } = require('./gameplay/constants');
 const citySpawns = require('../../shared/citySpawns.json');
 
 const MAP_SIZE = 512;
+const BUILDING_SIZE_TILES = 3;
 
 const HAZARD_TYPES = new Set([
     ITEM_TYPES.BOMB,
@@ -89,6 +90,29 @@ const normaliseInstallationEntry = (entry) => {
     return { type, dx, dy, angle };
 };
 
+const rectanglesCollide = (a, b) => {
+    if (!a || !b) {
+        return false;
+    }
+    return !(
+        a.x + a.w <= b.x ||
+        b.x + b.w <= a.x ||
+        a.y + a.h <= b.y ||
+        b.y + b.h <= a.y
+    );
+};
+
+const pushBuildingTiles = (set, tileX, tileY) => {
+    if (!set) {
+        return;
+    }
+    for (let dx = 0; dx < BUILDING_SIZE_TILES; dx += 1) {
+        for (let dy = 0; dy < BUILDING_SIZE_TILES; dy += 1) {
+            set.add(`${tileX + dx}_${tileY + dy}`);
+        }
+    }
+};
+
 class CityLayoutImporter {
 
     constructor({ game, buildingFactory, hazardManager, defenseManager }) {
@@ -162,12 +186,25 @@ class CityLayoutImporter {
             throw new Error('Unable to determine city base coordinates.');
         }
 
-        const layoutEntries = Array.isArray(payload?.layout)
+        const rawLayoutEntries = Array.isArray(payload?.layout)
             ? payload.layout
             : (Array.isArray(payload?.buildings) ? payload.buildings : []);
-        const installationEntries = Array.isArray(payload?.defenses)
+        const rawInstallationEntries = Array.isArray(payload?.defenses)
             ? payload.defenses
             : (Array.isArray(payload?.hazards) ? payload.hazards : []);
+
+        const layoutEntries = rawLayoutEntries
+            .map((entry) => normaliseLayoutEntry(entry))
+            .filter(Boolean);
+        const installationEntries = rawInstallationEntries
+            .map((entry) => normaliseInstallationEntry(entry))
+            .filter(Boolean);
+
+        if (!layoutEntries.length && !installationEntries.length) {
+            throw new Error('Layout payload did not include any buildings or defenses.');
+        }
+
+        this.validateLayout(cityId, base, layoutEntries, installationEntries);
 
         const removedBuildings = this.clearCityBuildings(cityId);
         const removedHazards = this.hazardManager?.removeHazardsForTeam(cityId, 'layout_import') || 0;
@@ -179,25 +216,10 @@ class CityLayoutImporter {
 
         let placedBuildings = 0;
         let skippedBuildings = 0;
-        layoutEntries.forEach((entry, index) => {
-            const normalized = normaliseLayoutEntry(entry);
-            if (!normalized) {
-                skippedBuildings += 1;
-                console.warn('[layout:import] Skipping malformed building entry', { entry, index });
-                return;
-            }
-            const tileX = clampTile(base.tileX + normalized.dx);
-            const tileY = clampTile(base.tileY + normalized.dy);
-            if (tileX === null || tileY === null) {
-                skippedBuildings += 1;
-                return;
-            }
-            const buildingData = { x: tileX, y: tileY, type: normalized.type, city: cityId };
-            if (typeof this.buildingFactory.checkBuildingCollision === 'function'
-                && this.buildingFactory.checkBuildingCollision(buildingData)) {
-                skippedBuildings += 1;
-                return;
-            }
+        layoutEntries.forEach((entry) => {
+            const tileX = clampTile(base.tileX + entry.dx);
+            const tileY = clampTile(base.tileY + entry.dy);
+            const buildingData = { x: tileX, y: tileY, type: entry.type, city: cityId };
             const building = this.buildingFactory.spawnStaticBuilding({
                 ...buildingData,
                 ownerId: options.ownerId || null
@@ -212,24 +234,10 @@ class CityLayoutImporter {
         let placedHazards = 0;
         let skippedHazards = 0;
         const defenseRecords = [];
-        installationEntries.forEach((entry, index) => {
-            const normalized = normaliseInstallationEntry(entry);
-            if (!normalized) {
-                skippedHazards += 1;
-                console.warn('[layout:import] Skipping malformed hazard entry', { entry, index });
-                return;
-            }
-            const tileX = clampTile(base.tileX + normalized.dx);
-            const tileY = clampTile(base.tileY + normalized.dy);
-            if (tileX === null || tileY === null) {
-                skippedHazards += 1;
-                return;
-            }
-            const itemType = normalizeItemType(normalized.type, null);
-            if (itemType === null) {
-                skippedHazards += 1;
-                return;
-            }
+        installationEntries.forEach((entry) => {
+            const tileX = clampTile(base.tileX + entry.dx);
+            const tileY = clampTile(base.tileY + entry.dy);
+            const itemType = normalizeItemType(entry.type, null);
             if (HAZARD_TYPES.has(itemType)) {
                 if (!this.hazardManager) {
                     skippedHazards += 1;
@@ -257,7 +265,7 @@ class CityLayoutImporter {
                     cityId,
                     teamId: cityId,
                     ownerId: options.ownerId || null,
-                    angle: normalized.angle ?? null,
+                    angle: entry.angle ?? null,
                     source: 'system'
                 });
                 return;
@@ -309,6 +317,69 @@ class CityLayoutImporter {
             removed += 1;
         }
         return removed;
+    }
+
+    validateLayout(cityId, base, layoutEntries, installationEntries) {
+        if (!base || !Number.isFinite(base.tileX) || !Number.isFinite(base.tileY)) {
+            throw new Error('City base coordinates are missing.');
+        }
+        const buildingRects = [];
+        const blockingBuildingTiles = new Set();
+
+        // Existing buildings from other cities should not be overlapped
+        for (const existing of this.buildingFactory?.buildings?.values() || []) {
+            const existingCity = normaliseCityId(existing.cityId ?? existing.city, null);
+            if (existingCity === cityId) {
+                continue;
+            }
+            buildingRects.push({
+                x: existing.x,
+                y: existing.y,
+                w: BUILDING_SIZE_TILES,
+                h: BUILDING_SIZE_TILES
+            });
+            pushBuildingTiles(blockingBuildingTiles, existing.x, existing.y);
+        }
+
+        layoutEntries.forEach((entry, index) => {
+            const tileX = base.tileX + entry.dx;
+            const tileY = base.tileY + entry.dy;
+            if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+                throw new Error(`Layout entry ${index + 1} has invalid coordinates.`);
+            }
+            if (tileX < 0 || tileY < 0 ||
+                tileX + BUILDING_SIZE_TILES > MAP_SIZE ||
+                tileY + BUILDING_SIZE_TILES > MAP_SIZE) {
+                throw new Error(`Layout extends beyond the playable map near ${tileX},${tileY}.`);
+            }
+            const rect = { x: tileX, y: tileY, w: BUILDING_SIZE_TILES, h: BUILDING_SIZE_TILES };
+            for (const placed of buildingRects) {
+                if (rectanglesCollide(rect, placed)) {
+                    throw new Error(`Layout overlaps an existing city at ${tileX},${tileY}.`);
+                }
+            }
+            buildingRects.push(rect);
+        });
+
+        const installationTiles = new Set();
+        installationEntries.forEach((entry, index) => {
+            const tileX = base.tileX + entry.dx;
+            const tileY = base.tileY + entry.dy;
+            if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+                throw new Error(`Installation entry ${index + 1} has invalid coordinates.`);
+            }
+            if (tileX < 0 || tileY < 0 || tileX >= MAP_SIZE || tileY >= MAP_SIZE) {
+                throw new Error(`Installation is out of bounds near ${tileX},${tileY}.`);
+            }
+            const tileKey = `${tileX}_${tileY}`;
+            if (installationTiles.has(tileKey)) {
+                throw new Error(`Multiple installations share the same tile at ${tileX},${tileY}.`);
+            }
+            if (blockingBuildingTiles.has(tileKey)) {
+                throw new Error(`Installation overlaps a building footprint at ${tileX},${tileY}.`);
+            }
+            installationTiles.add(tileKey);
+        });
     }
 }
 
