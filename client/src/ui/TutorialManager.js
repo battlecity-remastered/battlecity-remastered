@@ -1,5 +1,9 @@
 import {
     BUILDING_COMMAND_CENTER,
+    CAN_BUILD_BOMB_FACTORY,
+    CAN_BUILD_HOUSE,
+    CAN_BUILD_LASER_FACTORY,
+    CAN_BUILD_LASER_RESEARCH,
     CAN_BUILD_ORB_FACTORY,
     ITEM_TYPE_LASER,
     ITEM_TYPE_ORB,
@@ -30,34 +34,34 @@ class TutorialManager {
                 event: 'build_menu_opened',
             },
             {
-                id: 'place_building',
-                title: 'Place a structure',
-                detail: 'Select any structure and click to place it near your city.',
-                event: 'building_placed',
+                id: 'laser_research',
+                title: 'Place a laser research center',
+                detail: 'Build the laser research center so you can unlock heavy weapons.',
+                event: 'laser_research_built',
             },
             {
-                id: 'pickup_item',
-                title: 'Collect a drop',
-                detail: 'Drive over glowing loot and press U to pick up an item or icon.',
-                event: 'item_picked',
+                id: 'laser_factory',
+                title: 'Place the laser factory',
+                detail: 'Follow up with a laser factory to start manufacturing the gun.',
+                event: 'laser_factory_built',
             },
             {
-                id: 'use_item',
-                title: 'Deploy your gear',
-                detail: 'Press D to drop your selected inventory item (B for bombs, O for orbs).',
-                event: 'item_deployed',
-            },
-            {
-                id: 'arm_heavy_weapon',
-                title: 'Grab a bazooka or laser',
-                detail: 'Loot the glowing crates near the turret to equip a bazooka (stationary) or laser (mobile) shot.',
-                event: 'heavy_weapon_ready',
+                id: 'pickup_laser',
+                title: 'Pick up the laser',
+                detail: 'Collect the laser drop from your factory to arm up.',
+                event: 'laser_picked_up',
             },
             {
                 id: 'destroy_training_turret',
                 title: 'Destroy the practice turret',
                 detail: 'Circle strafe the turret, time Shift shots between its salvo, and blow it up.',
                 event: 'training_turret_destroyed',
+            },
+            {
+                id: 'pickup_orb',
+                title: 'Pick up the practice orb',
+                detail: 'Grab the orb output from the tutorial factory.',
+                event: 'tutorial_orb_collected',
             },
             {
                 id: 'fake_orb',
@@ -70,10 +74,18 @@ class TutorialManager {
         this.injectStyles();
         this.container = this.createContainer();
         this.trainingScenario = {
+            active: false,
             turretId: null,
             orbTargetCenter: null,
             orbTargetTile: null,
             orbFactoryId: null,
+            bombFactoryId: null,
+            anchorTile: null,
+            cleanup: {
+                icons: [],
+                items: [],
+                buildings: [],
+            }
         };
 
         // Only auto-pop the card for brand-new players; returning sessions keep the toggle hidden
@@ -88,7 +100,6 @@ class TutorialManager {
 
         this.render();
         this.scheduleAutoShow();
-        this.scheduleScenarioSetup();
     }
 
     loadState() {
@@ -293,7 +304,7 @@ class TutorialManager {
             toggle = document.createElement('button');
             toggle.id = 'battlecity-tutorial-toggle';
             toggle.textContent = 'Show Tutorial';
-            toggle.addEventListener('click', () => this.show());
+            toggle.addEventListener('click', () => this.startTrainingSession());
             const gameContainer = document.getElementById('game');
             if (gameContainer) {
                 gameContainer.appendChild(toggle);
@@ -320,9 +331,13 @@ class TutorialManager {
             return;
         }
         const step = this.steps.find((candidate) => candidate.event === eventName);
-        if (step) {
-            this.completeStep(step.id);
+        if (!step) {
+            return;
         }
+        if (!this.trainingScenario.active && step.id !== 'build_menu') {
+            return;
+        }
+        this.completeStep(step.id);
     }
 
     completeStep(stepId) {
@@ -336,6 +351,7 @@ class TutorialManager {
         this.state.hidden = false;
         this.saveState();
         this.render();
+        this.handleStepProgression(stepId);
     }
 
     hide() {
@@ -353,6 +369,8 @@ class TutorialManager {
     reset() {
         this.state = { completed: new Set(), hidden: false };
         this.pendingAutoShow = true;
+        this.cleanupTrainingEntities();
+        this.trainingScenario.active = false;
         this.saveState();
         this.render();
         this.scheduleAutoShow();
@@ -440,8 +458,8 @@ class TutorialManager {
 
         const intro = document.createElement('p');
         intro.textContent = allComplete
-            ? 'Nice work. You opened the build menu, placed a structure, collected loot, deployed gear, destroyed the turret, and executed a fake orb drop.'
-            : 'Follow these quick steps to learn how to construct buildings, grab drops, deploy your equipment, shred a turret, and slam a practice orb onto a command center.';
+            ? 'Nice work. You opened the build menu, built the laser research + factory chain, armed a laser, shredded the turret, and executed a fake orb detonation.'
+            : 'Follow these quick steps on the training map: build laser research and factory, pick up the laser, destroy the practice turret, then pick up and drop a fake orb onto a dummy command center.';
 
         const list = document.createElement('ul');
         list.className = 'battlecity-tutorial-steps';
@@ -450,18 +468,30 @@ class TutorialManager {
         const actions = document.createElement('div');
         actions.className = 'battlecity-tutorial-actions';
 
-        const hideButton = document.createElement('button');
-        hideButton.className = 'battlecity-tutorial-button';
-        hideButton.textContent = allComplete ? 'Hide card' : 'Skip for now';
-        hideButton.addEventListener('click', () => this.hide());
+        const startButton = document.createElement('button');
+        startButton.className = 'battlecity-tutorial-button';
+        startButton.textContent = this.trainingScenario.active ? 'Return to training' : 'Start tutorial run';
+        startButton.addEventListener('click', () => this.startTrainingSession());
+
+        const skipButton = document.createElement('button');
+        skipButton.className = 'battlecity-tutorial-button';
+        skipButton.textContent = 'Skip tutorial';
+        skipButton.addEventListener('click', () => this.skipTutorial());
 
         const resetButton = document.createElement('button');
         resetButton.className = 'battlecity-tutorial-button';
         resetButton.textContent = 'Restart';
         resetButton.addEventListener('click', () => this.reset());
 
+        const hideButton = document.createElement('button');
+        hideButton.className = 'battlecity-tutorial-button';
+        hideButton.textContent = allComplete ? 'Hide card' : 'Hide';
+        hideButton.addEventListener('click', () => this.hide());
+
         actions.appendChild(chip);
+        actions.appendChild(startButton);
         actions.appendChild(resetButton);
+        actions.appendChild(skipButton);
         actions.appendChild(hideButton);
 
         card.appendChild(heading);
@@ -472,37 +502,192 @@ class TutorialManager {
         this.container.appendChild(card);
     }
 
-    scheduleScenarioSetup(retries = 0) {
+    handleStepProgression(stepId) {
+        if (!stepId) {
+            return;
+        }
+        if (stepId === 'laser_factory') {
+            this.spawnCombatDrops();
+        }
+        if (stepId === 'pickup_laser') {
+            this.spawnCombatTurret();
+        }
+        if (stepId === 'destroy_training_turret') {
+            this.spawnOrbDrill();
+        }
+        if (stepId === 'fake_orb' || stepId === 'tutorial_orb_detonated') {
+            this.finishTutorial();
+            return;
+        }
+        const allComplete = this.steps.every((step) => this.isComplete(step.id));
+        if (allComplete) {
+            this.finishTutorial();
+        }
+    }
+
+    finishTutorial() {
+        this.trainingScenario.active = false;
+        this.returnToLobby('Tutorial complete. Returning to the lobby.');
+    }
+
+    startTrainingSession() {
+        this.state.hidden = false;
+        this.trainingScenario.active = true;
+        this.pendingAutoShow = false;
+        if (this.game?.player) {
+            this.game.player.isMayor = true;
+        }
+        this.saveState();
+        this.render();
+        this.runWhenReady(() => {
+            if (this.game?.socketListener?.leaveGame) {
+                this.game.socketListener.leaveGame({ reason: 'tutorial_training' });
+            }
+            this.prepareTrainingGround();
+        });
+    }
+
+    skipTutorial() {
+        this.returnToLobby('Tutorial skipped. Returning to the lobby.');
+        this.state.hidden = true;
+        this.render();
+    }
+
+    returnToLobby(message = 'Returning to the lobby...') {
+        this.cleanupTrainingEntities();
+        this.trainingScenario.active = false;
+        if (this.game?.socketListener?.leaveGame) {
+            this.game.socketListener.leaveGame({ reason: 'tutorial' });
+        }
+        if (this.game?.lobby?.completeReturnToLobby) {
+            this.game.lobby.completeReturnToLobby({ message, type: 'info' });
+        }
+    }
+
+    runWhenReady(callback, retries = 0) {
         const maxRetries = 30;
-        if (!this.game || typeof window === 'undefined') {
+        if (!callback || typeof callback !== 'function' || !this.game || typeof window === 'undefined') {
             return;
         }
         if (this.game.player && this.game.itemFactory && this.game.iconFactory && this.game.buildingFactory) {
-            this.initialiseScenario();
+            callback();
             return;
         }
         if (retries >= maxRetries) {
             return;
         }
-        window.setTimeout(() => this.scheduleScenarioSetup(retries + 1), 350);
+        window.setTimeout(() => this.runWhenReady(callback, retries + 1), 350);
     }
 
-    initialiseScenario() {
-        if (this.trainingScenario.initialised) {
+    cleanupTrainingEntities() {
+        const registry = this.trainingScenario.cleanup || {};
+        if (Array.isArray(registry.items) && this.game?.itemFactory?.deleteItem) {
+            registry.items.forEach((item) => {
+                if (item) {
+                    this.game.itemFactory.deleteItem(item, { notifyServer: false, reason: 'tutorial_cleanup' });
+                }
+            });
+        }
+        if (Array.isArray(registry.icons) && this.game?.iconFactory?.deleteIcon) {
+            registry.icons.forEach((icon) => {
+                if (icon) {
+                    this.game.iconFactory.deleteIcon(icon);
+                }
+            });
+        }
+        if (Array.isArray(registry.buildings) && this.game?.buildingFactory?.deleteBuilding) {
+            registry.buildings.forEach((buildingId) => {
+                const building = this.game.buildingFactory.getBuildingById(buildingId);
+                if (building) {
+                    this.game.buildingFactory.deleteBuilding(building, false, 'tutorial_cleanup');
+                }
+            });
+        }
+        this.trainingScenario.cleanup = { icons: [], items: [], buildings: [] };
+        this.trainingScenario.turretId = null;
+        this.trainingScenario.orbTargetCenter = null;
+        this.trainingScenario.orbTargetTile = null;
+        this.trainingScenario.orbFactoryId = null;
+        this.trainingScenario.bombFactoryId = null;
+    }
+
+    registerTrainingIcon(icon) {
+        if (!icon) {
             return;
         }
-        this.trainingScenario.initialised = true;
-        this.spawnCombatDrill();
-        this.spawnOrbDrill();
+        if (!Array.isArray(this.trainingScenario.cleanup.icons)) {
+            this.trainingScenario.cleanup.icons = [];
+        }
+        this.trainingScenario.cleanup.icons.push(icon);
     }
 
-    getAnchorTile() {
-        const offset = this.game?.player?.offset || { x: TILE_SIZE_PX * 10, y: TILE_SIZE_PX * 10 };
+    registerTrainingItem(item) {
+        if (!item) {
+            return;
+        }
+        if (!Array.isArray(this.trainingScenario.cleanup.items)) {
+            this.trainingScenario.cleanup.items = [];
+        }
+        this.trainingScenario.cleanup.items.push(item);
+    }
+
+    registerTrainingBuilding(building) {
+        if (!building || building.id === undefined || building.id === null) {
+            return;
+        }
+        if (!Array.isArray(this.trainingScenario.cleanup.buildings)) {
+            this.trainingScenario.cleanup.buildings = [];
+        }
+        this.trainingScenario.cleanup.buildings.push(building.id);
+    }
+
+    getTrainingAnchorTile() {
         const mapWidth = Array.isArray(this.game?.map) ? this.game.map.length : 512;
         const mapHeight = Array.isArray(this.game?.map?.[0]) ? this.game.map[0].length : 512;
-        const baseTileX = clampTile(offset.x / TILE_SIZE_PX, mapWidth - 3);
-        const baseTileY = clampTile(offset.y / TILE_SIZE_PX, mapHeight - 3);
+        const buffer = 24;
+        const baseTileX = clampTile(mapWidth - buffer, mapWidth - 3);
+        const baseTileY = clampTile(mapHeight - buffer, mapHeight - 3);
         return { x: baseTileX, y: baseTileY };
+    }
+
+    clearTrainingTiles(anchor, radius = 16) {
+        if (!anchor || !this.game || !Array.isArray(this.game.map)) {
+            return;
+        }
+        const startX = clampTile(anchor.x - radius, this.game.map.length - 1);
+        const endX = clampTile(anchor.x + radius, this.game.map.length - 1);
+        const startY = clampTile(anchor.y - radius, this.game.map[0].length - 1);
+        const endY = clampTile(anchor.y + radius, this.game.map[0].length - 1);
+        for (let x = startX; x <= endX; x += 1) {
+            for (let y = startY; y <= endY; y += 1) {
+                if (!this.game.map[x]) {
+                    this.game.map[x] = [];
+                }
+                if (!this.game.tiles[x]) {
+                    this.game.tiles[x] = [];
+                }
+                this.game.map[x][y] = 0;
+                this.game.tiles[x][y] = 0;
+                const existing = this.game.buildingFactory?.findBuildingAtTile(x, y);
+                if (existing) {
+                    this.game.buildingFactory.deleteBuilding(existing, false, 'tutorial_reset_zone');
+                }
+            }
+        }
+    }
+
+    prepareTrainingGround() {
+        this.cleanupTrainingEntities();
+        const anchor = this.getTrainingAnchorTile();
+        this.trainingScenario.anchorTile = anchor;
+        this.clearTrainingTiles(anchor, 18);
+        const startTile = { x: anchor.x + 2, y: anchor.y + 6 };
+        const startCenter = this.toCenterFromTile(startTile.x, startTile.y);
+        if (this.game?.player) {
+            this.game.player.offset = { x: startCenter.x, y: startCenter.y };
+            this.game.player.lastSafeOffset = { x: startCenter.x, y: startCenter.y };
+        }
+        this.game.forceDraw = true;
     }
 
     toWorldFromTile(tileX, tileY) {
@@ -519,10 +704,38 @@ class TutorialManager {
         };
     }
 
-    spawnCombatDrill() {
-        const anchor = this.getAnchorTile();
-        const turretTile = { x: anchor.x + 3, y: anchor.y - 1 };
-        const weaponTile = { x: anchor.x + 1, y: anchor.y - 1 };
+    spawnCombatDrops() {
+        const anchor = this.trainingScenario.anchorTile || this.getTrainingAnchorTile();
+        const weaponTile = { x: anchor.x + 4, y: anchor.y + 6 };
+        const weaponPosition = this.toWorldFromTile(weaponTile.x, weaponTile.y);
+
+        if (this.game?.iconFactory?.newIcon) {
+            const sharedDropOptions = {
+                isSharedDrop: true,
+                skipProductionUpdate: true,
+                city: null,
+                teamId: null,
+                synced: false,
+            };
+            const bazooka = this.game.iconFactory.newIcon(null, weaponPosition.x, weaponPosition.y, ITEM_TYPE_ROCKET, sharedDropOptions);
+            if (bazooka) {
+                bazooka.tutorialTag = 'training_weapon';
+                this.registerTrainingIcon(bazooka);
+            }
+            const laser = this.game.iconFactory.newIcon(null, weaponPosition.x + 48, weaponPosition.y - 48, ITEM_TYPE_LASER, sharedDropOptions);
+            if (laser) {
+                laser.tutorialTag = 'training_weapon';
+                this.registerTrainingIcon(laser);
+            }
+        }
+    }
+
+    spawnCombatTurret() {
+        if (this.trainingScenario.turretId) {
+            return;
+        }
+        const anchor = this.trainingScenario.anchorTile || this.getTrainingAnchorTile();
+        const turretTile = { x: anchor.x + 12, y: anchor.y + 2 };
         const turretPosition = this.toWorldFromTile(turretTile.x, turretTile.y);
 
         if (this.game?.itemFactory?.newItem) {
@@ -535,43 +748,39 @@ class TutorialManager {
                 turret.tutorialTag = 'combat_turret';
                 turret.life = Math.min(20, turret.life ?? 20);
                 this.trainingScenario.turretId = turret.id || 'tutorial_turret';
-            }
-        }
-
-        if (this.game?.iconFactory?.newIcon) {
-            const weaponPosition = this.toWorldFromTile(weaponTile.x, weaponTile.y);
-            const sharedDropOptions = {
-                isSharedDrop: true,
-                skipProductionUpdate: true,
-                city: null,
-                teamId: null,
-                synced: false,
-            };
-            const bazooka = this.game.iconFactory.newIcon(null, weaponPosition.x, weaponPosition.y, ITEM_TYPE_ROCKET, sharedDropOptions);
-            if (bazooka) {
-                bazooka.tutorialTag = 'training_weapon';
-            }
-            const laser = this.game.iconFactory.newIcon(null, weaponPosition.x + 32, weaponPosition.y + 32, ITEM_TYPE_LASER, sharedDropOptions);
-            if (laser) {
-                laser.tutorialTag = 'training_weapon';
+                this.registerTrainingItem(turret);
             }
         }
     }
 
     spawnOrbDrill() {
-        const anchor = this.getAnchorTile();
-        const factoryTile = { x: anchor.x + 4, y: anchor.y + 2 };
-        const orbTile = { x: factoryTile.x + 1, y: factoryTile.y };
-        const targetTile = { x: factoryTile.x + 3, y: factoryTile.y };
+        const anchor = this.trainingScenario.anchorTile || this.getTrainingAnchorTile();
+        const orbFactoryTile = { x: anchor.x + 6, y: anchor.y + 12 };
+        const bombFactoryTile = { x: anchor.x + 9, y: anchor.y + 12 };
+        const targetTile = { x: anchor.x + 12, y: anchor.y + 12 };
+        const orbTile = { x: orbFactoryTile.x + 1, y: orbFactoryTile.y + 1 };
 
         if (this.game?.buildingFactory?.newBuilding) {
-            const orbFactory = this.game.buildingFactory.newBuilding(null, factoryTile.x, factoryTile.y, CAN_BUILD_ORB_FACTORY, {
+            const orbFactory = this.game.buildingFactory.newBuilding(null, orbFactoryTile.x, orbFactoryTile.y, CAN_BUILD_ORB_FACTORY, {
                 notifyServer: false,
                 id: 'tutorial_orb_factory',
                 city: this.game.player?.city ?? 0,
             });
             if (orbFactory) {
+                orbFactory.tutorialTag = 'tutorial_orb_factory';
                 this.trainingScenario.orbFactoryId = orbFactory.id;
+                this.registerTrainingBuilding(orbFactory);
+            }
+
+            const bombFactory = this.game.buildingFactory.newBuilding(null, bombFactoryTile.x, bombFactoryTile.y, CAN_BUILD_BOMB_FACTORY, {
+                notifyServer: false,
+                id: 'tutorial_bomb_factory',
+                city: this.game.player?.city ?? 0,
+            });
+            if (bombFactory) {
+                bombFactory.tutorialTag = 'tutorial_bomb_factory';
+                this.trainingScenario.bombFactoryId = bombFactory.id;
+                this.registerTrainingBuilding(bombFactory);
             }
 
             const cc = this.game.buildingFactory.newBuilding(null, targetTile.x, targetTile.y, BUILDING_COMMAND_CENTER, {
@@ -580,9 +789,35 @@ class TutorialManager {
                 city: 99,
             });
             if (cc) {
+                cc.tutorialTag = 'tutorial_orb_target';
                 this.trainingScenario.orbTargetTile = targetTile;
-                this.trainingScenario.orbTargetCenter = this.toCenterFromTile(targetTile.x, targetTile.y);
+                this.trainingScenario.orbTargetCenter = this.toCenterFromTile(targetTile.x + 1, targetTile.y + 1);
+                this.registerTrainingBuilding(cc);
             }
+
+            const houseOffsets = [
+                { dx: -4, dy: -1 },
+                { dx: -4, dy: 2 },
+                { dx: -1, dy: -4 },
+                { dx: 2, dy: -4 },
+                { dx: 4, dy: -1 },
+                { dx: 4, dy: 2 },
+                { dx: -1, dy: 4 },
+                { dx: 2, dy: 4 },
+            ];
+            houseOffsets.forEach((offset) => {
+                const houseTileX = targetTile.x + offset.dx;
+                const houseTileY = targetTile.y + offset.dy;
+                const house = this.game.buildingFactory.newBuilding(null, houseTileX, houseTileY, CAN_BUILD_HOUSE, {
+                    notifyServer: false,
+                    id: `tutorial_house_${houseTileX}_${houseTileY}`,
+                    city: 99,
+                });
+                if (house) {
+                    house.tutorialTag = 'tutorial_orb_house';
+                    this.registerTrainingBuilding(house);
+                }
+            });
         }
 
         if (this.game?.iconFactory?.newIcon) {
@@ -597,7 +832,20 @@ class TutorialManager {
             });
             if (orb) {
                 orb.tutorialTag = 'tutorial_orb';
+                this.registerTrainingIcon(orb);
             }
+        }
+    }
+
+    handleBuildingPlaced(building) {
+        if (!building || !this.trainingScenario.active) {
+            return;
+        }
+        if (building.type === CAN_BUILD_LASER_RESEARCH) {
+            this.recordEvent('laser_research_built');
+        }
+        if (building.type === CAN_BUILD_LASER_FACTORY) {
+            this.recordEvent('laser_factory_built');
         }
     }
 
@@ -605,8 +853,11 @@ class TutorialManager {
         if (!icon) {
             return;
         }
-        if (icon.type === ITEM_TYPE_LASER || icon.type === ITEM_TYPE_ROCKET) {
-            this.recordEvent('heavy_weapon_ready');
+        if (icon.type === ITEM_TYPE_LASER) {
+            this.recordEvent('laser_picked_up');
+        }
+        if (icon.tutorialTag === 'tutorial_orb') {
+            this.recordEvent('tutorial_orb_collected');
         }
     }
 
@@ -615,12 +866,13 @@ class TutorialManager {
             return;
         }
         if (item.tutorialTag === 'combat_turret' || item.type === ITEM_TYPE_TURRET) {
+            this.trainingScenario.turretId = null;
             this.recordEvent('training_turret_destroyed');
         }
     }
 
     handleItemDrop(dropInfo, position, item) {
-        if (!dropInfo || !position || !this.trainingScenario.orbTargetCenter) {
+        if (!dropInfo || !position || !this.trainingScenario.orbTargetCenter || !this.trainingScenario.active) {
             return;
         }
         if (dropInfo.type !== ITEM_TYPE_ORB) {
