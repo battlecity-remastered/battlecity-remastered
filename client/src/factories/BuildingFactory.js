@@ -380,6 +380,7 @@ class BuildingFactory {
         const coordKey = `${x}_${y}`;
         const cityId = Number.isFinite(city) ? city : parseInt(city, 10) || 0;
         const isLocalPlacement = notifyServer && owner !== null && owner !== undefined && this.game?.player && owner === this.game.player.id;
+        const isPlayerPlacement = owner !== null && owner !== undefined && this.game?.player && owner === this.game.player.id;
         if (isLocalPlacement && !this.game?.player?.isMayor) {
             if (this.game.notify) {
                 this.game.notify({
@@ -500,6 +501,15 @@ class BuildingFactory {
                     cost: COST_BUILDING,
                 });
                 this.game.forceDraw = true;
+            }
+        }
+
+        if ((isLocalPlacement || isPlayerPlacement) && this.game?.tutorialManager) {
+            if (typeof this.game.tutorialManager.handleBuildingPlaced === 'function') {
+                this.game.tutorialManager.handleBuildingPlaced(building);
+            }
+            if (typeof this.game.tutorialManager.recordEvent === 'function') {
+                this.game.tutorialManager.recordEvent('building_placed');
             }
         }
 

@@ -39,6 +39,7 @@ import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
 import MapModal from "./src/ui/MapModal.js";
 import OptionsModal from "./src/ui/OptionsModal.js";
+import TutorialManager from "./src/ui/TutorialManager.js";
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
 // LOAD_TYPE and XHR_RESPONSE_TYPE are no longer needed
@@ -454,6 +455,8 @@ game.notify = (payload) => {
 game.chatManager = new ChatManager({ game });
 game.identityManager = new IdentityManager(game);
 game.identityManager.loadFromStorage();
+// The tutorial stays hidden for returning players and auto-pops for brand new sessions.
+game.tutorialManager = new TutorialManager({ game });
 game.resolveCallsign = (id) => {
     if (id === undefined || id === null) {
         return null;
@@ -2147,7 +2150,9 @@ function gameLoop() {
     }
 
     game.bulletFactory.cycle();
-    if (!game.lobby || game.lobby.isInGame()) {
+    const offlineTraining = !!(game.tutorialManager && typeof game.tutorialManager.isOfflineTrainingActive === 'function'
+        && game.tutorialManager.isOfflineTrainingActive());
+    if ((!game.lobby || game.lobby.isInGame()) && !offlineTraining) {
         game.socketListener.cycle();
     }
     game.itemFactory.cycle();

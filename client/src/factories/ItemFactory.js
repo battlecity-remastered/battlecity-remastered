@@ -9,7 +9,6 @@ import {ITEM_TYPE_MEDKIT} from "../constants.js";
 import {ITEM_TYPE_CLOAK} from "../constants.js";
 import {ITEM_TYPE_ROCKET} from "../constants.js";
 import {BOMB_EXPLOSION_TILE_RADIUS} from "../constants.js";
-import {BOMB_ITEM_TILE_RADIUS} from "../constants.js";
 import {ITEM_TYPE_ORB} from "../constants.js";
 import {ITEM_TYPE_FLARE} from "../constants.js";
 import {BUILDING_COMMAND_CENTER} from "../constants.js";
@@ -496,6 +495,10 @@ class ItemFactory {
             this.spawnExplosion(impactX, impactY);
         }
 
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.handleItemDestroyed === 'function') {
+            this.game.tutorialManager.handleItemDestroyed(item);
+        }
+
         this.deleteItem(item, {
             notifyServer: options.notifyServer,
             reason: options.reason || 'destroyed'
@@ -903,6 +906,9 @@ class ItemFactory {
         this.deleteItem(orbItem, { notifyServer: false, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
         return true;
     }
 
@@ -977,6 +983,12 @@ class ItemFactory {
         this.deleteItem(bomb, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.registerPickup === 'function') {
+            this.game.tutorialManager.registerPickup({ type: ITEM_TYPE_BOMB });
+        }
         return true;
     }
 
@@ -1049,6 +1061,12 @@ class ItemFactory {
         this.deleteItem(mine, { notifyServer: true, reason: 'picked_up' });
         player.collidedItem = null;
         this.game.forceDraw = true;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
+        }
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.registerPickup === 'function') {
+            this.game.tutorialManager.registerPickup({ type: ITEM_TYPE_ORB, tutorialTag: 'tutorial_orb' });
+        }
         return true;
     }
 
@@ -1078,10 +1096,15 @@ class ItemFactory {
     detonateBomb(item, options = {}) {
         const notifyServer = options.notifyServer !== undefined ? !!options.notifyServer : true;
         const reportDemolish = options.reportDemolish === true;
+        const radius = Number.isFinite(options.radiusOverride) ? Math.max(0, Math.floor(options.radiusOverride)) : BOMB_EXPLOSION_TILE_RADIUS;
         const centerTileX = Math.floor((item.x + 24) / 48);
         const centerTileY = Math.floor((item.y + 24) / 48);
 
         console.log(`Bomb detonated at tile ${centerTileX}, ${centerTileY}`);
+
+        if (options.spawnExplosion !== false && typeof this.spawnExplosion === 'function') {
+            this.spawnExplosion(centerTileX * 48 + 24, centerTileY * 48 + 24);
+        }
 
         let nextItem = this.deleteItem(item, { notifyServer });
 
@@ -1091,8 +1114,8 @@ class ItemFactory {
             const next = node.next;
             const tileX = Math.floor((node.x + 24) / 48);
             const tileY = Math.floor((node.y + 24) / 48);
-            if (Math.abs(tileX - centerTileX) <= BOMB_ITEM_TILE_RADIUS &&
-                Math.abs(tileY - centerTileY) <= BOMB_ITEM_TILE_RADIUS) {
+            if (Math.abs(tileX - centerTileX) <= radius &&
+                Math.abs(tileY - centerTileY) <= radius) {
                 this.deleteItem(node, { notifyServer });
             }
             node = next;
@@ -1103,8 +1126,8 @@ class ItemFactory {
         while (building) {
             const diffX = Math.floor(building.x) - centerTileX;
             const diffY = Math.floor(building.y) - centerTileY;
-            if (Math.abs(diffX) <= BOMB_EXPLOSION_TILE_RADIUS &&
-                Math.abs(diffY) <= BOMB_EXPLOSION_TILE_RADIUS) {
+            if (Math.abs(diffX) <= radius &&
+                Math.abs(diffY) <= radius) {
                 if (building.type === BUILDING_COMMAND_CENTER) {
                     building = building.next;
                     continue;
@@ -1120,6 +1143,54 @@ class ItemFactory {
         this.damagePlayersInRadius(centerTileX, centerTileY);
         this.game.forceDraw = true;
         return nextItem;
+    }
+
+    detonateBombAt(centerTileX, centerTileY, options = {}) {
+        if (!Number.isFinite(centerTileX) || !Number.isFinite(centerTileY)) {
+            return;
+        }
+        const notifyServer = options.notifyServer !== undefined ? !!options.notifyServer : true;
+        const reportDemolish = options.reportDemolish === true;
+        const radius = Number.isFinite(options.radiusOverride) ? Math.max(0, Math.floor(options.radiusOverride)) : BOMB_EXPLOSION_TILE_RADIUS;
+
+        if (options.spawnExplosion !== false && typeof this.spawnExplosion === 'function') {
+            this.spawnExplosion(centerTileX * 48 + 24, centerTileY * 48 + 24);
+        }
+
+        // Remove items in radius
+        let node = this.getHead();
+        while (node) {
+            const next = node.next;
+            const tileX = Math.floor((node.x + 24) / 48);
+            const tileY = Math.floor((node.y + 24) / 48);
+            if (Math.abs(tileX - centerTileX) <= radius &&
+                Math.abs(tileY - centerTileY) <= radius) {
+                this.deleteItem(node, { notifyServer });
+            }
+            node = next;
+        }
+
+        // Damage buildings
+        let building = this.game.buildingFactory.getHead();
+        while (building) {
+            const diffX = Math.floor(building.x) - centerTileX;
+            const diffY = Math.floor(building.y) - centerTileY;
+            if (Math.abs(diffX) <= radius &&
+                Math.abs(diffY) <= radius) {
+                if (building.type === BUILDING_COMMAND_CENTER) {
+                    building = building.next;
+                    continue;
+                }
+                const shouldNotifyDemolish = notifyServer || (reportDemolish && this.isLocalPlayersBuilding(building));
+                const demolishReason = shouldNotifyDemolish && reportDemolish ? 'bot_destroyed' : null;
+                building = this.game.buildingFactory.deleteBuilding(building, shouldNotifyDemolish, demolishReason);
+                continue;
+            }
+            building = building.next;
+        }
+
+        this.damagePlayersInRadius(centerTileX, centerTileY);
+        this.game.forceDraw = true;
     }
 
     damagePlayersInRadius() {
