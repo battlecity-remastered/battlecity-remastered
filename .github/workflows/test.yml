@@ -39,8 +39,13 @@ jobs:
           cache-dependency-path: server/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Run server tests
-        run: npm test
+      - name: Run server coverage
+        run: npm run coverage
+      - name: Upload server coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage
+          path: server/coverage
   client-tests:
     runs-on: ubuntu-latest
     needs: lint
@@ -58,5 +63,10 @@ jobs:
           cache-dependency-path: client/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Run client tests
-        run: npm test
+      - name: Run client coverage
+        run: npm run coverage
+      - name: Upload client coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-coverage
+          path: client/coverage

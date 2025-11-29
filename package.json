@@ -9,7 +9,8 @@
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
     "lint": "npx eslint client server",
     "build": "npm run build --workspace client",
-    "start": "npm run start --workspace server"
+    "start": "npm run start --workspace server",
+    "coverage": "npm run coverage --workspace server && npm run coverage --workspace client"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
