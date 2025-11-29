@@ -28,6 +28,8 @@ class LobbyManager {
         this.googleScriptPromise = null;
         this.googleInitialized = false;
         this.googleBusy = false;
+        this.cityFilterInput = null;
+        this.cityFilter = '';
         this.activeTab = 'cities';
         this.lastHighScores = [];
         this.isActivated = options.autoShow !== false;
@@ -142,6 +144,24 @@ class LobbyManager {
             }
             .lobby-tab-panel.active {
                 display: flex;
+            }
+            .lobby-city-filter {
+                display: flex;
+                margin-bottom: 12px;
+            }
+            .lobby-city-filter-input {
+                width: 100%;
+                padding: 8px 10px;
+                border: 1px solid #384156;
+                border-radius: 4px;
+                background: #0f131d;
+                color: #e1e6f6;
+                font-size: 13px;
+            }
+            .lobby-city-filter-input:focus {
+                outline: none;
+                border-color: #5c9eff;
+                box-shadow: 0 0 0 1px rgba(92, 158, 255, 0.25);
             }
             .lobby-city-list {
                 flex: 1;
@@ -445,8 +465,21 @@ class LobbyManager {
         this.cityPanel.className = 'lobby-tab-panel';
         this.cityPanel.dataset.tab = 'cities';
 
+        const cityFilterContainer = document.createElement('div');
+        cityFilterContainer.className = 'lobby-city-filter';
+
+        this.cityFilterInput = document.createElement('input');
+        this.cityFilterInput.type = 'search';
+        this.cityFilterInput.placeholder = 'Filter cities by name...';
+        this.cityFilterInput.className = 'lobby-city-filter-input';
+        this.cityFilterInput.addEventListener('input', () => this.handleCityFilterChange());
+
+        cityFilterContainer.appendChild(this.cityFilterInput);
+
         this.cityListContainer = document.createElement('div');
         this.cityListContainer.className = 'lobby-city-list';
+
+        this.cityPanel.appendChild(cityFilterContainer);
         this.cityPanel.appendChild(this.cityListContainer);
 
         this.highScorePanel = document.createElement('div');
@@ -1084,6 +1117,14 @@ class LobbyManager {
         }
     }
 
+    handleCityFilterChange() {
+        if (!this.cityFilterInput) {
+            return;
+        }
+        this.cityFilter = this.cityFilterInput.value || '';
+        this.renderCityList();
+    }
+
     renderHighScores() {
         if (!this.highScoreContainer) {
             return;
@@ -1166,7 +1207,25 @@ class LobbyManager {
             return aId - bId;
         });
 
-        sortedCities.forEach((city) => {
+        const filterValue = (this.cityFilter || '').trim().toLowerCase();
+        const filteredCities = filterValue.length
+            ? sortedCities.filter((city) => {
+                const label = (typeof city?.name === 'string' && city.name.trim().length)
+                    ? city.name.trim()
+                    : `City ${city?.id ?? ''}`;
+                return label.toLowerCase().startsWith(filterValue);
+            })
+            : sortedCities;
+
+        if (!filteredCities.length) {
+            const empty = document.createElement('div');
+            empty.className = 'lobby-city-empty';
+            empty.textContent = 'No cities match that name. Try a different filter.';
+            this.cityListContainer.appendChild(empty);
+            return;
+        }
+
+        filteredCities.forEach((city) => {
             const row = document.createElement('div');
             row.className = 'lobby-city-row';
             row.dataset.cityId = city.id;
@@ -1179,7 +1238,10 @@ class LobbyManager {
 
             const name = document.createElement('div');
             name.className = 'lobby-city-name';
-            name.textContent = city.name || `City ${city.id}`;
+            const cityLabel = (typeof city?.name === 'string' && city.name.trim().length)
+                ? city.name.trim()
+                : `City ${city.id}`;
+            name.textContent = cityLabel;
 
             const mayorDisplayName = city.mayorName || city.mayorLabel || '(unknown)';
             const mayorLabel = city.openMayor ? '(open)' : mayorDisplayName;
