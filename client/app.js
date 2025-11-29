@@ -39,7 +39,9 @@ import AudioManager, { SOUND_IDS } from './src/audio/AudioManager';
 import MusicManager from './src/audio/MusicManager';
 import IntroModal from "./src/ui/IntroModal";
 import HelpModal from "./src/ui/HelpModal";
-import MapModal from "./src/ui/MapModal";
+import MapModal from "./src/ui/MapModal.js";
+import OptionsModal from "./src/ui/OptionsModal.js";
+import importCityLayoutFromJson from "./src/utils/cityLayoutLoader.js";
 
 const assetUrl = (relativePath) => `${import.meta.env.BASE_URL}${relativePath}`;
 // PixiJS v8: Loader has been replaced with Assets API
@@ -130,7 +132,7 @@ const shortenId = (value) => {
 var app = new PIXI.Application();
 
 // Placeholder - will be set after app.init()
-var appCanvas = null;
+var _appCanvas = null;
 
 var stats = new Stats();
 stats.showPanel(0);
@@ -508,6 +510,7 @@ game.describeKillSource = (details = {}) => {
 game.cityFinanceFlags = new Map();
 game.mapOverlayActive = false;
 let activeMapModal = null;
+let activeOptionsModal = null;
 
 const describeDirection = (dx, dy, threshold = TILE_SIZE_PX) => {
     let horizontal = '';
@@ -932,6 +935,25 @@ game.showCityInfo = (cityOrData, overrides = {}) => {
 
     const message = buildCityPanelMessage(normalisedId, data || {});
     applyPanelMessage(message);
+};
+
+game.importCityLayoutFromJson = (jsonText) => importCityLayoutFromJson(game, jsonText);
+
+game.openOptionsPanel = () => {
+    if (activeOptionsModal) {
+        activeOptionsModal.close();
+        return;
+    }
+    const modal = new OptionsModal(game, {
+        onClose: () => {
+            if (activeOptionsModal === modal) {
+                activeOptionsModal = null;
+            }
+            game.forceDraw = true;
+        }
+    });
+    activeOptionsModal = modal;
+    game.forceDraw = true;
 };
 
 game.showStaffSummary = () => {
@@ -1455,7 +1477,7 @@ for (const item of resourcesToLoad) {
             mipmapTextures: 'off'
         });
 
-        appCanvas = app.canvas;
+        _appCanvas = app.canvas;
         // Append canvas to DOM
         document.getElementById("game").appendChild(app.canvas);
         app.canvas.style.imageRendering = 'pixelated';
