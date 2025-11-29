@@ -1,4 +1,5 @@
 "use strict";
+/* global WebAssembly */
 
 // Precompiled WASM binary for the octile distance helper used by defender pathfinding.
 // Generated from client/src/defenders/wasm/astar.wat to keep server bots behaviour-aligned
@@ -44,4 +45,3 @@ const octileCost = (dx, dy) => {
 };
 
 module.exports = { octileCost };
-

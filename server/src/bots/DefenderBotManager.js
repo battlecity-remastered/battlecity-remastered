@@ -28,7 +28,6 @@ const AVOIDANCE_ANGLES = Object.freeze([Math.PI / 4, -Math.PI / 4, Math.PI / 2, 
 const PLAYER_COLLISION_RADIUS = TILE_SIZE * 0.4;
 const DEBUG_EMIT_INTERVAL_MS = 500;
 const ENABLE_BOT_DEBUG = process.env.BOT_DEBUG === 'true' || process.env.SERVER_BOT_DEBUG === 'true';
-const DEBUG_PATH_LOG_INTERVAL_MS = 2000;
 const SPAWN_SEARCH_RADIUS_TILES = 160;
 const DEFENDER_ROLES = Object.freeze(['mayor', 'shooter', 'bomb_defuser', 'miner']);
 const normalizeCityId = (value) => {
@@ -192,7 +191,6 @@ class DefenderBotManager {
         const currentCityCount = this.countDefendersForCity(normalizedCity);
         if (currentCityCount >= MAX_DEFENDERS_PER_CITY) {
             if (ENABLE_BOT_DEBUG) {
-                // eslint-disable-next-line no-console
                 console.debug('[defender-bot] spawn skipped: city at cap', {
                     cityId: normalizedCity,
                     currentCityCount,
@@ -222,7 +220,6 @@ class DefenderBotManager {
             spawnY = (nearest.y * TILE_SIZE) + HALF_TILE;
         } else {
             if (ENABLE_BOT_DEBUG) {
-                // eslint-disable-next-line no-console
                 console.debug('[defender-bot] unable to find passable spawn tile', {
                     cityId,
                     centerX,
