@@ -99,6 +99,10 @@ class BulletFactory {
         if (!this.isLocalBotBullet(bullet)) {
             return;
         }
+        const player = this.game?.player;
+        if (!player) {
+            return;
+        }
         const socket = this.game?.socketListener?.io;
         const offlineTraining = !!(this.game?.tutorialManager?.isOfflineTrainingActive?.());
         const serverAuthoritative = !!socket?.connected && !offlineTraining;
@@ -109,10 +113,6 @@ class BulletFactory {
                     sourceType: bullet?.sourceType
                 });
             }
-            return;
-        }
-        const player = this.game?.player;
-        if (!player) {
             return;
         }
         const damage = Number.isFinite(bullet.damage) ? bullet.damage : getBulletDamage(bullet.type);
@@ -136,7 +136,6 @@ class BulletFactory {
         }
 
         // Ask the server to apply authoritative damage so death/eviction flows correctly.
-        const socket = this.game?.socketListener?.io;
         if (socket?.connected) {
             try {
                 socket.emit('player:bot_damage', {
