@@ -467,27 +467,27 @@ class BulletFactory {
                 break;
             }
 
-        if (this.hitsBuilding(rect, bullet)) {
-            bullet.x = prevX;
-            bullet.y = prevY;
-            bullet._destroy = true;
-            if (debug.enabled) {
-                debug(`Bullet ${bullet.id} hit structure at (${prevX.toFixed(1)}, ${prevY.toFixed(1)})`);
+            if (this.hitsBuilding(rect, bullet)) {
+                bullet.x = prevX;
+                bullet.y = prevY;
+                bullet._destroy = true;
+                if (debug.enabled) {
+                    debug(`Bullet ${bullet.id} hit structure at (${prevX.toFixed(1)}, ${prevY.toFixed(1)})`);
+                }
+                break;
             }
-            break;
-        }
 
-        if (this.hitsDefense(rect, bullet)) {
-            bullet.x = prevX;
-            bullet.y = prevY;
-            bullet._destroy = true;
-            break;
-        }
+            if (this.hitsDefense(rect, bullet)) {
+                bullet.x = prevX;
+                bullet.y = prevY;
+                bullet._destroy = true;
+                break;
+            }
 
-        bullet.traveled = (bullet.traveled ?? 0) + stepDistance;
-        if (Number.isFinite(bullet.maxRange) && bullet.maxRange > 0 && bullet.traveled >= bullet.maxRange) {
-            bullet._destroy = true;
-            break;
+            bullet.traveled = (bullet.traveled ?? 0) + stepDistance;
+            if (Number.isFinite(bullet.maxRange) && bullet.maxRange > 0 && bullet.traveled >= bullet.maxRange) {
+                bullet._destroy = true;
+                break;
             }
         }
 
