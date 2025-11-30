@@ -524,7 +524,7 @@ class DefenseManager {
         this.addDefense(record);
     }
 
-    handleRemove(_socket, payload) {
+    handleRemove(socket, payload) {
         const parsed = this.parsePayload(payload);
         if (!parsed) {
             return;
@@ -533,6 +533,30 @@ class DefenseManager {
         if (!id) {
             return;
         }
+
+        const record = this.defensesById.get(id);
+        if (!record) {
+            return;
+        }
+
+        const player = socket ? this.playerFactory.getPlayer(socket.id) : null;
+        const playerCity = player ? normaliseCityId(player.city, null) : null;
+        const recordCity = normaliseCityId(record.cityId ?? record.teamId, null);
+        const isFriendlyRemoval = recordCity !== null && playerCity !== null && recordCity === playerCity;
+
+        if (recordCity !== null && playerCity !== null && !isFriendlyRemoval) {
+            return;
+        }
+
+        if (isFriendlyRemoval && this.game?.buildingFactory?.cityManager) {
+            this.game.buildingFactory.cityManager.recordInventoryPickup(
+                socket?.id || record.ownerId || null,
+                recordCity,
+                record.type,
+                1
+            );
+        }
+
         this.removeDefenseById(id);
     }
 
