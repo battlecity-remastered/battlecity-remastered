@@ -135,6 +135,15 @@ var stats = new Stats();
 stats.showPanel(0);
 stats.dom.style.display = 'none'; // Hidden by default, shown when debug mode is enabled
 document.getElementById("game").appendChild(stats.dom);
+const debugLoopStats = {
+    lastUpdateAt: 0,
+    lastRenderAt: 0,
+    renderCount: 0,
+    updateCount: 0,
+    lastRenderDeltaMs: null,
+    mismatchEvents: 0,
+    _inRender: false
+};
 const debugHud = document.createElement('pre');
 debugHud.id = 'debug-hud';
 debugHud.style.position = 'fixed';
@@ -179,6 +188,7 @@ const game = {
     timePassed: 0,
     staticTick: 0,
     textures: [],
+    debugLoopStats,
     maxMapX: window.innerWidth - 200,
     maxMapY: window.innerHeight,
     maxCities: 0,
@@ -1495,6 +1505,40 @@ for (const item of resourcesToLoad) {
             mipmapTextures: 'off'
         });
 
+        // Use a single manual rAF for updates and rendering; stop Pixi's ticker
+        if (app.ticker) {
+            app.ticker.stop();
+            app.ticker.autoStart = false;
+        }
+
+        // Instrument Pixi render calls to compare against our manual rAF loop (debug use via F3)
+        const instrumentRender = (target, fnName) => {
+            if (!target || typeof target[fnName] !== 'function') {
+                return;
+            }
+            const original = target[fnName].bind(target);
+            target[fnName] = (...args) => {
+                const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+                    ? performance.now()
+                    : Date.now();
+                if (!debugLoopStats._inRender) {
+                    debugLoopStats._inRender = true;
+                    debugLoopStats.lastRenderAt = now;
+                    debugLoopStats.renderCount += 1;
+                    if (debugLoopStats.lastUpdateAt) {
+                        debugLoopStats.lastRenderDeltaMs = now - debugLoopStats.lastUpdateAt;
+                    }
+                    if (debugLoopStats.renderCount !== debugLoopStats.updateCount) {
+                        debugLoopStats.mismatchEvents += 1;
+                    }
+                }
+                const result = original(...args);
+                debugLoopStats._inRender = false;
+                return result;
+            };
+        };
+        instrumentRender(app.renderer, 'render');
+
         _appCanvas = app.canvas;
         // Append canvas to DOM
         document.getElementById("game").appendChild(app.canvas);
@@ -2123,6 +2167,14 @@ const updateDebugHud = (g) => {
         const ago = net.lastRejectionAt ? `${Math.max(0, Date.now() - net.lastRejectionAt)} ms ago` : '';
         lines.push(`Rejections: ${net.sendRejections} ${net.lastRejection ? `last=${net.lastRejection} ${ago}` : ''}`.trim());
     }
+    if (g.debugLoopStats) {
+        const loop = g.debugLoopStats;
+        const delta = loop.lastRenderDeltaMs !== null && loop.lastRenderDeltaMs !== undefined
+            ? `${Math.round(loop.lastRenderDeltaMs)} ms`
+            : 'n/a';
+        const mismatch = loop.mismatchEvents ? `, mismatches ${loop.mismatchEvents}` : '';
+        lines.push(`Render/update: ${loop.renderCount}/${loop.updateCount} (last render +${delta}${mismatch})`);
+    }
     g.debugHud.textContent = lines.join('\n');
     g.debugHud.style.display = 'block';
 };
@@ -2134,6 +2186,11 @@ var tileAnimationTick = 0;
 function gameLoop() {
 
     stats.begin();
+
+    debugLoopStats.updateCount += 1;
+    debugLoopStats.lastUpdateAt = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+        ? performance.now()
+        : Date.now();
 
 
     game.lastTick = game.tick;
@@ -2191,6 +2248,10 @@ function gameLoop() {
 
     game.forceDraw = false;
 
+
+    if (app && app.renderer && app.stage) {
+        app.renderer.render(app.stage);
+    }
 
     updateDebugHud(game);
     stats.end();

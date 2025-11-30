@@ -813,6 +813,14 @@ const collectCityInfo = (cityId) => {
 };
 
 io.on('connection', (socket) => {
+    socket.on('latency:ping', (payload = {}, respond) => {
+        const now = Date.now();
+        if (typeof respond === 'function') {
+            respond({ serverTime: now, receivedAt: now });
+        } else {
+            socket.emit('latency:pong', { serverTime: now, receivedAt: now });
+        }
+    });
     socket.on('city:layout:import', (payload, respond) => {
         cityLayoutImporter.handleImport(socket, payload, respond);
     });

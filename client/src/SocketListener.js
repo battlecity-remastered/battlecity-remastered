@@ -81,6 +81,8 @@ class SocketListener extends EventEmitter2 {
             lastRejection: null,
             lastRejectionAt: null
         };
+        this.manualPingIntervalMs = 5000;
+        this.nextManualPingAt = 0;
         this.sendIntervalMs = 33; // ~30 Hz network tick
         this.nextSendAt = 0;
         this.lastInterpolateAt = null;
@@ -111,6 +113,7 @@ class SocketListener extends EventEmitter2 {
             this.lastServerSequence = 0;
             this.emit("connected");
             this.requestLobbySnapshot();
+            this.nextManualPingAt = 0;
             if (this.game && this.game.identityManager && typeof this.game.identityManager.handleSocketConnected === 'function') {
                 this.game.identityManager.handleSocketConnected();
             }
@@ -532,6 +535,44 @@ class SocketListener extends EventEmitter2 {
         this._pingListenersAttached = true;
     }
 
+    maybeSendManualPing(now) {
+        if (!this.io || this.io.disconnected) {
+            return;
+        }
+        if (!this.game || !this.game.debugMode) {
+            return;
+        }
+        const nowTs = Number.isFinite(now) ? now : this.now();
+        if (!this.nextManualPingAt) {
+            this.nextManualPingAt = nowTs + this.manualPingIntervalMs;
+            return;
+        }
+        if (nowTs < this.nextManualPingAt) {
+            return;
+        }
+        const sentAt = this.now();
+        const emitWithTimeout = typeof this.io.timeout === 'function'
+            ? this.io.timeout(3000)
+            : this.io;
+        emitWithTimeout.emit('latency:ping', { sentAt }, (err, response) => {
+            // socket.timeout passes (err, response); plain emit passes (response)
+            const hasError = err && (err instanceof Error || typeof err === 'string');
+            const payload = hasError ? response : (err ?? response);
+            if (hasError) {
+                this.nextManualPingAt = this.now() + this.manualPingIntervalMs;
+                return;
+            }
+            const received = this.now();
+            const measured = received - sentAt;
+            this.recordLatency(measured);
+            this.nextManualPingAt = received + this.manualPingIntervalMs;
+            if (payload && payload.serverTime && this.game) {
+                this.game.debugNet = this.game.debugNet || {};
+                this.game.debugNet.serverTime = payload.serverTime;
+            }
+        });
+    }
+
     recordLatency(latencyMs) {
         if (!Number.isFinite(latencyMs)) {
             return;
@@ -853,6 +894,7 @@ class SocketListener extends EventEmitter2 {
                 this.io.emit("player", JSON.stringify(payload));
                 this.nextSendAt = now + this.sendIntervalMs;
             }
+            this.maybeSendManualPing(now);
         }
         this.updateRemotePlayers();
     }
