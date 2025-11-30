@@ -894,11 +894,15 @@ class SocketListener extends EventEmitter2 {
         if (!this.io || this.io.disconnected || !id) {
             return;
         }
-        const identifier = typeof id === 'object' ? (id.id ?? null) : id;
+        const payload = (typeof id === 'string' || typeof id === 'object') ? id : null;
+        const identifier = typeof payload === 'object' ? (payload.id ?? null) : payload;
         if (!identifier) {
             return;
         }
-        this.io.emit('defense:remove', JSON.stringify({ id: identifier }));
+        const body = (typeof payload === 'object')
+            ? { ...payload, id: identifier }
+            : { id: identifier };
+        this.io.emit('defense:remove', JSON.stringify(body));
     }
 
     collectFactoryItem(data) {

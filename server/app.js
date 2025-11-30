@@ -459,6 +459,8 @@ hazardManager.setIo(io);
 playerFactory.setHazardManager(hazardManager);
 const defenseManager = new DefenseManager({ game, playerFactory, hazardManager });
 defenseManager.setIo(io);
+bulletFactory.setDefenseManager(defenseManager);
+hazardManager.setDefenseManager(defenseManager);
 const iconDropManager = new IconDropManager({
     cityManager: buildingFactory.cityManager,
     playerFactory
@@ -847,9 +849,6 @@ io.on('connection', (socket) => {
     });
     socket.on('defense:spawn', (payload) => {
         defenseManager.handleSpawn(socket, payload);
-    });
-    socket.on('defense:remove', (payload) => {
-        defenseManager.handleRemove(socket, payload);
     });
     socket.on('disconnect', () => {
         hazardManager.onDisconnect(socket.id);

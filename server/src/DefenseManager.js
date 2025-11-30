@@ -5,6 +5,12 @@ const { normalizeItemType } = require("./items");
 const { getPlayerRect } = require("./gameplay/geometry");
 
 const ALLOWED_DEFENSE_TYPES = new Set([8, 9, 10, 11]);
+const DEFENSE_LIFE = Object.freeze({
+    8: 40,  // wall
+    9: 32,  // turret
+    10: 16, // sleeper
+    11: 40, // plasma
+});
 
 const toFiniteNumber = (value, fallback = null) => {
     if (typeof value === "number" && Number.isFinite(value)) {
@@ -267,6 +273,13 @@ class DefenseManager {
             toFiniteNumber(input.angle, defaults.angle ?? null)
         );
 
+        const maxLife = Number.isFinite(input.maxLife)
+            ? input.maxLife
+            : DEFENSE_LIFE[Math.floor(type)] ?? null;
+        const life = Number.isFinite(input.life)
+            ? input.life
+            : maxLife;
+
         return {
             id: identifier,
             type: Math.floor(type),
@@ -279,6 +292,8 @@ class DefenseManager {
             source: input.source || defaults.source || "player",
             createdAt: Date.now(),
             createdBy: defaults.createdBy ?? null,
+            maxLife: maxLife ?? null,
+            life: life ?? null,
         };
     }
 
@@ -303,19 +318,12 @@ class DefenseManager {
         if (cityId === null || cityId === undefined || !id) {
             return false;
         }
-        const cityDefenses = this.defensesByCity.get(cityId);
-        if (!cityDefenses || !cityDefenses.has(id)) {
+        const numericCityId = normaliseCityId(cityId, null);
+        const record = this.defensesById.get(id);
+        if (!record || normaliseCityId(record.cityId, null) !== numericCityId) {
             return false;
         }
-        cityDefenses.delete(id);
-        this.defensesById.delete(id);
-        if (cityDefenses.size === 0) {
-            this.defensesByCity.delete(cityId);
-        }
-        if (options.broadcast !== false) {
-            this.broadcastCity(cityId);
-        }
-        return true;
+        return this.removeDefenseRecord(record, options);
     }
 
     removeDefenseById(id, options = {}) {
@@ -326,7 +334,30 @@ class DefenseManager {
         if (!record) {
             return false;
         }
-        return this.removeDefense(record.cityId, id, options);
+        return this.removeDefenseRecord(record, options);
+    }
+
+    removeDefenseRecord(record, options = {}) {
+        if (!record) {
+            return false;
+        }
+        const cityId = normaliseCityId(record.cityId ?? record.teamId, null);
+        if (cityId === null || cityId === undefined) {
+            return false;
+        }
+        const cityDefenses = this.defensesByCity.get(cityId);
+        if (cityDefenses) {
+            cityDefenses.delete(record.id);
+            if (cityDefenses.size === 0) {
+                this.defensesByCity.delete(cityId);
+            }
+        }
+        this.defensesById.delete(record.id);
+
+        if (options.broadcast !== false) {
+            this.broadcastCity(cityId);
+        }
+        return true;
     }
 
     removeDefensesByType(cityId, type, options = {}) {
@@ -342,13 +373,10 @@ class DefenseManager {
         let removed = 0;
         for (const [id, record] of Array.from(cityDefenses.entries())) {
             if (record.type === numericType) {
-                cityDefenses.delete(id);
-                this.defensesById.delete(id);
+                const record = this.defensesById.get(id) || record;
+                this.removeDefenseRecord(record, { broadcast: false });
                 removed += 1;
             }
-        }
-        if (cityDefenses.size === 0) {
-            this.defensesByCity.delete(numericCityId);
         }
         if (removed && options.broadcast !== false) {
             this.broadcastCity(numericCityId);
@@ -376,6 +404,35 @@ class DefenseManager {
             }
         }
         return total;
+    }
+
+    applyDefenseDamage(id, amount = 1, options = {}) {
+        if (!id) {
+            return false;
+        }
+        const record = this.defensesById.get(id);
+        if (!record) {
+            return false;
+        }
+        const damage = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+        if (damage <= 0) {
+            return false;
+        }
+        const baseLife = DEFENSE_LIFE[record.type] ?? null;
+        if (!Number.isFinite(record.maxLife) && baseLife !== null) {
+            record.maxLife = baseLife;
+        }
+        if (!Number.isFinite(record.life)) {
+            record.life = record.maxLife ?? baseLife ?? damage;
+        }
+        record.life -= damage;
+        if (record.life <= 0) {
+            this.removeDefenseRecord(record, {
+                broadcast: options.broadcast !== false
+            });
+            return true;
+        }
+        return false;
     }
 
     removeDefensesBySource(cityId, source, options = {}) {
@@ -533,6 +590,10 @@ class DefenseManager {
         if (!id) {
             return;
         }
+        const reason = typeof parsed === "object" && typeof parsed.reason === "string"
+            ? parsed.reason.trim().toLowerCase()
+            : null;
+        const destroyedRemoval = reason === "destroyed" || reason === "killed";
 
         const record = this.defensesById.get(id);
         if (!record) {
@@ -544,20 +605,21 @@ class DefenseManager {
         const recordCity = normaliseCityId(record.cityId ?? record.teamId, null);
         const isFriendlyRemoval = recordCity !== null && playerCity !== null && recordCity === playerCity;
 
-        if (recordCity !== null && playerCity !== null && !isFriendlyRemoval) {
-            return;
+        if (!isFriendlyRemoval) {
+            // Allow hostile removals only for destroyed/killed reasons so defenders
+            // can be cleared when shot by enemies.
+            if (!destroyedRemoval) {
+                return;
+            }
         }
 
-        if (isFriendlyRemoval && this.game?.buildingFactory?.cityManager) {
-            this.game.buildingFactory.cityManager.recordInventoryPickup(
-                socket?.id || record.ownerId || null,
-                recordCity,
-                record.type,
-                1
-            );
-        }
-
-        this.removeDefenseById(id);
+        const shouldRefund = !destroyedRemoval && isFriendlyRemoval;
+        const refundOwner = shouldRefund ? (socket?.id || record.ownerId || null) : null;
+        this.removeDefenseRecord(record, {
+            broadcast: true,
+            refund: shouldRefund,
+            refundOwnerId: refundOwner
+        });
     }
 
     recordInventoryConsumption(socketId, record) {

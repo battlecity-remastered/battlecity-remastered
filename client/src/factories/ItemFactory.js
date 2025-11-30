@@ -821,7 +821,8 @@ class ItemFactory {
         }
         if (notifyServer && item.isDefense && this.game.socketListener && typeof this.game.socketListener.removeDefense === 'function') {
             try {
-                this.game.socketListener.removeDefense(item.id);
+                const defensePayload = removalReason ? { id: item.id, reason: removalReason } : item.id;
+                this.game.socketListener.removeDefense(defensePayload);
             } catch (error) {
                 console.debug("Failed to notify server about defense removal", error);
             }
