@@ -63,6 +63,8 @@ class MockDocument {
     }
 }
 
+const { setTimeout: nativeSetTimeout, clearTimeout: nativeClearTimeout } = globalThis;
+
 describe('Tutorial toggle visibility', () => {
     let tutorialManager;
     let mockGame;
@@ -84,8 +86,8 @@ describe('Tutorial toggle visibility', () => {
         globalThis.window = {
             innerWidth: 1920,
             innerHeight: 1080,
-            setTimeout,
-            clearTimeout,
+            setTimeout: nativeSetTimeout,
+            clearTimeout: nativeClearTimeout,
             location: {
                 reload: () => { reloadCalled = true; }
             }
