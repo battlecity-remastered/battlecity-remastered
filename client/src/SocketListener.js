@@ -503,16 +503,15 @@ class SocketListener extends EventEmitter2 {
     }
 
     attachPingListeners() {
-        if (this._pingListenersAttached || !this.io || !this.io.io) {
+        if (this._pingListenersAttached || !this.io) {
             return;
         }
-        const manager = this.io.io;
-        manager.on("ping", () => {
+        const handlePing = () => {
             this._lastPingAt = (typeof performance !== 'undefined' && typeof performance.now === 'function')
                 ? performance.now()
                 : Date.now();
-        });
-        manager.on("pong", (latency) => {
+        };
+        const handlePong = (latency) => {
             const now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
                 ? performance.now()
                 : Date.now();
@@ -520,7 +519,16 @@ class SocketListener extends EventEmitter2 {
                 ? latency
                 : (this._lastPingAt ? (now - this._lastPingAt) : null);
             this.recordLatency(measured);
-        });
+        };
+        const attach = (emitter) => {
+            if (!emitter || typeof emitter.on !== 'function') {
+                return;
+            }
+            emitter.on("ping", handlePing);
+            emitter.on("pong", handlePong);
+        };
+        attach(this.io.io || null);
+        attach(this.io);
         this._pingListenersAttached = true;
     }
 
