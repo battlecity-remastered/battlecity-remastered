@@ -54,10 +54,15 @@ class HazardManager {
         this.hazards = new Map();
         this.pendingIdsBySocket = new Map();
         this.lastSnapshotBroadcast = 0;
+        this.defenseManager = null;
     }
 
     setIo(io) {
         this.io = io;
+    }
+
+    setDefenseManager(defenseManager) {
+        this.defenseManager = defenseManager || null;
     }
 
     sendSnapshot(socket) {
@@ -497,6 +502,7 @@ class HazardManager {
 
         this.damagePlayersInRadius(hazard, centerTileX, centerTileY);
         this.destroyBuildingsInRadius(hazard, centerTileX, centerTileY);
+        this.destroyDefensesInRadius(hazard, centerTileX, centerTileY);
         this.removeHazard(hazard.id, "bomb_detonated");
     }
 
@@ -527,6 +533,27 @@ class HazardManager {
             reason: 'bomb_detonated',
             hazard,
         });
+    }
+
+    destroyDefensesInRadius(hazard, centerTileX, centerTileY) {
+        if (!this.defenseManager || !this.defenseManager.defensesById) {
+            return;
+        }
+        for (const defense of this.defenseManager.defensesById.values()) {
+            if (!defense) {
+                continue;
+            }
+            const tileX = Math.floor((defense.x + TILE_SIZE / 2) / TILE_SIZE);
+            const tileY = Math.floor((defense.y + TILE_SIZE / 2) / TILE_SIZE);
+            if (Math.abs(tileX - centerTileX) <= BOMB_EXPLOSION_TILE_RADIUS &&
+                Math.abs(tileY - centerTileY) <= BOMB_EXPLOSION_TILE_RADIUS) {
+                if (typeof this.defenseManager.applyDefenseDamage === 'function') {
+                    this.defenseManager.applyDefenseDamage(defense.id, Number.MAX_SAFE_INTEGER, { broadcast: true });
+                } else if (typeof this.defenseManager.removeDefenseById === 'function') {
+                    this.defenseManager.removeDefenseById(defense.id, { broadcast: true });
+                }
+            }
+        }
     }
 
     shouldDamagePlayer(hazard, socketId, player) {

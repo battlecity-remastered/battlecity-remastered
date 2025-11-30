@@ -94,9 +94,10 @@ const BULLET_BUILDING_PADDING = 0;
 
 class BulletFactory {
 
-    constructor(game, playerFactory) {
+    constructor(game, playerFactory, { defenseManager = null } = {}) {
         this.game = game;
         this.playerFactory = playerFactory;
+        this.defenseManager = defenseManager || null;
         this.io = null;
         this.bullets = new Map();
         this.recentSourceShots = new Map();
@@ -476,6 +477,13 @@ class BulletFactory {
                 break;
             }
 
+            if (this.hitsDefense(rect, bullet)) {
+                bullet.x = prevX;
+                bullet.y = prevY;
+                bullet._destroy = true;
+                break;
+            }
+
             bullet.traveled = (bullet.traveled ?? 0) + stepDistance;
             if (Number.isFinite(bullet.maxRange) && bullet.maxRange > 0 && bullet.traveled >= bullet.maxRange) {
                 bullet._destroy = true;
@@ -537,6 +545,10 @@ class BulletFactory {
             return false;
         }
         return true;
+    }
+
+    setDefenseManager(defenseManager) {
+        this.defenseManager = defenseManager || null;
     }
 
     getMapValue(tileX, tileY) {
@@ -729,6 +741,35 @@ class BulletFactory {
                     }
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    hitsDefense(rect, bullet = null) {
+        if (!rect || !this.defenseManager || !this.defenseManager.defensesById) {
+            return false;
+        }
+        const damage = Number.isFinite(bullet?.damage) ? Math.max(1, Math.floor(bullet.damage)) : BULLET_DAMAGE;
+        for (const defense of this.defenseManager.defensesById.values()) {
+            if (!defense) {
+                continue;
+            }
+            const hitbox = {
+                x: Number.isFinite(defense.x) ? defense.x : 0,
+                y: Number.isFinite(defense.y) ? defense.y : 0,
+                w: TILE_SIZE,
+                h: TILE_SIZE
+            };
+            if (rectangleCollision(rect, hitbox)) {
+                const destroyed = typeof this.defenseManager.applyDefenseDamage === 'function'
+                    ? this.defenseManager.applyDefenseDamage(defense.id, damage, { refund: false })
+                    : false;
+                // Even if not destroyed, bullet stops on impact
+                if (!destroyed && debug.enabled) {
+                    debug(`Bullet hit defense ${defense.id} for ${damage} damage (remaining: ${defense.life ?? 'unknown'})`);
+                }
+                return true;
             }
         }
         return false;
