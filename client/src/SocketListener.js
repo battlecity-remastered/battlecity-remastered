@@ -1037,6 +1037,8 @@ class SocketListener extends EventEmitter2 {
             return;
         }
         const me = this.game.player;
+        const previousPoints = Number.isFinite(me.points) ? me.points : null;
+        const previousRankTitle = typeof me.rankTitle === 'string' ? me.rankTitle : null;
         if (player.sequence !== undefined && player.sequence < this.lastServerSequence && this.lastServerSequence !== 0) {
             const dxOutdated = Math.abs(player.offset.x - me.offset.x);
             const dyOutdated = Math.abs(player.offset.y - me.offset.y);
@@ -1110,6 +1112,13 @@ class SocketListener extends EventEmitter2 {
         }
         if (typeof player.rankTitle === 'string' && player.rankTitle.trim().length) {
             me.rankTitle = player.rankTitle.trim();
+        }
+        const nextPoints = Number.isFinite(me.points) ? me.points : null;
+        const nextRankTitle = typeof me.rankTitle === 'string' ? me.rankTitle : null;
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.handlePlayerProfileUpdate === 'function') {
+            if (nextPoints !== previousPoints || nextRankTitle !== previousRankTitle) {
+                this.game.tutorialManager.handlePlayerProfileUpdate();
+            }
         }
         if (player.isCloaked !== undefined) {
             me.isCloaked = !!player.isCloaked;

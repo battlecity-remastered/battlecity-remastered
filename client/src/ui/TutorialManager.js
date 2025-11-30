@@ -84,6 +84,7 @@ class TutorialManager {
             }
         ];
         this.state = this.loadState();
+        this.lastToggleVisibility = null;
         this.injectStyles();
         this.container = this.createContainer();
         this.trainingScenario = {
@@ -362,7 +363,23 @@ class TutorialManager {
     }
 
     shouldShowToggle() {
-        return true;
+        const player = this.game?.player;
+        if (!player) {
+            return false;
+        }
+        const rankTitle = typeof player.rankTitle === 'string' ? player.rankTitle.trim().toLowerCase() : '';
+        const points = Number.isFinite(player.points) ? player.points : null;
+        const isPrivate = rankTitle === 'private';
+        const hasNoPoints = points === 0;
+        return isPrivate && hasNoPoints;
+    }
+
+    handlePlayerProfileUpdate() {
+        const shouldShowToggle = this.shouldShowToggle();
+        if (shouldShowToggle === this.lastToggleVisibility) {
+            return;
+        }
+        this.render();
     }
 
     isOfflineTrainingActive() {
@@ -500,6 +517,7 @@ class TutorialManager {
         const toggle = this.getToggleButton();
         const allComplete = this.steps.every((step) => this.isComplete(step.id));
         const shouldShowToggle = this.shouldShowToggle();
+        this.lastToggleVisibility = shouldShowToggle;
 
         this.container.innerHTML = '';
 
