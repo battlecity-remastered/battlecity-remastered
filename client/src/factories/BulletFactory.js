@@ -99,6 +99,18 @@ class BulletFactory {
         if (!this.isLocalBotBullet(bullet)) {
             return;
         }
+        const socket = this.game?.socketListener?.io;
+        const offlineTraining = !!(this.game?.tutorialManager?.isOfflineTrainingActive?.());
+        const serverAuthoritative = !!socket?.connected && !offlineTraining;
+        if (serverAuthoritative) {
+            if (isBotDamageDebug()) {
+                console.warn('[BotDamage] skip local bot damage; server authoritative', {
+                    connected: socket?.connected,
+                    sourceType: bullet?.sourceType
+                });
+            }
+            return;
+        }
         const player = this.game?.player;
         if (!player) {
             return;
