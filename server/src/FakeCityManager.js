@@ -87,6 +87,7 @@ const RECRUIT_POSITION_PATTERNS = Object.freeze([
 
 const DEFAULT_BOTS_PER_CITY = 2;
 const MIN_ORBABLE_CITIES = 3;
+const LOW_PLAYER_THRESHOLD = 20;
 const CITIES_DATA_DIR = path.join(__dirname, '..', 'data', 'cities');
 
 const clamp = (value, min, max) => {
@@ -636,23 +637,27 @@ class FakeCityManager {
         }
     }
 
-    update(now = Date.now()) {
+    update(now = Date.now(), options = {}) {
         if (this.disabled) {
             return;
         }
+        const force = options.force === true;
         const interval = toFiniteNumber(this.config.evaluationIntervalMs, 10000);
-        if (now < this.nextEvaluation) {
+        if (!force && now < this.nextEvaluation) {
             return;
         }
         this.nextEvaluation = now + interval;
+
+        this.pruneInactiveCities();
 
         const humanCount = this.getHumanPlayerCount();
         const configured = this.getConfiguredCities();
         const maxActive = Math.min(configured.length, Math.max(0, toFiniteNumber(this.config.maxActive, configured.length)));
 
         // Calculate desired fake cities based on player count
-        const minPlayers = Math.max(0, toFiniteNumber(this.config.minPlayers, 1));
-        let desired = Math.min(maxActive, Math.max(0, minPlayers - humanCount));
+        const minPlayers = Math.max(LOW_PLAYER_THRESHOLD, toFiniteNumber(this.config.minPlayers, LOW_PLAYER_THRESHOLD));
+        const underThreshold = humanCount < minPlayers;
+        let desired = underThreshold ? maxActive : 0;
 
         // Solo player feature: spawn nearby city if only one human player
         if (humanCount === 1 && this.activeCities.size === 0) {
@@ -667,8 +672,7 @@ class FakeCityManager {
         const orbableCount = this.getOrbableCityCount();
         if (orbableCount < MIN_ORBABLE_CITIES) {
             const needed = MIN_ORBABLE_CITIES - orbableCount;
-            desired = Math.max(desired, needed);
-            desired = Math.min(desired, maxActive);
+            desired = Math.max(desired, Math.min(needed, maxActive));
             this.debug(`[fake - city] Only ${orbableCount} orbable cities, spawning ${needed} more`);
         }
 
@@ -677,6 +681,36 @@ class FakeCityManager {
         } else if (desired < this.activeCities.size) {
             this.removeFakeCities(this.activeCities.size - desired);
         }
+    }
+
+    onCityOrbed(event = {}) {
+        const targetCityId = toFiniteNumber(event?.targetCityId ?? event?.targetCity, null);
+        if (targetCityId === null || !this.activeCities.has(targetCityId)) {
+            return;
+        }
+        this.debug(`[fake-city] City ${targetCityId} orbed; refreshing fake roster`);
+        this.despawnFakeCity(targetCityId);
+        this.nextEvaluation = 0;
+        this.update(Date.now(), { force: true });
+    }
+
+    pruneInactiveCities() {
+        const cityManager = this.buildingFactory?.cityManager;
+        if (!cityManager || !this.activeCities.size) {
+            return 0;
+        }
+        let removed = 0;
+        for (const cityId of Array.from(this.activeCities.keys())) {
+            const city = cityManager.getCity(cityId);
+            const stillFake = !!city?.isFake;
+            const isOrbable = cityManager.isOrbable(cityId);
+            if (!stillFake || !isOrbable) {
+                if (this.despawnFakeCity(cityId)) {
+                    removed += 1;
+                }
+            }
+        }
+        return removed;
     }
 
     /**

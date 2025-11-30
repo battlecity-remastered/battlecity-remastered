@@ -305,6 +305,8 @@ const formatPlayerDisplayName = (player) => {
     return shortId || 'Unknown player';
 };
 
+let fakeCityManager = null;
+
 const handlePlayerAssigned = (event) => {
     if (!discordNotifier) {
         return;
@@ -326,6 +328,9 @@ const handlePlayerAssigned = (event) => {
 };
 
 const handleCityOrbed = (event) => {
+    if (fakeCityManager && typeof fakeCityManager.onCityOrbed === 'function') {
+        fakeCityManager.onCityOrbed(event);
+    }
     if (!discordNotifier) {
         return;
     }
@@ -478,7 +483,7 @@ const orbManager = new OrbManager({
     onCityOrbed: handleCityOrbed,
 });
 orbManager.setIo(io);
-const fakeCityManager = new FakeCityManager({
+fakeCityManager = new FakeCityManager({
     game,
     buildingFactory,
     playerFactory,
