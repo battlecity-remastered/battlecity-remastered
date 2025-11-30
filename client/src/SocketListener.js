@@ -1041,6 +1041,7 @@ class SocketListener extends EventEmitter2 {
             return;
         }
         const me = this.game.player;
+        const previousPoints = Number.isFinite(me.points) ? me.points : null;
         if (player.sequence !== undefined && player.sequence < this.lastServerSequence && this.lastServerSequence !== 0) {
             const dxOutdated = Math.abs(player.offset.x - me.offset.x);
             const dyOutdated = Math.abs(player.offset.y - me.offset.y);
@@ -1111,6 +1112,10 @@ class SocketListener extends EventEmitter2 {
         }
         if (Number.isFinite(player.points)) {
             me.points = player.points;
+        }
+        const nextPoints = Number.isFinite(me.points) ? me.points : null;
+        if (previousPoints !== nextPoints && this.game?.tutorialManager?.handlePointsUpdate) {
+            this.game.tutorialManager.handlePointsUpdate(nextPoints);
         }
         if (typeof player.rankTitle === 'string' && player.rankTitle.trim().length) {
             me.rankTitle = player.rankTitle.trim();

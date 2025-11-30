@@ -107,6 +107,7 @@ class TutorialManager {
                 bomb: false,
             }
         };
+        this.lastKnownPoints = this.normalisePoints(this.game?.player?.points);
 
         // Always start hidden; surface a toggle for players who haven't finished the tutorial.
         this.pendingAutoShow = false;
@@ -361,8 +362,40 @@ class TutorialManager {
         return this.steps.every((step) => this.state.completed.has(step.id));
     }
 
+    normalisePoints(value) {
+        if (!Number.isFinite(value)) {
+            return null;
+        }
+        return Math.max(0, Math.floor(value));
+    }
+
+    getPlayerPoints() {
+        const points = this.normalisePoints(this.game?.player?.points);
+        if (points !== null) {
+            this.lastKnownPoints = points;
+            return points;
+        }
+        return this.lastKnownPoints;
+    }
+
+    handlePointsUpdate(points) {
+        const nextPoints = this.normalisePoints(points);
+        if (nextPoints === null) {
+            return;
+        }
+        const previousPoints = this.normalisePoints(this.lastKnownPoints);
+        this.lastKnownPoints = nextPoints;
+        if (previousPoints !== nextPoints) {
+            this.render();
+        }
+    }
+
     shouldShowToggle() {
-        return true;
+        const points = this.getPlayerPoints();
+        if (points === null) {
+            return true;
+        }
+        return points === 0;
     }
 
     isOfflineTrainingActive() {
@@ -540,7 +573,11 @@ class TutorialManager {
         const exitButton = document.createElement('button');
         exitButton.className = 'battlecity-tutorial-button';
         exitButton.textContent = 'Exit Tutorial';
-        exitButton.addEventListener('click', () => this.returnToLobby('Exiting tutorial...'));
+        exitButton.addEventListener('click', () => {
+            if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+                window.location.reload();
+            }
+        });
 
         actions.appendChild(restartButton);
         actions.appendChild(exitButton);
