@@ -3,15 +3,20 @@
 Use this document to record gameplay rules, mechanics, and feature behaviors as they are implemented. Keeping it current prevents regressions and makes it easier to onboard new contributors.
 
 ## Core Gameplay
+
 - Players control a tank mapped to the 48px tile grid; movement is clamped to the map bounds.
 - Tank collisions use the shared `{x, y, w, h}` rectangle helpers to stay consistent with bullet and building logic.
 - Death resets the player to the defined spawn location with default stats.
 - Collision resolution keeps a rolling “last safe” position, nudges outward in 6px steps, scans nearby tiles, and finally snaps to city spawn if required so players can’t be trapped by buildings or terrain pushes. (client/src/play.js:18)
 
 ## UI & Controls
+
 - Press `M` to open or close the strategic map overlay; the panel button triggers the same toggle, and the view also closes via the overlay close control or `Esc`.
+- The Options modal now includes a **Joystick & Mobile Controls** section with two persistent toggles: enabling joystick controls replaces tank-style rotation with a 32-direction joystick heading (arrow keys or the touch joystick point your tank toward the pressed direction), and enabling the mobile overlay shows the semi-transparent on-screen joystick + fire button even on desktop displays.
+- When the overlay is visible it auto-hides after physical keyboard/mouse input and reappears on the next touch; it mirrors whichever control mode is active so touch users can keep the classic tank steering or the new omnidirectional mode without reloading.
 
 ## Teams & Roles
+
 - The authoritative server guarantees each city has exactly one mayor and at most three recruits; newcomers round-robin between city `0` and city `1` until both rosters reach that capacity. (server/src/PlayerFactory.js:11, server/src/PlayerFactory.js:195)
 - When every slot is filled the join request is rejected with `cities_full`, allowing a future lobby flow to queue players without spawning them. (server/src/PlayerFactory.js:39)
 - City spawn points and canonical city names are keyed in `shared/citySpawns.json`; both client and server snap players to those offsets so each team enters at the correct base. (client/src/utils/citySpawns.js:1, server/src/PlayerFactory.js:208)
@@ -19,12 +24,14 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Tank nameplates now show player rank and callsign on the first line with the city name beneath; rogues keep a single-line rogue label while respecting cloak fade. (client/src/draw/draw-changing.js:6, client/src/draw/nameLabels.js:1)
 
 ## Economy
+
 - Each city starts with `95,000,000` cash and resolves finance ticks every 7 seconds; the server clamps balances, tracks income/expenses, and rebroadcasts updates to clients. (server/src/CityManager.js:20)
 - Houses generate `population × 10,000` cash per tick while fully staffed Research centers withdraw the `COST_ITEM` budget and Hospitals consume `COST_UPKEEP_HOSPITAL`. (server/src/Building.js:74)
 - Factories only craft items when their city can afford `COST_ITEM` and the amount is deducted as production spending. (server/src/FactoryBuilding.js:28)
 - Mayors see a live money box in the side panel with cash totals and up/down indicators driven by the latest finance update. (client/src/draw/draw-panel-interface.js:47)
 
 ## Combat
+
 - Bullets originate from the active tank barrel position and inherit the firing tank's facing direction.
 - Client handles bullet physics; server currently trusts reported positions and broadcasts them to peers.
 - Buildings occupy a 3×3 tile footprint (144×144 pixels). Housing and research buildings block projectiles across their entire 3×3 area. Command centers, factories, hospitals, and repair facilities have a driveable bay in the bottom tile, allowing projectiles and tanks to pass through the lower third while blocking shots to the upper 2×3 tiles.
@@ -39,6 +46,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Fake city garrisons now spawn up to two automated recruits that anchor near the command center, scan ~18 tiles for enemies from other cities, fire laser volleys every ~1.4s, and respawn 45 seconds after being destroyed—with hazards and bullets damaging them exactly like human tanks. (server/src/FakeCityManager.js:196, server/src/FakeCityManager.js:397, server/src/PlayerFactory.js:244)
 
 ## Points & Ranks
+
 - Capturing an enemy city’s orb grants its point value to every active member of the attacking city; the orbing player gains an Orb stat while teammates log assists. (original/Battle-City/server/CCity.cpp:283)
 - Orb value scales with the target city’s development: `maxBuildingCount` ≥ `ORBABLE_SIZE` (21) is worth 30 points, ≥ `ORBABLE_SIZE + 5` yields 40, and ≥ `ORBABLE_SIZE + 10` pays 50; legacy Orb or Bomb factories keep a city worth 20 or 10 respectively, and the total is boosted by +5 for each orb already stolen. (original/Battle-City/server/CConstants.h:30, original/Battle-City/server/CCity.cpp:401)
 - Death only impacts standings after a player has more than 100 points; at that threshold the victim loses 2 points and, when the killer’s city differs from the victim’s, every in-game member of that opposing city receives 2. (original/Battle-City/server/CProcess.cpp:963)
@@ -71,6 +79,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Source: original/Battle-City/server/CAccount.cpp:435
 
 ## Buildings & Items
+
 - Building placement consumes the appropriate resources and links into the building factory's list (`next`/`previous` pointers must remain valid).
 - Mayors can only place a building when their city's cash balance covers `COST_BUILDING`; insufficient funds now reject the placement server-side and refund any optimistic client adjustments. (server/src/BuildingFactory.js:87, client/src/factories/BuildingFactory.js:50)
 - New construction must remain contiguous: non-command center buildings are rejected if their center lies more than 20 tiles (~960px) from the nearest friendly structure, and the client surfaces a toast explaining the rule. The same layout scan feeds rogue assault radius calculations. (client/src/factories/BuildingFactory.js:133, client/src/factories/BuildingFactory.js:414)
@@ -89,7 +98,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Turrets and sleepers evaluate rogue tanks when acquiring targets, ensuring city defenses fire on NPC raiders even when no player opponents are nearby. (client/src/factories/ItemFactory.js:296)
 - Factory production now leaves icons on the ground until collected; pickups notify the server so city stock counts stay authoritative and future production isn't blocked. (server/src/FactoryBuilding.js:33, client/src/factories/BuildingFactory.js:515, server/src/BuildingFactory.js:116)
 - Command Centers are immune to bomb demolition and will never be deleted by local explosion cleanup. (client/src/factories/ItemFactory.js:698)
-- Cities become *orbable* once they either (a) reach a historical maximum of at least 21 constructed buildings, or (b) have ever operated a Bomb or Orb factory. (server/src/CityManager.js:129)
+- Cities become _orbable_ once they either (a) reach a historical maximum of at least 21 constructed buildings, or (b) have ever operated a Bomb or Orb factory. (server/src/CityManager.js:129)
 - An Orb dropped on an enemy command center now triggers a full city wipe when the target meets the orbable criteria: the command center is destroyed, every building is demolished, all hazards are cleared, and the affected players are sent back to the lobby. (server/src/orb/OrbManager.js:47, server/src/PlayerFactory.js:658)
 - Orb drops only register when they land on the bottom (front) tile row of an enemy command center; no extra margin is applied around the footprint. (server/src/orb/OrbManager.js:240)
 - Factory output counts now come entirely from the server snapshot. Each `new_building` payload includes `itemsLeft`, and the client reconciles the expected drops through `syncFactoryItems`. (client/src/SocketListener.js:140, client/src/factories/BuildingFactory.js:538)
@@ -116,19 +125,23 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
 - Factory drops now carry their producing city’s team flag; only members of that city can collect the items, preventing players from looting rival (or AI) production lines. (server/src/FactoryBuilding.js:41, client/src/SocketListener.js:131, client/src/factories/IconFactory.js:239)
 
 ## AI Opposition
+
 - When the human roster slips below 16 players the server fabricates up to six AI fortress cities from the shared blueprint, wiring in bomb, orb, and turret factories so they’re immediately orbable and large enough to draw rogue tank patrols. (server/src/FakeCityManager.js, shared/fakeCities.json)
 - These synthetic strongholds carry an `isFake` marker, so the lobby assignment flow skips them while they are active. (server/src/PlayerFactory.js)
 - AI fortress templates now include a command center at the city spawn, so they can be orbed like player cities and feel like full bases. (shared/fakeCities.json:5, server/src/FakeCityManager.js:90)
 - Default fortresses pre-seed minefields and autonomous turrets/plasma/sleeper emplacements, all team-locked so only the owning city can interact with them; the layout mirrors `defaultDefenses` and is streamed to clients along with hazard snapshots. (shared/fakeCities.json:17, server/src/FakeCityManager.js:110, server/src/hazards/HazardManager.js:74, client/src/SocketListener.js:129)
 
 ## Build Tree
+
 **Starting unlocks**
+
 - Housing (300) is available immediately.
 - Laser Research (412) → Laser Factory (112).
 - Bazooka Research (401) → Bazooka Factory (101).
 - Turret Research (409) → Turret Factory (109).
 
 **Dependency map**
+
 - Bazooka Research (401)
   - Cloak Research (400) → Cloak Factory (100)
     - Orb Research (405) → Orb Factory (105)
@@ -143,6 +156,7 @@ Use this document to record gameplay rules, mechanics, and feature behaviors as 
     - DFG Research (406) → DFG Factory (107)
 
 **Mermaid view**
+
 ```mermaid
 flowchart TD
     Housing[Housing 300]
@@ -179,6 +193,7 @@ flowchart TD
 ```
 
 ## Items
+
 - **Cloak** – Press `C` to activate a 5-second cloak as long as you own the icon; enemies stop drawing your tank while allied players still see you. The server tracks the timer so taking damage or timeout automatically broadcasts a status update. (client/src/input/input-keyboard.js:150, client/src/factories/ItemFactory.js:208, server/src/PlayerFactory.js:318)
 - **Laser** – Owning a Laser icon enables the default SHIFT shot; the input handler falls back to bullet type `0` (5 damage) whenever no bazooka is available. (client/src/input/input-keyboard.js:175, client/src/factories/BulletFactory.js:13)
 - **Cougar Missile (Bazooka)** – When you hold still with Cougar Missiles in your inventory, SHIFT fires rocket shots (type `1`) that reuse the classic damage boost, now enforced on both client and server. (client/src/input/input-keyboard.js:175, client/src/factories/BulletFactory.js:13, server/src/BulletFactory.js:10)
@@ -194,6 +209,7 @@ flowchart TD
 - **Plasma Turret** – Plasma turrets share the automated targeting loop, providing the higher-tier factory defense once population is available. (client/src/factories/ItemFactory.js:33, client/src/draw/draw-items.js:20)
 
 ## Defense Durability
+
 - Players can deliver two baseline projectile types: lasers (default SHIFT fire) and Cougar Missiles/Bazookas (stand still + SHIFT). Lasers carry `DAMAGE_LASER = 5` while bazooka rounds bump to `DAMAGE_ROCKET = 8`; automated defenses also use the laser profile unless explicitly overridden. (client/src/constants.js:39-41, client/src/factories/BulletFactory.js:7, client/src/factories/BulletFactory.js:26, client/src/factories/ItemFactory.js:467)
 - Defense items load their base hit points from `ITEM_INITIAL_LIFE`, letting us map life totals directly to the number of laser hits required (ceiling applied to cover partial health remaining). (client/src/constants.js:120, client/src/factories/ItemFactory.js:383)
 - `Wall` – 40 life → 8 laser hits or 5 bazooka hits; walls ignite once they slip below the 20-life burn threshold but still need the full count to crumble. (client/src/constants.js:121, client/src/constants.js:128)
@@ -202,16 +218,19 @@ flowchart TD
 - `Plasma Turret` – 40 life → 8 laser hits or 5 bazooka hits; these inherit the same sturdiness as walls and don’t get a special armor bonus beyond the higher burn threshold. (client/src/constants.js:124, client/src/constants.js:131)
 
 ## Networking
+
 - Socket.IO server runs on port 8021 and rebroadcasts player, bullet, and building updates it receives from clients.
 - Client emits `player`, `bullet_shot`, and `new_building` events when local state changes; listeners reconcile remote entities under `game.otherPlayers`.
 - Orb drops are authoritative: the client sends an `orb:drop` request, the server validates the target and broadcasts the `city:orbed` result (or an `orb:result` failure) so every peer stays in sync. (client/src/factories/ItemFactory.js:134, server/src/orb/OrbManager.js:47)
 
 ## Points & Scoring
+
 - Each city tracks a running `score` tally and the number of successful orbs (`orbs`), both of which are surfaced in the mayor finance panel, lobby listings, and the contextual right-click inspector. (client/src/draw/draw-panel-interface.js:53, client/src/lobby/LobbyManager.js:215)
 - Destroying an orbable enemy city awards points to the attacking city based on the victim's historical growth (max buildings) plus a 5-point bonus per prior orb they had launched; this value is also exposed as the city's `Bounty` in inspection panels. (server/src/CityManager.js:166, client/app.js:305)
 - When a city is destroyed its economy resets to the starting balance, its orb bounty drops to zero, and every occupant must rejoin via the lobby overlay. (server/src/CityManager.js:200, client/src/lobby/LobbyManager.js:410)
 
 ## Houses ↔ Factories
+
 - Every non-house building (including factories) must attach to a compatible house to accumulate staff population; without an attachment its population is reset to `0`. (server/src/Building.js:75, server/src/BuildingFactory.js:205)
 - Houses are filled front-to-back: a non-house building always claims an existing partially filled house before using a brand-new empty one, so two staffed attachments fill a single house to 100 before the next house starts accumulating population. (server/src/BuildingFactory.js:818, original/Battle-City/server/CBuilding.cpp:504)
 - Attachment eligibility requires matching owner or matching city, and each house can host at most two attachments; attachments claim the first available slot using that ownership filter. (server/src/BuildingFactory.js:224, server/src/BuildingFactory.js:237)

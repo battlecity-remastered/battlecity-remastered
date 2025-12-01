@@ -1,31 +1,32 @@
 class OptionsModal {
-    constructor(game, options = {}) {
-        this.game = game;
-        this.onClose = typeof options.onClose === 'function' ? options.onClose : null;
-        this.overlay = null;
-        this.panel = null;
-        this.section = null;
-        this.sectionBody = null;
-        this.sectionHeader = null;
-        this.sectionChevron = null;
-        this.formSection = null;
-        this.textArea = null;
-        this.revealButton = null;
-        this.status = null;
-        this.ensureStyles();
-        this.createOverlay();
-    }
+  constructor(game, options = {}) {
+    this.game = game;
+    this.onClose =
+      typeof options.onClose === "function" ? options.onClose : null;
+    this.overlay = null;
+    this.panel = null;
+    this.section = null;
+    this.sectionBody = null;
+    this.sectionHeader = null;
+    this.sectionChevron = null;
+    this.formSection = null;
+    this.textArea = null;
+    this.revealButton = null;
+    this.status = null;
+    this.ensureStyles();
+    this.createOverlay();
+  }
 
-    ensureStyles() {
-        if (typeof document === 'undefined') {
-            return;
-        }
-        if (document.getElementById('battlecity-options-styles')) {
-            return;
-        }
-        const style = document.createElement('style');
-        style.id = 'battlecity-options-styles';
-        style.textContent = `
+  ensureStyles() {
+    if (typeof document === "undefined") {
+      return;
+    }
+    if (document.getElementById("battlecity-options-styles")) {
+      return;
+    }
+    const style = document.createElement("style");
+    style.id = "battlecity-options-styles";
+    style.textContent = `
             .battlecity-options-overlay {
                 position: fixed;
                 inset: 0;
@@ -262,6 +263,35 @@ class OptionsModal {
                 color: rgba(200, 210, 235, 0.9);
                 line-height: 1.5;
             }
+            .battlecity-options-toggle {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 12px;
+                border: 1px solid rgba(123, 182, 255, 0.3);
+                border-radius: 12px;
+                background: rgba(10, 16, 32, 0.7);
+            }
+            .battlecity-options-toggle input {
+                width: 18px;
+                height: 18px;
+                accent-color: #6eb3ff;
+            }
+            .battlecity-options-toggleContent {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            .battlecity-options-toggleTitle {
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 0.2px;
+            }
+            .battlecity-options-toggleDescription {
+                font-size: 12px;
+                color: rgba(204, 218, 255, 0.85);
+                line-height: 1.4;
+            }
             .battlecity-options-status {
                 font-size: 12px;
                 color: #bcd8ff;
@@ -269,278 +299,393 @@ class OptionsModal {
                 padding: 6px 0 2px;
             }
         `;
-        document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
+
+  createOverlay() {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const overlay = document.createElement("div");
+    overlay.className = "battlecity-options-overlay";
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        this.close();
+      }
+    });
+
+    const panel = document.createElement("div");
+    panel.className = "battlecity-options-panel";
+
+    const header = document.createElement("div");
+    header.className = "battlecity-options-header";
+
+    const title = document.createElement("h2");
+    title.className = "battlecity-options-title";
+    title.textContent = "Options";
+
+    const badge = document.createElement("span");
+    badge.className = "battlecity-options-badge";
+    badge.textContent = "City Import";
+
+    const closeButton = document.createElement("button");
+    closeButton.className = "battlecity-options-close";
+    closeButton.type = "button";
+    closeButton.textContent = "Close";
+    closeButton.addEventListener("click", () => this.close());
+
+    header.appendChild(title);
+    title.appendChild(badge);
+    header.appendChild(closeButton);
+
+    const body = document.createElement("div");
+    body.className = "battlecity-options-body";
+
+    const section = document.createElement("div");
+    section.className = "battlecity-options-section";
+
+    const sectionHeader = document.createElement("button");
+    sectionHeader.className = "battlecity-options-sectionHeader";
+    sectionHeader.type = "button";
+
+    const sectionTitle = document.createElement("div");
+    sectionTitle.className = "battlecity-options-sectionTitle";
+    sectionTitle.innerHTML = `<span>City import</span><span class="battlecity-options-sectionSubtitle">Replace your city layout from a builder export</span>`;
+
+    const chevron = document.createElement("span");
+    chevron.className = "battlecity-options-chevron";
+    chevron.innerHTML = "&#9662;";
+
+    sectionHeader.appendChild(sectionTitle);
+    sectionHeader.appendChild(chevron);
+    sectionHeader.addEventListener("click", () => {
+      const open = this.sectionBody?.dataset.open === "true";
+      this.setSectionOpen(!open);
+    });
+
+    const sectionBody = document.createElement("div");
+    sectionBody.className = "battlecity-options-sectionBody";
+    sectionBody.dataset.open = "true";
+    sectionHeader.setAttribute("aria-expanded", "true");
+
+    const lead = document.createElement("p");
+    lead.className = "battlecity-options-lead";
+    lead.textContent =
+      "Import a city layout exported from the builder. This replaces your existing structures, defenses, and hazards for the current city slot. More configuration options will land here over time.";
+
+    const steps = document.createElement("ul");
+    steps.className = "battlecity-options-steps";
+    [
+      "In the city builder, export your layout as JSON.",
+      "Join the city you want to overwrite in-game.",
+      "Click Paste JSON to reveal the importer, then load.",
+    ].forEach((text) => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      steps.appendChild(li);
+    });
+
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "battlecity-options-actions";
+
+    const revealButton = document.createElement("button");
+    revealButton.className = "battlecity-options-reveal";
+    revealButton.type = "button";
+    revealButton.textContent = "Paste JSON";
+    revealButton.addEventListener("click", () => {
+      this.setFormOpen(true);
+    });
+
+    actionsRow.appendChild(revealButton);
+
+    const textArea = document.createElement("textarea");
+    textArea.className = "battlecity-options-textarea";
+    textArea.placeholder = '{ "layout": [...], "defenses": [...] }';
+
+    const actionRow = document.createElement("div");
+    actionRow.style.display = "flex";
+    actionRow.style.justifyContent = "flex-end";
+
+    const loadButton = document.createElement("button");
+    loadButton.className = "battlecity-options-action";
+    loadButton.type = "button";
+    loadButton.textContent = "Load Map";
+    loadButton.addEventListener("click", () => this.handleLoad(textArea));
+
+    actionRow.appendChild(loadButton);
+
+    const status = document.createElement("div");
+    status.className = "battlecity-options-status";
+
+    const formSection = document.createElement("div");
+    formSection.className = "battlecity-options-form";
+    formSection.dataset.open = "false";
+
+    formSection.appendChild(textArea);
+    formSection.appendChild(actionRow);
+    formSection.appendChild(status);
+
+    sectionBody.appendChild(lead);
+    sectionBody.appendChild(steps);
+    sectionBody.appendChild(actionsRow);
+    sectionBody.appendChild(formSection);
+
+    section.appendChild(sectionHeader);
+    section.appendChild(sectionBody);
+
+    body.appendChild(section);
+
+    const controlsSection = this.createControlsSection();
+    if (controlsSection) {
+      body.appendChild(controlsSection);
     }
 
-    createOverlay() {
-        if (typeof document === 'undefined') {
-            return;
+    panel.appendChild(header);
+    panel.appendChild(body);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    this.overlay = overlay;
+    this.panel = panel;
+    this.section = section;
+    this.sectionBody = sectionBody;
+    this.sectionHeader = sectionHeader;
+    this.sectionChevron = chevron;
+    this.formSection = formSection;
+    this.textArea = textArea;
+    this.revealButton = revealButton;
+    this.status = status;
+  }
+
+  createControlsSection() {
+    if (!this.game) {
+      return null;
+    }
+    const section = document.createElement("div");
+    section.className = "battlecity-options-section";
+
+    const header = document.createElement("div");
+    header.className = "battlecity-options-sectionHeader";
+    header.style.cursor = "default";
+    header.style.pointerEvents = "none";
+
+    const title = document.createElement("div");
+    title.className = "battlecity-options-sectionTitle";
+    title.textContent = "Joystick & Mobile Controls";
+    header.appendChild(title);
+
+    const body = document.createElement("div");
+    body.className = "battlecity-options-sectionBody";
+    body.dataset.open = "true";
+    body.style.maxHeight = "initial";
+    body.style.opacity = "1";
+    body.style.pointerEvents = "auto";
+    body.style.padding = "12px 14px 14px 16px";
+
+    const overview = document.createElement("p");
+    overview.className = "battlecity-options-lead";
+    overview.textContent =
+      "Swap between legacy tank steering and a smooth joystick-style control scheme. Optional touch overlays keep tablets and phones playable without covering the action.";
+    body.appendChild(overview);
+
+    const joystickToggle = this.createControlToggle({
+      label: "Enable Joystick Controls",
+      description:
+        "Arrow keys (and the touch joystick) aim toward the pressed direction, allowing full 32-direction movement with curved turns.",
+      checked: !!this.game.controlPreferences?.joystickControlsEnabled,
+      onToggle: (checked) => {
+        if (typeof this.game?.updateControlPreferences === "function") {
+          this.game.updateControlPreferences({
+            joystickControlsEnabled: checked,
+          });
         }
-        const overlay = document.createElement('div');
-        overlay.className = 'battlecity-options-overlay';
-        overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) {
-                this.close();
-            }
-        });
+      },
+    });
+    body.appendChild(joystickToggle);
 
-        const panel = document.createElement('div');
-        panel.className = 'battlecity-options-panel';
+    const mobileToggle = this.createControlToggle({
+      label: "Show Mobile Controls",
+      description:
+        "Displays the semi-transparent on-screen joystick and fire button. The layout switches to joystick or tank mode automatically based on the toggle above.",
+      checked: !!this.game.controlPreferences?.showMobileControls,
+      onToggle: (checked) => {
+        if (typeof this.game?.updateControlPreferences === "function") {
+          this.game.updateControlPreferences({ showMobileControls: checked });
+        }
+      },
+    });
+    body.appendChild(mobileToggle);
 
-        const header = document.createElement('div');
-        header.className = 'battlecity-options-header';
+    const hint = document.createElement("p");
+    hint.className = "battlecity-options-helper";
+    hint.textContent =
+      "When physical keyboard or mouse input is detected the touch overlay hides automatically. Tap anywhere on screen to bring it back.";
+    body.appendChild(hint);
 
-        const title = document.createElement('h2');
-        title.className = 'battlecity-options-title';
-        title.textContent = 'Options';
+    section.appendChild(header);
+    section.appendChild(body);
+    return section;
+  }
 
-        const badge = document.createElement('span');
-        badge.className = 'battlecity-options-badge';
-        badge.textContent = 'City Import';
+  createControlToggle({ label, description, checked, onToggle }) {
+    const row = document.createElement("label");
+    row.className = "battlecity-options-toggle";
 
-        const closeButton = document.createElement('button');
-        closeButton.className = 'battlecity-options-close';
-        closeButton.type = 'button';
-        closeButton.textContent = 'Close';
-        closeButton.addEventListener('click', () => this.close());
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = !!checked;
+    checkbox.addEventListener("change", () => {
+      onToggle && onToggle(checkbox.checked);
+    });
 
-        header.appendChild(title);
-        title.appendChild(badge);
-        header.appendChild(closeButton);
+    const content = document.createElement("div");
+    content.className = "battlecity-options-toggleContent";
 
-        const body = document.createElement('div');
-        body.className = 'battlecity-options-body';
+    const title = document.createElement("span");
+    title.className = "battlecity-options-toggleTitle";
+    title.textContent = label;
 
-        const section = document.createElement('div');
-        section.className = 'battlecity-options-section';
+    const details = document.createElement("span");
+    details.className = "battlecity-options-toggleDescription";
+    details.textContent = description;
 
-        const sectionHeader = document.createElement('button');
-        sectionHeader.className = 'battlecity-options-sectionHeader';
-        sectionHeader.type = 'button';
+    content.appendChild(title);
+    content.appendChild(details);
 
-        const sectionTitle = document.createElement('div');
-        sectionTitle.className = 'battlecity-options-sectionTitle';
-        sectionTitle.innerHTML = `<span>City import</span><span class="battlecity-options-sectionSubtitle">Replace your city layout from a builder export</span>`;
+    row.appendChild(checkbox);
+    row.appendChild(content);
+    return row;
+  }
 
-        const chevron = document.createElement('span');
-        chevron.className = 'battlecity-options-chevron';
-        chevron.innerHTML = '&#9662;';
-
-        sectionHeader.appendChild(sectionTitle);
-        sectionHeader.appendChild(chevron);
-        sectionHeader.addEventListener('click', () => {
-            const open = this.sectionBody?.dataset.open === 'true';
-            this.setSectionOpen(!open);
-        });
-
-        const sectionBody = document.createElement('div');
-        sectionBody.className = 'battlecity-options-sectionBody';
-        sectionBody.dataset.open = 'true';
-        sectionHeader.setAttribute('aria-expanded', 'true');
-
-        const lead = document.createElement('p');
-        lead.className = 'battlecity-options-lead';
-        lead.textContent = 'Import a city layout exported from the builder. This replaces your existing structures, defenses, and hazards for the current city slot. More configuration options will land here over time.';
-
-        const steps = document.createElement('ul');
-        steps.className = 'battlecity-options-steps';
-        [
-            'In the city builder, export your layout as JSON.',
-            'Join the city you want to overwrite in-game.',
-            'Click Paste JSON to reveal the importer, then load.'
-        ].forEach((text) => {
-            const li = document.createElement('li');
-            li.textContent = text;
-            steps.appendChild(li);
-        });
-
-        const actionsRow = document.createElement('div');
-        actionsRow.className = 'battlecity-options-actions';
-
-        const revealButton = document.createElement('button');
-        revealButton.className = 'battlecity-options-reveal';
-        revealButton.type = 'button';
-        revealButton.textContent = 'Paste JSON';
-        revealButton.addEventListener('click', () => {
-            this.setFormOpen(true);
-        });
-
-        actionsRow.appendChild(revealButton);
-
-        const textArea = document.createElement('textarea');
-        textArea.className = 'battlecity-options-textarea';
-        textArea.placeholder = '{ "layout": [...], "defenses": [...] }';
-
-        const actionRow = document.createElement('div');
-        actionRow.style.display = 'flex';
-        actionRow.style.justifyContent = 'flex-end';
-
-        const loadButton = document.createElement('button');
-        loadButton.className = 'battlecity-options-action';
-        loadButton.type = 'button';
-        loadButton.textContent = 'Load Map';
-        loadButton.addEventListener('click', () => this.handleLoad(textArea));
-
-        actionRow.appendChild(loadButton);
-
-        const status = document.createElement('div');
-        status.className = 'battlecity-options-status';
-
-        const formSection = document.createElement('div');
-        formSection.className = 'battlecity-options-form';
-        formSection.dataset.open = 'false';
-
-        formSection.appendChild(textArea);
-        formSection.appendChild(actionRow);
-        formSection.appendChild(status);
-
-        sectionBody.appendChild(lead);
-        sectionBody.appendChild(steps);
-        sectionBody.appendChild(actionsRow);
-        sectionBody.appendChild(formSection);
-
-        section.appendChild(sectionHeader);
-        section.appendChild(sectionBody);
-
-        body.appendChild(section);
-
-        panel.appendChild(header);
-        panel.appendChild(body);
-
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
-
-        this.overlay = overlay;
-        this.panel = panel;
-        this.section = section;
-        this.sectionBody = sectionBody;
-        this.sectionHeader = sectionHeader;
-        this.sectionChevron = chevron;
-        this.formSection = formSection;
-        this.textArea = textArea;
-        this.revealButton = revealButton;
-        this.status = status;
+  handleLoad(textArea) {
+    if (!this.game) {
+      this.setStatus("Game is not ready yet.");
+      return;
+    }
+    const payloadText = (textArea?.value || "").trim();
+    if (!payloadText.length) {
+      this.setStatus("Paste exported layout JSON to import a map.");
+      return;
     }
 
-    handleLoad(textArea) {
-        if (!this.game) {
-            this.setStatus('Game is not ready yet.');
-            return;
-        }
-        const payloadText = (textArea?.value || '').trim();
-        if (!payloadText.length) {
-            this.setStatus('Paste exported layout JSON to import a map.');
-            return;
-        }
+    const importer =
+      typeof this.game?.importCityLayoutFromJson === "function"
+        ? this.game.importCityLayoutFromJson
+        : null;
 
-        const importer = (typeof this.game?.importCityLayoutFromJson === 'function')
-            ? this.game.importCityLayoutFromJson
-            : null;
-
-        if (!importer) {
-            this.setStatus('Layout import is not available.');
-            return;
-        }
-
-        this.setStatus('Sending layout to the server...');
-
-        Promise.resolve(importer(payloadText))
-            .then((result = {}) => {
-                const placedInstallations = (result.placedHazards || 0) + (result.placedDefenses || 0);
-                const removedInstallations = (result.removedHazards || 0) + (result.removedDefenses || 0);
-                const summary = `Loaded ${result.placedBuildings || 0} buildings and ${placedInstallations} hazards/defenses.`;
-                const cleanup = [];
-                if (result.removedBuildings) {
-                    cleanup.push(`${result.removedBuildings} existing buildings removed`);
-                }
-                if (removedInstallations) {
-                    cleanup.push(`${removedInstallations} hazards cleared`);
-                }
-                const skippedTotal = (result.skippedBuildings || 0)
-                    + (result.skippedHazards || 0)
-                    + (result.skippedDefenses || 0);
-                const statusParts = [summary];
-                if (cleanup.length) {
-                    statusParts.push(cleanup.join(', ') + '.');
-                }
-                if (skippedTotal > 0) {
-                    statusParts.push(`${skippedTotal} placements skipped due to validation.`);
-                }
-                this.setStatus(statusParts.join(' '));
-                if (typeof this.game?.notify === 'function') {
-                    this.game.notify({
-                        title: 'Map Imported',
-                        message: summary,
-                        variant: 'info',
-                        timeout: 4200
-                    });
-                }
-                if (this.game?.forceDraw !== undefined) {
-                    this.game.forceDraw = true;
-                }
-            })
-            .catch((error) => {
-                const message = error?.message || 'Failed to import layout.';
-                this.setStatus(message);
-                if (typeof this.game?.notify === 'function') {
-                    this.game.notify({
-                        title: 'Import failed',
-                        message,
-                        variant: 'warn',
-                        timeout: 4800
-                    });
-                }
-            });
+    if (!importer) {
+      this.setStatus("Layout import is not available.");
+      return;
     }
 
-    setStatus(message) {
-        if (this.status) {
-            this.status.textContent = message || '';
-        }
-    }
+    this.setStatus("Sending layout to the server...");
 
-    setSectionOpen(isOpen) {
-        if (this.sectionBody) {
-            this.sectionBody.dataset.open = isOpen ? 'true' : 'false';
+    Promise.resolve(importer(payloadText))
+      .then((result = {}) => {
+        const placedInstallations =
+          (result.placedHazards || 0) + (result.placedDefenses || 0);
+        const removedInstallations =
+          (result.removedHazards || 0) + (result.removedDefenses || 0);
+        const summary = `Loaded ${result.placedBuildings || 0} buildings and ${placedInstallations} hazards/defenses.`;
+        const cleanup = [];
+        if (result.removedBuildings) {
+          cleanup.push(`${result.removedBuildings} existing buildings removed`);
         }
-        if (this.sectionHeader) {
-            this.sectionHeader.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (removedInstallations) {
+          cleanup.push(`${removedInstallations} hazards cleared`);
         }
-    }
+        const skippedTotal =
+          (result.skippedBuildings || 0) +
+          (result.skippedHazards || 0) +
+          (result.skippedDefenses || 0);
+        const statusParts = [summary];
+        if (cleanup.length) {
+          statusParts.push(cleanup.join(", ") + ".");
+        }
+        if (skippedTotal > 0) {
+          statusParts.push(
+            `${skippedTotal} placements skipped due to validation.`,
+          );
+        }
+        this.setStatus(statusParts.join(" "));
+        if (typeof this.game?.notify === "function") {
+          this.game.notify({
+            title: "Map Imported",
+            message: summary,
+            variant: "info",
+            timeout: 4200,
+          });
+        }
+        if (this.game?.forceDraw !== undefined) {
+          this.game.forceDraw = true;
+        }
+      })
+      .catch((error) => {
+        const message = error?.message || "Failed to import layout.";
+        this.setStatus(message);
+        if (typeof this.game?.notify === "function") {
+          this.game.notify({
+            title: "Import failed",
+            message,
+            variant: "warn",
+            timeout: 4800,
+          });
+        }
+      });
+  }
 
-    setFormOpen(isOpen) {
-        if (isOpen) {
-            this.setSectionOpen(true);
-        }
-        if (this.formSection) {
-            this.formSection.dataset.open = isOpen ? 'true' : 'false';
-        }
-        if (this.revealButton) {
-            this.revealButton.disabled = !!isOpen;
-            this.revealButton.style.opacity = isOpen ? 0.7 : 1;
-        }
-        if (isOpen && this.textArea) {
-            this.textArea.focus();
-        }
+  setStatus(message) {
+    if (this.status) {
+      this.status.textContent = message || "";
     }
+  }
 
-    close() {
-        if (this.overlay?.parentNode) {
-            this.overlay.parentNode.removeChild(this.overlay);
-        }
-        this.overlay = null;
-        this.panel = null;
-        this.section = null;
-        this.sectionBody = null;
-        this.sectionHeader = null;
-        this.sectionChevron = null;
-        this.formSection = null;
-        this.textArea = null;
-        this.revealButton = null;
-        if (typeof this.onClose === 'function') {
-            this.onClose();
-        }
+  setSectionOpen(isOpen) {
+    if (this.sectionBody) {
+      this.sectionBody.dataset.open = isOpen ? "true" : "false";
     }
+    if (this.sectionHeader) {
+      this.sectionHeader.setAttribute(
+        "aria-expanded",
+        isOpen ? "true" : "false",
+      );
+    }
+  }
+
+  setFormOpen(isOpen) {
+    if (isOpen) {
+      this.setSectionOpen(true);
+    }
+    if (this.formSection) {
+      this.formSection.dataset.open = isOpen ? "true" : "false";
+    }
+    if (this.revealButton) {
+      this.revealButton.disabled = !!isOpen;
+      this.revealButton.style.opacity = isOpen ? 0.7 : 1;
+    }
+    if (isOpen && this.textArea) {
+      this.textArea.focus();
+    }
+  }
+
+  close() {
+    if (this.overlay?.parentNode) {
+      this.overlay.parentNode.removeChild(this.overlay);
+    }
+    this.overlay = null;
+    this.panel = null;
+    this.section = null;
+    this.sectionBody = null;
+    this.sectionHeader = null;
+    this.sectionChevron = null;
+    this.formSection = null;
+    this.textArea = null;
+    this.revealButton = null;
+    if (typeof this.onClose === "function") {
+      this.onClose();
+    }
+  }
 }
 
 export default OptionsModal;
