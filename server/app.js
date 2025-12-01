@@ -14,6 +14,7 @@ app.set('trust proxy', 1);
 
 var isRender = process.env.RENDER === 'true';
 var isProduction = process.env.NODE_ENV === 'production' || isRender;
+var isTestMode = String(process.env.TEST_MODE || '').toLowerCase() === 'true';
 
 var CLIENT_DIST_DIR = path.join(__dirname, '..', 'client', 'dist');
 var CLIENT_INDEX_FILE = path.join(CLIENT_DIST_DIR, 'index.html');
@@ -25,6 +26,8 @@ var citySpawns = require('../shared/citySpawns.json');
 var fakeCityConfig = require('../shared/fakeCities.json');
 var UserStore = require('./src/users/UserStore');
 var ScoreService = require('./src/users/ScoreService');
+var { MAX_HEALTH, TILE_SIZE } = require('./src/gameplay/constants');
+var { ITEM_TYPES } = require('./src/items');
 
 const parseClientIds = (value) => {
     if (!value || typeof value !== 'string') {
@@ -194,6 +197,9 @@ app.use('/client/data', express.static(CLIENT_PUBLIC_DIR, staticOptions));
 var PlayerFactory = require('./src/PlayerFactory');
 var BulletFactory = require('./src/BulletFactory');
 var BuildingFactory = require('./src/BuildingFactory');
+var Building = require('./src/Building');
+var FactoryBuilding = require('./src/FactoryBuilding');
+var { isFactory } = require('./src/constants');
 var HazardManager = require('./src/hazards/HazardManager');
 var OrbManager = require('./src/orb/OrbManager');
 var FakeCityManager = require('./src/FakeCityManager');
@@ -468,7 +474,8 @@ bulletFactory.setDefenseManager(defenseManager);
 hazardManager.setDefenseManager(defenseManager);
 const iconDropManager = new IconDropManager({
     cityManager: buildingFactory.cityManager,
-    playerFactory
+    playerFactory,
+    buildingFactory
 });
 iconDropManager.setIo(io);
 buildingFactory.setManagers({ hazardManager, defenseManager, playerFactory });
@@ -518,6 +525,331 @@ const chatManager = new ChatManager({
 });
 chatManager.listen(io);
 playerFactory.setChatManager(chatManager);
+
+const ITEM_TYPE_NAMES = Object.entries(ITEM_TYPES).reduce((acc, [key, value]) => {
+    acc[value] = String(key).toLowerCase();
+    return acc;
+}, {});
+
+if (isTestMode) {
+    const serializeItems = (record) => {
+        const items = {};
+        if (record && record.items instanceof Map) {
+            for (const [type, count] of record.items.entries()) {
+                const name = ITEM_TYPE_NAMES[type] || type;
+                items[name] = count;
+            }
+        }
+        return items;
+    };
+
+    const serializeCityInventory = (cityId) => {
+        if (!buildingFactory || !buildingFactory.cityManager) {
+            return {};
+        }
+        const inventory = buildingFactory.cityManager.inventoryByCity.get(Number(cityId));
+        const items = {};
+        if (inventory instanceof Map) {
+            for (const [type, count] of inventory.entries()) {
+                const name = ITEM_TYPE_NAMES[type] || type;
+                items[name] = count;
+            }
+        }
+        return items;
+    };
+
+    app.get('/test/constants', (_req, res) => {
+        res.json({ maxHealth: MAX_HEALTH, tileSize: TILE_SIZE });
+    });
+
+    app.get('/test/player/:socketId', (req, res) => {
+        const socketId = req.params.socketId;
+        const player = playerFactory.getPlayer(socketId);
+        if (!player) {
+            res.status(404).json({ error: 'player_not_found' });
+            return;
+        }
+        const inventoryRecord = buildingFactory && buildingFactory.cityManager
+            ? buildingFactory.cityManager.inventoryByPlayer.get(socketId)
+            : null;
+        res.json({
+            player,
+            inventory: {
+                items: serializeItems(inventoryRecord)
+            },
+            cityId: inventoryRecord ? inventoryRecord.cityId : (player && player.city)
+        });
+    });
+
+    app.post('/test/player/:socketId/health', (req, res) => {
+        const socketId = req.params.socketId;
+        const player = playerFactory.getPlayer(socketId);
+        if (!player) {
+            res.status(404).json({ error: 'player_not_found' });
+            return;
+        }
+        const desired = req.body && Number(req.body.health);
+        const clamped = Number.isFinite(desired)
+            ? Math.max(0, Math.min(MAX_HEALTH, Math.floor(desired)))
+            : MAX_HEALTH;
+        const previousHealth = player.health;
+        player.health = clamped;
+        if (io) {
+            io.emit('player:health', JSON.stringify({
+                id: player.id,
+                health: player.health,
+                previousHealth,
+                source: { type: 'test:set-health' }
+            }));
+        }
+        res.json({ health: player.health, previousHealth, maxHealth: MAX_HEALTH });
+    });
+
+    app.post('/test/player/:socketId/inventory', (req, res) => {
+        if (!buildingFactory || !buildingFactory.cityManager) {
+            res.status(503).json({ error: 'city_manager_unavailable' });
+            return;
+        }
+        const socketId = req.params.socketId;
+        const player = playerFactory.getPlayer(socketId);
+        if (!player) {
+            res.status(404).json({ error: 'player_not_found' });
+            return;
+        }
+        const requestedQuantity = req.body && Number(req.body.quantity);
+        const quantity = Number.isFinite(requestedQuantity) ? requestedQuantity : 1;
+        const itemType = req.body && req.body.itemType;
+        const targetCity = req.body && req.body.cityId !== undefined ? req.body.cityId : player.city;
+        const granted = buildingFactory.cityManager.recordInventoryPickup(
+            socketId,
+            targetCity,
+            itemType,
+            quantity
+        );
+        const inventoryRecord = buildingFactory.cityManager.inventoryByPlayer.get(socketId);
+        res.json({
+            granted,
+            inventory: {
+                items: serializeItems(inventoryRecord)
+            },
+            cityInventory: serializeCityInventory(targetCity)
+        });
+    });
+
+    app.post('/test/player/:socketId/position', (req, res) => {
+        const socketId = req.params.socketId;
+        const player = playerFactory.getPlayer(socketId);
+        if (!player) {
+            res.status(404).json({ error: 'player_not_found' });
+            return;
+        }
+        const x = Number(req.body?.x);
+        const y = Number(req.body?.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            res.status(400).json({ error: 'invalid_position' });
+            return;
+        }
+        player.offset = { x, y };
+        if (io) {
+            io.emit('player', JSON.stringify(player));
+        }
+        res.json({ offset: player.offset });
+    });
+
+    app.get('/test/city/:cityId/inventory', (req, res) => {
+        if (!buildingFactory || !buildingFactory.cityManager) {
+            res.status(503).json({ error: 'city_manager_unavailable' });
+            return;
+        }
+        const cityId = Number(req.params.cityId);
+        if (!Number.isFinite(cityId)) {
+            res.status(400).json({ error: 'invalid_city' });
+            return;
+        }
+        res.json({
+            cityId,
+            items: serializeCityInventory(cityId)
+        });
+    });
+
+    app.post('/test/defense', (req, res) => {
+        if (!defenseManager) {
+            res.status(503).json({ error: 'defense_manager_unavailable' });
+            return;
+        }
+        const body = req.body || {};
+        const type = body.type;
+        const cityId = body.cityId ?? body.teamId ?? 0;
+        const x = Number.isFinite(body.x) ? body.x : 0;
+        const y = Number.isFinite(body.y) ? body.y : 0;
+        const record = defenseManager.sanitiseDefenseRecord({
+            id: body.id,
+            type,
+            x,
+            y,
+            cityId,
+            teamId: body.teamId ?? cityId,
+            ownerId: body.ownerId ?? null,
+            life: body.life,
+            maxLife: body.maxLife
+        }, { cityId, teamId: cityId });
+        if (!record) {
+            res.status(400).json({ error: 'invalid_defense' });
+            return;
+        }
+        defenseManager.addDefense(record, { broadcast: false });
+        res.json({ defense: record });
+    });
+
+    app.get('/test/defense/:id', (req, res) => {
+        const id = req.params.id;
+        if (!id || !defenseManager) {
+            res.status(404).json({ error: 'defense_not_found' });
+            return;
+        }
+        const record = defenseManager.defensesById.get(id);
+        if (!record) {
+            res.status(404).json({ error: 'defense_not_found' });
+            return;
+        }
+        res.json({ defense: record });
+    });
+
+    app.post('/test/defense/fire', (req, res) => {
+        if (!bulletFactory || !playerFactory) {
+            res.status(503).json({ error: 'bullet_factory_unavailable' });
+            return;
+        }
+        const body = req.body || {};
+        const socketId = body.socketId;
+        const socket = playerFactory.getSocket(socketId);
+        if (!socket) {
+            res.status(404).json({ error: 'socket_not_found' });
+            return;
+        }
+        const payload = {
+            sourceType: body.sourceType || 'turret',
+            sourceId: body.sourceId || 'test_turret',
+            x: body.x,
+            y: body.y,
+            angle: body.angle ?? 0,
+            type: body.type ?? 0,
+            team: body.teamId ?? body.team ?? null,
+        };
+        bulletFactory.handleRequestFire(socket, JSON.stringify(payload));
+        res.json({ ok: true });
+    });
+
+    app.post('/test/building', (req, res) => {
+        if (!buildingFactory) {
+            res.status(503).json({ error: 'building_factory_unavailable' });
+            return;
+        }
+        const body = req.body || {};
+        const type = Number(body.type);
+        const x = Number(body.x);
+        const y = Number(body.y);
+        const cityId = body.cityId ?? body.teamId ?? 0;
+        if (!Number.isFinite(type) || !Number.isFinite(x) || !Number.isFinite(y)) {
+            res.status(400).json({ error: 'invalid_payload' });
+            return;
+        }
+        const buildingPayload = {
+            id: body.id || `test_building_${Date.now()}`,
+            x: Math.floor(x),
+            y: Math.floor(y),
+            type,
+            city: cityId,
+            cityId,
+            itemsLeft: body.itemsLeft || 0
+        };
+        const ownerId = body.ownerId || "test_system";
+        const newBuilding = new Building(ownerId, buildingPayload, null);
+        if (isFactory(newBuilding.type)) {
+            const factory = new FactoryBuilding(game, newBuilding);
+            newBuilding.injectType(factory);
+        }
+        buildingFactory.registerBuilding(ownerId, newBuilding);
+        if (buildingFactory.cityManager) {
+            buildingFactory.cityManager.registerBuilding(newBuilding);
+        }
+        buildingFactory.ensureAttachment(newBuilding);
+        if (buildingFactory.io) {
+            const snapshot = buildingFactory.serializeBuilding(newBuilding);
+            buildingFactory.io.emit('new_building', JSON.stringify(snapshot));
+            buildingFactory.emitPopulationUpdate(newBuilding);
+        }
+        res.json({ building: buildingFactory.serializeBuilding(newBuilding) });
+    });
+
+    app.get('/test/building/:id', (req, res) => {
+        const id = req.params.id;
+        const building = buildingFactory && buildingFactory.buildings && buildingFactory.buildings.get(id);
+        if (!building) {
+            res.status(404).json({ error: 'building_not_found' });
+            return;
+        }
+        res.json({ building: buildingFactory.serializeBuilding(building) });
+    });
+
+    app.post('/test/factory/produce', (req, res) => {
+        if (!buildingFactory) {
+            res.status(503).json({ error: 'building_factory_unavailable' });
+            return;
+        }
+        const { buildingId, itemType = null, quantity = 1 } = req.body || {};
+        const building = buildingFactory.buildings.get(buildingId);
+        if (!building) {
+            res.status(404).json({ error: 'building_not_found' });
+            return;
+        }
+        const increment = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1;
+        const type = Number.isFinite(itemType) ? itemType : (building.type % 100);
+        building.itemsLeft = Math.max(0, (building.itemsLeft || 0) + increment);
+        if (buildingFactory.io) {
+            buildingFactory.io.emit('new_building', JSON.stringify(buildingFactory.serializeBuilding(building)));
+            buildingFactory.emitPopulationUpdate(building);
+        }
+        const icon = {
+            id: `icon_${buildingId}_${Date.now()}`,
+            x: (building.x * TILE_SIZE) + (TILE_SIZE * 1.5),
+            y: (building.y * TILE_SIZE) + (TILE_SIZE * 2.25),
+            type,
+            quantity: increment,
+            cityId: building.cityId ?? 0,
+            teamId: building.cityId ?? 0,
+            buildingId: building.id,
+            sharedDrop: true,
+            skipProductionUpdate: true
+        };
+        if (iconDropManager && iconDropManager.io) {
+            iconDropManager.io.emit("new_icon", JSON.stringify(icon));
+        }
+        res.json({ building: buildingFactory.serializeBuilding(building), icon });
+    });
+
+    app.post('/test/factory/pickup', (req, res) => {
+        if (!buildingFactory) {
+            res.status(503).json({ error: 'building_factory_unavailable' });
+            return;
+        }
+        const { buildingId, type = null, quantity = 1 } = req.body || {};
+        const socketId = req.headers["x-socket-id"] || req.headers["X-Socket-Id"] || null;
+        const building = buildingFactory.buildings.get(buildingId);
+        if (!building) {
+            res.status(404).json({ error: 'building_not_found' });
+            return;
+        }
+        const payload = {
+            buildingId,
+            type,
+            quantity
+        };
+        const socket = socketId ? playerFactory.getSocket(socketId) : null;
+        buildingFactory.handleFactoryCollect(socket || { id: socketId }, payload);
+        res.json({ building: buildingFactory.serializeBuilding(building) });
+    });
+}
 if (typeof playerFactory.setScoreService === 'function') {
     playerFactory.setScoreService(scoreService);
 }
@@ -818,7 +1150,7 @@ const collectCityInfo = (cityId) => {
 };
 
 io.on('connection', (socket) => {
-    socket.on('latency:ping', (payload = {}, respond) => {
+    socket.on('latency:ping', (_payload = {}, respond) => {
         const now = Date.now();
         if (typeof respond === 'function') {
             respond({ serverTime: now, receivedAt: now });

@@ -25,9 +25,10 @@ const toNumber = (value, fallback = null) => {
 };
 
 class IconDropManager {
-    constructor({ cityManager = null, playerFactory = null, allowedTypes = null } = {}) {
+    constructor({ cityManager = null, playerFactory = null, buildingFactory = null, allowedTypes = null } = {}) {
         this.cityManager = cityManager;
         this.playerFactory = playerFactory;
+        this.buildingFactory = buildingFactory;
         this.allowedTypes = allowedTypes instanceof Set && allowedTypes.size
             ? allowedTypes
             : DEFAULT_DROP_TYPES;
@@ -156,6 +157,7 @@ class IconDropManager {
         this.removeFromCityInventory(cityId, record.type, record.quantity);
         this.restoreCityInventory(socket.id, cityId, record.type, record.quantity);
 
+        this.decrementFactoryStock(record);
         this.broadcastIconRemoval(record, { reason: "collected", collector: socket.id });
         this.emitPickupResult(socket, { status: "ok", id: record.id });
     }
@@ -251,6 +253,30 @@ class IconDropManager {
             return null;
         }
         return this.playerFactory.getPlayer(socketId);
+    }
+
+    decrementFactoryStock(record) {
+        if (!record || !record.buildingId || !this.buildingFactory || !this.buildingFactory.buildings) {
+            return;
+        }
+        const building = this.buildingFactory.buildings.get(record.buildingId);
+        if (!building) {
+            return;
+        }
+        const previous = Number.isFinite(building.itemsLeft) ? building.itemsLeft : 0;
+        const quantity = Number.isFinite(record.quantity) ? Math.max(1, Math.floor(record.quantity)) : 1;
+        const next = Math.max(0, previous - quantity);
+        if (next === previous) {
+            return;
+        }
+        building.itemsLeft = next;
+        if (typeof this.buildingFactory.emitPopulationUpdate === "function") {
+            this.buildingFactory.emitPopulationUpdate(building);
+        }
+        if (this.buildingFactory.io) {
+            const snapshot = this.buildingFactory.serializeBuilding(building);
+            this.buildingFactory.io.emit("new_building", JSON.stringify(snapshot));
+        }
     }
 
     toCityId(value, fallback = null) {

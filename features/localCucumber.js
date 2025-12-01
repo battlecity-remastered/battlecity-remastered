@@ -106,10 +106,23 @@ const runStep = async (world, step) => {
     if (!match) {
         throw new Error(`No step definition found for: ${step.text}`);
     }
-    await match.definition.handler.apply(world, match.args);
+    try {
+        await match.definition.handler.apply(world, match.args);
+    } catch (error) {
+        if (error && error.name === "PendingStepError") {
+            return { pending: true, reason: error.message };
+        }
+        throw error;
+    }
 };
 
-const SKIPPED_TAGS = new Set(["pending", "todo", "wip", "skip", "spec-only", "known-bug"]);
+const shouldIncludePending = process.argv.includes("--include-pending")
+    || process.env.INCLUDE_PENDING === "1"
+    || String(process.env.INCLUDE_PENDING || "").toLowerCase() === "true";
+
+const SKIPPED_TAGS = new Set(
+    ["pending", "todo", "wip", "skip", "spec-only", "known-bug"].filter((tag) => !(shouldIncludePending && tag === "pending"))
+);
 
 const runScenario = async (scenario) => {
     const shouldSkip = Array.isArray(scenario.tags) && scenario.tags.some((tag) => SKIPPED_TAGS.has(tag));
@@ -121,12 +134,17 @@ const runScenario = async (scenario) => {
 
     const world = new WorldConstructor();
     let failure = null;
+    let pendingReason = null;
     try {
         for (const hook of beforeHooks) {
             await hook.call(world);
         }
         for (const step of scenario.steps) {
-            await runStep(world, step);
+            const result = await runStep(world, step);
+            if (result && result.pending) {
+                pendingReason = result.reason || "pending";
+                break;
+            }
         }
     } catch (error) {
         failure = error;
@@ -146,6 +164,10 @@ const runScenario = async (scenario) => {
         throw failure;
     }
 
+    if (pendingReason) {
+        return { skipped: false, pending: true, reason: pendingReason };
+    }
+
     return { skipped: false };
 };
 
@@ -155,7 +177,10 @@ const runFeatures = async (featurePaths) => {
         for (const scenario of scenarios) {
             try {
                 const result = await runScenario(scenario);
-                if (!(result && result.skipped)) {
+                if (result && result.pending) {
+                    const reason = result.reason ? `: ${result.reason}` : "";
+                    console.log(`○ ${scenario.name} (pending${reason})`);
+                } else if (!(result && result.skipped)) {
                     console.log(`✔ ${scenario.name}`);
                 }
             } catch (error) {
@@ -167,6 +192,18 @@ const runFeatures = async (featurePaths) => {
     }
 };
 
+class PendingStepError extends Error {
+
+    constructor(message) {
+        super(message || "Pending step");
+        this.name = "PendingStepError";
+    }
+}
+
+const Pending = (message) => {
+    throw new PendingStepError(message);
+};
+
 module.exports = {
     defineStep,
     Given,
@@ -174,6 +211,7 @@ module.exports = {
     Then,
     Before,
     After,
+    Pending,
     setWorldConstructor,
     runFeatures
 };

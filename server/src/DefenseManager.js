@@ -1,6 +1,7 @@
 "use strict";
 
 const { TILE_SIZE } = require("./gameplay/constants");
+const { isFactory, isCommandCenter, isHospital } = require("./constants");
 const { normalizeItemType } = require("./items");
 const { getPlayerRect } = require("./gameplay/geometry");
 
@@ -108,6 +109,56 @@ class DefenseManager {
         };
     }
 
+    isFactoryPickupTile(tileX, tileY) {
+        const factory = this.game?.buildingFactory;
+        if (!factory || !factory.buildings || typeof factory.buildings.values !== "function") {
+            return false;
+        }
+        for (const building of factory.buildings.values()) {
+            if (!building || !isFactory(building.type)) {
+                continue;
+            }
+            // Pickup zone is the entire bottom row of the 3x3 footprint
+            const pickupY = building.y + 2;
+            const pickupXMin = building.x;
+            const pickupXMax = building.x + 2;
+            if (tileY === pickupY && tileX >= pickupXMin && tileX <= pickupXMax) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isPlacementAllowedOnBuilding(tileX, tileY) {
+        const factory = this.game?.buildingFactory;
+        if (!factory || !factory.buildings || typeof factory.buildings.values !== "function") {
+            return false;
+        }
+        for (const building of factory.buildings.values()) {
+            if (!building) {
+                continue;
+            }
+            const inFootprint = tileX >= building.x && tileX < building.x + 3
+                && tileY >= building.y && tileY < building.y + 3;
+            if (!inFootprint) {
+                continue;
+            }
+            if (isFactory(building.type)) {
+                if (this.isFactoryPickupTile(tileX, tileY)) {
+                    return true;
+                }
+                continue;
+            }
+            if (isCommandCenter(building.type) || isHospital(building.type)) {
+                const bottomRow = building.y + 2;
+                if (tileY === bottomRow) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     isTileBlocked(tileX, tileY) {
         if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
             return true;
@@ -126,6 +177,10 @@ class DefenseManager {
                 const footprintY = building.y;
                 if (tileX >= footprintX && tileX < footprintX + 3 &&
                     tileY >= footprintY && tileY < footprintY + 3) {
+                    // Allow placement on factory pickup tiles and select building footprints (CC/Hospital)
+                    if (this.isFactoryPickupTile(tileX, tileY) || this.isPlacementAllowedOnBuilding(tileX, tileY)) {
+                        return false;
+                    }
                     return true;
                 }
             }

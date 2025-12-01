@@ -6,7 +6,9 @@ const { runFeatures } = require("./localCucumber.js");
 
 const stepFiles = [
     path.join(__dirname, "support", "world.js"),
-    path.join(__dirname, "steps", "cityAssignments.steps.js")
+    path.join(__dirname, "steps", "cityAssignments.steps.js"),
+    path.join(__dirname, "steps", "bugReports.steps.js"),
+    path.join(__dirname, "steps", "buildingCollision.steps.js")
 ];
 
 stepFiles.forEach((filePath) => {

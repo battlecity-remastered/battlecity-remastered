@@ -2195,7 +2195,7 @@ function gameLoop() {
 
     game.lastTick = game.tick;
     game.tick = new Date().getTime();
-    game.timePassed = (game.tick - game.lastTick);
+    game.timePassed = Math.min((game.tick - game.lastTick), 60);
 
     const shakeOffset = updateCameraShake(game, game.timePassed);
     if (game.stage) {

@@ -755,6 +755,15 @@ class BulletFactory {
             if (!defense) {
                 continue;
             }
+            const defenseTeam = Number.isFinite(defense.teamId) ? Math.floor(defense.teamId) : (
+                Number.isFinite(defense.cityId) ? Math.floor(defense.cityId) : null
+            );
+            const bulletTeam = Number.isFinite(bullet?.teamId) ? Math.floor(bullet.teamId) : null;
+            if ((defenseTeam !== null && bulletTeam !== null && defenseTeam === bulletTeam)
+                || (defenseTeam === null && bulletTeam === null)) {
+                // Friendly or neutral defenses ignore friendly/neutral bullets
+                continue;
+            }
             const hitbox = {
                 x: Number.isFinite(defense.x) ? defense.x : 0,
                 y: Number.isFinite(defense.y) ? defense.y : 0,

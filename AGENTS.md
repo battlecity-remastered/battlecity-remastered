@@ -51,6 +51,8 @@
 - **CRITICAL: Always run tests AFTER making changes** to catch regressions immediately.
 - Server tests: `cd server && npm test` (use `npm test <file>` for specific tests).
 - Client tests: `cd client && npm test` — test files live under `client/test/` and run via Node’s built-in test runner.
+- Cucumber: `npm run cucumber` exercises a small harness-only suite (city roster/spawn, medkit, defense placement, factory duplication). These scenarios use TEST_MODE-only endpoints, not the full client flow; add focused server/client tests for deeper coverage. We avoid adding server unit tests that pull in client-only dependencies; keep integration coverage lightweight and socket-based when possible.
+- Server integration: `server/test/factory-duplication.test.js` spins up the app in TEST_MODE, uses Socket.IO to pick up factory drops, and asserts `itemsLeft` decrements to prevent double-collect. It imports `socket.io-client` from `client/node_modules`, so ensure client deps are installed.
 - When a test fails after your changes, investigate immediately - don't assume it was pre-existing.
 - When adding new functionality, add corresponding test coverage to prevent future regressions.
 - If you discover broken tests that are unrelated to your changes, fix them or document them clearly.

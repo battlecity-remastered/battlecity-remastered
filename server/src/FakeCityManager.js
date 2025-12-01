@@ -89,6 +89,7 @@ const DEFAULT_BOTS_PER_CITY = 2;
 const MIN_ORBABLE_CITIES = 3;
 const LOW_PLAYER_THRESHOLD = 20;
 const CITIES_DATA_DIR = path.join(__dirname, '..', 'data', 'cities');
+const CITY_REBUILD_COOLDOWN_MS = 5 * 60 * 1000;
 
 const clamp = (value, min, max) => {
     if (!Number.isFinite(value)) {
@@ -600,6 +601,7 @@ class FakeCityManager {
         this.debug = require('debug')('BattleCity:FakeCityManager');
         this.disabled = !enabled;
         this.cityFileLayouts = new Map();
+        this.cityCooldowns = new Map();
 
         if (this.disabled) {
             this.debug('[fake-city] manager disabled via configuration');
@@ -637,6 +639,42 @@ class FakeCityManager {
         }
     }
 
+    setCityCooldown(cityId, durationMs = CITY_REBUILD_COOLDOWN_MS, now = Date.now()) {
+        const numericCity = toFiniteNumber(cityId, null);
+        if (numericCity === null || !Number.isFinite(durationMs) || durationMs < 0) {
+            return;
+        }
+        const cooldownUntil = now + durationMs;
+        this.cityCooldowns.set(numericCity, cooldownUntil);
+    }
+
+    isCityOnCooldown(cityId, now = Date.now()) {
+        const numericCity = toFiniteNumber(cityId, null);
+        if (numericCity === null) {
+            return false;
+        }
+        const cooldownUntil = this.cityCooldowns.get(numericCity);
+        if (!Number.isFinite(cooldownUntil)) {
+            return false;
+        }
+        if (now >= cooldownUntil) {
+            this.cityCooldowns.delete(numericCity);
+            return false;
+        }
+        return true;
+    }
+
+    pruneCityCooldowns(now = Date.now()) {
+        if (!this.cityCooldowns.size) {
+            return;
+        }
+        for (const [cityId, cooldownUntil] of this.cityCooldowns.entries()) {
+            if (!Number.isFinite(cooldownUntil) || now >= cooldownUntil) {
+                this.cityCooldowns.delete(cityId);
+            }
+        }
+    }
+
     update(now = Date.now(), options = {}) {
         if (this.disabled) {
             return;
@@ -649,6 +687,7 @@ class FakeCityManager {
         this.nextEvaluation = now + interval;
 
         this.pruneInactiveCities();
+        this.pruneCityCooldowns(now);
 
         const humanCount = this.getHumanPlayerCount();
         const configured = this.getConfiguredCities();
@@ -685,7 +724,15 @@ class FakeCityManager {
 
     onCityOrbed(event = {}) {
         const targetCityId = toFiniteNumber(event?.targetCityId ?? event?.targetCity, null);
-        if (targetCityId === null || !this.activeCities.has(targetCityId)) {
+        if (targetCityId === null) {
+            return;
+        }
+
+        this.setCityCooldown(targetCityId, CITY_REBUILD_COOLDOWN_MS);
+        this.killCityBot(targetCityId, 'city_orbed');
+        this.removeCityRecruits(targetCityId, { broadcast: true });
+
+        if (!this.activeCities.has(targetCityId)) {
             return;
         }
         this.debug(`[fake-city] City ${targetCityId} orbed; refreshing fake roster`);
@@ -747,7 +794,10 @@ class FakeCityManager {
         }
 
         const configured = this.getConfiguredCities();
-        const available = configured.filter((entry) => !this.activeCities.has(toFiniteNumber(entry.cityId)));
+        const available = configured.filter((entry) => {
+            const cityId = toFiniteNumber(entry.cityId, null);
+            return cityId !== null && !this.activeCities.has(cityId) && !this.isCityOnCooldown(cityId, Date.now());
+        });
 
         if (available.length === 0) {
             return false;
@@ -3075,7 +3125,11 @@ class FakeCityManager {
         if (!count || count <= 0) {
             return;
         }
-        const available = configured.filter((entry) => !this.activeCities.has(toFiniteNumber(entry.cityId)));
+        const now = Date.now();
+        const available = configured.filter((entry) => {
+            const cityId = toFiniteNumber(entry.cityId, null);
+            return cityId !== null && !this.activeCities.has(cityId) && !this.isCityOnCooldown(cityId, now);
+        });
         if (!available.length) {
             return;
         }
@@ -3092,6 +3146,10 @@ class FakeCityManager {
     spawnFakeCity(entry) {
         const cityId = toFiniteNumber(entry?.cityId, null);
         if (cityId === null || this.activeCities.has(cityId)) {
+            return false;
+        }
+        if (this.isCityOnCooldown(cityId)) {
+            this.debug(`[fake-city] City ${cityId} is on cooldown; skipping spawn`);
             return false;
         }
         const spawn = citySpawns && citySpawns[String(cityId)];
