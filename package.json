@@ -10,7 +10,8 @@
     "lint": "npx eslint client server",
     "build": "npm run build --workspace client",
     "start": "npm run start --workspace server",
-    "coverage": "npm run coverage --workspace server && npm run coverage --workspace client"
+    "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
+    "cucumber": "node features/run-cucumber.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
