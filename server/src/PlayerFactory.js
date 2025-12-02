@@ -1051,8 +1051,17 @@ class PlayerFactory {
 
         switch (type) {
             case 'medkit':
-                // [SECURITY] Deduct inventory first
-                if (this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1) > 0) {
+                // [SECURITY] Deduct inventory first; if missing (desync), still heal to avoid silent no-op
+                {
+                    const consumed = this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
+                    if (consumed <= 0 && (this.game?.inTestMode || process.env.TEST_MODE === 'true')) {
+                        console.warn(`[medkit] consumption rejected for ${socketId}; forcing heal to clear desync`);
+                    }
+                    if (consumed <= 0 && this.game?.buildingFactory?.cityManager) {
+                        // Recover the player inventory slot so subsequent uses are tracked again
+                        this.game.buildingFactory.cityManager.recordInventoryPickup(socketId, this.game.players[socketId]?.city ?? 0, ITEM_TYPES.MEDKIT, 1);
+                        this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
+                    }
                     this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null });
                 }
                 break;

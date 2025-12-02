@@ -10,7 +10,8 @@ const stepFiles = [
     path.join(__dirname, "steps", "bugReports.steps.js"),
     path.join(__dirname, "steps", "buildingCollision.steps.js"),
     path.join(__dirname, "steps", "defenseReplenishment.steps.js"),
-    path.join(__dirname, "steps", "factoryCaps.steps.js")
+    path.join(__dirname, "steps", "factoryCaps.steps.js"),
+    path.join(__dirname, "steps", "itemsMedkit.steps.js")
 ];
 
 stepFiles.forEach((filePath) => {
