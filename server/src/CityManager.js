@@ -6,6 +6,7 @@ const {
     MONEY_TICK_INTERVAL,
     COST_BUILDING,
     COST_UPKEEP_HOSPITAL,
+    FACTORY_ITEM_LIMITS,
 } = require('./constants');
 const { ITEM_TYPES, normalizeItemType } = require('./items');
 const { ORBABLE_SIZE } = require('./gameplay/constants');
@@ -159,33 +160,31 @@ class CityManager {
         if (!Number.isFinite(numericCity) || type === null || amount <= 0) {
             return 0;
         }
+        let allowed = amount;
         const city = this.ensureCity(numericCity);
-        const cityInventory = this.ensureCityInventory(numericCity);
-        const current = cityInventory.get(type) || 0;
-        cityInventory.set(type, current + amount);
 
         if (socketId) {
             const playerInventory = this.ensurePlayerInventory(socketId, numericCity);
             if (playerInventory) {
-                // [SECURITY] Enforce inventory limit (e.g., 5 items per type)
-                const MAX_INVENTORY_PER_TYPE = 5;
+                const maxPerType = FACTORY_ITEM_LIMITS?.[type] ?? 5;
                 const existing = playerInventory.items.get(type) || 0;
-                if (existing >= MAX_INVENTORY_PER_TYPE) {
+                if (existing >= maxPerType) {
                     return 0;
                 }
-                const allowed = Math.min(amount, MAX_INVENTORY_PER_TYPE - existing);
-                if (allowed > 0) {
-                    playerInventory.items.set(type, existing + allowed);
-                } else {
+                allowed = Math.min(amount, maxPerType - existing);
+                if (allowed <= 0) {
                     return 0;
                 }
-                city.updatedAt = Date.now();
-                return allowed;
+                playerInventory.items.set(type, existing + allowed);
             }
         }
 
+        const cityInventory = this.ensureCityInventory(numericCity);
+        const current = cityInventory.get(type) || 0;
+        cityInventory.set(type, current + allowed);
+
         city.updatedAt = Date.now();
-        return amount;
+        return allowed;
     }
 
     recordInventoryConsumption(socketId, cityId, itemType, quantity = 1) {

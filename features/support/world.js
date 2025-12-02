@@ -192,6 +192,14 @@ class BattleCityWorld {
         return response.json();
     }
 
+    async clearCityInventory(cityId, itemType = null) {
+        const body = (itemType === null || itemType === undefined) ? {} : { itemType };
+        await this.fetchServerJson(`/test/city/${encodeURIComponent(cityId)}/inventory/clear`, {
+            method: "POST",
+            body: JSON.stringify(body)
+        });
+    }
+
     getSocketById(id) {
         if (!id) {
             return null;
@@ -223,8 +231,19 @@ class BattleCityWorld {
         return result;
     }
 
-    async createDefense({ id = null, cityId = 0, type, x = 0, y = 0, life = null, maxLife = null }) {
-        const payload = { id, cityId, type, x, y, life, maxLife };
+    async createDefense({
+        id = null,
+        cityId = 0,
+        type,
+        x = 0,
+        y = 0,
+        life = null,
+        maxLife = null,
+        ownerId = null,
+        teamId = null,
+        consumeInventory = false
+    }) {
+        const payload = { id, cityId, teamId, type, x, y, life, maxLife, ownerId, consumeInventory };
         const result = await this.fetchServerJson("/test/defense", {
             method: "POST",
             body: JSON.stringify(payload)
@@ -244,8 +263,8 @@ class BattleCityWorld {
         });
     }
 
-    async createBuilding({ id = null, type, x = 0, y = 0, cityId = 0, itemsLeft = 0 }) {
-        const payload = { id, type, x, y, cityId, itemsLeft };
+    async createBuilding({ id = null, type, x = 0, y = 0, cityId = 0, itemsLeft = 0, population = null }) {
+        const payload = { id, type, x, y, cityId, itemsLeft, population };
         const result = await this.fetchServerJson("/test/building", {
             method: "POST",
             body: JSON.stringify(payload)
@@ -259,6 +278,22 @@ class BattleCityWorld {
             method: "POST",
             body: JSON.stringify(payload)
         });
+    }
+
+    async setFactoryStock(buildingId, itemsLeft = 0) {
+        const payload = { buildingId, itemsLeft };
+        const result = await this.fetchServerJson("/test/factory/stock", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        return result && result.building;
+    }
+
+    async getOutstanding(cityId, itemType) {
+        const result = await this.fetchServerJson(
+            `/test/factory/outstanding/${encodeURIComponent(cityId)}/${encodeURIComponent(itemType)}`
+        );
+        return result && typeof result.outstanding === "number" ? result.outstanding : null;
     }
 
     async collectFactoryItem(buildingId, { socketId, itemType, quantity = 1 } = {}) {
@@ -322,6 +357,65 @@ class BattleCityWorld {
                 }
             };
             socket.on("player:health", onHealth);
+        });
+    }
+
+    async waitForDefense(id, timeoutMs = 1000) {
+        const deadline = Date.now() + timeoutMs;
+        while (Date.now() < deadline) {
+            try {
+                const defense = await this.getDefense(id);
+                if (defense) {
+                    return defense;
+                }
+            } catch (_error) {
+                // Retry until timeout
+            }
+            await delay(50);
+        }
+        throw new Error(`Timed out waiting for defense ${id}`);
+    }
+
+    async destroyDefense(id, { socketId = null, reason = "destroyed" } = {}) {
+        const socket = socketId ? this.getSocketById(socketId) : this.sockets[0];
+        if (!socket) {
+            throw new Error("No socket available to destroy defense");
+        }
+        const payload = JSON.stringify({ id, reason });
+        socket.emit("defense:remove", payload);
+        await delay(50);
+    }
+
+    waitForIcon(type, buildingId = null, { socketId = null, timeoutMs = 3000 } = {}) {
+        const socket = socketId ? this.getSocketById(socketId) : this.sockets[0];
+        if (!socket) {
+            throw new Error("No socket available to wait for icon");
+        }
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                cleanup();
+                reject(new Error("Timed out waiting for icon production"));
+            }, timeoutMs);
+
+            const cleanup = () => {
+                clearTimeout(timer);
+                socket.off("new_icon", onIcon);
+            };
+
+            const onIcon = (payload) => {
+                const data = this.parsePayload(payload);
+                if (!data) {
+                    return;
+                }
+                const typeMatch = Number(data.type) === Number(type);
+                const buildingMatch = buildingId === null || data.buildingId === buildingId;
+                if (typeMatch && buildingMatch) {
+                    cleanup();
+                    resolve(data);
+                }
+            };
+
+            socket.on("new_icon", onIcon);
         });
     }
 }

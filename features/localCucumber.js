@@ -124,7 +124,19 @@ const SKIPPED_TAGS = new Set(
     ["pending", "todo", "wip", "skip", "spec-only", "known-bug"].filter((tag) => !(shouldIncludePending && tag === "pending"))
 );
 
+const shouldRunScenario = (scenario) => {
+    const tags = Array.isArray(scenario.tags) ? scenario.tags : [];
+    if (!global.__tagFilter || !global.__tagFilter.length) {
+        return true;
+    }
+    return tags.some((tag) => global.__tagFilter.includes(tag));
+};
+
 const runScenario = async (scenario) => {
+    if (!shouldRunScenario(scenario)) {
+        console.log(`○ ${scenario.name} (skipped: tag filter)`);
+        return { skipped: true };
+    }
     const shouldSkip = Array.isArray(scenario.tags) && scenario.tags.some((tag) => SKIPPED_TAGS.has(tag));
     if (shouldSkip) {
         const skippedTags = scenario.tags.filter((tag) => SKIPPED_TAGS.has(tag));

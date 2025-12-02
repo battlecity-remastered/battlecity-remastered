@@ -1,3 +1,4 @@
+@defense-placement
 Feature: Turret placement rules
 
   Scenario: Turret rounds must not destroy friendly or neutral walls
@@ -23,3 +24,16 @@ Feature: Turret placement rules
     And the player is targeting a hospital footprint
     When the player places the turret on the pickup zone
     Then the placement succeeds and the turret begins defending the factory
+
+  Scenario: Destroyed friendly turrets trigger factory replacement
+    Given a mayor with a fully stocked turret factory
+    When the mayor collects and places a turret
+    And the mayor reports the turret destroyed
+    Then the turret factory stock increases by one
+
+  Scenario: Destroyed enemy turrets trigger factory replacement
+    Given a mayor with a fully stocked turret factory
+    And an enemy player in another city
+    When the mayor collects and places a turret
+    And the enemy reports the turret destroyed
+    Then the turret factory stock increases by one

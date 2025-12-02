@@ -27,7 +27,7 @@ var fakeCityConfig = require('../shared/fakeCities.json');
 var UserStore = require('./src/users/UserStore');
 var ScoreService = require('./src/users/ScoreService');
 var { MAX_HEALTH, TILE_SIZE } = require('./src/gameplay/constants');
-var { ITEM_TYPES } = require('./src/items');
+var { ITEM_TYPES, normalizeItemType } = require('./src/items');
 
 const parseClientIds = (value) => {
     if (!value || typeof value !== 'string') {
@@ -672,6 +672,45 @@ if (isTestMode) {
         });
     });
 
+    app.post('/test/city/:cityId/inventory/clear', (req, res) => {
+        if (!buildingFactory || !buildingFactory.cityManager) {
+            res.status(503).json({ error: 'city_manager_unavailable' });
+            return;
+        }
+        const cityId = Number(req.params.cityId);
+        if (!Number.isFinite(cityId)) {
+            res.status(400).json({ error: 'invalid_city' });
+            return;
+        }
+        const itemTypeRaw = req.body ? req.body.itemType : null;
+        if (itemTypeRaw === null || itemTypeRaw === undefined) {
+            buildingFactory.cityManager.clearCityInventory(cityId);
+        } else {
+            const itemType = normalizeItemType(itemTypeRaw, null);
+            if (itemType === null) {
+                res.status(400).json({ error: 'invalid_item_type' });
+                return;
+            }
+            buildingFactory.cityManager.clearInventoryForType(cityId, itemType);
+        }
+        res.json({ ok: true });
+    });
+
+    app.get('/test/factory/outstanding/:cityId/:itemType', (req, res) => {
+        if (!buildingFactory) {
+            res.status(503).json({ error: 'building_factory_unavailable' });
+            return;
+        }
+        const cityId = Number(req.params.cityId);
+        const itemType = normalizeItemType(req.params.itemType, null);
+        if (!Number.isFinite(cityId) || itemType === null) {
+            res.status(400).json({ error: 'invalid_parameters' });
+            return;
+        }
+        const outstanding = buildingFactory.getCityOutstandingItemCount(cityId, itemType);
+        res.json({ cityId, itemType, outstanding });
+    });
+
     app.post('/test/defense', (req, res) => {
         if (!defenseManager) {
             res.status(503).json({ error: 'defense_manager_unavailable' });
@@ -696,6 +735,18 @@ if (isTestMode) {
         if (!record) {
             res.status(400).json({ error: 'invalid_defense' });
             return;
+        }
+        if (body.consumeInventory && buildingFactory && buildingFactory.cityManager) {
+            const consumed = buildingFactory.cityManager.recordInventoryConsumption(
+                body.ownerId || null,
+                cityId,
+                type,
+                1
+            );
+            if (consumed <= 0) {
+                res.status(400).json({ error: 'inventory_unavailable' });
+                return;
+            }
         }
         defenseManager.addDefense(record, { broadcast: false });
         res.json({ defense: record });
@@ -773,6 +824,10 @@ if (isTestMode) {
         if (buildingFactory.cityManager) {
             buildingFactory.cityManager.registerBuilding(newBuilding);
         }
+        if (Number.isFinite(body.population)) {
+            const numericPopulation = Math.max(0, Math.floor(body.population));
+            newBuilding.population = numericPopulation;
+        }
         buildingFactory.ensureAttachment(newBuilding);
         if (buildingFactory.io) {
             const snapshot = buildingFactory.serializeBuilding(newBuilding);
@@ -826,6 +881,30 @@ if (isTestMode) {
             iconDropManager.io.emit("new_icon", JSON.stringify(icon));
         }
         res.json({ building: buildingFactory.serializeBuilding(building), icon });
+    });
+
+    app.post('/test/factory/stock', (req, res) => {
+        if (!buildingFactory) {
+            res.status(503).json({ error: 'building_factory_unavailable' });
+            return;
+        }
+        const { buildingId, itemsLeft = 0 } = req.body || {};
+        const building = buildingFactory.buildings.get(buildingId);
+        if (!building) {
+            res.status(404).json({ error: 'building_not_found' });
+            return;
+        }
+        const value = Number.isFinite(itemsLeft) ? Math.max(0, Math.floor(itemsLeft)) : null;
+        if (value === null) {
+            res.status(400).json({ error: 'invalid_items_left' });
+            return;
+        }
+        building.itemsLeft = value;
+        if (buildingFactory.io) {
+            buildingFactory.io.emit('new_building', JSON.stringify(buildingFactory.serializeBuilding(building)));
+            buildingFactory.emitPopulationUpdate(building);
+        }
+        res.json({ building: buildingFactory.serializeBuilding(building) });
     });
 
     app.post('/test/factory/pickup', (req, res) => {
@@ -1178,6 +1257,9 @@ io.on('connection', (socket) => {
     });
     socket.on('hazard:remove', (payload) => {
         hazardManager.handleRemove(socket, hazardManager.parsePayload(payload));
+    });
+    socket.on('defense:remove', (payload) => {
+        defenseManager.handleRemove(socket, payload);
     });
     socket.on('city:inspect', (payload) => {
         const cityId = parseCityInspectPayload(payload);

@@ -1,3 +1,4 @@
+@bug-report-suite
 Feature: Reported gameplay regressions
   # These scenarios codify the latest live regressions so we can wire up integration coverage later.
 

@@ -1,3 +1,4 @@
+@city-assignment
 Feature: City assignment and shared spawns
   Scenario: City rosters allow one mayor and three recruits
     Given the BattleCity server is running
