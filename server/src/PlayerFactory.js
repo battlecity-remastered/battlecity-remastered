@@ -225,6 +225,7 @@ class PlayerFactory {
 
         var parsedPlayer = this.safeParse(player);
         const now = Date.now();
+        const latencyMs = Number.isFinite(socket?.data?.latencyMs) ? socket.data.latencyMs : null;
         if (parsedPlayer && (existingPlayer.isFake || existingPlayer.isSystemControlled || existingPlayer.isFakeRecruit)) {
             if (parsedPlayer.sequence !== undefined && Number.isFinite(parsedPlayer.sequence)) {
                 if (existingPlayer.sequence !== undefined && parsedPlayer.sequence <= existingPlayer.sequence) {
@@ -255,7 +256,7 @@ class PlayerFactory {
             return;
         }
 
-        var validation = this.validator.validatePlayerUpdate(existingPlayer, parsedPlayer, { now });
+        var validation = this.validator.validatePlayerUpdate(existingPlayer, parsedPlayer, { now, latencyMs });
         if (!validation) {
             return;
         }

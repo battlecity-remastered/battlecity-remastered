@@ -1151,7 +1151,16 @@ const collectCityInfo = (cityId) => {
 
 io.on('connection', (socket) => {
     socket.on('latency:ping', (_payload = {}, respond) => {
+        const payload = _payload || {};
         const now = Date.now();
+        const sentAtEpoch = payload && payload.sentAtEpoch !== undefined ? Number(payload.sentAtEpoch) : null;
+        const sentAtFallback = payload && payload.sentAt !== undefined ? Number(payload.sentAt) : null;
+        const sentAt = Number.isFinite(sentAtEpoch) ? sentAtEpoch : sentAtFallback;
+        if (Number.isFinite(sentAt)) {
+            const measured = Math.max(0, now - sentAt);
+            socket.data = socket.data || {};
+            socket.data.latencyMs = measured;
+        }
         if (typeof respond === 'function') {
             respond({ serverTime: now, receivedAt: now });
         } else {

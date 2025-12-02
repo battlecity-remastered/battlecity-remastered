@@ -539,9 +539,6 @@ class SocketListener extends EventEmitter2 {
         if (!this.io || this.io.disconnected) {
             return;
         }
-        if (!this.game || !this.game.debugMode) {
-            return;
-        }
         const nowTs = Number.isFinite(now) ? now : this.now();
         if (!this.nextManualPingAt) {
             this.nextManualPingAt = nowTs + this.manualPingIntervalMs;
@@ -551,10 +548,11 @@ class SocketListener extends EventEmitter2 {
             return;
         }
         const sentAt = this.now();
+        const sentAtEpoch = Date.now();
         const emitWithTimeout = typeof this.io.timeout === 'function'
             ? this.io.timeout(3000)
             : this.io;
-        emitWithTimeout.emit('latency:ping', { sentAt }, (err, response) => {
+        emitWithTimeout.emit('latency:ping', { sentAt, sentAtEpoch }, (err, response) => {
             // socket.timeout passes (err, response); plain emit passes (response)
             const hasError = err && (err instanceof Error || typeof err === 'string');
             const payload = hasError ? response : (err ?? response);
@@ -1051,7 +1049,12 @@ class SocketListener extends EventEmitter2 {
         }
         const myId = this.io?.id;
         if (myId && player.id === myId) {
-            this.syncLocalPlayer(player, context);
+            const source = context?.source;
+            if (source === 'rejected' || source === 'enter_game' || source === 'snapshot') {
+                this.syncLocalPlayer(player, context);
+            } else {
+                this.syncLocalPlayerMeta(player, context, { syncDirection: false });
+            }
             return;
         }
         const existing = this.game.otherPlayers[player.id];
@@ -1086,23 +1089,24 @@ class SocketListener extends EventEmitter2 {
         }
     }
 
-    syncLocalPlayer(player, context = {}) {
+    syncLocalPlayerMeta(player, context = {}, options = {}) {
         if (!player || !this.game || !this.game.player) {
-            return;
+            return { applied: false, cityChanged: false };
         }
         const me = this.game.player;
         const previousPoints = Number.isFinite(me.points) ? me.points : null;
-        if (player.sequence !== undefined && player.sequence < this.lastServerSequence && this.lastServerSequence !== 0) {
-            const dxOutdated = Math.abs(player.offset.x - me.offset.x);
-            const dyOutdated = Math.abs(player.offset.y - me.offset.y);
-            const outdatedThreshold = 96;
-            if (dxOutdated < outdatedThreshold && dyOutdated < outdatedThreshold) {
-                return;
-            }
-        }
+        const previousCity = (options && options.previousCity !== undefined)
+            ? options.previousCity
+            : (Number.isFinite(me.city) ? me.city : null);
+        const allowOutdatedSequence = options?.allowOutdatedSequence === true;
+        const syncDirection = options?.syncDirection !== false;
 
         if (player.sequence !== undefined) {
+            if (!allowOutdatedSequence && this.lastServerSequence !== 0 && player.sequence < this.lastServerSequence) {
+                return { applied: false, cityChanged: false };
+            }
             this.lastServerSequence = Math.max(this.lastServerSequence, player.sequence);
+            me.sequence = player.sequence;
         }
 
         me.id = player.id ?? me.id;
@@ -1112,47 +1116,10 @@ class SocketListener extends EventEmitter2 {
         if (typeof player.userId === 'string' && player.userId.trim().length) {
             me.userId = player.userId.trim();
         }
-        const previousCity = Number.isFinite(me.city) ? me.city : null;
+
         const nextCity = this.toFiniteNumber(player.city, me.city);
         const cityChanged = previousCity !== nextCity;
-        if (player.offset && typeof player.offset === 'object') {
-            const serverX = this.toFiniteNumber(player.offset.x, me.offset.x);
-            const serverY = this.toFiniteNumber(player.offset.y, me.offset.y);
-            const diffX = serverX - me.offset.x;
-            const diffY = serverY - me.offset.y;
-            const diffDistanceSq = (diffX * diffX) + (diffY * diffY);
-            const snapThresholdSq = 96 * 96;
-            const lerpAlpha = 0.1;
-            if (diffDistanceSq > snapThresholdSq) {
-                me.offset.x = serverX;
-                me.offset.y = serverY;
-            } else {
-                me.offset.x += diffX * lerpAlpha;
-                me.offset.y += diffY * lerpAlpha;
-            }
-            if (me.lastSafeOffset) {
-                me.lastSafeOffset.x = me.offset.x;
-                me.lastSafeOffset.y = me.offset.y;
-            }
-        }
         me.city = nextCity;
-        if (cityChanged) {
-            const spawn = getCitySpawn(nextCity);
-            if (spawn) {
-                me.offset.x = spawn.x;
-                me.offset.y = spawn.y;
-            } else {
-                const city = this.game.cities?.[nextCity];
-                if (city) {
-                    me.offset.x = city.x + 48;
-                    me.offset.y = city.y + 100;
-                }
-            }
-            if (me.lastSafeOffset) {
-                me.lastSafeOffset.x = me.offset.x;
-                me.lastSafeOffset.y = me.offset.y;
-            }
-        }
         me.isMayor = !!player.isMayor;
         const incomingHealth = this.toFiniteNumber(player.health, me.health);
         if (Number.isFinite(incomingHealth)) {
@@ -1187,24 +1154,87 @@ class SocketListener extends EventEmitter2 {
                 me.frozenBy = null;
             }
         }
-        const serverDirection = Math.round(this.toFiniteNumber(player.direction, me.direction));
-        if (Number.isFinite(serverDirection)) {
-            const normalizedDirection = ((serverDirection % 32) + 32) % 32;
-            const currentDirection = Number.isFinite(me.direction) ? ((Math.round(me.direction) % 32) + 32) % 32 : normalizedDirection;
-            const directionDiff = Math.min(
-                Math.abs(normalizedDirection - currentDirection),
-                32 - Math.abs(normalizedDirection - currentDirection)
-            );
-            if (directionDiff > 4) {
-                me.direction = normalizedDirection;
+        if (syncDirection) {
+            const serverDirection = Math.round(this.toFiniteNumber(player.direction, me.direction));
+            if (Number.isFinite(serverDirection)) {
+                const normalizedDirection = ((serverDirection % 32) + 32) % 32;
+                const currentDirection = Number.isFinite(me.direction) ? ((Math.round(me.direction) % 32) + 32) % 32 : normalizedDirection;
+                const directionDiff = Math.min(
+                    Math.abs(normalizedDirection - currentDirection),
+                    32 - Math.abs(normalizedDirection - currentDirection)
+                );
+                if (directionDiff > 4) {
+                    me.direction = normalizedDirection;
+                }
             }
-        }
-        if (player.sequence !== undefined) {
-            me.sequence = player.sequence;
         }
         if (this.game && typeof this.game.updateOrbHint === 'function') {
             const shouldForce = context && context.source === 'enter_game';
             this.game.updateOrbHint({ force: shouldForce });
+        }
+
+        return { applied: true, cityChanged };
+    }
+
+    syncLocalPlayer(player, context = {}) {
+        if (!player || !this.game || !this.game.player) {
+            return;
+        }
+        const me = this.game.player;
+        const previousCity = Number.isFinite(me.city) ? me.city : null;
+        if (player.sequence !== undefined && player.sequence < this.lastServerSequence && this.lastServerSequence !== 0) {
+            const dxOutdated = Math.abs(player.offset.x - me.offset.x);
+            const dyOutdated = Math.abs(player.offset.y - me.offset.y);
+            const outdatedThreshold = 96;
+            if (dxOutdated < outdatedThreshold && dyOutdated < outdatedThreshold) {
+                return;
+            }
+        }
+
+        const metaResult = this.syncLocalPlayerMeta(player, context, {
+            previousCity,
+            allowOutdatedSequence: true
+        });
+        if (!metaResult.applied) {
+            return;
+        }
+        const cityChanged = metaResult.cityChanged;
+        if (player.offset && typeof player.offset === 'object') {
+            const serverX = this.toFiniteNumber(player.offset.x, me.offset.x);
+            const serverY = this.toFiniteNumber(player.offset.y, me.offset.y);
+            const diffX = serverX - me.offset.x;
+            const diffY = serverY - me.offset.y;
+            const diffDistanceSq = (diffX * diffX) + (diffY * diffY);
+            const snapThresholdSq = 96 * 96;
+            const lerpAlpha = 0.1;
+            if (diffDistanceSq > snapThresholdSq) {
+                me.offset.x = serverX;
+                me.offset.y = serverY;
+            } else {
+                me.offset.x += diffX * lerpAlpha;
+                me.offset.y += diffY * lerpAlpha;
+            }
+            if (me.lastSafeOffset) {
+                me.lastSafeOffset.x = me.offset.x;
+                me.lastSafeOffset.y = me.offset.y;
+            }
+        }
+        if (cityChanged) {
+            const spawn = getCitySpawn(me.city);
+            if (spawn) {
+                me.offset.x = spawn.x;
+                me.offset.y = spawn.y;
+            } else {
+                const city = this.game.cities?.[me.city];
+                if (city) {
+                    me.offset.x = city.x + 48;
+                    me.offset.y = city.y + 100;
+                }
+            }
+            if (me.lastSafeOffset) {
+                me.lastSafeOffset.x = me.offset.x;
+                me.lastSafeOffset.y = me.offset.y;
+            }
         }
     }
 

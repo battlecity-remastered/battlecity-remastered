@@ -8,6 +8,9 @@ const DEFAULT_OPTIONS = {
     maxAxisDelta: 96,
     snapAllowance: 144,
     frameToleranceMs: 80,
+    latencyPaddingMaxMs: 300,
+    latencyPaddingMultiplier: 0.50,
+    latencyFallbackMs: 120,
     maxDirectionIndex: 31,
     directionSlots: 32,
     maxTurnDelta: 4,
@@ -69,7 +72,7 @@ class PlayerStateValidator {
         };
 
         const elapsed = Math.max(1, now - (previousState.lastUpdateAt || now));
-        const maxAxisMovement = this._computeAxisLimit(elapsed);
+        const maxAxisMovement = this._computeAxisLimit(elapsed, context);
         const totalDistance = Math.sqrt((delta.x * delta.x) + (delta.y * delta.y));
         const isFake = !!(previousState.isFake || previousState.isFakeRecruit || previousState.isSystemControlled);
         let maxDistance = Math.min(this.axisHardCap, Math.max(maxAxisMovement, this.options.maxAxisDelta));
@@ -114,16 +117,28 @@ class PlayerStateValidator {
         return result;
     }
 
-    _computeAxisLimit(elapsedMs) {
+    _computeAxisLimit(elapsedMs, context) {
         if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) {
             return this.options.maxAxisDelta;
         }
-        const paddedElapsed = elapsedMs + this.options.frameToleranceMs;
+        const latencyPadding = this._resolveLatencyPadding(context);
+        const paddedElapsed = elapsedMs + this.options.frameToleranceMs + latencyPadding;
         const projected = paddedElapsed * this.options.speedPerMs;
         if (!Number.isFinite(projected)) {
             return this.options.maxAxisDelta;
         }
         return Math.min(this.axisHardCap, Math.max(this.options.maxAxisDelta, projected));
+    }
+
+    _resolveLatencyPadding(context) {
+        const latencyValue = context ? (context.latencyMs ?? context.latency) : null;
+        const resolvedLatency = this._toFiniteNumber(latencyValue, this.options.latencyFallbackMs);
+        const boundedLatency = Number.isFinite(resolvedLatency) ? Math.max(0, resolvedLatency) : this.options.latencyFallbackMs;
+        const padding = boundedLatency * this.options.latencyPaddingMultiplier;
+        if (!Number.isFinite(padding) || padding <= 0) {
+            return 0;
+        }
+        return Math.min(this.options.latencyPaddingMaxMs, padding);
     }
 
     _sanitizeOffset(offset, fallback) {
