@@ -1,4 +1,4 @@
-import PIXI from '../pixi';
+import PIXI from '../pixi.js';
 
 const DEFAULT_MIN_DELAY_MS = 0;
 const DEFAULT_MAX_DELAY_MS = 180;

@@ -15,6 +15,18 @@ app.set('trust proxy', 1);
 var isRender = process.env.RENDER === 'true';
 var isProduction = process.env.NODE_ENV === 'production' || isRender;
 var isTestMode = String(process.env.TEST_MODE || '').toLowerCase() === 'true';
+const shouldEnableTestPointDrip = (() => {
+    const flag = String(process.env.TEST_POINTS_DRIP_ENABLED || '').toLowerCase();
+    if (flag === 'true') {
+        return true;
+    }
+    if (flag === 'false') {
+        return false;
+    }
+    return !isProduction && !isTestMode;
+})();
+const TEST_POINTS_DRIP_INTERVAL_MS = Number(process.env.TEST_POINTS_DRIP_INTERVAL_MS) || 20000;
+const TEST_POINTS_DRIP_AMOUNT = Number(process.env.TEST_POINTS_DRIP_AMOUNT) || 50;
 
 var CLIENT_DIST_DIR = path.join(__dirname, '..', 'client', 'dist');
 var CLIENT_INDEX_FILE = path.join(CLIENT_DIST_DIR, 'index.html');
@@ -525,6 +537,27 @@ const chatManager = new ChatManager({
 });
 chatManager.listen(io);
 playerFactory.setChatManager(chatManager);
+
+const awardTestPoints = () => {
+    if (!playerFactory || !game || !io) {
+        return;
+    }
+    const now = Date.now();
+    Object.values(game.players || {}).forEach((player) => {
+        if (!player || player.isSystemControlled || player.isFake || player.isFakeRecruit) {
+            return;
+        }
+        const previous = Number.isFinite(player.points) ? player.points : 0;
+        const next = Math.max(0, previous + TEST_POINTS_DRIP_AMOUNT);
+        if (next === previous) {
+            return;
+        }
+        player.points = next;
+        player.sequence = Math.max(0, Math.round(player.sequence || 0)) + 1;
+        player.lastUpdateAt = now;
+        io.emit('player', JSON.stringify(player));
+    });
+};
 
 const ITEM_TYPE_NAMES = Object.entries(ITEM_TYPES).reduce((acc, [key, value]) => {
     acc[value] = String(key).toLowerCase();
@@ -1298,6 +1331,7 @@ io.on('connection', (socket) => {
 
 const BUILDING_UPDATE_INTERVAL = 100;
 let buildingAccumulator = 0;
+let pointsDripAccumulator = 0;
 
 var loop = () => {
 
@@ -1326,6 +1360,14 @@ var loop = () => {
     if (buildingAccumulator >= BUILDING_UPDATE_INTERVAL) {
         buildingFactory.cycle();
         buildingAccumulator = buildingAccumulator % BUILDING_UPDATE_INTERVAL;
+    }
+
+    if (shouldEnableTestPointDrip) {
+        pointsDripAccumulator += delta;
+        if (pointsDripAccumulator >= TEST_POINTS_DRIP_INTERVAL_MS) {
+            awardTestPoints();
+            pointsDripAccumulator = pointsDripAccumulator % TEST_POINTS_DRIP_INTERVAL_MS;
+        }
     }
 
     if (loopMonitor) {

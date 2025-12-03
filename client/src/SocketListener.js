@@ -3,6 +3,7 @@ import EventEmitter2 from 'eventemitter2';
 import { getCitySpawn, getCityDisplayName } from './utils/citySpawns.js';
 import { SOUND_IDS } from './audio/AudioManager.js';
 import spawnMuzzleFlash from './effects/muzzleFlash.js';
+import { addFloatingPoints } from './effects/floatingPoints.js';
 
 const CHAT_MAX_LENGTH = 240;
 const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/g;
@@ -1058,6 +1059,7 @@ class SocketListener extends EventEmitter2 {
             return;
         }
         const existing = this.game.otherPlayers[player.id];
+        const previousPoints = Number.isFinite(existing?.points) ? existing.points : null;
         if (existing && existing.sequence !== undefined && player.sequence !== undefined) {
             if (player.sequence <= existing.sequence) {
                 return;
@@ -1081,6 +1083,15 @@ class SocketListener extends EventEmitter2 {
             updated.userId = existing.userId;
         }
         this.game.otherPlayers[player.id] = updated;
+        if (context?.source !== 'snapshot') {
+            const nextPoints = Number.isFinite(updated.points) ? updated.points : null;
+            if (previousPoints !== null && nextPoints !== null && nextPoints > previousPoints) {
+                const viewerCity = this.game.player?.city ?? null;
+                const playerCity = Number.isFinite(updated.city) ? updated.city : null;
+                const isEnemyCloaked = !!updated.isCloaked && playerCity !== null && viewerCity !== null && playerCity !== viewerCity;
+                this.spawnPointsFloat(nextPoints - previousPoints, { x: targetX, y: targetY }, { isEnemyCloaked });
+            }
+        }
         const isSnapshot = context && context.source === 'snapshot';
         const isEnterGame = context && context.source === 'enter_game';
         const isNewPlayer = !existing;
@@ -1131,6 +1142,9 @@ class SocketListener extends EventEmitter2 {
             me.points = player.points;
         }
         const nextPoints = Number.isFinite(me.points) ? me.points : null;
+        if (previousPoints !== null && nextPoints !== null && nextPoints > previousPoints) {
+            this.spawnPointsFloat(nextPoints - previousPoints, me.offset || player.offset, { isEnemyCloaked: false });
+        }
         if (previousPoints !== nextPoints && this.game?.tutorialManager?.handlePointsUpdate) {
             this.game.tutorialManager.handlePointsUpdate(nextPoints);
         }
@@ -1284,6 +1298,26 @@ class SocketListener extends EventEmitter2 {
             return null;
         }
         return getCityDisplayName(numericCity);
+    }
+
+    spawnPointsFloat(amount, offset, options = {}) {
+        if (!this.game) {
+            return;
+        }
+        const points = Number(amount);
+        const x = Number(offset?.x);
+        const y = Number(offset?.y);
+        if (options.isEnemyCloaked) {
+            return;
+        }
+        if (!Number.isFinite(points) || points <= 0 || !Number.isFinite(x) || !Number.isFinite(y)) {
+            return;
+        }
+        addFloatingPoints(this.game, {
+            amount: points,
+            x: x + 24,
+            y: y - 6
+        });
     }
 
     normalisePlayerPayload(payload) {

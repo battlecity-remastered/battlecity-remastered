@@ -235,6 +235,7 @@ const game = {
         engineLoopActive: false
     },
     explosions: [],
+    floatingPoints: [],
     panelState: {
         heading: DEFAULT_PANEL_MESSAGE.heading,
         lines: [...DEFAULT_PANEL_MESSAGE.lines],

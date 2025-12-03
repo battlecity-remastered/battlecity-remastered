@@ -2,6 +2,7 @@ import PIXI from '../pixi';
 import { scheduleDestroy } from '../utils/pixiPerformance';
 import { MAX_HEALTH } from '../constants';
 import { buildRoleLabel, toFiniteCityId } from './nameLabels';
+import { drawFloatingPoints } from '../effects/floatingPoints.js';
 
 const EXPLOSION_VARIANTS = {
     small: {
@@ -457,6 +458,7 @@ export const drawChanging = (game) => {
     drawDefenderBots(game, game.objectContainer);
     drawBullets(game, game.objectContainer);
     drawExplosions(game, game.objectContainer);
+    drawFloatingPoints(game, game.objectContainer);
 
     const cache = game.__nameLabelCache;
     if (cache && cache.size) {
