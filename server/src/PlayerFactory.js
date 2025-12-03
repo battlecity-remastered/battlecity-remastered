@@ -1190,6 +1190,27 @@ class PlayerFactory {
         const playerCityNumeric = Number(player.city);
         const playerCityId = Number.isFinite(playerCityNumeric) ? Math.floor(playerCityNumeric) : null;
 
+        const cityManager = this.game.buildingFactory && this.game.buildingFactory.cityManager;
+        let releasedOrbCityId = null;
+        if (cityManager && typeof cityManager.releaseOrbHolder === 'function') {
+            releasedOrbCityId = cityManager.releaseOrbHolder(socketId, { consume: true });
+            if (Number.isFinite(releasedOrbCityId) && typeof cityManager.consumeOrb === 'function') {
+                cityManager.consumeOrb(releasedOrbCityId, socketId);
+                const city = typeof cityManager.ensureCity === 'function'
+                    ? cityManager.ensureCity(releasedOrbCityId)
+                    : null;
+                if (city) {
+                    const activeCount = typeof cityManager.getActiveOrbCount === 'function'
+                        ? cityManager.getActiveOrbCount(releasedOrbCityId)
+                        : city.activeOrbCount || 0;
+                    city.activeOrbCount = Math.max(0, activeCount);
+                    if (typeof cityManager.emitFinance === 'function') {
+                        cityManager.emitFinance(city);
+                    }
+                }
+            }
+        }
+
         if (!player.isSystemControlled) {
             this.releaseSlot(player, { emitSnapshot: false });
         }
