@@ -498,6 +498,7 @@ class SocketListener extends EventEmitter2 {
             if (data) {
                 this.handleCityOrbedAudio(data);
             }
+            this.removePlayersForCity(data);
             this.emit('city:orbed', data);
         });
         this.io.on("lobby:evicted", (payload) => {
@@ -1505,7 +1506,11 @@ class SocketListener extends EventEmitter2 {
         if (!this.game.otherPlayers[update.id]) {
             this.game.otherPlayers[update.id] = { id: update.id };
         }
-        this.game.otherPlayers[update.id].health = Math.max(0, healthValue);
+        const target = this.game.otherPlayers[update.id];
+        target.health = Math.max(0, healthValue);
+        if (target.health <= 0 && (target.isSystemControlled || target.isFake || target.isFakeRecruit || (typeof target.ownerId === 'string' && target.ownerId.startsWith('fake_city_')))) {
+            delete this.game.otherPlayers[update.id];
+        }
         // Force UI redraw for other players' health bars as well
         this.game.forceDraw = true;
     }
@@ -1678,6 +1683,27 @@ class SocketListener extends EventEmitter2 {
         }
         if (Number.isFinite(attackerCity) && myCity === attackerCity) {
             this.game.audio.playEffect(SOUND_IDS.SCREECH);
+        }
+    }
+
+    removePlayersForCity(event) {
+        if (!event || !this.game || !this.game.otherPlayers) {
+            return;
+        }
+        const cityId = this.toFiniteNumber(event.targetCity ?? event.targetCityId ?? event.city ?? event.id, null);
+        if (cityId === null) {
+            return;
+        }
+        let removed = 0;
+        Object.keys(this.game.otherPlayers).forEach((id) => {
+            const player = this.game.otherPlayers[id];
+            if (player && this.toFiniteNumber(player.city, null) === cityId) {
+                delete this.game.otherPlayers[id];
+                removed += 1;
+            }
+        });
+        if (removed > 0) {
+            this.game.forceDraw = true;
         }
     }
 
