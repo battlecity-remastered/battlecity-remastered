@@ -1851,7 +1851,15 @@ class PlayerFactory {
             return null;
         }
         const roster = this.ensureCityRoster(id);
-        const players = Object.values(this.game.players || {}).filter((player) => normaliseCityIdValue(player && player.city, null) === id);
+        const players = Object.values(this.game.players || {}).filter((player) => {
+            if (!player) {
+                return false;
+            }
+            if (player.isSystemControlled || player.isFake || player.isFakeRecruit) {
+                return false;
+            }
+            return normaliseCityIdValue(player.city, null) === id;
+        });
         const mayorPlayer = players.find((player) => player && player.isMayor);
         const mayorIdCandidate = mayorPlayer ? mayorPlayer.id : (roster.mayor || null);
         const mayorEntity = mayorPlayer || (mayorIdCandidate && this.game.players ? this.game.players[mayorIdCandidate] : null);
