@@ -186,7 +186,7 @@ class HelpModal {
         const list = document.createElement('div');
         list.className = 'battlecity-help-list';
         const shortcuts = [
-            { key: 'Shift', desc: 'Fire equipped weapon (laser or Cougar rockets; rockets need you to be stationary).' },
+            { key: 'Shift', desc: 'Hold to fire your equipped weapon (laser or Cougar rockets; rockets need you to be stationary).' },
             { key: 'Ctrl', desc: 'Fire the Flare Gun spread behind you when you own an Orb icon.' },
             { key: 'M', desc: 'Open or close the strategic map overlay for a full-field view.' },
             { key: 'D', desc: 'Drop the currently selected item at your marker. If a bomb is selected, it drops with its current armed state (unarmed by default; click the bomb icon to toggle arming).' },

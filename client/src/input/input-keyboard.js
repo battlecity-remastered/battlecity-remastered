@@ -124,6 +124,9 @@ const dropInventoryItem = (game, dropInfo) => {
 };
 
 var lastShot = 0;
+var shiftHoldLoopId = null;
+var lastWeaponWarningAt = 0;
+const SHIFT_WARNING_COOLDOWN_MS = 1000;
 
 const isInteractiveTarget = (event) => {
     if (!event) {
@@ -174,6 +177,76 @@ const playShotSound = (game, soundId, position) => {
         game.audio.playEffect(soundId, { position });
     } else {
         game.audio.playEffect(soundId);
+    }
+};
+
+const stopShiftAutofire = () => {
+    if (shiftHoldLoopId !== null) {
+        window.cancelAnimationFrame(shiftHoldLoopId);
+        shiftHoldLoopId = null;
+    }
+};
+
+const shouldLogWeaponWarning = (now) => {
+    if (!Number.isFinite(now)) {
+        return false;
+    }
+    if (now < lastWeaponWarningAt + SHIFT_WARNING_COOLDOWN_MS) {
+        return false;
+    }
+    lastWeaponWarningAt = now;
+    return true;
+};
+
+const attemptPrimaryFire = (game, { logWarnings = true } = {}) => {
+    if (!game || !game.player || !game.bulletFactory || !game.socketListener) {
+        return;
+    }
+    const now = game.tick || Date.now();
+    if (game.player.isFrozen && (game.player.frozenUntil ?? 0) > now) {
+        return;
+    }
+    const hasRocketEquipped = hasEquippedItem(game, ITEM_TYPE_ROCKET);
+    const hasLaserEquipped = hasEquippedItem(game, ITEM_TYPE_LASER);
+    const isStationary = (game?.player?.isMoving ?? 0) === 0;
+    const canFireRocket = hasRocketEquipped && isStationary;
+
+    if (!canFireRocket && !hasLaserEquipped) {
+        if (logWarnings && shouldLogWeaponWarning(now)) {
+            if (hasRocketEquipped && !isStationary) {
+                console.log("Cougar Missiles only fire while stationary.");
+            } else {
+                console.log("Weapon unavailable: pick up a Laser or Cougar Missile.");
+            }
+        }
+        return;
+    }
+
+    const cooldown = canFireRocket ? TIMER_SHOOT_ROCKET : TIMER_SHOOT_LASER;
+    const bulletType = canFireRocket ? 1 : 0;
+    const tick = Number.isFinite(game.tick) ? game.tick : Date.now();
+
+    if (tick > lastShot) {
+        lastShot = tick + cooldown;
+
+        const direction = normaliseDirection(game.player.direction);
+        const muzzle = computeTankMuzzlePosition(game.player.offset, direction);
+        const shotAngle = -direction;
+        const x2 = muzzle.x;
+        const y2 = muzzle.y;
+        const teamId = game.player.city ?? null;
+        spawnMuzzleFlash(game, x2, y2);
+        game.bulletFactory.newBullet(game.player.id, x2, y2, bulletType, shotAngle, teamId);
+        const soundId = canFireRocket ? SOUND_IDS.ROCKET : SOUND_IDS.LASER;
+        playShotSound(game, soundId, { x: x2, y: y2 });
+        game.socketListener.sendBulletShot({
+            shooter: game.player.id,
+            x: x2,
+            y: y2,
+            type: bulletType,
+            angle: shotAngle,
+            team: teamId
+        });
     }
 };
 
@@ -431,49 +504,24 @@ export const setupKeyboardInputs = (game) => {    //Capture the keyboard arrow k
     };
 
     shift.press = function () {
-        if (game?.player?.isFrozen && (game.player.frozenUntil ?? 0) > (game.tick || Date.now())) {
+        attemptPrimaryFire(game);
+        if (shiftHoldLoopId !== null) {
             return;
         }
-        const hasRocketEquipped = hasEquippedItem(game, ITEM_TYPE_ROCKET);
-        const hasLaserEquipped = hasEquippedItem(game, ITEM_TYPE_LASER);
-        const isStationary = (game?.player?.isMoving ?? 0) === 0;
-        const canFireRocket = hasRocketEquipped && isStationary;
 
-        if (!canFireRocket && !hasLaserEquipped) {
-            if (hasRocketEquipped && !isStationary) {
-                console.log("Cougar Missiles only fire while stationary.");
-            } else {
-                console.log("Weapon unavailable: pick up a Laser or Cougar Missile.");
+        const fireLoop = () => {
+            if (!shift.isDown) {
+                shiftHoldLoopId = null;
+                return;
             }
-            return;
-        }
+            attemptPrimaryFire(game, { logWarnings: false });
+            shiftHoldLoopId = window.requestAnimationFrame(fireLoop);
+        };
 
-        const cooldown = canFireRocket ? TIMER_SHOOT_ROCKET : TIMER_SHOOT_LASER;
-        const bulletType = canFireRocket ? 1 : 0;
+        shiftHoldLoopId = window.requestAnimationFrame(fireLoop);
+    };
 
-        console.log("shift key pressed");
-        if (game.tick > lastShot) {
-            lastShot = game.tick + cooldown;
-
-            const direction = normaliseDirection(game.player.direction);
-            const muzzle = computeTankMuzzlePosition(game.player.offset, direction);
-            const shotAngle = -direction;
-            const x2 = muzzle.x;
-            const y2 = muzzle.y;
-            const teamId = game.player.city ?? null;
-            spawnMuzzleFlash(game, x2, y2);
-            game.bulletFactory.newBullet(game.player.id, x2, y2, bulletType, shotAngle, teamId);
-            const soundId = canFireRocket ? SOUND_IDS.ROCKET : SOUND_IDS.LASER;
-            playShotSound(game, soundId, { x: x2, y: y2 });
-            game.socketListener.sendBulletShot({
-                shooter: game.player.id,
-                x: x2,
-                y: y2,
-                type: bulletType,
-                angle: shotAngle,
-                team: teamId
-            });
-        }
-
-    }
+    shift.release = function () {
+        stopShiftAutofire();
+    };
 };
