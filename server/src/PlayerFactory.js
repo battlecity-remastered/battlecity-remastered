@@ -865,17 +865,6 @@ class PlayerFactory {
         return player.healthSequence;
     }
 
-    nextHealthSequence(player) {
-        if (!player) {
-            return 0;
-        }
-        if (!Number.isFinite(player.healthSequence)) {
-            player.healthSequence = 0;
-        }
-        player.healthSequence += 1;
-        return player.healthSequence;
-    }
-
     getSocket(socketId) {
         const sockets = this.io && this.io.sockets && this.io.sockets.sockets;
         if (!sockets) {

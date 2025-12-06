@@ -5,7 +5,6 @@ const assert = require('node:assert/strict');
 
 const PlayerFactory = require('../src/PlayerFactory');
 const { MAX_HEALTH } = require('../src/gameplay/constants');
-const { ITEM_TYPES } = require('../src/items');
 
 const createFactory = () => {
     const game = { players: {} };
