@@ -300,11 +300,6 @@ class PlayerStateValidator {
 
             const isBlocked = (x, y) => {
                 try {
-                    // 0 = Empty, 3 = Water (passable?), others blocked.
-                    // Assuming 0 is empty. Need to verify what blocks.
-                    // Usually 1=Brick, 2=Steel, 3=Water, 4=Ice, 5=Trees.
-                    // Tanks block on Brick(1), Steel(2), Water(3).
-                    // Trees(5) and Ice(4) might be passable.
                     const tile = this.game.map[x][y];
                     return tile === 1 || tile === 2 || tile === 3;
                 } catch (_e) {

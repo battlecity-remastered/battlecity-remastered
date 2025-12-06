@@ -854,6 +854,28 @@ class PlayerFactory {
         return cityManager.recordInventoryConsumption(socketId, cityId, itemType, Math.abs(delta));
     }
 
+    nextHealthSequence(player) {
+        if (!player) {
+            return 0;
+        }
+        if (!Number.isFinite(player.healthSequence)) {
+            player.healthSequence = 0;
+        }
+        player.healthSequence += 1;
+        return player.healthSequence;
+    }
+
+    nextHealthSequence(player) {
+        if (!player) {
+            return 0;
+        }
+        if (!Number.isFinite(player.healthSequence)) {
+            player.healthSequence = 0;
+        }
+        player.healthSequence += 1;
+        return player.healthSequence;
+    }
+
     getSocket(socketId) {
         const sockets = this.io && this.io.sockets && this.io.sockets.sockets;
         if (!sockets) {
@@ -1014,12 +1036,14 @@ class PlayerFactory {
 
         const previousHealth = player.health;
         player.health = Math.max(0, previousHealth - Math.floor(amount));
+        const sequence = this.nextHealthSequence(player);
 
         const payload = {
             id: player.id,
             health: player.health,
             previousHealth: previousHealth,
-            source: meta || null
+            source: meta || null,
+            healthSequence: sequence
         };
 
         if (this.io) {
@@ -1045,7 +1069,8 @@ class PlayerFactory {
             return;
         }
         const socketId = socket.id;
-        if (!this.game.players[socketId]) {
+        const player = this.game.players[socketId];
+        if (!player) {
             return;
         }
 
@@ -1053,14 +1078,25 @@ class PlayerFactory {
             case 'medkit':
                 // [SECURITY] Deduct inventory first; if missing (desync), still heal to avoid silent no-op
                 {
-                    const consumed = this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
-                    if (consumed <= 0 && (this.game?.inTestMode || process.env.TEST_MODE === 'true')) {
-                        console.warn(`[medkit] consumption rejected for ${socketId}; forcing heal to clear desync`);
+                    const atMaxHealth = Number.isFinite(player.health) && player.health >= MAX_HEALTH;
+                    if (atMaxHealth) {
+                        // Sync client health without consuming inventory
+                        const sequence = this.nextHealthSequence(player);
+                        if (this.io) {
+                            this.io.emit('player:health', JSON.stringify({
+                                id: player.id,
+                                health: player.health,
+                                previousHealth: player.health,
+                                source: { type: 'medkit', reason: 'already_full' },
+                                healthSequence: sequence
+                            }));
+                        }
+                        break;
                     }
-                    if (consumed <= 0 && this.game?.buildingFactory?.cityManager) {
-                        // Recover the player inventory slot so subsequent uses are tracked again
-                        this.game.buildingFactory.cityManager.recordInventoryPickup(socketId, this.game.players[socketId]?.city ?? 0, ITEM_TYPES.MEDKIT, 1);
-                        this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
+                    const consumed = this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
+                    if (consumed <= 0) {
+                        // No inventory; ignore the request
+                        break;
                     }
                     this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null });
                 }
@@ -1088,12 +1124,14 @@ class PlayerFactory {
             return false;
         }
         player.health = clamped;
+        const sequence = this.nextHealthSequence(player);
         if (this.io) {
             this.io.emit('player:health', JSON.stringify({
                 id: player.id,
                 health: player.health,
                 previousHealth,
-                source: meta || null
+                source: meta || null,
+                healthSequence: sequence
             }));
         }
         return true;

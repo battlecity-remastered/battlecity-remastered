@@ -9,6 +9,7 @@ Before(async function (scenario) {
         return;
     }
     this.testPlayer = null;
+    this.medkitScenarioTags = scenario.tags || [];
     if (this.socketById && typeof this.socketById.clear === "function") {
         this.socketById.clear();
     }
@@ -69,8 +70,12 @@ When(/^the player consumes the medkit$/, async function () {
     assert(socket, "Player socket not found");
     const wait = this.waitForHealthUpdate(this.medkitContext.socketId, 2000);
     socket.emit("item:use", JSON.stringify({ type: "medkit" }));
-    const update = await wait;
-    this.medkitContext.afterHealth = update?.health ?? null;
+    try {
+        const update = await wait;
+        this.medkitContext.afterHealth = update?.health ?? null;
+    } catch (_error) {
+        this.medkitContext.afterHealth = null;
+    }
 });
 
 Then(/^the player regains the expected health every time and the medkit does not disappear without healing$/, async function () {
@@ -80,4 +85,14 @@ Then(/^the player regains the expected health every time and the medkit does not
     const state = await this.loadPlayerState(this.medkitContext.socketId);
     const medkitCount = state?.inventory?.items?.medkit || 0;
     assert.strictEqual(medkitCount, 0, "Medkit was not consumed from inventory");
+});
+
+Then(/^the medkit use is rejected and the player keeps the medkit$/, async function () {
+    assert(this.medkitContext, "Medkit context missing");
+    const state = await this.loadPlayerState(this.medkitContext.socketId);
+    const medkitCount = state?.inventory?.items?.medkit || 0;
+    const after = Number(this.medkitContext.afterHealth);
+    // Health should remain at the pre-use level (waiter may time out)
+    assert.strictEqual(after || this.medkitContext.beforeHealth, this.medkitContext.beforeHealth, "Health should remain unchanged when medkit is rejected");
+    assert.strictEqual(medkitCount, 1, "Medkit should remain in inventory when use is rejected");
 });

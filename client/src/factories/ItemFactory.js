@@ -240,10 +240,6 @@ class ItemFactory {
         }
         const iconId = icon.id ?? null;
         this.game.iconFactory.consumeOwnedIcon(playerId, ITEM_TYPE_MEDKIT, 1);
-        if (this.game.player) {
-            this.game.player.health = MAX_HEALTH;
-            this.game.forceDraw = true;
-        }
         if (this.game.socketListener && typeof this.game.socketListener.useItem === 'function') {
             this.game.socketListener.useItem('medkit', {
                 iconId,

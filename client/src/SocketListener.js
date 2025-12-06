@@ -1438,10 +1438,24 @@ class SocketListener extends EventEmitter2 {
             return;
         }
         const myId = this.io?.id;
+        const sequence = this.toFiniteNumber(update.healthSequence, null);
         if (myId && update.id === myId) {
             const previous = Number.isFinite(this.game.player?.health) ? this.game.player.health : healthValue;
             const nextHealth = Math.max(0, healthValue);
             const now = Date.now();
+            const sourceType = typeof update?.source?.type === 'string'
+                ? update.source.type.toLowerCase()
+                : null;
+            const updateType = typeof update?.type === 'string'
+                ? update.type.toLowerCase()
+                : null;
+            const isMedkitHeal = sourceType === 'medkit' || updateType === 'medkit';
+            const lastSequence = Number.isFinite(this.game.player?.healthSequence)
+                ? this.game.player.healthSequence
+                : null;
+            if (sequence !== null && lastSequence !== null && sequence <= lastSequence) {
+                return;
+            }
             const justRespawned = Number.isFinite(this.game.player?.lastRespawnAt)
                 && (now - this.game.player.lastRespawnAt) < 1500;
             const debugBotDamage = (() => {
@@ -1463,7 +1477,8 @@ class SocketListener extends EventEmitter2 {
             }
 
             // Never let server heal above local health; only apply decreases
-            if (nextHealth > previous) {
+            // EXCEPT for medkit heals, which we allow to override a late-arriving damage packet.
+            if (nextHealth > previous && !isMedkitHeal) {
                 return;
             }
             // Ignore stale death updates right after a local respawn so we don't bounce back to low health.
@@ -1481,6 +1496,7 @@ class SocketListener extends EventEmitter2 {
 
             if (this.game.player) {
                 this.game.player.health = nextHealth;
+                this.game.player.healthSequence = sequence !== null ? sequence : lastSequence;
                 if (nextHealth <= 0) {
                     this.game.player.awaitingServerDeath = false;
                     this.game.player.botDeathConfirmSent = false;
@@ -1507,7 +1523,12 @@ class SocketListener extends EventEmitter2 {
             this.game.otherPlayers[update.id] = { id: update.id };
         }
         const target = this.game.otherPlayers[update.id];
+        const lastSequence = Number.isFinite(target.healthSequence) ? target.healthSequence : null;
+        if (sequence !== null && lastSequence !== null && sequence <= lastSequence) {
+            return;
+        }
         target.health = Math.max(0, healthValue);
+        target.healthSequence = sequence !== null ? sequence : lastSequence;
         if (target.health <= 0 && (target.isSystemControlled || target.isFake || target.isFakeRecruit || (typeof target.ownerId === 'string' && target.ownerId.startsWith('fake_city_')))) {
             delete this.game.otherPlayers[update.id];
         }

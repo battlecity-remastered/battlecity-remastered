@@ -13,4 +13,4 @@ Feature: Medkit consumption
     And the player has a medkit in their inventory
     And the server forgets the player's medkit inventory
     When the player consumes the medkit
-    Then the player regains the expected health every time and the medkit does not disappear without healing
+    Then the medkit use is rejected and the player keeps the medkit

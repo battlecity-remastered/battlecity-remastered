@@ -34,22 +34,39 @@ test('medkit heals when inventory consumption succeeds', () => {
     assert.ok(healthEvent, 'Health update should be emitted');
 });
 
+test('medkit does nothing (and is not consumed) when already at max health', () => {
+    const { game, factory } = createFactory();
+    const socketId = 'p3';
+    game.players[socketId] = { id: socketId, city: 0, health: MAX_HEALTH };
+
+    let consumptionAttempted = false;
+    factory.adjustCityInventory = () => {
+        consumptionAttempted = true;
+        return 1;
+    };
+
+    factory.handleItemUse(buildSocket(socketId), JSON.stringify({ type: 'medkit', iconId: 'icon-full' }));
+
+    assert.equal(consumptionAttempted, false, 'Inventory should not be consumed at full health');
+    assert.equal(game.players[socketId].health, MAX_HEALTH, 'Health should remain at max');
+    const healthEvent = factory.io.emitted.find((evt) => evt.event === 'player:health');
+    assert.ok(healthEvent, 'Health sync should be emitted even for no-op medkit');
+    const payload = JSON.parse(healthEvent.payload);
+    assert.equal(payload.health, MAX_HEALTH);
+    assert.equal(payload.previousHealth, MAX_HEALTH);
+    assert.equal(payload.source.type, 'medkit');
+});
+
 test('medkit heals even if server inventory is missing (desync recovery)', () => {
     const { game, factory } = createFactory();
     const socketId = 'p2';
-    game.players[socketId] = { id: socketId, city: 0, health: 7 };
+    const startingHealth = 7;
+    game.players[socketId] = { id: socketId, city: 0, health: startingHealth };
     factory.adjustCityInventory = () => 0; // simulate missing inventory
-    factory.game.buildingFactory = {
-        cityManager: {
-            recordInventoryPickup() {
-                return 1;
-            }
-        }
-    };
 
     factory.handleItemUse(buildSocket(socketId), JSON.stringify({ type: 'medkit', iconId: 'ghost' }));
 
-    assert.equal(game.players[socketId].health, MAX_HEALTH, 'Player should still be healed even if inventory is out of sync');
+    assert.equal(game.players[socketId].health, startingHealth, 'Player health should remain unchanged if inventory is missing');
     const healthEvent = factory.io.emitted.find((evt) => evt.event === 'player:health');
-    assert.ok(healthEvent, 'Health update should be emitted even when inventory was missing');
+    assert.ok(!healthEvent, 'No health event should be emitted when medkit use is rejected');
 });

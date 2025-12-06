@@ -70,4 +70,77 @@ describe('SocketListener health update', () => {
 
         assert.equal(mockGame.forceDraw, false, 'forceDraw should not be set for invalid updates');
     });
+
+    it('allows medkit heals to apply even when they raise health', () => {
+        const damageUpdate = {
+            id: 'test-player-123',
+            health: 8,
+            previousHealth: 12,
+            source: { type: 'bullet' },
+            healthSequence: 1
+        };
+        const medkitUpdate = {
+            id: 'test-player-123',
+            health: 40,
+            previousHealth: 8,
+            source: { type: 'medkit' },
+            healthSequence: 2
+        };
+
+        mockGame.player.health = 12;
+        mockGame.player.healthSequence = 0;
+        mockGame.forceDraw = false;
+        mockSocketListener.applyHealthUpdate(damageUpdate);
+        assert.equal(mockGame.player.health, 8, 'Damage update should reduce health');
+
+        mockGame.forceDraw = false;
+        mockSocketListener.applyHealthUpdate(medkitUpdate);
+        assert.equal(mockGame.player.health, 40, 'Medkit update should heal even if it increases health');
+        assert.equal(mockGame.forceDraw, true, 'Medkit heal should still trigger UI redraw');
+    });
+
+    it('still ignores non-medkit health increases', () => {
+        const staleHeal = {
+            id: 'test-player-123',
+            health: 30,
+            previousHealth: 10,
+            source: { type: 'hospital' },
+            healthSequence: 1
+        };
+
+        mockGame.player.health = 10;
+        mockGame.player.healthSequence = 2; // newer state already seen
+        mockGame.forceDraw = false;
+        mockSocketListener.applyHealthUpdate(staleHeal);
+
+        assert.equal(mockGame.player.health, 10, 'Non-medkit heal should be ignored if it increases health');
+        assert.equal(mockGame.forceDraw, false, 'forceDraw should remain unchanged for ignored updates');
+    });
+
+    it('ignores older-sequence damage but accepts newer damage', () => {
+        mockGame.player.health = 25;
+        mockGame.player.healthSequence = 5;
+
+        const staleDamage = {
+            id: 'test-player-123',
+            health: 20,
+            previousHealth: 25,
+            source: { type: 'bullet' },
+            healthSequence: 4
+        };
+        const freshDamage = {
+            id: 'test-player-123',
+            health: 15,
+            previousHealth: 25,
+            source: { type: 'bullet' },
+            healthSequence: 6
+        };
+
+        mockSocketListener.applyHealthUpdate(staleDamage);
+        assert.equal(mockGame.player.health, 25, 'Older sequence update should be ignored');
+
+        mockSocketListener.applyHealthUpdate(freshDamage);
+        assert.equal(mockGame.player.health, 15, 'Newer sequence update should be applied');
+        assert.equal(mockGame.player.healthSequence, 6, 'Health sequence should be updated');
+    });
 });
