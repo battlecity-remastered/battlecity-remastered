@@ -262,6 +262,10 @@ class ItemFactory {
             console.log("Cloak unavailable.");
             return false;
         }
+        const iconId = icon.id ?? null;
+        if (typeof this.game.iconFactory.consumeOwnedIcon === 'function') {
+            this.game.iconFactory.consumeOwnedIcon(playerId, ITEM_TYPE_CLOAK, 1);
+        }
         const now = this.game.tick || Date.now();
         const expiresAt = now + TIMER_CLOAK;
         if (this.game.player) {
@@ -277,7 +281,7 @@ class ItemFactory {
         }
         if (this.game.socketListener && typeof this.game.socketListener.useItem === 'function') {
             this.game.socketListener.useItem('cloak', {
-                iconId: icon.id ?? null,
+                iconId,
                 type: ITEM_TYPE_CLOAK,
                 duration: TIMER_CLOAK
             });
