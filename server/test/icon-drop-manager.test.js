@@ -59,13 +59,10 @@ test("IconDropManager shares inventory items across teammates", () => {
 
     dropManager.handlePickup(socket, { id: "shared_cloak" });
 
-    assert.strictEqual(
-        cityManager.getInventoryCount(0, ITEM_TYPES.CLOAK),
-        1,
-        "city inventory stays consistent after pickup"
-    );
+    // Player should regain the drop; city total should stay consistent (1)
     const updatedInventory = cityManager.inventoryByPlayer.get(socket.id);
     assert.ok(updatedInventory?.items.get(ITEM_TYPES.CLOAK) === 1, "player regains the shared drop");
+    assert.strictEqual(cityManager.getInventoryCount(0, ITEM_TYPES.CLOAK), 1, "city inventory unchanged after pickup");
 
     const removalEvent = dropManager.io.emitted.find((entry) => entry.event === "icon:remove");
     assert.ok(removalEvent, "pickup should broadcast icon removal");

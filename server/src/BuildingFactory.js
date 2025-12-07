@@ -73,6 +73,7 @@ class BuildingFactory {
         this.dependencyTreeRoot = this.buildDependencyTree(DEPENDENCY_TREE);
         this.snapshotIntervalMs = 10000;
         this.lastSnapshotAt = 0;
+        this.iconDropManager = null;
     }
 
     buildDependencyTree(entries) {
@@ -186,7 +187,7 @@ class BuildingFactory {
         }
     }
 
-    setManagers({ hazardManager = null, defenseManager = null, playerFactory = null } = {}) {
+    setManagers({ hazardManager = null, defenseManager = null, playerFactory = null, iconDropManager = null } = {}) {
         if (hazardManager) {
             this.hazardManager = hazardManager;
         }
@@ -195,6 +196,9 @@ class BuildingFactory {
         }
         if (playerFactory) {
             this.playerFactory = playerFactory;
+        }
+        if (iconDropManager) {
+            this.iconDropManager = iconDropManager;
         }
     }
 
@@ -291,6 +295,19 @@ class BuildingFactory {
             return;
         }
 
+        const iconId = typeof data.iconId === 'string' ? data.iconId.trim()
+            : (typeof data.id === 'string' ? data.id.trim() : null);
+        if (iconId && this.iconDropManager && typeof this.iconDropManager.getIconRecord === 'function') {
+            const record = this.iconDropManager.getIconRecord(iconId);
+            if (record && (!record.buildingId || !data.buildingId || record.buildingId === data.buildingId)) {
+                this.iconDropManager.handlePickup(socket, {
+                    id: record.id,
+                    buildingId: record.buildingId ?? data.buildingId ?? null
+                });
+                return;
+            }
+        }
+
         const building = this.buildings.get(data.buildingId);
         if (!building) {
             socket.emit('icon:pickup:rejected', JSON.stringify({
@@ -368,6 +385,27 @@ class BuildingFactory {
             const owningCity = playerCity !== null ? playerCity : buildingCity;
             this.cityManager.registerOrbHolder(socket.id, owningCity);
         }
+    }
+
+    registerFactoryIcon(iconPayload) {
+        if (!iconPayload) {
+            return null;
+        }
+        const payload = { ...iconPayload };
+        if (!payload.id && this.iconDropManager && typeof this.iconDropManager.resolveIconId === 'function') {
+            payload.id = this.iconDropManager.resolveIconId(null, payload.ownerId || payload.owner || 'factory');
+        }
+        if (this.iconDropManager && typeof this.iconDropManager.registerFactoryIcon === 'function') {
+            return this.iconDropManager.registerFactoryIcon(payload);
+        }
+        if (!payload.id) {
+            const suffix = Math.random().toString(16).slice(2, 8);
+            payload.id = `icon_factory_${Date.now()}_${suffix}`;
+        }
+        if (this.io) {
+            this.io.emit('new_icon', JSON.stringify(payload));
+        }
+        return payload;
     }
 
     handleNewBuilding(socket, payload) {

@@ -490,7 +490,7 @@ const iconDropManager = new IconDropManager({
     buildingFactory
 });
 iconDropManager.setIo(io);
-buildingFactory.setManagers({ hazardManager, defenseManager, playerFactory });
+buildingFactory.setManagers({ hazardManager, defenseManager, playerFactory, iconDropManager });
 const orbManager = new OrbManager({
     game,
     cityManager: buildingFactory.cityManager,
@@ -910,10 +910,8 @@ if (isTestMode) {
             sharedDrop: true,
             skipProductionUpdate: true
         };
-        if (iconDropManager && iconDropManager.io) {
-            iconDropManager.io.emit("new_icon", JSON.stringify(icon));
-        }
-        res.json({ building: buildingFactory.serializeBuilding(building), icon });
+        const record = buildingFactory.registerFactoryIcon(icon) || icon;
+        res.json({ building: buildingFactory.serializeBuilding(building), icon: record });
     });
 
     app.post('/test/factory/stock', (req, res) => {

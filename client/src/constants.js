@@ -1,4 +1,5 @@
 import * as sharedBuildTreeConfigModule from '../../shared/buildTreeConfig.js';
+import { ITEM_CAPS } from '../../shared/itemCaps.js';
 
 export const RESOLUTION_X = 1024;
 export const RESOLUTION_Y = 768;
@@ -139,21 +140,21 @@ export const ITEM_BURN_THRESHOLDS = Object.freeze({
     [ITEM_TYPE_PLASMA]: 20,
 });
 
-export const ITEM_TYPE_LIMITS = {
-    [ITEM_TYPE_CLOAK]: 4,
-    [ITEM_TYPE_ROCKET]: 4,
-    [ITEM_TYPE_MEDKIT]: 5,
-    [ITEM_TYPE_BOMB]: 20,
-    [ITEM_TYPE_MINE]: 10,
-    [ITEM_TYPE_ORB]: 1,
-    [ITEM_TYPE_FLARE]: 4,
-    [ITEM_TYPE_DFG]: 5,
-    [ITEM_TYPE_WALL]: 20,
-    [ITEM_TYPE_TURRET]: 10,
-    [ITEM_TYPE_SLEEPER]: 5,
-    [ITEM_TYPE_PLASMA]: 5,
-    [ITEM_TYPE_LASER]: 4,
-};
+export const ITEM_TYPE_LIMITS = Object.freeze({
+    [ITEM_TYPE_CLOAK]: ITEM_CAPS.CLOAK,
+    [ITEM_TYPE_ROCKET]: ITEM_CAPS.ROCKET,
+    [ITEM_TYPE_MEDKIT]: ITEM_CAPS.MEDKIT,
+    [ITEM_TYPE_BOMB]: ITEM_CAPS.BOMB,
+    [ITEM_TYPE_MINE]: ITEM_CAPS.MINE,
+    [ITEM_TYPE_ORB]: ITEM_CAPS.ORB,
+    [ITEM_TYPE_FLARE]: ITEM_CAPS.FLARE,
+    [ITEM_TYPE_DFG]: ITEM_CAPS.DFG,
+    [ITEM_TYPE_WALL]: ITEM_CAPS.WALL,
+    [ITEM_TYPE_TURRET]: ITEM_CAPS.TURRET,
+    [ITEM_TYPE_SLEEPER]: ITEM_CAPS.SLEEPER,
+    [ITEM_TYPE_PLASMA]: ITEM_CAPS.PLASMA,
+    [ITEM_TYPE_LASER]: ITEM_CAPS.LASER,
+});
 
 const SHARED_BUILD_TREE_CONFIG = Array.isArray(sharedBuildTreeConfigModule?.BUILD_TREE_CONFIG)
     ? sharedBuildTreeConfigModule.BUILD_TREE_CONFIG

@@ -40,6 +40,53 @@ class IconDropManager {
         this.io = io;
     }
 
+    getIconRecord(id) {
+        const normalized = this.resolveIconId(id, null);
+        if (!normalized) {
+            return null;
+        }
+        return this.droppedIcons.get(normalized) || null;
+    }
+
+    createIconRecord(payload = {}) {
+        const type = normalizeItemType(payload.type, null);
+        const x = toNumber(payload.x, null);
+        const y = toNumber(payload.y, null);
+        if (type === null || !Number.isFinite(x) || !Number.isFinite(y)) {
+            return null;
+        }
+        const cityId = this.toCityId(payload.cityId, 0);
+        const record = {
+            id: this.resolveIconId(payload.id, payload.droppedBy ?? payload.ownerId ?? payload.owner ?? "server"),
+            type,
+            x,
+            y,
+            cityId,
+            teamId: this.toCityId(payload.teamId, cityId),
+            quantity: this.toQuantity(payload.quantity),
+            buildingId: payload.buildingId ?? payload.sourceBuildingId ?? null,
+            sharedDrop: payload.sharedDrop !== false,
+            skipProductionUpdate: payload.skipProductionUpdate !== false,
+            droppedBy: payload.droppedBy ?? payload.ownerId ?? payload.owner ?? null,
+        };
+        this.droppedIcons.set(record.id, record);
+        return record;
+    }
+
+    registerFactoryIcon(payload) {
+        const parsed = this.parsePayload(payload);
+        const record = this.createIconRecord({
+            ...parsed,
+            sharedDrop: true,
+            skipProductionUpdate: parsed?.skipProductionUpdate !== false,
+        });
+        if (!record) {
+            return null;
+        }
+        this.broadcastIconSpawn(record);
+        return record;
+    }
+
     parsePayload(payload) {
         if (payload === null || payload === undefined) {
             return null;
@@ -109,9 +156,8 @@ class IconDropManager {
 
         this.restoreCityInventory(null, cityId, type, quantity);
 
-        const id = this.resolveIconId(data.id, socket.id);
-        const record = {
-            id,
+        const record = this.createIconRecord({
+            id: data.id,
             type,
             x: dropX,
             y: dropY,
@@ -119,11 +165,16 @@ class IconDropManager {
             teamId: this.toCityId(data.teamId, cityId),
             quantity,
             droppedBy: socket.id,
-        };
+            sharedDrop: true,
+            skipProductionUpdate: true,
+        });
+        if (!record) {
+            this.emitDropResult(socket, { status: "rejected", reason: "invalid_payload" });
+            return;
+        }
 
-        this.droppedIcons.set(id, record);
         this.broadcastIconSpawn(record);
-        this.emitDropResult(socket, { status: "ok", id });
+        this.emitDropResult(socket, { status: "ok", id: record.id });
     }
 
     handlePickup(socket, payload) {
@@ -135,7 +186,8 @@ class IconDropManager {
             socket.emit("icon:pickup:rejected", JSON.stringify({
                 reason: "invalid_payload",
                 iconId: null,
-                type: data?.type ?? null
+                type: data?.type ?? null,
+                buildingId: data?.buildingId ?? null
             }));
             return;
         }
@@ -144,7 +196,8 @@ class IconDropManager {
             socket.emit("icon:pickup:rejected", JSON.stringify({
                 reason: "missing",
                 iconId: data.id,
-                type: data.type ?? null
+                type: data.type ?? null,
+                buildingId: data?.buildingId ?? null
             }));
             return;
         }
@@ -153,7 +206,8 @@ class IconDropManager {
             socket.emit("icon:pickup:rejected", JSON.stringify({
                 reason: "unknown_player",
                 iconId: record.id,
-                type: record.type
+                type: record.type,
+                buildingId: record.buildingId ?? null
             }));
             return;
         }
@@ -162,25 +216,59 @@ class IconDropManager {
             socket.emit("icon:pickup:rejected", JSON.stringify({
                 reason: "wrong_team",
                 iconId: record.id,
-                type: record.type
+                type: record.type,
+                buildingId: record.buildingId ?? null
             }));
             return;
+        }
+
+        let applied = 0;
+        if (record.type === ITEM_TYPES.ORB &&
+            this.cityManager &&
+            typeof this.cityManager.registerOrbHolder === 'function') {
+            const holderCity = this.cityManager.registerOrbHolder(socket.id, cityId);
+            applied = holderCity !== null && holderCity !== undefined ? record.quantity : 0;
+        } else {
+            applied = this.restoreCityInventory(socket.id, cityId, record.type, record.quantity);
+            if (!applied || applied <= 0) {
+                const playerCount = this.cityManager?.getPlayerInventoryCount?.(socket.id, record.type, null);
+                const cityCount = this.cityManager?.getInventoryCount?.(cityId, record.type);
+                const cap = this.cityManager?.getInventoryCap?.(record.type) ?? null;
+                console.warn("[IconDropManager] inventory_full", {
+                    socketId: socket.id,
+                    iconId: record.id,
+                    type: record.type,
+                    playerCount,
+                    cityCount,
+                    cap
+                });
+                socket.emit("icon:pickup:rejected", JSON.stringify({
+                    reason: "inventory_full",
+                    iconId: record.id,
+                    type: record.type,
+                    buildingId: record.buildingId ?? null,
+                    playerCount,
+                    cap
+                }));
+                return;
+            }
+            // restoreCityInventory increments both player and city pools; offset city portion to keep totals stable
+            this.removeFromCityInventory(cityId, record.type, applied);
         }
 
         // Prevent duplicates when multiple players race for the same drop.
         this.droppedIcons.delete(record.id);
 
-        this.removeFromCityInventory(cityId, record.type, record.quantity);
-        this.restoreCityInventory(socket.id, cityId, record.type, record.quantity);
-
-        this.decrementFactoryStock(record);
-        this.broadcastIconRemoval(record, { reason: "collected", collector: socket.id });
+        const appliedRecord = { ...record, quantity: applied };
+        this.decrementFactoryStock(appliedRecord);
+        this.broadcastIconRemoval(appliedRecord, { reason: "collected", collector: socket.id });
 
         // Confirm pickup to client
         socket.emit("icon:pickup:confirmed", JSON.stringify({
             iconId: record.id,
             type: record.type,
-            quantity: record.quantity
+            quantity: applied,
+            buildingId: record.buildingId ?? null,
         }));
     }
 
@@ -217,6 +305,7 @@ class IconDropManager {
             quantity: record.quantity,
             cityId: record.cityId,
             teamId: record.teamId,
+            buildingId: record.buildingId ?? null,
             sharedDrop: true,
             skipProductionUpdate: true,
         };
@@ -234,6 +323,7 @@ class IconDropManager {
             y: record.y,
             cityId: record.cityId,
             teamId: record.teamId,
+            buildingId: record.buildingId ?? null,
             reason: meta.reason || "removed",
             sharedDrop: true,
         };

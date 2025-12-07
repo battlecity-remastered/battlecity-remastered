@@ -63,10 +63,16 @@ class FactoryBuilding {
                 teamId: this.building.cityId ?? null,
                 buildingId: this.building.id,
                 producedBy: this.building.ownerId || null,
+                sharedDrop: true,
+                skipProductionUpdate: true,
             };
 
             debug("Factory produced icon", icon);
-            io.emit("new_icon", JSON.stringify(icon));
+            if (factory && typeof factory.registerFactoryIcon === 'function') {
+                factory.registerFactoryIcon(icon);
+            } else if (io) {
+                io.emit("new_icon", JSON.stringify(icon));
+            }
 
             const current = this.building.itemsLeft || 0;
             this.building.itemsLeft = limit !== undefined ? Math.min(limit, current + 1) : current + 1;

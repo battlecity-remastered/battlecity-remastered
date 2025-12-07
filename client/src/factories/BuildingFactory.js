@@ -427,7 +427,6 @@ class BuildingFactory {
         };
 
         if (checkBuildingCollision(this.game, building)) {
-            console.log("Collision");
             return false;
         }
 
@@ -945,6 +944,9 @@ class BuildingFactory {
     }
 
     handleIconProduced(icon) {
+        if (!icon || icon.isSharedDrop) {
+            return;
+        }
         const building = this.assignIconSource(icon);
         if (!building) {
             return;
@@ -954,6 +956,9 @@ class BuildingFactory {
     }
 
     handleIconCollected(icon) {
+        if (!icon || icon.isSharedDrop) {
+            return;
+        }
         const building = this.assignIconSource(icon);
         if (!building) {
             return;
@@ -994,15 +999,6 @@ class BuildingFactory {
         const existing = this.game.iconFactory.countUnownedIconsNear(drop.x, drop.y, itemType, 48, teamId);
         if (existing > expected) {
             this.game.iconFactory.removeUnownedIconsNear(drop.x, drop.y, itemType, existing - expected, 48, teamId);
-        } else if (existing < expected) {
-            const missing = expected - existing;
-            for (let i = 0; i < missing; i++) {
-                this.game.iconFactory.newIcon(null, drop.x, drop.y, itemType, {
-                    sourceBuildingId: building.id,
-                    teamId,
-                    skipProductionUpdate: true,
-                });
-            }
         }
     }
 

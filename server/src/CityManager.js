@@ -8,6 +8,7 @@ const {
     COST_UPKEEP_HOSPITAL,
     FACTORY_ITEM_LIMITS,
 } = require('./constants');
+const { ITEM_CAPS } = require('../../shared/itemCaps.cjs');
 const { ITEM_TYPES, normalizeItemType } = require('./items');
 const { ORBABLE_SIZE } = require('./gameplay/constants');
 const { DEFAULT_CITY_CAN_BUILD } = require('../../shared/buildTreeConfig');
@@ -32,6 +33,49 @@ class CityManager {
         this.orbHolders = new Map();
         this.inventoryByCity = new Map();
         this.inventoryByPlayer = new Map();
+    }
+
+    getPlayerInventoryCount(socketId, itemType, defaultValue = 0) {
+        if (!socketId) {
+            return defaultValue;
+        }
+        const type = normalizeItemType(itemType, null);
+        if (type === null) {
+            return defaultValue;
+        }
+        const record = this.inventoryByPlayer.get(socketId);
+        if (!record || record.cityId === null || record.cityId === undefined) {
+            return defaultValue;
+        }
+        return record.items.get(type) || defaultValue;
+    }
+
+    getInventoryCap(itemType) {
+        const type = normalizeItemType(itemType, null);
+        if (type === null) {
+            return 0;
+        }
+        const capsByType = {
+            [ITEM_TYPES.CLOAK]: ITEM_CAPS.CLOAK,
+            [ITEM_TYPES.ROCKET]: ITEM_CAPS.ROCKET,
+            [ITEM_TYPES.MEDKIT]: ITEM_CAPS.MEDKIT,
+            [ITEM_TYPES.BOMB]: ITEM_CAPS.BOMB,
+            [ITEM_TYPES.MINE]: ITEM_CAPS.MINE,
+            [ITEM_TYPES.ORB]: ITEM_CAPS.ORB,
+            [ITEM_TYPES.FLARE]: ITEM_CAPS.FLARE,
+            [ITEM_TYPES.DFG]: ITEM_CAPS.DFG,
+            [ITEM_TYPES.WALL]: ITEM_CAPS.WALL,
+            [ITEM_TYPES.TURRET]: ITEM_CAPS.TURRET,
+            [ITEM_TYPES.SLEEPER]: ITEM_CAPS.SLEEPER,
+            [ITEM_TYPES.PLASMA]: ITEM_CAPS.PLASMA,
+            [ITEM_TYPES.LASER]: ITEM_CAPS.LASER,
+        };
+        const cap = capsByType[type];
+        if (Number.isFinite(cap)) {
+            return cap;
+        }
+        // Fallback to legacy factory limits to avoid hard failures if a new type appears
+        return FACTORY_ITEM_LIMITS?.[type] ?? 0;
     }
 
     setIo(io) {
@@ -167,7 +211,7 @@ class CityManager {
         if (socketId) {
             const playerInventory = this.ensurePlayerInventory(socketId, numericCity);
             if (playerInventory) {
-                const maxPerType = FACTORY_ITEM_LIMITS?.[type] ?? 5;
+                const maxPerType = this.getInventoryCap(type) || 0;
                 const existing = playerInventory.items.get(type) || 0;
                 if (existing >= maxPerType) {
                     return 0;

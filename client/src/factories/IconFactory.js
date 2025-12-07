@@ -5,6 +5,7 @@ class IconFactory {
         this.game = game;
         this.iconListHead = null;
         this.iconsById = new Map();
+        this.pendingPickups = new Map();
     }
 
     generateIconId(prefix = "icon") {
@@ -45,6 +46,9 @@ class IconFactory {
         const icon = this.getIconById(id);
         if (!icon) {
             return false;
+        }
+        if (icon.id) {
+            this.pendingPickups.delete(icon.id);
         }
         if (options.onlyUnowned && icon.owner != null) {
             return false;
@@ -96,10 +100,11 @@ class IconFactory {
     }
 
     newIcon(owner, x, y, type, options = {}) {
+        const force = options.force === true;
         const requestedQuantity =
             options.quantity !== undefined ? options.quantity : 1;
         let quantity = Math.max(1, parseInt(requestedQuantity, 10) || 1);
-        if (owner !== null && owner !== undefined) {
+        if (owner !== null && owner !== undefined && !force) {
             const allowed = this.getAllowedQuantity(owner, type, quantity);
             if (allowed <= 0) {
                 return null;
@@ -157,7 +162,11 @@ class IconFactory {
         icon.quantity = Math.max(1, parseInt(icon.quantity, 10) || 1);
         this.registerIcon(icon);
 
-        if (this.game.buildingFactory && icon.owner == null && !icon.isSharedDrop) {
+        const shouldSyncFactory = this.game.buildingFactory &&
+            icon.owner == null &&
+            !icon.isSharedDrop &&
+            icon.synced !== true;
+        if (shouldSyncFactory) {
             if (
                 !icon.sourceBuildingId &&
                 typeof this.game.buildingFactory.assignIconSource === "function"
@@ -191,100 +200,44 @@ class IconFactory {
 
     pickupIcon() {
         var icon = this.findIconByLocation();
-        if (icon) {
-            const ownerId = this.game.player.id;
-            const isSharedDrop = !!icon.isSharedDrop;
-            if (isSharedDrop && icon.synced === false) {
-                return;
-            }
-            const quantityToAdd = icon.quantity ?? 1;
-            const allowedQuantity = this.getAllowedQuantity(
-                ownerId,
-                icon.type,
-                quantityToAdd,
-            );
-            if (allowedQuantity <= 0 || allowedQuantity < quantityToAdd) {
-                return;
-            }
-            const existing = this.findOwnedIconByType(ownerId, icon.type);
-            const sharedDropId = isSharedDrop ? icon.id : null;
-            const sharedDropTeam = isSharedDrop ? icon.teamId ?? null : null;
+        if (!icon) {
+            return;
+        }
+        const iconId = this.normalizeIconId(icon.id);
+        if (!iconId) {
+            console.warn("Cannot pick up icon without server id", icon);
+            return;
+        }
+        if (icon.pendingPickup) {
+            return;
+        }
 
-            icon.owner = ownerId;
-            icon.city = this.game.player.city ?? null;
-            icon.teamId = this.game.player.city ?? null;
-            icon.quantity = quantityToAdd;
-            icon.isSharedDrop = false;
-            icon.synced = true;
-            if (sharedDropId) {
-                this.unregisterIcon(icon);
-                icon.id = null;
-            }
+        const payload = {
+            id: iconId,
+            iconId,
+            type: icon.type,
+            quantity: Math.max(1, icon.quantity ?? 1),
+            buildingId: icon.sourceBuildingId ?? null,
+            cityId: this.game.player.city ?? null,
+            teamId: icon.teamId ?? icon.city ?? this.game.player.city ?? null,
+        };
 
-            if (
-                this.game.buildingFactory &&
-                typeof this.game.buildingFactory.handleIconCollected === "function" &&
-                !isSharedDrop
-            ) {
-                this.game.buildingFactory.handleIconCollected(icon);
-            }
+        this.pendingPickups.set(iconId, {
+            type: icon.type,
+            buildingId: payload.buildingId,
+            quantity: payload.quantity,
+        });
+        icon.pendingPickup = true;
 
-            // Determine which icon will be the final selected item
-            let itemToSelect = icon;
+        if (this.game.socketListener && typeof this.game.socketListener.collectDroppedIcon === "function") {
+            this.game.socketListener.collectDroppedIcon(payload);
+        }
 
-            if (existing && existing !== icon) {
-                // Merging into existing item
-                const limit = this.getLimitForType(icon.type);
-                const updatedQuantity = (existing.quantity ?? 1) + quantityToAdd;
-                existing.quantity = Number.isFinite(limit)
-                    ? Math.min(limit, Math.max(1, updatedQuantity))
-                    : Math.max(1, updatedQuantity);
-                this.deleteIcon(icon);
-                itemToSelect = existing;
-            }
-
-            // Always auto-select the picked up item (either new or existing)
-            itemToSelect.selected = true;
-
-            // Do NOT auto-arm bombs on pickup.
-            // If it was already armed (e.g. merging into an armed stack), keep it.
-            // If it's a new pickup, it starts unarmed unless explicitly set otherwise (which default newIcon handles).
-
-            // Deselect all other owned icons (only one can be selected at a time)
-            let node = this.getHead();
-            while (node) {
-                if (node !== itemToSelect && node.owner === ownerId) {
-                    node.selected = false;
-                }
-                node = node.next;
-            }
-
-            // Sync player state with the selected item
-            if (itemToSelect.type === ITEM_TYPE_BOMB) {
-                this.game.player.bombsArmed = !!itemToSelect.armed;
-            } else {
-                this.game.player.bombsArmed = false;
-            }
-
-            if (sharedDropId &&
-                this.game.socketListener &&
-                typeof this.game.socketListener.collectDroppedIcon === "function") {
-                this.game.socketListener.collectDroppedIcon({
-                    id: sharedDropId,
-                    type: icon.type,
-                    cityId: this.game.player.city ?? null,
-                    teamId: sharedDropTeam ?? this.game.player.city ?? null,
-                    quantity: quantityToAdd,
-                });
-            }
-
-            this.game.forceDraw = true;
-            if (this.game?.tutorialManager && typeof this.game.tutorialManager.handleIconPickup === 'function') {
-                this.game.tutorialManager.handleIconPickup(icon);
-            }
-            if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
-                this.game.tutorialManager.recordEvent('item_picked');
-            }
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.handleIconPickup === 'function') {
+            this.game.tutorialManager.handleIconPickup(icon);
+        }
+        if (this.game?.tutorialManager && typeof this.game.tutorialManager.recordEvent === 'function') {
+            this.game.tutorialManager.recordEvent('item_picked');
         }
     }
 
@@ -479,6 +432,10 @@ class IconFactory {
 
         const playerCity = this.game.player?.city ?? null;
         while (icon) {
+            if (icon.pendingPickup) {
+                icon = icon.next;
+                continue;
+            }
             const allowedTeam =
                 icon.teamId === null ||
                 icon.teamId === undefined ||
@@ -535,38 +492,130 @@ class IconFactory {
      * Restore an item that was consumed locally but rejected by the server.
      * Creates a new icon if needed, or increments quantity of existing one.
      */
-    restoreUsedItem(type, amount = 1) {
-        const ownerId = this.game.player?.id;
-        if (!ownerId || type === undefined || type === null) {
+    restoreUsedItem(type, amount = 1, meta = {}) {
+        const ownerIdLocal = this.game.player?.id;
+        if (!ownerIdLocal || type === undefined || type === null) {
             return;
         }
-        const existing = this.findOwnedIconByType(ownerId, type);
+        const cap = Number.isFinite(meta?.cap) ? meta.cap : null;
+        const reportedCount = Number.isFinite(meta?.playerCount) ? meta.playerCount : null;
+        const targetQuantity = reportedCount !== null ? reportedCount : null;
+        const existing = this.findOwnedIconByType(ownerIdLocal, type);
         if (existing) {
-            existing.quantity = (existing.quantity ?? 1) + amount;
+            if (targetQuantity !== null) {
+                existing.quantity = targetQuantity;
+            } else {
+                existing.quantity = (existing.quantity ?? 1) + amount;
+            }
         } else {
-            this.newIcon(ownerId,
+            const quantity = targetQuantity !== null ? targetQuantity : amount;
+            this.newIcon(ownerIdLocal,
                 this.game.player.offset?.x ?? 0,
                 this.game.player.offset?.y ?? 0,
                 type,
-                { quantity: amount }
+                { quantity, force: true }
             );
+        }
+        if (cap !== null) {
+            const icon = this.findOwnedIconByType(ownerIdLocal, type);
+            if (icon) {
+                icon.quantity = Math.min(icon.quantity ?? 1, cap);
+            }
         }
         this.game.forceDraw = true;
     }
 
-    /**
-     * Called when server confirms or rejects a pickup.
-     * For now, we don't use pending state for pickups - server is authoritative
-     * and will confirm/reject. On confirmation we do nothing extra (client already has it).
-     * On rejection, we would need to remove the item.
-     */
-    confirmPickup(iconId, type, quantity, success) {
-        if (!success) {
-            // Server rejected the pickup - for now just log it
-            // In a full implementation, we'd track pending pickups and remove on rejection
-            console.log("Pickup rejected by server:", type, iconId);
+    confirmPickup(iconId, type, quantity, success, meta = {}) {
+        const normalizedId = this.normalizeIconId(iconId);
+        const pending = normalizedId ? this.pendingPickups.get(normalizedId) : null;
+        if (normalizedId) {
+            this.pendingPickups.delete(normalizedId);
         }
-        // On success, the client already has the item from pickupIcon()
+        const worldIcon = normalizedId ? this.getIconById(normalizedId) : null;
+        if (!success) {
+            if (worldIcon) {
+                worldIcon.pendingPickup = false;
+                if (meta.reason === 'missing') {
+                    this.deleteIcon(worldIcon);
+                }
+            }
+            if (meta.reason === 'inventory_full' && typeof this.game?.notify === 'function') {
+                this.game.notify({
+                    title: 'Inventory Full',
+                    message: 'You are at the max for that item type.',
+                    variant: 'warn',
+                    timeout: 2400,
+                });
+            }
+            if (meta.reason === 'inventory_full' && Number.isFinite(meta.playerCount)) {
+                const ownerIdLocal = this.game.player?.id;
+                if (ownerIdLocal !== null && ownerIdLocal !== undefined) {
+                    const existing = this.findOwnedIconByType(ownerIdLocal, type ?? pending?.type ?? null);
+                    if (existing) {
+                        existing.quantity = meta.cap && Number.isFinite(meta.cap)
+                            ? Math.min(meta.playerCount, meta.cap)
+                            : meta.playerCount;
+                        this.game.forceDraw = true;
+                    }
+                }
+            }
+            console.warn("Pickup rejected by server:", type, normalizedId, meta.reason ?? "unknown");
+            this.game.forceDraw = true;
+            return;
+        }
+
+        if (worldIcon) {
+            this.deleteIcon(worldIcon);
+        }
+        const ownerId = this.game.player?.id;
+        if (!ownerId) {
+            return;
+        }
+        const resolvedType = type ?? pending?.type ?? null;
+        if (resolvedType === null || resolvedType === undefined) {
+            return;
+        }
+        const resolvedQuantity = Math.max(1, Number.isFinite(quantity) ? Math.floor(quantity) : (pending?.quantity ?? 1));
+
+        const existing = this.findOwnedIconByType(ownerId, resolvedType);
+        let itemToSelect = existing;
+        if (existing) {
+            const limit = this.getLimitForType(resolvedType);
+            const updatedQuantity = (existing.quantity ?? 1) + resolvedQuantity;
+            existing.quantity = Number.isFinite(limit)
+                ? Math.min(limit, Math.max(1, updatedQuantity))
+                : Math.max(1, updatedQuantity);
+        } else {
+            const created = this.newIcon(ownerId,
+                this.game.player.offset?.x ?? 0,
+                this.game.player.offset?.y ?? 0,
+                resolvedType,
+                {
+                    quantity: resolvedQuantity,
+                    city: this.game.player.city ?? null,
+                    teamId: this.game.player.city ?? null,
+                    selected: true,
+                    force: true,
+                });
+            itemToSelect = created;
+        }
+
+        if (itemToSelect) {
+            itemToSelect.selected = true;
+        }
+        let node = this.getHead();
+        while (node) {
+            if (node !== itemToSelect && node.owner === ownerId) {
+                node.selected = false;
+            }
+            node = node.next;
+        }
+        if (itemToSelect?.type === ITEM_TYPE_BOMB) {
+            this.game.player.bombsArmed = !!itemToSelect.armed;
+        } else {
+            this.game.player.bombsArmed = false;
+        }
+        this.game.forceDraw = true;
     }
 
     getSelectedIcon(ownerId) {
@@ -624,6 +673,9 @@ class IconFactory {
             this.game.player.bombsArmed = icon.armed;
         }
 
+        if (icon.id) {
+            this.pendingPickups.delete(icon.id);
+        }
         this.unregisterIcon(icon);
         icon.id = null;
 

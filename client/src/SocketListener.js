@@ -263,6 +263,7 @@ class SocketListener extends EventEmitter2 {
                     }
                     existing.city = payload.cityId ?? existing.city;
                     existing.teamId = payload.teamId ?? payload.cityId ?? existing.teamId;
+                    existing.sourceBuildingId = payload.buildingId ?? existing.sourceBuildingId ?? null;
                     existing.isSharedDrop = !!payload.sharedDrop;
                     existing.synced = true;
                     return;
@@ -318,7 +319,8 @@ class SocketListener extends EventEmitter2 {
                     data.iconId ?? data.id ?? null,
                     data.type,
                     data.quantity ?? 1,
-                    true
+                    true,
+                    { buildingId: data.buildingId ?? null }
                 );
             }
         });
@@ -334,7 +336,13 @@ class SocketListener extends EventEmitter2 {
                     data.iconId ?? data.id ?? null,
                     data.type,
                     0,
-                    false
+                    false,
+                    {
+                        reason: data.reason ?? null,
+                        buildingId: data.buildingId ?? null,
+                        playerCount: data.playerCount ?? null,
+                        cap: data.cap ?? null,
+                    }
                 );
             }
             console.warn("Server rejected item pickup:", data.reason ?? "unknown");
@@ -348,7 +356,10 @@ class SocketListener extends EventEmitter2 {
             }
             // Restore the item to the player's inventory since server rejected usage
             if (typeof this.game.iconFactory.restoreUsedItem === "function") {
-                this.game.iconFactory.restoreUsedItem(data.type);
+                this.game.iconFactory.restoreUsedItem(data.type, 1, {
+                    playerCount: data.playerCount ?? null,
+                    cap: data.cap ?? null
+                });
             }
             console.warn("Server rejected item use:", data.type, data.reason ?? "unknown");
         });
@@ -549,6 +560,10 @@ class SocketListener extends EventEmitter2 {
         });
         this.io.on("lobby:evicted", (payload) => {
             const data = this.safeParse(payload);
+            if (this.game?.player) {
+                this.game.player.healthSequence = null;
+                this.game.player.health = 0;
+            }
             this.emit('lobby:evicted', data);
         });
     }
@@ -1181,9 +1196,13 @@ class SocketListener extends EventEmitter2 {
         me.isMayor = !!player.isMayor;
         const incomingHealth = this.toFiniteNumber(player.health, me.health);
         if (Number.isFinite(incomingHealth)) {
-            me.health = Number.isFinite(me.health)
-                ? Math.min(me.health, incomingHealth)
-                : incomingHealth;
+            if (!Number.isFinite(me.healthSequence) || context.source === 'enter_game') {
+                me.health = incomingHealth;
+            } else {
+                me.health = Number.isFinite(me.health)
+                    ? Math.min(me.health, incomingHealth)
+                    : incomingHealth;
+            }
         }
         if (Number.isFinite(player.points)) {
             me.points = player.points;
@@ -1544,6 +1563,7 @@ class SocketListener extends EventEmitter2 {
                 this.game.player.health = nextHealth;
                 this.game.player.healthSequence = sequence !== null ? sequence : lastSequence;
                 if (nextHealth <= 0) {
+                    this.game.player.healthSequence = null;
                     this.game.player.awaitingServerDeath = false;
                     this.game.player.botDeathConfirmSent = false;
                 }

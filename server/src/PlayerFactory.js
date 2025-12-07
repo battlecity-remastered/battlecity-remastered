@@ -1060,6 +1060,11 @@ class PlayerFactory {
         const socketId = socket.id;
         const player = this.game.players[socketId];
         if (!player) {
+            console.warn("[PlayerFactory] item:use rejected - unknown player", { socketId, type });
+            socket.emit('item:use:rejected', JSON.stringify({
+                type,
+                reason: 'unknown_player'
+            }));
             return;
         }
 
@@ -1085,12 +1090,30 @@ class PlayerFactory {
                     const consumed = this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
                     if (consumed <= 0) {
                         // No inventory - emit rejection so client can restore the medkit
+                        const playerCount = this.game.buildingFactory?.cityManager?.getPlayerInventoryCount?.(socketId, ITEM_TYPES.MEDKIT, null);
+                        const cityCount = this.game.buildingFactory?.cityManager?.getInventoryCount?.(player.city, ITEM_TYPES.MEDKIT);
+                        const cap = this.game.buildingFactory?.cityManager?.getInventoryCap?.(ITEM_TYPES.MEDKIT) ?? null;
+                        console.warn("[PlayerFactory] medkit use rejected - no inventory", {
+                            socketId,
+                            playerId: player.id,
+                            playerCount,
+                            cityCount,
+                            cap
+                        });
                         socket.emit('item:use:rejected', JSON.stringify({
                             type: 'medkit',
-                            reason: 'no_inventory'
+                            reason: 'no_inventory',
+                            playerCount,
+                            cap
                         }));
                         break;
                     }
+                    const remaining = this.game.buildingFactory?.cityManager?.getPlayerInventoryCount?.(socketId, ITEM_TYPES.MEDKIT, null);
+                    console.log("[PlayerFactory] medkit consumed", {
+                        socketId,
+                        consumed,
+                        remaining
+                    });
                     this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null });
                 }
                 break;

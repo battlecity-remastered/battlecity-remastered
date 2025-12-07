@@ -53,31 +53,27 @@ export const checkBuildingCollision = (game, building) => {
 
     var collision = checkEdges(getPlayerRect(game.player));
     if (collision) {
-        console.log("Collided with edges");
         return collision;
     }
 
     collision = checkTiles(game, buildingRect);
     if (collision) {
-        console.log("Collided with tiles");
         return collision;
     }
 
 
     collision = checkBuildings(game, buildingRect);
     if (collision) {
-        console.log("Collided with buildings");
         return collision;
     }
 
     collision = checkPlayers(game, buildingRect);
     if (collision) {
-        console.log("Collided with buildings");
         return collision;
     }
 
     collision = checkItems(game, buildingRect);
 
 
-    return collision
+    return collision;
 };
