@@ -49,6 +49,7 @@ const DEFAULT_PANEL_MESSAGE = {
     heading: 'Intel',
     lines: ['Right-click a city building to inspect.']
 };
+const NEGATIVE_INCOME_NOTICE_DELAY_MS = 5000;
 
 const applyColorKey = (resource, color = COLOR_KEY_MAGENTA) => {
     if (!resource || !resource.data || !resource.texture) {
@@ -584,6 +585,7 @@ game.describeKillSource = (details = {}) => {
     return 'System Hazard';
 };
 game.cityFinanceFlags = new Map();
+game.cityFinanceState = new Map();
 game.mapOverlayActive = false;
 let activeMapModal = null;
 let activeOptionsModal = null;
@@ -1795,6 +1797,7 @@ function setup(resources) {
         }
         const city = game.cities[cityId];
         const previousFlags = game.cityFinanceFlags.get(cityId) || {};
+        const financeState = game.cityFinanceState.get(cityId) || { negativeIncomeStart: null, negativeIncomeNotified: false };
         city.cash = toFiniteNumber(data.cash, city.cash ?? 0);
         city.income = toFiniteNumber(data.income, 0);
         city.itemProduction = toFiniteNumber(data.itemProduction, 0);
@@ -1826,13 +1829,21 @@ function setup(resources) {
         }
         city.updatedAt = data.updatedAt ? toFiniteNumber(data.updatedAt, Date.now()) : Date.now();
         const playerCityId = normaliseCityId(game.player && game.player.city, null);
+        const now = Date.now();
         const financeFlags = {
             orbable: !!city.isOrbable,
             negativeIncome: city.grossIncome < 0,
             cashZero: city.cash <= 0,
             cashLow: city.cash > 0 && city.cash < COST_BUILDING
         };
+        if (financeFlags.negativeIncome) {
+            financeState.negativeIncomeStart = financeState.negativeIncomeStart ?? now;
+        } else {
+            financeState.negativeIncomeStart = null;
+            financeState.negativeIncomeNotified = false;
+        }
         game.cityFinanceFlags.set(cityId, financeFlags);
+        game.cityFinanceState.set(cityId, financeState);
         if (playerCityId === cityId && game.notify) {
             const cityName = getCityDisplayName(cityId);
             if (financeFlags.cashZero && !previousFlags.cashZero) {
@@ -1841,13 +1852,18 @@ function setup(resources) {
                     message: `${cityName} has run out of cash. Income ticks are needed before building again.`,
                     variant: 'error'
                 });
-            } else if (financeFlags.negativeIncome && !previousFlags.negativeIncome) {
-                game.notify({
-                    title: 'Income Shortfall',
-                    message: `${cityName} is spending more than it earns. Consider staffing houses or pausing construction.`,
-                    variant: 'warn',
-                    timeout: 5200
-                });
+            } else if (financeFlags.negativeIncome) {
+                const negativeIncomeDuration = financeState.negativeIncomeStart ? now - financeState.negativeIncomeStart : 0;
+                if (negativeIncomeDuration >= NEGATIVE_INCOME_NOTICE_DELAY_MS && !financeState.negativeIncomeNotified) {
+                    game.notify({
+                        title: 'Income Shortfall',
+                        message: `${cityName} is spending more than it earns. Consider staffing houses or pausing construction.`,
+                        variant: 'warn',
+                        timeout: 5200
+                    });
+                    financeState.negativeIncomeNotified = true;
+                    game.cityFinanceState.set(cityId, financeState);
+                }
             }
             if (financeFlags.orbable && !previousFlags.orbable) {
                 game.notify({
