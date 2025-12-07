@@ -157,6 +157,7 @@ class CityManager {
         const numericCity = toCityId(cityId);
         const type = normalizeItemType(itemType, null);
         const amount = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1;
+
         if (!Number.isFinite(numericCity) || type === null || amount <= 0) {
             return 0;
         }
@@ -191,6 +192,7 @@ class CityManager {
         const numericCity = toCityId(cityId);
         const type = normalizeItemType(itemType, null);
         const amount = Number.isFinite(quantity) ? Math.max(1, Math.floor(quantity)) : 1;
+
         if (!Number.isFinite(numericCity) || type === null || amount <= 0) {
             return 0;
         }
@@ -202,6 +204,7 @@ class CityManager {
                 return 0;
             }
             const owned = playerInventory.items.get(type) || 0;
+
             if (owned < amount) {
                 return 0;
             }
@@ -221,12 +224,6 @@ class CityManager {
         const city = this.ensureCity(numericCity);
         const cityInventory = this.ensureCityInventory(numericCity);
         const current = cityInventory.get(type) || 0;
-
-        // Even if player had it, if city doesn't (shouldn't happen in sync), we clamp? 
-        // Or we just deduct what we can? 
-        // Logic: Player inventory is a subset/view of city inventory in this game design?
-        // Actually, looking at pickup: cityInventory gets +amount, player gets +amount.
-        // So they should be in sync.
 
         const applied = Math.min(current, amount);
         const nextValue = current - applied;
@@ -300,6 +297,7 @@ class CityManager {
     clearInventoryForType(cityId, itemType) {
         const numericCity = toCityId(cityId);
         const type = normalizeItemType(itemType, null);
+
         if (!Number.isFinite(numericCity) || type === null) {
             return;
         }

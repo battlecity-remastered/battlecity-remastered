@@ -132,22 +132,38 @@ class IconDropManager {
         }
         const data = this.parsePayload(payload);
         if (!data || !data.id) {
-            this.emitPickupResult(socket, { status: "rejected", reason: "invalid_payload" });
+            socket.emit("icon:pickup:rejected", JSON.stringify({
+                reason: "invalid_payload",
+                iconId: null,
+                type: data?.type ?? null
+            }));
             return;
         }
         const record = this.droppedIcons.get(data.id);
         if (!record) {
-            this.emitPickupResult(socket, { status: "missing", id: data.id });
+            socket.emit("icon:pickup:rejected", JSON.stringify({
+                reason: "missing",
+                iconId: data.id,
+                type: data.type ?? null
+            }));
             return;
         }
         const player = this.getPlayer(socket.id);
         if (!player) {
-            this.emitPickupResult(socket, { status: "rejected", reason: "unknown_player", id: record.id });
+            socket.emit("icon:pickup:rejected", JSON.stringify({
+                reason: "unknown_player",
+                iconId: record.id,
+                type: record.type
+            }));
             return;
         }
         const cityId = this.toCityId(player.city);
         if (!Number.isFinite(cityId) || cityId !== record.cityId) {
-            this.emitPickupResult(socket, { status: "rejected", reason: "wrong_team", id: record.id });
+            socket.emit("icon:pickup:rejected", JSON.stringify({
+                reason: "wrong_team",
+                iconId: record.id,
+                type: record.type
+            }));
             return;
         }
 
@@ -159,7 +175,13 @@ class IconDropManager {
 
         this.decrementFactoryStock(record);
         this.broadcastIconRemoval(record, { reason: "collected", collector: socket.id });
-        this.emitPickupResult(socket, { status: "ok", id: record.id });
+
+        // Confirm pickup to client
+        socket.emit("icon:pickup:confirmed", JSON.stringify({
+            iconId: record.id,
+            type: record.type,
+            quantity: record.quantity
+        }));
     }
 
     consumeFromPlayer(socketId, cityId, itemType, quantity) {

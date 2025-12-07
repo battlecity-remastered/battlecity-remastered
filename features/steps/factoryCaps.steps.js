@@ -217,19 +217,23 @@ When(/^all items are destroyed$/, async function () {
     assert(this.placedDefenses, "No defenses recorded");
     for (const defense of this.placedDefenses) {
         await this.destroyDefense(defense.id);
+        // Small delay to allow factory stock replenishment to process
+        await delay(100);
     }
 });
 
 Then(/^the factory count should equal the factory cap$/, async function () {
     assert(this.currentFactory, "Factory not initialised");
-    const deadline = Date.now() + 5000;
+    // Factory production takes 7000ms per item, so we need much longer than 5s
+    // to produce 10 items (worst case ~70+ seconds)
+    const deadline = Date.now() + 90000;
     let building = null;
     while (Date.now() < deadline) {
         building = await this.getBuilding(this.currentFactory.id);
         if (building && building.itemsLeft === this.currentItem.factoryCap) {
             break;
         }
-        await delay(100);
+        await delay(500);
     }
     assert(building, "Factory missing");
     assert.strictEqual(building.itemsLeft, this.currentItem.factoryCap, "Factory stock did not replenish to cap");

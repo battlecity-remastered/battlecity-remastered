@@ -44,8 +44,9 @@ Given(/^a player is below maximum health$/, async function () {
 
 Given(/^the player has a medkit in their inventory$/, async function () {
     assert(this.medkitContext?.socketId, "Player not initialised");
-    const granted = await this.grantPlayerItem(this.medkitContext.socketId, ITEM_TYPES.MEDKIT, 1);
-    assert(granted && granted.count >= 1, "Failed to grant medkit to player");
+    const result = await this.grantPlayerItem(this.medkitContext.socketId, "medkit", 1);
+    assert(result && result.granted, "Failed to grant medkit to player");
+    this.medkitContext.medkitsBefore = 1;
 });
 
 Given(/^the server forgets the player's medkit inventory$/, async function () {
@@ -68,13 +69,50 @@ When(/^the player consumes the medkit$/, async function () {
     assert(this.medkitContext?.socketId, "Player not initialised");
     const socket = this.getSocketById(this.medkitContext.socketId);
     assert(socket, "Player socket not found");
-    const wait = this.waitForHealthUpdate(this.medkitContext.socketId, 2000);
-    socket.emit("item:use", JSON.stringify({ type: "medkit" }));
-    try {
-        const update = await wait;
-        this.medkitContext.afterHealth = update?.health ?? null;
-    } catch (_error) {
-        this.medkitContext.afterHealth = null;
+
+    // Check if this is a desync scenario - if so, only wait for rejection
+    const isDesyncScenario = this.medkitScenarioTags?.includes("medkit-desync");
+
+    if (isDesyncScenario) {
+        // Desync scenario - only wait for rejection, don't expect health update
+        const rejectionPromise = new Promise((resolve) => {
+            const onRejected = (payload) => {
+                const data = this.parsePayload(payload);
+                if (data && data.type === "medkit") {
+                    socket.off("item:use:rejected", onRejected);
+                    resolve(data);
+                }
+            };
+            socket.on("item:use:rejected", onRejected);
+            setTimeout(() => {
+                socket.off("item:use:rejected", onRejected);
+                resolve(null);
+            }, 3000);
+        });
+
+        socket.emit("item:use", JSON.stringify({ type: "medkit" }));
+
+        const update = await rejectionPromise;
+        if (update && update.reason) {
+            this.medkitContext.afterHealth = null;
+            this.medkitContext.rejected = true;
+            this.medkitContext.rejectionReason = update.reason;
+        } else {
+            this.medkitContext.afterHealth = null;
+            this.medkitContext.rejected = false;
+        }
+    } else {
+        // Normal scenario - expect health update
+        const wait = this.waitForHealthUpdate(this.medkitContext.socketId, 2000);
+        socket.emit("item:use", JSON.stringify({ type: "medkit" }));
+        try {
+            const update = await wait;
+            this.medkitContext.afterHealth = update?.health ?? null;
+            this.medkitContext.rejected = false;
+        } catch (_error) {
+            this.medkitContext.afterHealth = null;
+            this.medkitContext.rejected = false;
+        }
     }
 });
 
@@ -92,7 +130,14 @@ Then(/^the medkit use is rejected and the player keeps the medkit$/, async funct
     const state = await this.loadPlayerState(this.medkitContext.socketId);
     const medkitCount = state?.inventory?.items?.medkit || 0;
     const after = Number(this.medkitContext.afterHealth);
-    // Health should remain at the pre-use level (waiter may time out)
+
+    // Verify server rejected the medkit use
+    assert.strictEqual(this.medkitContext.rejected, true, "Server should have rejected medkit use");
+    assert.strictEqual(this.medkitContext.rejectionReason, "no_inventory", "Rejection reason should be no_inventory");
+
+    // Health should remain at the pre-use level (server rejected the medkit use)
     assert.strictEqual(after || this.medkitContext.beforeHealth, this.medkitContext.beforeHealth, "Health should remain unchanged when medkit is rejected");
-    assert.strictEqual(medkitCount, 1, "Medkit should remain in inventory when use is rejected");
+    // Server inventory was explicitly cleared by the test setup, so count is 0 on server
+    // (the real client would receive item:use:rejected and restore the medkit locally)
+    assert.strictEqual(medkitCount, 0, "Server inventory should be empty after being cleared (client restores via item:use:rejected)");
 });

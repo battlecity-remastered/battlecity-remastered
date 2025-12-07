@@ -284,22 +284,38 @@ class BuildingFactory {
         }
 
         if (!data || !data.buildingId) {
+            socket.emit('icon:pickup:rejected', JSON.stringify({
+                reason: 'invalid_payload',
+                type: data?.type ?? null
+            }));
             return;
         }
 
         const building = this.buildings.get(data.buildingId);
         if (!building) {
+            socket.emit('icon:pickup:rejected', JSON.stringify({
+                reason: 'building_not_found',
+                type: data.type ?? null
+            }));
             return;
         }
 
         const player = this.game.players[socket.id];
         if (!player) {
+            socket.emit('icon:pickup:rejected', JSON.stringify({
+                reason: 'player_not_found',
+                type: data.type ?? null
+            }));
             return;
         }
 
         const playerCity = toFiniteNumber(player.city, null);
         const buildingCity = toFiniteNumber(building.cityId, building.city);
         if (playerCity !== null && buildingCity !== null && playerCity !== buildingCity) {
+            socket.emit('icon:pickup:rejected', JSON.stringify({
+                reason: 'wrong_city',
+                type: data.type ?? null
+            }));
             return;
         }
 
@@ -328,6 +344,21 @@ class BuildingFactory {
         if (actualDispensed > 0) {
             building.itemsLeft = previous - actualDispensed;
             this.emitPopulationUpdate(building);
+
+            // Confirm pickup to client
+            socket.emit('icon:pickup:confirmed', JSON.stringify({
+                iconId: data.iconId ?? null,
+                type: itemType,
+                quantity: actualDispensed,
+                buildingId: building.id
+            }));
+        } else {
+            // Reject pickup - inventory full or no items
+            socket.emit('icon:pickup:rejected', JSON.stringify({
+                iconId: data.iconId ?? null,
+                type: itemType,
+                reason: dispensed <= 0 ? 'no_items' : 'inventory_full'
+            }));
         }
 
         if (dispensed > 0 &&

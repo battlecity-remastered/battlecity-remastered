@@ -9,6 +9,8 @@ Feature: Medkit consumption
 
   @requires-further-investigation @medkit @medkit-desync
   Scenario: Medkits fail to heal when server inventory desyncs
+    # This test is currently pending - the client-side restoration behavior
+    # requires a real client with IconFactory, not just a mock socket
     Given a player is below maximum health
     And the player has a medkit in their inventory
     And the server forgets the player's medkit inventory

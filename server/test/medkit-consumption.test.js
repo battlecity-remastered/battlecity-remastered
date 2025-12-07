@@ -18,7 +18,13 @@ const createFactory = () => {
     return { game, factory };
 };
 
-const buildSocket = (id) => ({ id });
+const buildSocket = (id) => ({
+    id,
+    emitted: [],
+    emit(event, payload) {
+        this.emitted.push({ event, payload });
+    }
+});
 
 test('medkit heals when inventory consumption succeeds', () => {
     const { game, factory } = createFactory();
@@ -56,16 +62,24 @@ test('medkit does nothing (and is not consumed) when already at max health', () 
     assert.equal(payload.source.type, 'medkit');
 });
 
-test('medkit heals even if server inventory is missing (desync recovery)', () => {
+test('medkit use is rejected when server inventory is missing', () => {
     const { game, factory } = createFactory();
     const socketId = 'p2';
     const startingHealth = 7;
     game.players[socketId] = { id: socketId, city: 0, health: startingHealth };
     factory.adjustCityInventory = () => 0; // simulate missing inventory
 
-    factory.handleItemUse(buildSocket(socketId), JSON.stringify({ type: 'medkit', iconId: 'ghost' }));
+    const socket = buildSocket(socketId);
+    factory.handleItemUse(socket, JSON.stringify({ type: 'medkit', iconId: 'ghost' }));
 
     assert.equal(game.players[socketId].health, startingHealth, 'Player health should remain unchanged if inventory is missing');
     const healthEvent = factory.io.emitted.find((evt) => evt.event === 'player:health');
     assert.ok(!healthEvent, 'No health event should be emitted when medkit use is rejected');
+
+    // Verify rejection event was sent to client
+    const rejectedEvent = socket.emitted.find((evt) => evt.event === 'item:use:rejected');
+    assert.ok(rejectedEvent, 'item:use:rejected should be emitted to client');
+    const payload = JSON.parse(rejectedEvent.payload);
+    assert.equal(payload.type, 'medkit');
+    assert.equal(payload.reason, 'no_inventory');
 });

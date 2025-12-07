@@ -3,7 +3,7 @@
 const fs = require("fs");
 
 const stepDefinitions = [];
-let WorldConstructor = class {};
+let WorldConstructor = class { };
 const beforeHooks = [];
 const afterHooks = [];
 
@@ -149,7 +149,7 @@ const runScenario = async (scenario) => {
     let pendingReason = null;
     try {
         for (const hook of beforeHooks) {
-            await hook.call(world);
+            await hook.call(world, scenario);
         }
         for (const step of scenario.steps) {
             const result = await runStep(world, step);

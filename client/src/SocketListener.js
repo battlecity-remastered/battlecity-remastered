@@ -307,6 +307,52 @@ class SocketListener extends EventEmitter2 {
             }
         });
 
+        // Server-authoritative inventory: confirmation that pickup was successful
+        this.io.on("icon:pickup:confirmed", (payload) => {
+            const data = this.safeParse(payload);
+            if (!data || !this.game || !this.game.iconFactory) {
+                return;
+            }
+            if (typeof this.game.iconFactory.confirmPickup === "function") {
+                this.game.iconFactory.confirmPickup(
+                    data.iconId ?? data.id ?? null,
+                    data.type,
+                    data.quantity ?? 1,
+                    true
+                );
+            }
+        });
+
+        // Server rejected pickup (inventory full, desync, etc.)
+        this.io.on("icon:pickup:rejected", (payload) => {
+            const data = this.safeParse(payload);
+            if (!data || !this.game || !this.game.iconFactory) {
+                return;
+            }
+            if (typeof this.game.iconFactory.confirmPickup === "function") {
+                this.game.iconFactory.confirmPickup(
+                    data.iconId ?? data.id ?? null,
+                    data.type,
+                    0,
+                    false
+                );
+            }
+            console.warn("Server rejected item pickup:", data.reason ?? "unknown");
+        });
+
+        // Server rejected item use (no inventory, desync, etc.)
+        this.io.on("item:use:rejected", (payload) => {
+            const data = this.safeParse(payload);
+            if (!data || !this.game || !this.game.iconFactory) {
+                return;
+            }
+            // Restore the item to the player's inventory since server rejected usage
+            if (typeof this.game.iconFactory.restoreUsedItem === "function") {
+                this.game.iconFactory.restoreUsedItem(data.type);
+            }
+            console.warn("Server rejected item use:", data.type, data.reason ?? "unknown");
+        });
+
         this.io.on("factory:purge", (payload) => {
             const data = this.safeParse(payload);
             if (!data || !this.game || !this.game.iconFactory) {

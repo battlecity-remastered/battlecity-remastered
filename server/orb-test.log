@@ -1,0 +1,17 @@
+✖ /home/alan/Workspace/alan/battlecity-remastered/server/test/orb-factory-cap.test.js (77.351414ms)
+  'test failed'
+
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.814346
+
+✖ failing tests:
+
+test at test/orb-factory-cap.test.js:1:1
+✖ /home/alan/Workspace/alan/battlecity-remastered/server/test/orb-factory-cap.test.js (77.351414ms)
+  'test failed'

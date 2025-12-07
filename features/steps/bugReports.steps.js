@@ -81,56 +81,10 @@ Then(/^the wall tile remains intact and is not damaged by turret fire$/, async f
     assert.strictEqual(currentLife, this.turretContext.initialLife, "Wall life changed after friendly turret fire");
 });
 
-Given(/^a player is below maximum health$/, async function () {
-    const constants = await this.loadServerConstants();
-    const player = await this.ensureTestPlayer(0);
-    const targetHealth = Math.max(1, constants.maxHealth - 20);
-    await this.setPlayerHealth(player.socketId, targetHealth);
-    const state = await this.loadPlayerState(player.socketId);
-    assert(state && state.player, "Player state not available");
-    assert(state.player.health < constants.maxHealth, "Expected player to start below max health");
-    this.medkitContext = {
-        maxHealth: constants.maxHealth,
-        startingHealth: state.player.health
-    };
-});
 
-Given(/^the player has a medkit in their inventory$/, async function () {
-    const player = await this.ensureTestPlayer(0);
-    await this.grantPlayerItem(player.socketId, "medkit", 1);
-    const state = await this.loadPlayerState(player.socketId);
-    const medkits = state?.inventory?.items?.medkit || 0;
-    assert(medkits > 0, "Expected player to hold at least one medkit");
-    this.medkitContext = Object.assign({}, this.medkitContext, {
-        medkitsBefore: medkits
-    });
-});
 
-When(/^the player consumes the medkit$/, async function () {
-    const player = await this.ensureTestPlayer(0);
-    const socket = this.getSocketById(player.socketId);
-    assert(socket, "Socket not found for player");
-    const healthUpdate = this.waitForHealthUpdate(player.socketId);
-    socket.emit("item:use", JSON.stringify({ type: "medkit" }));
-    const update = await healthUpdate;
-    const state = await this.loadPlayerState(player.socketId);
-    const medkits = state?.inventory?.items?.medkit || 0;
-    this.medkitContext = Object.assign({}, this.medkitContext, {
-        healthAfter: update.health,
-        medkitsAfter: medkits
-    });
-});
-
-Then(/^the player regains the expected health every time and the medkit does not disappear without healing$/, async function () {
-    assert(this.medkitContext, "Missing medkit context");
-    assert.strictEqual(this.medkitContext.healthAfter, this.medkitContext.maxHealth, "Player did not heal to max health");
-    assert(this.medkitContext.medkitsBefore > 0, "Starting medkit count missing");
-    assert.strictEqual(
-        this.medkitContext.medkitsAfter,
-        this.medkitContext.medkitsBefore - 1,
-        "Medkit count did not decrement after use"
-    );
-});
+// Note: "When the player consumes the medkit" step is defined in itemsMedkit.steps.js
+// Note: "Then the player regains the expected health..." step is defined in itemsMedkit.steps.js
 
 Given(/^a factory is actively producing an item$/, async function () {
     const player = await this.ensureTestPlayer(0);

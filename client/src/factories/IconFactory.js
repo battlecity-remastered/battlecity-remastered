@@ -531,6 +531,44 @@ class IconFactory {
         return icon;
     }
 
+    /**
+     * Restore an item that was consumed locally but rejected by the server.
+     * Creates a new icon if needed, or increments quantity of existing one.
+     */
+    restoreUsedItem(type, amount = 1) {
+        const ownerId = this.game.player?.id;
+        if (!ownerId || type === undefined || type === null) {
+            return;
+        }
+        const existing = this.findOwnedIconByType(ownerId, type);
+        if (existing) {
+            existing.quantity = (existing.quantity ?? 1) + amount;
+        } else {
+            this.newIcon(ownerId,
+                this.game.player.offset?.x ?? 0,
+                this.game.player.offset?.y ?? 0,
+                type,
+                { quantity: amount }
+            );
+        }
+        this.game.forceDraw = true;
+    }
+
+    /**
+     * Called when server confirms or rejects a pickup.
+     * For now, we don't use pending state for pickups - server is authoritative
+     * and will confirm/reject. On confirmation we do nothing extra (client already has it).
+     * On rejection, we would need to remove the item.
+     */
+    confirmPickup(iconId, type, quantity, success) {
+        if (!success) {
+            // Server rejected the pickup - for now just log it
+            // In a full implementation, we'd track pending pickups and remove on rejection
+            console.log("Pickup rejected by server:", type, iconId);
+        }
+        // On success, the client already has the item from pickupIcon()
+    }
+
     getSelectedIcon(ownerId) {
         var icon = this.getHead();
         while (icon) {

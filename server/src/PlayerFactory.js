@@ -1084,7 +1084,11 @@ class PlayerFactory {
                     }
                     const consumed = this.adjustCityInventory(socketId, ITEM_TYPES.MEDKIT, -1);
                     if (consumed <= 0) {
-                        // No inventory; ignore the request
+                        // No inventory - emit rejection so client can restore the medkit
+                        socket.emit('item:use:rejected', JSON.stringify({
+                            type: 'medkit',
+                            reason: 'no_inventory'
+                        }));
                         break;
                     }
                     this.applyHealing(socketId, MAX_HEALTH, { type: 'medkit', iconId: data.iconId ?? null });
