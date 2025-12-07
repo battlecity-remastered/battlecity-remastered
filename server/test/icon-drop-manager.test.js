@@ -67,3 +67,45 @@ test("IconDropManager shares inventory items across teammates", () => {
     const removalEvent = dropManager.io.emitted.find((entry) => entry.event === "icon:remove");
     assert.ok(removalEvent, "pickup should broadcast icon removal");
 });
+
+test("sendSnapshotForCity replays shared city icons to a new socket", () => {
+    const dropManager = new IconDropManager();
+    dropManager.createIconRecord({
+        id: "city1_shared",
+        type: ITEM_TYPES.MEDKIT,
+        x: 10,
+        y: 20,
+        cityId: 1,
+        teamId: 1,
+        sharedDrop: true
+    });
+    dropManager.createIconRecord({
+        id: "city2_shared",
+        type: ITEM_TYPES.LASER,
+        x: 30,
+        y: 40,
+        cityId: 2,
+        teamId: 2,
+        sharedDrop: true
+    });
+    dropManager.createIconRecord({
+        id: "city1_private",
+        type: ITEM_TYPES.ORB,
+        x: 50,
+        y: 60,
+        cityId: 1,
+        teamId: 1,
+        sharedDrop: false
+    });
+
+    const socket = createSocket("viewer");
+    const delivered = dropManager.sendSnapshotForCity(socket, 1);
+
+    const newIconEvents = socket.emitted
+        .filter((entry) => entry.event === "new_icon")
+        .map((entry) => JSON.parse(entry.payload));
+
+    assert.strictEqual(delivered, 1, "only shared icons for the city should be sent");
+    assert.deepStrictEqual(newIconEvents.map((entry) => entry.id), ["city1_shared"]);
+    assert.strictEqual(newIconEvents[0].cityId, 1);
+});

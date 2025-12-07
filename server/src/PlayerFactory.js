@@ -163,6 +163,7 @@ class PlayerFactory {
         this.scoreService = options.scoreService || null;
         this.hazardManager = options.hazardManager || null;
         this.onPlayerAssigned = typeof options.onPlayerAssigned === 'function' ? options.onPlayerAssigned : null;
+        this.iconDropManager = options.iconDropManager || null;
     }
 
     applyScoreProfileToPlayer(player, profile, options = {}) {
@@ -407,6 +408,9 @@ class PlayerFactory {
 
                 socket.emit('player', JSON.stringify(newPlayer));
                 socket.emit('players:snapshot', JSON.stringify(this.serializePlayers(socket.id)));
+                if (this.iconDropManager && typeof this.iconDropManager.sendSnapshotForCity === 'function') {
+                    this.iconDropManager.sendSnapshotForCity(socket, newPlayer.city);
+                }
                 io.emit('enter_game', JSON.stringify(newPlayer));
                 io.emit('player', JSON.stringify(newPlayer));
             });
@@ -548,6 +552,10 @@ class PlayerFactory {
 
     setHazardManager(hazardManager) {
         this.hazardManager = hazardManager || null;
+    }
+
+    setIconDropManager(iconDropManager) {
+        this.iconDropManager = iconDropManager || null;
     }
 
     getPlayerTeam(socketId) {

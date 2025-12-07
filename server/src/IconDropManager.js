@@ -48,6 +48,24 @@ class IconDropManager {
         return this.droppedIcons.get(normalized) || null;
     }
 
+    serializeRecord(record) {
+        if (!record) {
+            return null;
+        }
+        return {
+            id: record.id,
+            x: record.x,
+            y: record.y,
+            type: record.type,
+            quantity: record.quantity,
+            cityId: record.cityId,
+            teamId: record.teamId,
+            buildingId: record.buildingId ?? null,
+            sharedDrop: record.sharedDrop !== false,
+            skipProductionUpdate: record.skipProductionUpdate !== false,
+        };
+    }
+
     createIconRecord(payload = {}) {
         const type = normalizeItemType(payload.type, null);
         const x = toNumber(payload.x, null);
@@ -252,8 +270,11 @@ class IconDropManager {
                 }));
                 return;
             }
-            // restoreCityInventory increments both player and city pools; offset city portion to keep totals stable
-            this.removeFromCityInventory(cityId, record.type, applied);
+            // Only offset city inventory for player-dropped icons. Factory icons should count toward
+            // outstanding inventory so production respects caps.
+            if (!record.buildingId) {
+                this.removeFromCityInventory(cityId, record.type, applied);
+            }
         }
 
         // Prevent duplicates when multiple players race for the same drop.
@@ -297,18 +318,10 @@ class IconDropManager {
         if (!this.io || !record) {
             return;
         }
-        const payload = {
-            id: record.id,
-            x: record.x,
-            y: record.y,
-            type: record.type,
-            quantity: record.quantity,
-            cityId: record.cityId,
-            teamId: record.teamId,
-            buildingId: record.buildingId ?? null,
-            sharedDrop: true,
-            skipProductionUpdate: true,
-        };
+        const payload = this.serializeRecord(record);
+        if (!payload) {
+            return;
+        }
         this.io.emit("new_icon", JSON.stringify(payload));
     }
 
@@ -397,6 +410,33 @@ class IconDropManager {
             return Math.max(0, Math.floor(numeric));
         }
         return fallback;
+    }
+
+    sendSnapshotForCity(socket, cityId) {
+        if (!socket) {
+            return 0;
+        }
+        const targetCityId = this.toCityId(cityId, null);
+        if (!Number.isFinite(targetCityId)) {
+            return 0;
+        }
+        let delivered = 0;
+        for (const record of this.droppedIcons.values()) {
+            if (!record || record.sharedDrop === false) {
+                continue;
+            }
+            const recordCityId = this.toCityId(record.cityId, this.toCityId(record.teamId, null));
+            if (!Number.isFinite(recordCityId) || recordCityId !== targetCityId) {
+                continue;
+            }
+            const payload = this.serializeRecord(record);
+            if (!payload) {
+                continue;
+            }
+            socket.emit("new_icon", JSON.stringify(payload));
+            delivered += 1;
+        }
+        return delivered;
     }
 
     clearCity(cityId) {

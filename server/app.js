@@ -490,6 +490,7 @@ const iconDropManager = new IconDropManager({
     buildingFactory
 });
 iconDropManager.setIo(io);
+playerFactory.setIconDropManager(iconDropManager);
 buildingFactory.setManagers({ hazardManager, defenseManager, playerFactory, iconDropManager });
 const orbManager = new OrbManager({
     game,
