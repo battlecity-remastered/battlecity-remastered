@@ -1,6 +1,6 @@
 import {DEFAULT_CITY_CAN_BUILD} from "./constants";
 import {MONEY_STARTING_VALUE} from "./constants";
-import citySpawns from '@shared/citySpawns.json' assert { type: "json" };
+import citySpawns from '@shared/citySpawns.json' with { type: "json" };
 import fakeCityConfig from '@shared/fakeCities.json';
 import {getCityDisplayName, getCitySpawn} from "./utils/citySpawns";
 
