@@ -69,7 +69,7 @@ class FactoryBuilding {
 
             debug("Factory produced icon", icon);
             if (factory && typeof factory.registerFactoryIcon === 'function') {
-                factory.registerFactoryIcon(icon);
+                factory.registerFactoryIcon(icon, io);
             } else if (io) {
                 io.emit("new_icon", JSON.stringify(icon));
             }

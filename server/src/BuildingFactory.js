@@ -387,7 +387,7 @@ class BuildingFactory {
         }
     }
 
-    registerFactoryIcon(iconPayload) {
+    registerFactoryIcon(iconPayload, ioOverride = null) {
         if (!iconPayload) {
             return null;
         }
@@ -402,8 +402,9 @@ class BuildingFactory {
             const suffix = Math.random().toString(16).slice(2, 8);
             payload.id = `icon_factory_${Date.now()}_${suffix}`;
         }
-        if (this.io) {
-            this.io.emit('new_icon', JSON.stringify(payload));
+        const targetIo = this.io || ioOverride;
+        if (targetIo) {
+            targetIo.emit('new_icon', JSON.stringify(payload));
         }
         return payload;
     }

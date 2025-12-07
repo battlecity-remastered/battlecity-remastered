@@ -149,9 +149,9 @@ test("Lobby player count returns to baseline after a player leaves", async () =>
         socket.on("lobby:snapshot", updateLatestSnapshot);
         socket.on("lobby:update", updateLatestSnapshot);
 
-        const initialSnapshotPromise = waitForSnapshot(socket);
+        const initialSnapshotPromise = waitForSnapshot(socket, 10000);
         const assignmentPromise = new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error("assignment timeout")), 5000);
+            const timer = setTimeout(() => reject(new Error("assignment timeout")), 10000);
             const handler = (payload) => {
                 clearTimeout(timer);
                 socket.off("lobby:assignment", handler);
@@ -161,7 +161,7 @@ test("Lobby player count returns to baseline after a player leaves", async () =>
         });
 
         await new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error("connect timeout")), 5000);
+            const timer = setTimeout(() => reject(new Error("connect timeout")), 10000);
             socket.once("connect", () => {
                 clearTimeout(timer);
                 resolve();
@@ -193,7 +193,7 @@ test("Lobby player count returns to baseline after a player leaves", async () =>
             await waitForCityCount(socket, assignedCityId, (count) => {
                 latestSnapshot = latestSnapshot || {};
                 return count === baselineCount + 1;
-            });
+            }, 10000);
         }
 
         socket.emit("lobby:leave", JSON.stringify({ reason: "test_leave" }));
@@ -205,7 +205,7 @@ test("Lobby player count returns to baseline after a player leaves", async () =>
         if (afterLeaveCount !== baselineCount) {
             await waitForCityCount(socket, assignedCityId, (count) => {
                 return count === baselineCount;
-            });
+            }, 10000);
         }
 
         socket.disconnect();

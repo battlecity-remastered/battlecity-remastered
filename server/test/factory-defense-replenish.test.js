@@ -32,8 +32,7 @@ test('factories resume production after defenses are destroyed without refunding
         }
     };
     const defenseManager = new DefenseManager({ game, playerFactory });
-    const iconDropManager = { registerFactoryIcon: () => {} };
-    buildingFactory.setManagers({ defenseManager, iconDropManager });
+    buildingFactory.setManagers({ defenseManager });
 
     // Research building to satisfy production requirement
     const researchBuilding = {
@@ -108,8 +107,7 @@ test('enemy can report destroyed defenses; production resumes', () => {
         }
     };
     const defenseManager = new DefenseManager({ game, playerFactory });
-    const iconDropManager = { registerFactoryIcon: () => {} };
-    buildingFactory.setManagers({ defenseManager, iconDropManager });
+    buildingFactory.setManagers({ defenseManager });
 
     const researchBuilding = {
         id: 'research1',
@@ -177,8 +175,7 @@ test('plasma defenses destroyed are replenished without refunds', () => {
         getPlayer: (id) => ({ id: id || 'player1', city: 1 })
     };
     const defenseManager = new DefenseManager({ game, playerFactory });
-    const iconDropManager = { registerFactoryIcon: () => {} };
-    buildingFactory.setManagers({ defenseManager, iconDropManager });
+    buildingFactory.setManagers({ defenseManager });
 
     const researchBuilding = {
         id: 'research_plasma',
