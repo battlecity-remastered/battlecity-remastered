@@ -400,10 +400,42 @@ game.clearChatAlert = () => {
     menuToggleButton.title = game.menuOpen ? 'Close Chat' : 'Toggle Chat';
 };
 
+let escapeChatListenerAttached = false;
+
+const handleEscapeKey = (event) => {
+    if (event.defaultPrevented) {
+        return;
+    }
+    if (event.key !== 'Escape' && event.key !== 'Esc') {
+        return;
+    }
+    if (!game.menuOpen) {
+        return;
+    }
+    game.toggleMenu();
+};
+
+const attachEscapeListener = () => {
+    if (escapeChatListenerAttached) {
+        return;
+    }
+    document.addEventListener('keydown', handleEscapeKey);
+    escapeChatListenerAttached = true;
+};
+
+const detachEscapeListener = () => {
+    if (!escapeChatListenerAttached) {
+        return;
+    }
+    document.removeEventListener('keydown', handleEscapeKey);
+    escapeChatListenerAttached = false;
+};
+
 game.toggleMenu = () => {
     game.menuOpen = !game.menuOpen;
 
     if (game.menuOpen) {
+        attachEscapeListener();
         menuToggleButton.innerHTML = '&#10005;'; // X icon
         menuToggleButton.title = 'Close Chat';
         game.clearChatAlert();
@@ -424,6 +456,7 @@ game.toggleMenu = () => {
             menuContainerStyle.display = 'flex';
         }, 10);
     } else {
+        detachEscapeListener();
         // Hide menu
         menuContainerStyle.display = 'none';
         menuToggleButton.textContent = '💬';
