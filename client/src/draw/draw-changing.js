@@ -261,6 +261,9 @@ var drawOtherPlayers = (game, stage) => {
         if (!player) {
             return;
         }
+        if (!player.offset || !Number.isFinite(player.offset.x) || !Number.isFinite(player.offset.y)) {
+            return;
+        }
 
         if (player.isCloaked) {
             const myId = game.player?.id;
