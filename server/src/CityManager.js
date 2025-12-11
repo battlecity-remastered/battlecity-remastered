@@ -16,6 +16,21 @@ const { DEFAULT_CITY_CAN_BUILD } = require('../../shared/buildTreeConfig');
 const REFUND_CHANCE = 0.25;
 const BOMB_FACTORY_TYPES = new Set([103]);
 const ORB_FACTORY_TYPES = new Set([105]);
+const INVENTORY_CAPS_BY_TYPE = {
+    [ITEM_TYPES.CLOAK]: ITEM_CAPS.CLOAK,
+    [ITEM_TYPES.ROCKET]: ITEM_CAPS.ROCKET,
+    [ITEM_TYPES.MEDKIT]: ITEM_CAPS.MEDKIT,
+    [ITEM_TYPES.BOMB]: ITEM_CAPS.BOMB,
+    [ITEM_TYPES.MINE]: ITEM_CAPS.MINE,
+    [ITEM_TYPES.ORB]: ITEM_CAPS.ORB,
+    [ITEM_TYPES.FLARE]: ITEM_CAPS.FLARE,
+    [ITEM_TYPES.DFG]: ITEM_CAPS.DFG,
+    [ITEM_TYPES.WALL]: ITEM_CAPS.WALL,
+    [ITEM_TYPES.TURRET]: ITEM_CAPS.TURRET,
+    [ITEM_TYPES.SLEEPER]: ITEM_CAPS.SLEEPER,
+    [ITEM_TYPES.PLASMA]: ITEM_CAPS.PLASMA,
+    [ITEM_TYPES.LASER]: ITEM_CAPS.LASER,
+};
 
 const toCityId = (cityId) => {
     if (typeof cityId === 'number' && Number.isFinite(cityId)) {
@@ -55,22 +70,7 @@ class CityManager {
         if (type === null) {
             return 0;
         }
-        const capsByType = {
-            [ITEM_TYPES.CLOAK]: ITEM_CAPS.CLOAK,
-            [ITEM_TYPES.ROCKET]: ITEM_CAPS.ROCKET,
-            [ITEM_TYPES.MEDKIT]: ITEM_CAPS.MEDKIT,
-            [ITEM_TYPES.BOMB]: ITEM_CAPS.BOMB,
-            [ITEM_TYPES.MINE]: ITEM_CAPS.MINE,
-            [ITEM_TYPES.ORB]: ITEM_CAPS.ORB,
-            [ITEM_TYPES.FLARE]: ITEM_CAPS.FLARE,
-            [ITEM_TYPES.DFG]: ITEM_CAPS.DFG,
-            [ITEM_TYPES.WALL]: ITEM_CAPS.WALL,
-            [ITEM_TYPES.TURRET]: ITEM_CAPS.TURRET,
-            [ITEM_TYPES.SLEEPER]: ITEM_CAPS.SLEEPER,
-            [ITEM_TYPES.PLASMA]: ITEM_CAPS.PLASMA,
-            [ITEM_TYPES.LASER]: ITEM_CAPS.LASER,
-        };
-        const cap = capsByType[type];
+        const cap = INVENTORY_CAPS_BY_TYPE[type];
         if (Number.isFinite(cap)) {
             return cap;
         }
@@ -294,48 +294,110 @@ class CityManager {
         return cityInventory.get(type) || 0;
     }
 
+    _pruneCityInventory(cityId, options = {}) {
+        const numericCity = toCityId(cityId);
+        if (!Number.isFinite(numericCity)) {
+            return;
+        }
+        const {
+            types = null,
+            returnToCity = false,
+            socketIds = null,
+            clearCityStock = false,
+            forceDeletePlayerRecords = false,
+        } = options;
+
+        const normalizedTypes = types
+            ? new Set(
+                Array.from(types)
+                    .map((type) => normalizeItemType(type, null))
+                    .filter((type) => type !== null),
+            )
+            : null;
+        const shouldHandleType = normalizedTypes
+            ? (type) => normalizedTypes.has(type)
+            : () => true;
+
+        const cityInventory = (returnToCity || !clearCityStock)
+            ? this.ensureCityInventory(numericCity)
+            : this.inventoryByCity.get(numericCity);
+        const playerEntries = socketIds
+            ? socketIds
+                .map((socketId) => [socketId, this.inventoryByPlayer.get(socketId)])
+                .filter(([, record]) => record && record.cityId === numericCity)
+            : Array.from(this.inventoryByPlayer.entries())
+                .filter(([, record]) => record && record.cityId === numericCity);
+
+        let updated = false;
+
+        for (const [socketId, record] of playerEntries) {
+            for (const [type, count] of record.items.entries()) {
+                if (!shouldHandleType(type)) {
+                    continue;
+                }
+                const current = (cityInventory && cityInventory.get(type)) || 0;
+                const baseValue = Math.max(0, current - count);
+                const nextValue = returnToCity ? baseValue + count : baseValue;
+
+                if (cityInventory) {
+                    if (nextValue > 0) {
+                        cityInventory.set(type, nextValue);
+                    } else {
+                        cityInventory.delete(type);
+                    }
+                }
+                record.items.delete(type);
+                updated = true;
+            }
+            if (forceDeletePlayerRecords || record.items.size === 0) {
+                this.inventoryByPlayer.delete(socketId);
+                updated = true;
+            }
+        }
+
+        if (clearCityStock) {
+            if (normalizedTypes && cityInventory) {
+                for (const type of normalizedTypes) {
+                    if (cityInventory.delete(type)) {
+                        updated = true;
+                    }
+                }
+            } else if (this.inventoryByCity.delete(numericCity)) {
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            const city = this.getCity(numericCity);
+            if (city) {
+                const now = Date.now();
+                city.updatedAt = Math.max(city.updatedAt + 1, now);
+            }
+        }
+    }
+
     releasePlayerInventory(socketId, options = {}) {
         if (!socketId || !this.inventoryByPlayer.has(socketId)) {
             return;
         }
         const record = this.inventoryByPlayer.get(socketId);
-        this.inventoryByPlayer.delete(socketId);
-        if (!record || record.cityId === null || record.cityId === undefined) {
+        if (!record) {
             return;
         }
-        const { returnToCity = false } = options || {};
-        const cityInventory = this.ensureCityInventory(record.cityId);
-        for (const [type, count] of record.items.entries()) {
-            const current = cityInventory.get(type) || 0;
-            const baseValue = Math.max(0, current - count);
-            const nextValue = returnToCity ? baseValue + count : baseValue;
-            if (nextValue > 0) {
-                cityInventory.set(type, nextValue);
-            } else {
-                cityInventory.delete(type);
-            }
+        if (record.cityId === null || record.cityId === undefined) {
+            this.inventoryByPlayer.delete(socketId);
+            return;
         }
-        const city = this.getCity(record.cityId);
-        if (city) {
-            city.updatedAt = Date.now();
-        }
+        const { returnToCity = true } = options || {};
+        this._pruneCityInventory(record.cityId, {
+            returnToCity,
+            socketIds: [socketId],
+            forceDeletePlayerRecords: true,
+        });
     }
 
     clearCityInventory(cityId) {
-        const numericCity = toCityId(cityId);
-        if (!Number.isFinite(numericCity)) {
-            return;
-        }
-        this.inventoryByCity.delete(numericCity);
-        for (const [socketId, record] of Array.from(this.inventoryByPlayer.entries())) {
-            if (record && record.cityId === numericCity) {
-                this.inventoryByPlayer.delete(socketId);
-            }
-        }
-        const city = this.getCity(numericCity);
-        if (city) {
-            city.updatedAt = Date.now();
-        }
+        this._pruneCityInventory(cityId, { clearCityStock: true, forceDeletePlayerRecords: true });
     }
 
     clearInventoryForType(cityId, itemType) {
@@ -345,25 +407,10 @@ class CityManager {
         if (!Number.isFinite(numericCity) || type === null) {
             return;
         }
-        const cityInventory = this.inventoryByCity.get(numericCity);
-        if (cityInventory) {
-            cityInventory.delete(type);
-        }
-        for (const [socketId, record] of Array.from(this.inventoryByPlayer.entries())) {
-            if (!record || record.cityId !== numericCity) {
-                continue;
-            }
-            if (record.items.has(type)) {
-                record.items.delete(type);
-                if (record.items.size === 0) {
-                    this.inventoryByPlayer.delete(socketId);
-                }
-            }
-        }
-        const city = this.getCity(numericCity);
-        if (city) {
-            city.updatedAt = Date.now();
-        }
+        this._pruneCityInventory(numericCity, {
+            types: [type],
+            clearCityStock: true,
+        });
     }
 
     addIncome(cityId, amount) {
