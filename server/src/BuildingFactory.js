@@ -789,7 +789,10 @@ class BuildingFactory {
         const numericType = Number(building.type);
         if (Number.isFinite(numericType)) {
             if (isHouse(numericType)) {
-                return { width: 1, height: 1 };
+                return { width: 3, height: 3 };
+            }
+            if (isResearch(numericType)) {
+                return { width: 3, height: 3 };
             }
             if (isCommandCenter(numericType) || isHospital(numericType)) {
                 return {
@@ -799,6 +802,19 @@ class BuildingFactory {
             }
         }
         return fallback;
+    }
+
+    /**
+     * Blast footprint (used for bombs/demolish): treat all 3x3 art as full 3x3,
+     * regardless of driveable rows.
+     */
+    getBlastFootprint(building) {
+        const numericType = Number(building?.type);
+        if (!Number.isFinite(numericType)) {
+            return { width: 3, height: 3 };
+        }
+        // All buildings use a 3x3 blast footprint so bombs touching any edge/corner detonate them.
+        return { width: 3, height: 3 };
     }
 
     destroyBuildingsInRadius(centerTileX, centerTileY, radiusTiles, options = {}) {
@@ -822,7 +838,7 @@ class BuildingFactory {
             if (tileX === null || tileY === null) {
                 continue;
             }
-            const footprint = this.getBuildingFootprint(building);
+            const footprint = this.getBlastFootprint(building);
             const widthTiles = Math.max(1, Math.floor(Number.isFinite(footprint.width) ? footprint.width : COMMAND_CENTER_WIDTH_TILES));
             const heightTiles = Math.max(1, Math.floor(Number.isFinite(footprint.height) ? footprint.height : COMMAND_CENTER_HEIGHT_TILES));
             const minTileX = tileX;

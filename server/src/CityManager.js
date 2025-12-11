@@ -388,7 +388,7 @@ class CityManager {
             this.inventoryByPlayer.delete(socketId);
             return;
         }
-        const { returnToCity = true } = options || {};
+        const { returnToCity = false } = options || {};
         this._pruneCityInventory(record.cityId, {
             returnToCity,
             socketIds: [socketId],

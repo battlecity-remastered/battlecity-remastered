@@ -58,7 +58,7 @@ export const COST_BUILDING = 500000;
 export const COST_ITEM = 750000;
 export const COST_INCOME_POPULATION = 10000;
 export const COST_UPKEEP_HOSPITAL = 2000000;
-export const BOMB_EXPLOSION_TILE_RADIUS = 2;
+export const BOMB_EXPLOSION_TILE_RADIUS = 1;
 export const BOMB_ITEM_TILE_RADIUS = 1;
 
 export const MAP_SQUARE_LAVA = 1;

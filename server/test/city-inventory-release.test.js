@@ -9,7 +9,7 @@ const { ITEM_CAPS } = require("../../shared/itemCaps.cjs");
 
 const CITY_ID = 1;
 
-test("releasing player inventory keeps city mine counts for factory caps", () => {
+test("releasing player inventory frees city stock so factories can rebuild", () => {
     const game = {};
     const factory = new BuildingFactory(game);
     const cityManager = factory.cityManager;
@@ -23,8 +23,8 @@ test("releasing player inventory keeps city mine counts for factory caps", () =>
     cityManager.releasePlayerInventory(socketId);
 
     const outstandingAfter = factory.getCityOutstandingItemCount(CITY_ID, ITEM_TYPES.MINE);
-    assert.equal(outstandingAfter, outstandingBefore, "city stock should remain after player leaves");
-    assert.equal(cityManager.getInventoryCount(CITY_ID, ITEM_TYPES.MINE), ITEM_CAPS.MINE);
+    assert.equal(outstandingAfter, 0, "city stock should clear after player leaves");
+    assert.equal(cityManager.getInventoryCount(CITY_ID, ITEM_TYPES.MINE), 0);
 });
 
 test("clearing city inventory removes player-held items", () => {

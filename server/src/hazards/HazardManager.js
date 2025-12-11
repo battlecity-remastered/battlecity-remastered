@@ -6,6 +6,7 @@ const {
     DAMAGE_BOMB,
     BOMB_TIMER_MS,
     BOMB_EXPLOSION_TILE_RADIUS,
+    BOMB_PLAYER_EXPLOSION_TILE_RADIUS,
     TIMER_DFG,
 } = require("../gameplay/constants");
 const { ITEM_TYPES, normalizeItemType } = require("../items");
@@ -507,14 +508,17 @@ class HazardManager {
     }
 
     damagePlayersInRadius(hazard, centerTileX, centerTileY) {
+        const radius = Number.isFinite(BOMB_PLAYER_EXPLOSION_TILE_RADIUS)
+            ? BOMB_PLAYER_EXPLOSION_TILE_RADIUS
+            : BOMB_EXPLOSION_TILE_RADIUS;
         for (const [socketId, player] of Object.entries(this.game.players)) {
             if (!this.shouldDamagePlayer(hazard, socketId, player)) {
                 continue;
             }
             const playerTileX = Math.floor((player.offset?.x ?? 0 + TILE_SIZE / 2) / TILE_SIZE);
             const playerTileY = Math.floor((player.offset?.y ?? 0 + TILE_SIZE / 2) / TILE_SIZE);
-            if (Math.abs(playerTileX - centerTileX) <= BOMB_EXPLOSION_TILE_RADIUS &&
-                Math.abs(playerTileY - centerTileY) <= BOMB_EXPLOSION_TILE_RADIUS) {
+            if (Math.abs(playerTileX - centerTileX) <= radius &&
+                Math.abs(playerTileY - centerTileY) <= radius) {
                 this.applyDamage(socketId, DAMAGE_BOMB, {
                     type: hazard.type,
                     hazardId: hazard.id,
