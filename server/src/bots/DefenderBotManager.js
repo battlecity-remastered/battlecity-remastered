@@ -23,6 +23,11 @@ const DISENGAGEMENT_RADIUS = ENGAGEMENT_RADIUS * 2;
 const BASE_SPEED_MULTIPLIER = 1.0;
 const SHOOT_INTERVAL = 750;
 const SHOOT_RANGE = TILE_SIZE * 16;
+const DESIRED_STANDOFF_PX = SHOOT_RANGE * 0.50;
+const MIN_TARGET_BUFFER_PX = TILE_SIZE * 1.0;
+const HAZARD_AVOID_RADIUS_PX = TILE_SIZE * 0.9;
+const MINER_DROP_COOLDOWN_MS = 5500;
+const MINER_DROP_VARIANCE_MS = 2500;
 const PATHFIND_INTERVAL = 1000;
 const AVOIDANCE_ANGLES = Object.freeze([Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2]);
 const PLAYER_COLLISION_RADIUS = TILE_SIZE * 0.4;
@@ -57,12 +62,15 @@ const distanceSquared = (ax, ay, bx, by) => {
     return (dx * dx) + (dy * dy);
 };
 
+const clampDistance = (value, min, max) => Math.max(min, Math.min(max, value));
+
 class DefenderBotManager {
-    constructor({ game, playerFactory, bulletFactory, buildingFactory }) {
+    constructor({ game, playerFactory, bulletFactory, buildingFactory, hazardManager = null }) {
         this.game = game;
         this.playerFactory = playerFactory;
         this.bulletFactory = bulletFactory;
         this.buildingFactory = buildingFactory;
+        this.hazardManager = hazardManager;
         this.pathfinder = new SimplePathfinder(game);
         this.defenders = new Map();
         this.cityDefenders = new Map();
@@ -264,8 +272,13 @@ class DefenderBotManager {
             pathIndex: 0,
             nextPathAt: now + 250,
             nextShotAt: now + 600,
+            nextHazardAt: now + MINER_DROP_COOLDOWN_MS,
             engaged: false,
             role: role || null,
+            jitter: {
+                x: (Math.random() - 0.5) * TILE_SIZE * 0.6,
+                y: (Math.random() - 0.5) * TILE_SIZE * 0.6
+            },
             engagementRadius: Number.isFinite(options.engagementRadius) ? options.engagementRadius : null,
             disengagementRadius: Number.isFinite(options.engagementRadius) ? options.engagementRadius * 2 : null,
         };
@@ -300,6 +313,7 @@ class DefenderBotManager {
             }
             this.updateMovement(bot, target, now);
             this.tryShoot(bot, target, now);
+            this.maybeDropHazard(bot, target, now);
         }
 
         removals.forEach((id) => this.removeBot(id));
@@ -307,6 +321,30 @@ class DefenderBotManager {
     }
 
     pickTarget(bot) {
+        const role = bot.role || 'shooter';
+        const bombTarget = this.findNearestBomb(bot);
+        if (role === 'bomb_defuser' && bombTarget) {
+            bot.targetId = bombTarget.id;
+            return bombTarget;
+        }
+
+        const playerTarget = this.findNearestPlayer(bot);
+        if (playerTarget) {
+            bot.targetId = playerTarget.id;
+            return playerTarget;
+        }
+
+        // Bomb defuser falls back to players; miners without players ignore bombs to avoid idle behavior
+        if (bombTarget) {
+            bot.targetId = bombTarget.id;
+            return bombTarget;
+        }
+
+        bot.targetId = null;
+        return null;
+    }
+
+    findNearestPlayer(bot) {
         let closest = null;
         let closestDist = Infinity;
         for (const player of Object.values(this.game.players || {})) {
@@ -327,8 +365,123 @@ class DefenderBotManager {
                 closestDist = distSq;
             }
         }
-        bot.targetId = closest ? closest.id : null;
-        return closest;
+        if (!closest) {
+            return null;
+        }
+        return {
+            kind: 'player',
+            id: closest.id,
+            offset: { x: closest.offset.x + HALF_TILE, y: closest.offset.y + HALF_TILE },
+            direction: closest.direction ?? 0,
+            standOff: DESIRED_STANDOFF_PX
+        };
+    }
+
+    findNearestBomb(bot) {
+        if (!this.hazardManager || !this.hazardManager.hazards) {
+            return null;
+        }
+        const botCity = normalizeCityId(bot.cityId);
+        let closest = null;
+        let closestDist = Infinity;
+        for (const hazard of this.hazardManager.hazards.values()) {
+            if (!hazard || hazard.type !== 'bomb' || !hazard.armed || !hazard.active) {
+                continue;
+            }
+            const teamId = normalizeCityId(hazard.teamId);
+            if (teamId !== null && botCity !== null && teamId === botCity) {
+                continue;
+            }
+            const hx = hazard.x + HALF_TILE;
+            const hy = hazard.y + HALF_TILE;
+            const distSq = distanceSquared(
+                bot.player.offset.x + HALF_TILE,
+                bot.player.offset.y + HALF_TILE,
+                hx,
+                hy
+            );
+            if (distSq < closestDist && distSq <= (DISENGAGEMENT_RADIUS * DISENGAGEMENT_RADIUS)) {
+                closest = hazard;
+                closestDist = distSq;
+            }
+        }
+
+        if (!closest) {
+            return null;
+        }
+
+        return {
+            kind: 'bomb',
+            id: closest.id,
+            offset: { x: closest.x + HALF_TILE, y: closest.y + HALF_TILE },
+            standOff: SHOOT_RANGE * 0.6
+        };
+    }
+
+    computeStandOffPoint(bot, target) {
+        const startX = bot.player.offset.x + HALF_TILE;
+        const startY = bot.player.offset.y + HALF_TILE;
+        const targetX = target?.offset?.x ?? startX;
+        const targetY = target?.offset?.y ?? startY;
+        const desiredStandOff = Math.max(MIN_TARGET_BUFFER_PX, target?.standOff ?? DESIRED_STANDOFF_PX);
+
+        const dx = targetX - startX;
+        const dy = targetY - startY;
+        const dist = Math.hypot(dx, dy);
+        if (!Number.isFinite(dist) || dist < 1e-3) {
+            return { x: targetX, y: targetY };
+        }
+
+        const keepBack = clampDistance(desiredStandOff, MIN_TARGET_BUFFER_PX, SHOOT_RANGE * 0.95);
+        const ratio = Math.max(0, (dist - keepBack) / dist);
+        let goalX = startX + dx * ratio;
+        let goalY = startY + dy * ratio;
+
+        if (bot.jitter) {
+            goalX += bot.jitter.x;
+            goalY += bot.jitter.y;
+        }
+
+        const goalTile = this.pathfinder.findNearestPassable(
+            Math.floor(goalX / TILE_SIZE),
+            Math.floor(goalY / TILE_SIZE),
+            80,
+            { requireNeighbor: true }
+        );
+        if (goalTile) {
+            goalX = (goalTile.x * TILE_SIZE) + HALF_TILE;
+            goalY = (goalTile.y * TILE_SIZE) + HALF_TILE;
+        }
+
+        return { x: goalX, y: goalY };
+    }
+
+    isHazardTooClose(x, y, radius = HAZARD_AVOID_RADIUS_PX) {
+        if (!this.hazardManager || !this.hazardManager.hazards) {
+            return false;
+        }
+        const radiusSq = radius * radius;
+        for (const hazard of this.hazardManager.hazards.values()) {
+            if (!hazard || !hazard.active) {
+                continue;
+            }
+            const hx = hazard.x + HALF_TILE;
+            const hy = hazard.y + HALF_TILE;
+            const distSq = distanceSquared(x, y, hx, hy);
+            if (distSq <= radiusSq) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isTooCloseToTarget(target, x, y) {
+        if (!target || !target.offset) {
+            return false;
+        }
+        const buffer = Math.max(MIN_TARGET_BUFFER_PX, (target.standOff || 0) * 0.5);
+        const distSq = distanceSquared(x, y, target.offset.x, target.offset.y);
+        return distSq < (buffer * buffer);
     }
 
     rebuildPath(bot, target) {
@@ -341,10 +494,7 @@ class DefenderBotManager {
             x: bot.player.offset.x + HALF_TILE,
             y: bot.player.offset.y + HALF_TILE
         };
-        const goal = {
-            x: target.offset.x + HALF_TILE,
-            y: target.offset.y + HALF_TILE
-        };
+        const goal = this.computeStandOffPoint(bot, target);
         // Refresh mask around the goal so we get up-to-date passability
         const mask = this.pathfinder.navMask.getMask(2000, this.pathfinder.getMaskOptions(goal.x, goal.y, 80));
         this.pathfinder.mask = mask;
@@ -393,6 +543,7 @@ class DefenderBotManager {
             this.rebuildPath(bot, target);
         }
 
+        const standOff = Math.max(MIN_TARGET_BUFFER_PX, target?.standOff ?? DESIRED_STANDOFF_PX);
         let vector = null;
         if (bot.path && bot.path.length && bot.pathIndex < bot.path.length) {
             const waypoint = bot.path[bot.pathIndex];
@@ -405,19 +556,26 @@ class DefenderBotManager {
                 vector = normalizeVector(dx, dy);
             }
         } else if (target && target.offset) {
-            const dx = (target.offset.x + HALF_TILE) - (bot.player.offset.x + HALF_TILE);
-            const dy = (target.offset.y + HALF_TILE) - (bot.player.offset.y + HALF_TILE);
-            vector = normalizeVector(dx, dy);
+            const dx = target.offset.x - (bot.player.offset.x + HALF_TILE);
+            const dy = target.offset.y - (bot.player.offset.y + HALF_TILE);
+            const distSq = (dx * dx) + (dy * dy);
+            if (distSq > (standOff * standOff * 0.64)) {
+                vector = normalizeVector(dx, dy);
+            }
         }
+
+        const blocked = (x, y) => this.pathfinder.mask.isBlocked(x, y)
+            || this.isHazardTooClose(x, y)
+            || this.isTooCloseToTarget(target, x, y);
 
         const delta = clampDelta(this.game.timePassed);
         const step = delta * BASE_SPEED_MULTIPLIER * 0.24;
         if (vector && step > 0) {
-            if (!tryStep(bot.player, vector, step, (x, y) => this.pathfinder.mask.isBlocked(x, y))) {
-                const alternate = findAlternateVector(bot.player, vector, step, AVOIDANCE_ANGLES, (x, y) => this.pathfinder.mask.isBlocked(x, y));
+            if (!tryStep(bot.player, vector, step, blocked)) {
+                const alternate = findAlternateVector(bot.player, vector, step, AVOIDANCE_ANGLES, blocked);
                 if (alternate) {
                     vector = alternate;
-                    tryStep(bot.player, alternate, step, (x, y) => this.pathfinder.mask.isBlocked(x, y));
+                    tryStep(bot.player, alternate, step, blocked);
                 }
             }
             bot.player.isMoving = 1;
@@ -440,15 +598,15 @@ class DefenderBotManager {
         const distSq = distanceSquared(
             bot.player.offset.x + HALF_TILE,
             bot.player.offset.y + HALF_TILE,
-            target.offset.x + HALF_TILE,
-            target.offset.y + HALF_TILE
+            target.offset.x,
+            target.offset.y
         );
         if (distSq > (SHOOT_RANGE * SHOOT_RANGE)) {
             return;
         }
 
-        const dx = (target.offset.x + HALF_TILE) - (bot.player.offset.x + HALF_TILE);
-        const dy = (target.offset.y + HALF_TILE) - (bot.player.offset.y + HALF_TILE);
+        const dx = target.offset.x - (bot.player.offset.x + HALF_TILE);
+        const dy = target.offset.y - (bot.player.offset.y + HALF_TILE);
         const direction = vectorToDirection(dx, dy, bot.player.direction);
         const muzzle = directionToVector(direction);
         const originX = (bot.player.offset.x + HALF_TILE) + (muzzle.dx * 30);
@@ -466,6 +624,72 @@ class DefenderBotManager {
             targetId: target.id,
         });
         bot.nextShotAt = now + SHOOT_INTERVAL;
+    }
+
+    maybeDropHazard(bot, target, now) {
+        if (bot.role !== 'miner' || !this.hazardManager) {
+            return;
+        }
+        if (!target || target.kind !== 'player') {
+            return;
+        }
+        if (now < bot.nextHazardAt) {
+            return;
+        }
+
+        const directionVec = directionToVector(target.direction ?? 0);
+        const dropDistance = TILE_SIZE * 3;
+        const desiredX = target.offset.x + directionVec.dx * dropDistance;
+        const desiredY = target.offset.y + directionVec.dy * dropDistance;
+        const placement = this.findHazardPlacement(desiredX, desiredY);
+        if (!placement) {
+            bot.nextHazardAt = now + MINER_DROP_COOLDOWN_MS; // retry soon
+            return;
+        }
+
+        const hazardType = Math.random() < 0.6 ? 'mine' : 'dfg';
+        this.hazardManager.spawnSystemHazard({
+            type: hazardType,
+            x: placement.x,
+            y: placement.y,
+            teamId: bot.cityId,
+            ownerId: bot.id,
+            armed: true,
+            active: true
+        });
+        bot.nextHazardAt = now + MINER_DROP_COOLDOWN_MS + Math.random() * MINER_DROP_VARIANCE_MS;
+    }
+
+    findHazardPlacement(desiredX, desiredY) {
+        if (!this.pathfinder || !this.pathfinder.mask) {
+            return null;
+        }
+        const map = this.game?.map;
+        const maxTileX = Array.isArray(map) ? Math.max(0, map.length - 1) : 511;
+        const maxTileY = Array.isArray(map) && Array.isArray(map[0]) ? Math.max(0, map[0].length - 1) : 511;
+
+        const clampTile = (v, maxV) => Math.max(0, Math.min(maxV, Math.floor(v)));
+        const candidates = [];
+        const primaryTileX = clampTile(desiredX / TILE_SIZE, maxTileX);
+        const primaryTileY = clampTile(desiredY / TILE_SIZE, maxTileY);
+        candidates.push({ x: primaryTileX, y: primaryTileY });
+        candidates.push({ x: clampTile(primaryTileX + 1, maxTileX), y: primaryTileY });
+        candidates.push({ x: primaryTileX, y: clampTile(primaryTileY + 1, maxTileY) });
+        candidates.push({ x: clampTile(primaryTileX - 1, maxTileX), y: primaryTileY });
+        candidates.push({ x: primaryTileX, y: clampTile(primaryTileY - 1, maxTileY) });
+
+        for (const tile of candidates) {
+            if (this.pathfinder.mask.isBlockedTile(tile.x, tile.y)) {
+                continue;
+            }
+            const px = (tile.x * TILE_SIZE);
+            const py = (tile.y * TILE_SIZE);
+            if (this.isHazardTooClose(px + HALF_TILE, py + HALF_TILE, TILE_SIZE)) {
+                continue;
+            }
+            return { x: px, y: py };
+        }
+        return null;
     }
 
     emitPlayer(player) {

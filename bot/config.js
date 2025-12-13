@@ -34,7 +34,7 @@ const LOS_STEP_PX = Math.max(6, Math.floor(TILE_SIZE / 6));
 const RECALC_DEBOUNCE_MS = 80;
 const STALL_TICKS = 6;
 
-const DEFAULT_BUILDING_TILES = 4;
+const DEFAULT_BUILDING_TILES = 3;
 
 const PLAYER_RECT_SIZE = TILE_SIZE - (PLAYER_HITBOX_GAP * 2);
 

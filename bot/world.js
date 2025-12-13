@@ -2,6 +2,13 @@
 
 const { loadMapData } = require("../server/src/utils/mapLoader");
 const citySpawns = require("../shared/citySpawns.json");
+const {
+  isHouse,
+  isResearch,
+  isHospital,
+  isCommandCenter,
+  isFactory
+} = require("../server/src/constants");
 
 const {
   TILE_SIZE,
@@ -20,6 +27,43 @@ const {
   playerRectFromCenter,
   rectsTouchOrOverlap
 } = require("./helpers");
+
+const fallbackWidthTiles = Number(COMMAND_CENTER_WIDTH_TILES) || DEFAULT_BUILDING_TILES;
+const fallbackHeightTiles = Number(COMMAND_CENTER_HEIGHT_TILES) || DEFAULT_BUILDING_TILES;
+
+const resolveBuildingFootprint = (building) => {
+  const fallback = {
+    width: fallbackWidthTiles,
+    height: fallbackHeightTiles
+  };
+  if (!building) {
+    return fallback;
+  }
+
+  const explicitWidth = Number(building.width);
+  const explicitHeight = Number(building.height);
+  if (Number.isFinite(explicitWidth) && Number.isFinite(explicitHeight)) {
+    return {
+      width: explicitWidth,
+      height: explicitHeight
+    };
+  }
+
+  const type = Number(building.type);
+  if (!Number.isFinite(type)) {
+    return fallback;
+  }
+
+  if (isHouse(type) || isResearch(type)) {
+    return { width: 3, height: 3 };
+  }
+
+  if (isCommandCenter(type) || isHospital(type) || isFactory(type)) {
+    return fallback;
+  }
+
+  return fallback;
+};
 
 class WorldState {
   constructor({ log = () => {}, warn = () => {} } = {}) {
@@ -165,14 +209,17 @@ class WorldState {
     return null;
   }
 
-  addBuilding({ id, x, y, type }) {
+  addBuilding({ id, x, y, type, width, height }) {
     if (!id || !Number.isFinite(x) || !Number.isFinite(y)) return;
-    const tilesW = type === 0
-      ? (Number(COMMAND_CENTER_WIDTH_TILES) || DEFAULT_BUILDING_TILES)
-      : DEFAULT_BUILDING_TILES;
-    const tilesH = type === 0
-      ? (Number(COMMAND_CENTER_HEIGHT_TILES) || DEFAULT_BUILDING_TILES)
-      : DEFAULT_BUILDING_TILES;
+    const footprint = resolveBuildingFootprint({ type, width, height });
+    const tilesW = Math.max(
+      1,
+      Math.floor(Number.isFinite(footprint.width) ? footprint.width : fallbackWidthTiles)
+    );
+    const tilesH = Math.max(
+      1,
+      Math.floor(Number.isFinite(footprint.height) ? footprint.height : fallbackHeightTiles)
+    );
 
     const worldX = x * this.tileSize;
     const worldY = y * this.tileSize;

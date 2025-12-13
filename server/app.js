@@ -523,7 +523,8 @@ const defenderBotManager = new DefenderBotManager({
     game,
     playerFactory,
     bulletFactory,
-    buildingFactory
+    buildingFactory,
+    hazardManager
 });
 const rogueBotManager = new RogueBotManager({
     game,
