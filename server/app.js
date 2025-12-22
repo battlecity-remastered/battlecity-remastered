@@ -479,6 +479,7 @@ buildingFactory.listen(io);
 game.buildingFactory = buildingFactory;
 const hazardManager = new HazardManager(game, playerFactory);
 hazardManager.setIo(io);
+bulletFactory.setHazardManager(hazardManager);
 playerFactory.setHazardManager(hazardManager);
 const defenseManager = new DefenseManager({ game, playerFactory, hazardManager });
 defenseManager.setIo(io);

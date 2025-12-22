@@ -98,6 +98,7 @@ class BulletFactory {
         this.game = game;
         this.playerFactory = playerFactory;
         this.defenseManager = defenseManager || null;
+        this.hazardManager = null;
         this.io = null;
         this.bullets = new Map();
         this.recentSourceShots = new Map();
@@ -484,6 +485,13 @@ class BulletFactory {
                 break;
             }
 
+            if (this.hitsHazard(rect)) {
+                bullet.x = prevX;
+                bullet.y = prevY;
+                bullet._destroy = true;
+                break;
+            }
+
             bullet.traveled = (bullet.traveled ?? 0) + stepDistance;
             if (Number.isFinite(bullet.maxRange) && bullet.maxRange > 0 && bullet.traveled >= bullet.maxRange) {
                 bullet._destroy = true;
@@ -549,6 +557,32 @@ class BulletFactory {
 
     setDefenseManager(defenseManager) {
         this.defenseManager = defenseManager || null;
+    }
+
+    setHazardManager(hazardManager) {
+        this.hazardManager = hazardManager || null;
+    }
+
+    hitsHazard(rect) {
+        if (!this.hazardManager || !(this.hazardManager.hazards instanceof Map)) {
+            return false;
+        }
+        for (const hazard of this.hazardManager.hazards.values()) {
+            if (!hazard || !hazard.id) {
+                continue;
+            }
+            const hitbox = {
+                x: Number.isFinite(hazard.x) ? hazard.x : 0,
+                y: Number.isFinite(hazard.y) ? hazard.y : 0,
+                w: TILE_SIZE,
+                h: TILE_SIZE
+            };
+            if (rectangleCollision(rect, hitbox)) {
+                this.hazardManager.removeHazard(hazard.id, "bullet_hit");
+                return true;
+            }
+        }
+        return false;
     }
 
     getMapValue(tileX, tileY) {
