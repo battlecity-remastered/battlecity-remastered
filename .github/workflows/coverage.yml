@@ -1,0 +1,66 @@
+name: Coverage Summary
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run server coverage
+        run: npm run coverage --workspace server
+
+      - name: Generate server coverage artifacts
+        run: |
+          mkdir -p server/coverage/tmp
+          mv server/coverage/coverage-*.json server/coverage/tmp/
+          npx --yes c8 report --reporter=cobertura --reporter=lcov --temp-dir=server/coverage --report-dir=server/coverage
+
+      - name: Run client coverage
+        run: npm run coverage --workspace client
+
+      - name: Generate client coverage artifacts
+        run: |
+          mkdir -p client/coverage/tmp
+          mv client/coverage/coverage-*.json client/coverage/tmp/
+          npx --yes c8 report --reporter=cobertura --reporter=lcov --temp-dir=client/coverage --report-dir=client/coverage
+
+      - name: Code Coverage Summary
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: |
+            server/coverage/cobertura-coverage.xml
+            client/coverage/cobertura-coverage.xml
+          format: markdown
+          output: both
+          badge: true
+
+      - name: Publish Coverage PR Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            server/coverage
+            client/coverage
