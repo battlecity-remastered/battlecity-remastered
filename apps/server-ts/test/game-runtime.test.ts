@@ -202,3 +202,28 @@ test("demolish rejects missing building id", () => {
     assert.equal(rejected.length, 1);
     assert.equal(rejected[0]?.reason, "building_not_found");
 });
+
+test("disconnect emits player.removed and clears player from snapshot", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("s1", makeEnvelope("player.update", 2, {
+        id: "s1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 32, y: 32 }
+    }));
+
+    runtime.handleDisconnect("s1");
+
+    const removed = broadcast.filter((event) => event.type === "player.removed");
+    assert.equal(removed.length, 1);
+    assert.equal((removed[0]?.payload as { id: string }).id, "s1");
+
+    const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
+    const latestSnapshot = snapshots.at(-1);
+    assert.ok(latestSnapshot);
+    const players = latestSnapshot.payload as Array<{ id: string }>;
+    assert.equal(players.some((player) => player.id === "s1"), false);
+});

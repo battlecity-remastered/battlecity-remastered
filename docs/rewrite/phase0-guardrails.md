@@ -21,6 +21,7 @@ This document defines the first implementation guardrails for the TypeScript + E
 - Rewrite dependency cycle report: `npm run rewrite:cycles`
 - Rewrite import extension report: `npm run rewrite:imports`
 - Rewrite maintainability report: `npm run rewrite:maintainability`
+- Rewrite unused symbol check: `npm run rewrite:unused`
 - Rewrite strict guardrail: `npm run rewrite:check:strict`
 
 ## Protocol Coverage Guardrail
@@ -39,6 +40,7 @@ This document defines the first implementation guardrails for the TypeScript + E
   - duplicate block threshold regressions (`rewrite:duplication:strict`)
   - dependency cycles across rewrite modules (`rewrite:cycles:strict`)
   - relative imports that omit explicit ESM runtime extensions (`rewrite:imports:strict`)
+  - unused locals/parameters across rewrite workspaces (`rewrite:unused`)
 
 ## Exit Criteria For Phase 0
 
@@ -48,5 +50,6 @@ This document defines the first implementation guardrails for the TypeScript + E
 4. Complexity and duplication strict checks pass.
 5. Rewrite dependency cycle and import-extension strict checks pass.
 6. Maintainability strict checks pass.
-7. Node version in CI is `23.x`.
-8. Typed protocol decoding is used by rewrite app entrypoints.
+7. Unused locals/parameters gate passes.
+8. Node version in CI is `23.x`.
+9. Typed protocol decoding is used by rewrite app entrypoints.

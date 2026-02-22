@@ -4,6 +4,7 @@ export type LocalState = {
     direction: number;
     x: number;
     y: number;
+    speed: number;
     health: number;
     maxHealth: number;
     lastShotAt: number;
@@ -23,6 +24,12 @@ export type RemotePlayer = {
 export type ClientState = {
     local: LocalState;
     remotePlayers: Map<string, RemotePlayer>;
+    controls: {
+        moveForward: boolean;
+        turnLeft: boolean;
+        turnRight: boolean;
+        shoot: boolean;
+    };
 };
 
 export const createClientState = (): ClientState => {
@@ -33,12 +40,19 @@ export const createClientState = (): ClientState => {
             direction: 0,
             x: 128,
             y: 128,
+            speed: 300,
             health: 100,
             maxHealth: 100,
             lastShotAt: 0,
             placedInitialBuilding: false
         },
-        remotePlayers: new Map()
+        remotePlayers: new Map(),
+        controls: {
+            moveForward: false,
+            turnLeft: false,
+            turnRight: false,
+            shoot: false
+        }
     };
 };
 

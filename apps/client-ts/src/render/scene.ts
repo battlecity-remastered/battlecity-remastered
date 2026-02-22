@@ -65,7 +65,8 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
             `id: ${state.local.id ?? "(joining...)"}`,
             `city: ${state.local.city}`,
             `health: ${state.local.health}/${state.local.maxHealth}`,
-            `remote: ${state.remotePlayers.size}`
+            `remote: ${state.remotePlayers.size}`,
+            "controls: W/Up move, A/D turn, Space fire"
         ].join("\n");
     };
 

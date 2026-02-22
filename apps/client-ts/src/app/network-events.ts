@@ -45,6 +45,12 @@ const handlers: {
     },
     "player.dead": (state, payload) => {
         setHealth(state, payload.id, 0, resolveMaxHealth(state, payload.id));
+    },
+    "player.removed": (state, payload) => {
+        if (payload.id === state.local.id) {
+            return;
+        }
+        state.remotePlayers.delete(payload.id);
     }
 };
 

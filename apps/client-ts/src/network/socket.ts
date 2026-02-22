@@ -8,7 +8,7 @@ import type { ClientState } from "../app/state.js";
 import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
 
-const SERVER_URL = "http://localhost:8121";
+const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:8121";
 
 export type SocketRuntime = {
     socket: Socket;
