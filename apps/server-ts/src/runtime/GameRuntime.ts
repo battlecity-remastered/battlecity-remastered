@@ -1,40 +1,32 @@
 import {
-    makeEnvelope,
     decodeKnownEnvelope,
-    type EventEnvelope,
     type KnownEventPayloadByType,
     type KnownTypedEventEnvelope
 } from "@battlecity/protocol";
-import {
-    advancePlayer,
-    normalizeHeading32,
-    stepBulletAndResolve,
-    type BulletState,
-    type CombatBuildingState,
-    type CombatPlayerState
-} from "@battlecity/sim-core";
 import { Effect } from "effect";
 import {
     createRuntimeState,
     DEFAULT_RUNTIME_CONFIG,
-    type RuntimeBuilding,
     type RuntimeConfig,
-    type RuntimePlayer,
     type RuntimeState
 } from "./types.js";
+import { createRuntimeEmitter, type Broadcaster, type RuntimeEmitter } from "./emitter.js";
+import { emitPlayersSnapshot } from "./snapshot.js";
+import { upsertPlayerFromUpdate, removePlayer } from "./player-runtime.js";
+import { placeBuildingFromRequest, demolishBuildingFromRequest } from "./building-runtime.js";
+import { createBulletFromRequest, tickBullets } from "./bullet-runtime.js";
 
-type EnvelopeType = EventEnvelope["type"];
-
-type Broadcaster = {
-    emitAll: (event: EventEnvelope) => void;
-    emitTo: (socketId: string, event: EventEnvelope) => void;
-    reject: (socketId: string, reason: string) => void;
-};
+type RuntimeHandler<TType extends keyof KnownEventPayloadByType> =
+    (socketId: string, payload: KnownEventPayloadByType[TType]) => void;
 
 export class GameRuntime {
     private readonly state: RuntimeState;
     private readonly config: RuntimeConfig;
     private readonly broadcaster: Broadcaster;
+    private readonly emitter: RuntimeEmitter;
+    private readonly handlers: {
+        [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K>;
+    };
 
     constructor(
         broadcaster: Broadcaster,
@@ -44,6 +36,24 @@ export class GameRuntime {
         this.broadcaster = broadcaster;
         this.config = { ...DEFAULT_RUNTIME_CONFIG, ...config };
         this.state = initialState;
+        this.emitter = createRuntimeEmitter(this.state, this.broadcaster);
+        this.handlers = {
+            "lobby.join.request": (socketId, payload) => {
+                this.handleLobbyJoin(socketId, payload);
+            },
+            "player.update": (socketId, payload) => {
+                this.handlePlayerUpdate(socketId, payload);
+            },
+            "bullet.fire.request": (socketId, payload) => {
+                this.handleBulletFire(socketId, payload);
+            },
+            "building.place.request": (socketId, payload) => {
+                this.handleBuildingPlace(socketId, payload);
+            },
+            "building.demolish.request": (socketId, payload) => {
+                this.handleBuildingDemolish(socketId, payload);
+            }
+        };
     }
 
     public handleRawEvent(socketId: string, raw: unknown): void {
@@ -70,8 +80,14 @@ export class GameRuntime {
         return Effect.sync(() => {
             this.state.socketCities.delete(socketId);
             this.state.socketRoles.delete(socketId);
-            this.removePlayer(socketId);
-            this.emitSnapshot();
+            const removedBulletIds = removePlayer(this.state, socketId);
+            for (const bulletId of removedBulletIds) {
+                this.emitter.emit("bullet.resolved", {
+                    id: bulletId,
+                    reason: "out_of_bounds"
+                });
+            }
+            emitPlayersSnapshot(this.state, this.emitter);
         });
     }
 
@@ -81,100 +97,7 @@ export class GameRuntime {
 
     public tickBulletsEffect(): Effect.Effect<void> {
         return Effect.sync(() => {
-            let snapshotDirty = false;
-
-            for (const [bulletId, bullet] of this.state.bullets.entries()) {
-                const result = stepBulletAndResolve(
-                    bullet,
-                    this.config.bulletTickMs,
-                    this.config.mapMax,
-                    this.config.mapMax,
-                    this.state.players.values() as Iterable<CombatPlayerState>,
-                    this.state.buildings.values() as Iterable<CombatBuildingState>
-                );
-
-                if (result.kind === "none") {
-                    this.state.bullets.set(bulletId, result.bullet);
-                    continue;
-                }
-
-                this.state.bullets.delete(bulletId);
-
-                if (result.kind === "out_of_bounds") {
-                    this.emit("bullet.resolved", {
-                        id: bulletId,
-                        reason: "out_of_bounds"
-                    });
-                    continue;
-                }
-
-                if (result.kind === "hit_player") {
-                    this.emit("bullet.resolved", {
-                        id: bulletId,
-                        reason: "hit_player",
-                        hitPlayerId: result.playerId
-                    });
-
-                    const player = this.state.players.get(result.playerId);
-                    if (!player) {
-                        continue;
-                    }
-
-                    const nextPlayer: RuntimePlayer = {
-                        ...player,
-                        health: result.nextHealth
-                    };
-
-                    this.emit("player.health", {
-                        id: nextPlayer.id,
-                        health: nextPlayer.health,
-                        maxHealth: nextPlayer.maxHealth,
-                        source: "bullet"
-                    });
-
-                    if (result.isDead) {
-                        this.emit("player.dead", {
-                            id: nextPlayer.id,
-                            by: bullet.ownerId
-                        });
-                        this.removePlayer(nextPlayer.id);
-                        snapshotDirty = true;
-                    } else {
-                        this.state.players.set(nextPlayer.id, nextPlayer);
-                    }
-
-                    continue;
-                }
-
-                this.emit("bullet.resolved", {
-                    id: bulletId,
-                    reason: "hit_building",
-                    hitBuildingId: result.buildingId
-                });
-
-                const building = this.state.buildings.get(result.buildingId);
-                if (!building) {
-                    continue;
-                }
-
-                if (result.isDemolished) {
-                    this.state.buildings.delete(building.id);
-                    this.emit("building.demolished", {
-                        id: building.id,
-                        cityId: building.cityId
-                    });
-                    continue;
-                }
-
-                this.state.buildings.set(building.id, {
-                    ...building,
-                    health: result.nextHealth
-                });
-            }
-
-            if (snapshotDirty) {
-                this.emitSnapshot();
-            }
+            tickBullets(this.state, this.config, this.emitter);
         });
     }
 
@@ -183,29 +106,9 @@ export class GameRuntime {
     }
 
     private handleEvent(socketId: string, event: KnownTypedEventEnvelope): void {
-        switch (event.type) {
-            case "lobby.join.request": {
-                this.handleLobbyJoin(socketId, event.payload);
-                return;
-            }
-            case "player.update": {
-                this.handlePlayerUpdate(socketId, event.payload);
-                return;
-            }
-            case "bullet.fire.request": {
-                this.handleBulletFire(socketId, event.payload);
-                return;
-            }
-            case "building.place.request": {
-                this.handleBuildingPlace(socketId, event.payload);
-                return;
-            }
-            case "building.demolish.request": {
-                this.handleBuildingDemolish(socketId, event.payload);
-                return;
-            }
-            default:
-                return;
+        const handler = this.handlers[event.type];
+        if (handler) {
+            handler(socketId, event.payload as never);
         }
     }
 
@@ -218,68 +121,27 @@ export class GameRuntime {
         this.state.socketCities.set(socketId, city);
         this.state.socketRoles.set(socketId, role);
 
-        this.emitTo(socketId, "lobby.assignment", {
+        this.emitter.emitTo(socketId, "lobby.assignment", {
             id: socketId,
             city,
             role
         });
 
-        this.emitSnapshot();
+        emitPlayersSnapshot(this.state, this.emitter);
     }
 
     private handlePlayerUpdate(socketId: string, payload: KnownEventPayloadByType["player.update"]): void {
-        const city = this.state.socketCities.get(socketId) ?? payload.city ?? this.config.defaultCity;
-        this.state.socketCities.set(socketId, city);
-
-        const current = this.state.players.get(socketId) ?? {
-            id: socketId,
-            city,
-            x: payload.offset.x,
-            y: payload.offset.y,
-            direction: normalizeHeading32(payload.direction),
-            speed: this.config.playerSpeed,
-            health: 100,
-            maxHealth: 100
-        };
-
-        const withDirection: RuntimePlayer = {
-            ...current,
-            city,
-            direction: normalizeHeading32(payload.direction)
-        };
-
-        const next = payload.isMoving
-            ? {
-                ...advancePlayer(withDirection, this.config.serverStepMs, this.config.mapMax, this.config.mapMax),
-                city,
-                health: current.health,
-                maxHealth: current.maxHealth
-            }
-            : withDirection;
-
-        this.state.players.set(socketId, next);
-        this.emitSnapshot();
+        upsertPlayerFromUpdate(this.state, socketId, payload, this.config);
+        emitPlayersSnapshot(this.state, this.emitter);
     }
 
     private handleBulletFire(socketId: string, payload: KnownEventPayloadByType["bullet.fire.request"]): void {
-        const player = this.state.players.get(socketId);
-        if (!player) {
+        const bullet = createBulletFromRequest(this.state, socketId, payload, this.config, () => this.nextSeq());
+        if (!bullet) {
             return;
         }
 
-        const bullet: BulletState = {
-            id: `bullet_${this.nextSeq()}`,
-            ownerId: socketId,
-            city: player.city,
-            x: player.x,
-            y: player.y,
-            direction: normalizeHeading32(payload.direction),
-            speed: this.config.bulletSpeed,
-            type: payload.type
-        };
-
-        this.state.bullets.set(bullet.id, bullet);
-        this.emit("bullet.fired", {
+        this.emitter.emit("bullet.fired", {
             id: bullet.id,
             ownerId: bullet.ownerId,
             city: bullet.city,
@@ -293,102 +155,33 @@ export class GameRuntime {
     }
 
     private handleBuildingPlace(socketId: string, payload: KnownEventPayloadByType["building.place.request"]): void {
-        const city = this.state.socketCities.get(socketId);
-        if (city === undefined || city !== payload.cityId) {
+        const building = placeBuildingFromRequest(
+            this.state,
+            socketId,
+            payload,
+            this.config,
+            () => this.nextSeq()
+        );
+        if (!building) {
             return;
         }
-
-        const tileX = Math.max(0, Math.floor(payload.tileX));
-        const tileY = Math.max(0, Math.floor(payload.tileY));
-
-        const building: RuntimeBuilding = {
-            id: `building_${this.nextSeq()}`,
-            ownerId: socketId,
-            cityId: city,
-            type: payload.type,
-            tileX,
-            tileY,
-            health: this.config.defaultBuildingHealth,
-            maxHealth: this.config.defaultBuildingHealth
-        };
-
-        this.state.buildings.set(building.id, building);
-        this.emit("building.placed", building);
+        this.emitter.emit("building.placed", building);
     }
 
     private handleBuildingDemolish(socketId: string, payload: KnownEventPayloadByType["building.demolish.request"]): void {
-        const city = this.state.socketCities.get(socketId);
-        const building = this.state.buildings.get(payload.id);
-        if (city === undefined || !building || building.cityId !== city || payload.cityId !== city) {
+        const building = demolishBuildingFromRequest(this.state, socketId, payload);
+        if (!building) {
             return;
         }
 
-        if (payload.ownerId && payload.ownerId !== building.ownerId) {
-            return;
-        }
-
-        this.state.buildings.delete(building.id);
-        this.emit("building.demolished", {
+        this.emitter.emit("building.demolished", {
             id: building.id,
             cityId: building.cityId
         });
     }
 
-    private buildSnapshot(): KnownEventPayloadByType["players.snapshot"] {
-        return Array.from(this.state.players.values()).map((player) => {
-            return {
-                id: player.id,
-                city: player.city,
-                direction: player.direction,
-                offset: {
-                    x: player.x,
-                    y: player.y
-                },
-                health: player.health,
-                maxHealth: player.maxHealth
-            };
-        });
-    }
-
-    private emitSnapshot(): void {
-        this.emit("players.snapshot", this.buildSnapshot());
-    }
-
-    private removeOwnedBullets(ownerId: string): void {
-        for (const [bulletId, bullet] of this.state.bullets.entries()) {
-            if (bullet.ownerId !== ownerId) {
-                continue;
-            }
-            this.state.bullets.delete(bulletId);
-            this.emit("bullet.resolved", {
-                id: bulletId,
-                reason: "out_of_bounds"
-            });
-        }
-    }
-
-    private removePlayer(playerId: string): void {
-        this.state.players.delete(playerId);
-        this.removeOwnedBullets(playerId);
-    }
-
     private nextSeq(): number {
         this.state.seq += 1;
         return this.state.seq;
-    }
-
-    private emit<TType extends EnvelopeType>(
-        type: TType,
-        payload: KnownEventPayloadByType[TType & keyof KnownEventPayloadByType]
-    ): void {
-        this.broadcaster.emitAll(makeEnvelope(type, this.nextSeq(), payload));
-    }
-
-    private emitTo<TType extends EnvelopeType>(
-        socketId: string,
-        type: TType,
-        payload: KnownEventPayloadByType[TType & keyof KnownEventPayloadByType]
-    ): void {
-        this.broadcaster.emitTo(socketId, makeEnvelope(type, this.nextSeq(), payload));
     }
 }

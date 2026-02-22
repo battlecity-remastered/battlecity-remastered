@@ -2,11 +2,10 @@ import { io, type Socket } from "socket.io-client";
 import {
     decodeKnownEnvelope,
     makeEnvelope,
-    type KnownTypedEventEnvelope
 } from "@battlecity/protocol";
 import { Effect } from "effect";
 import type { ClientState } from "../app/state.js";
-import { updateFromSnapshot } from "../app/state.js";
+import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
 
 const SERVER_URL = "http://localhost:8121";
@@ -42,7 +41,9 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
                 if (decoded._tag !== "Right") {
                     return Effect.void;
                 }
-                return applyEvent(state, decoded.right);
+                return Effect.sync(() => {
+                    applyServerEvent(state, decoded.right);
+                });
             })
         );
 
@@ -53,35 +54,4 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         socket,
         send
     };
-};
-
-const applyEvent = (state: ClientState, event: KnownTypedEventEnvelope) => {
-    return Effect.sync(() => {
-        switch (event.type) {
-            case "lobby.assignment": {
-                state.local.id = event.payload.id;
-                state.local.city = event.payload.city;
-                return;
-            }
-            case "players.snapshot": {
-                updateFromSnapshot(state, event.payload);
-                return;
-            }
-            case "player.health": {
-                if (event.payload.id === state.local.id) {
-                    state.local.health = event.payload.health;
-                    state.local.maxHealth = event.payload.maxHealth;
-                }
-                return;
-            }
-            case "player.dead": {
-                if (event.payload.id === state.local.id) {
-                    state.local.health = 0;
-                }
-                return;
-            }
-            default:
-                return;
-        }
-    });
 };
