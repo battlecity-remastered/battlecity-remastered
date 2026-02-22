@@ -19,8 +19,13 @@
         "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
         "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
         "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
-        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:event-inventory",
-        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:event-inventory:strict"
+        "rewrite:test": "node --test --import tsx packages/protocol/test/*.test.ts packages/sim-core/test/*.test.ts apps/server-ts/test/*.test.ts",
+        "rewrite:complexity": "node scripts/rewrite-complexity-report.mjs",
+        "rewrite:complexity:strict": "node scripts/rewrite-complexity-report.mjs --strict",
+        "rewrite:duplication": "node scripts/rewrite-duplication-report.mjs",
+        "rewrite:duplication:strict": "node scripts/rewrite-duplication-report.mjs --strict",
+        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication",
+        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict"
     },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
