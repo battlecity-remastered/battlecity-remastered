@@ -1,16 +1,19 @@
 import {
     makeEnvelope,
+    decodeKnownEnvelope,
     type EventEnvelope,
-    type KnownEventPayloadByType
+    type KnownEventPayloadByType,
+    type KnownTypedEventEnvelope
 } from "@battlecity/protocol";
 import {
     advancePlayer,
+    normalizeHeading32,
     stepBulletAndResolve,
     type BulletState,
     type CombatBuildingState,
     type CombatPlayerState
 } from "@battlecity/sim-core";
-import { decodeTypedEnvelope } from "@battlecity/protocol";
+import { Effect } from "effect";
 import {
     createRuntimeState,
     DEFAULT_RUNTIME_CONFIG,
@@ -26,11 +29,6 @@ type Broadcaster = {
     emitAll: (event: EventEnvelope) => void;
     emitTo: (socketId: string, event: EventEnvelope) => void;
     reject: (socketId: string, reason: string) => void;
-};
-
-const normalizeDirection = (direction: number): number => {
-    const wrapped = Math.floor(direction) % 32;
-    return wrapped < 0 ? wrapped + 32 : wrapped;
 };
 
 export class GameRuntime {
@@ -49,143 +47,161 @@ export class GameRuntime {
     }
 
     public handleRawEvent(socketId: string, raw: unknown): void {
-        const decoded = decodeTypedEnvelope(raw);
-        if (decoded._tag !== "Right") {
-            this.broadcaster.reject(socketId, "invalid_envelope");
-            return;
-        }
+        Effect.runSync(this.handleRawEventEffect(socketId, raw));
+    }
 
-        this.handleEvent(socketId, decoded.right);
+    public handleRawEventEffect(socketId: string, raw: unknown): Effect.Effect<void> {
+        return Effect.sync(() => {
+            const decoded = decodeKnownEnvelope(raw);
+            if (decoded._tag !== "Right") {
+                this.broadcaster.reject(socketId, "invalid_envelope");
+                return;
+            }
+
+            this.handleEvent(socketId, decoded.right);
+        });
     }
 
     public handleDisconnect(socketId: string): void {
-        this.state.socketCities.delete(socketId);
-        this.state.socketRoles.delete(socketId);
-        this.removePlayer(socketId);
-        this.emitSnapshot();
+        Effect.runSync(this.handleDisconnectEffect(socketId));
+    }
+
+    public handleDisconnectEffect(socketId: string): Effect.Effect<void> {
+        return Effect.sync(() => {
+            this.state.socketCities.delete(socketId);
+            this.state.socketRoles.delete(socketId);
+            this.removePlayer(socketId);
+            this.emitSnapshot();
+        });
     }
 
     public tickBullets(): void {
-        let snapshotDirty = false;
+        Effect.runSync(this.tickBulletsEffect());
+    }
 
-        for (const [bulletId, bullet] of this.state.bullets.entries()) {
-            const result = stepBulletAndResolve(
-                bullet,
-                this.config.bulletTickMs,
-                this.config.mapMax,
-                this.config.mapMax,
-                this.state.players.values() as Iterable<CombatPlayerState>,
-                this.state.buildings.values() as Iterable<CombatBuildingState>
-            );
+    public tickBulletsEffect(): Effect.Effect<void> {
+        return Effect.sync(() => {
+            let snapshotDirty = false;
 
-            if (result.kind === "none") {
-                this.state.bullets.set(bulletId, result.bullet);
-                continue;
-            }
+            for (const [bulletId, bullet] of this.state.bullets.entries()) {
+                const result = stepBulletAndResolve(
+                    bullet,
+                    this.config.bulletTickMs,
+                    this.config.mapMax,
+                    this.config.mapMax,
+                    this.state.players.values() as Iterable<CombatPlayerState>,
+                    this.state.buildings.values() as Iterable<CombatBuildingState>
+                );
 
-            this.state.bullets.delete(bulletId);
-
-            if (result.kind === "out_of_bounds") {
-                this.emit("bullet.resolved", {
-                    id: bulletId,
-                    reason: "out_of_bounds"
-                });
-                continue;
-            }
-
-            if (result.kind === "hit_player") {
-                this.emit("bullet.resolved", {
-                    id: bulletId,
-                    reason: "hit_player",
-                    hitPlayerId: result.playerId
-                });
-
-                const player = this.state.players.get(result.playerId);
-                if (!player) {
+                if (result.kind === "none") {
+                    this.state.bullets.set(bulletId, result.bullet);
                     continue;
                 }
 
-                const nextPlayer: RuntimePlayer = {
-                    ...player,
-                    health: result.nextHealth
-                };
+                this.state.bullets.delete(bulletId);
 
-                this.emit("player.health", {
-                    id: nextPlayer.id,
-                    health: nextPlayer.health,
-                    maxHealth: nextPlayer.maxHealth,
-                    source: "bullet"
-                });
-
-                if (result.isDead) {
-                    this.emit("player.dead", {
-                        id: nextPlayer.id,
-                        by: bullet.ownerId
+                if (result.kind === "out_of_bounds") {
+                    this.emit("bullet.resolved", {
+                        id: bulletId,
+                        reason: "out_of_bounds"
                     });
-                    this.removePlayer(nextPlayer.id);
-                    snapshotDirty = true;
-                } else {
-                    this.state.players.set(nextPlayer.id, nextPlayer);
+                    continue;
                 }
 
-                continue;
-            }
+                if (result.kind === "hit_player") {
+                    this.emit("bullet.resolved", {
+                        id: bulletId,
+                        reason: "hit_player",
+                        hitPlayerId: result.playerId
+                    });
 
-            this.emit("bullet.resolved", {
-                id: bulletId,
-                reason: "hit_building",
-                hitBuildingId: result.buildingId
-            });
+                    const player = this.state.players.get(result.playerId);
+                    if (!player) {
+                        continue;
+                    }
 
-            const building = this.state.buildings.get(result.buildingId);
-            if (!building) {
-                continue;
-            }
+                    const nextPlayer: RuntimePlayer = {
+                        ...player,
+                        health: result.nextHealth
+                    };
 
-            if (result.isDemolished) {
-                this.state.buildings.delete(building.id);
-                this.emit("building.demolished", {
-                    id: building.id,
-                    cityId: building.cityId
+                    this.emit("player.health", {
+                        id: nextPlayer.id,
+                        health: nextPlayer.health,
+                        maxHealth: nextPlayer.maxHealth,
+                        source: "bullet"
+                    });
+
+                    if (result.isDead) {
+                        this.emit("player.dead", {
+                            id: nextPlayer.id,
+                            by: bullet.ownerId
+                        });
+                        this.removePlayer(nextPlayer.id);
+                        snapshotDirty = true;
+                    } else {
+                        this.state.players.set(nextPlayer.id, nextPlayer);
+                    }
+
+                    continue;
+                }
+
+                this.emit("bullet.resolved", {
+                    id: bulletId,
+                    reason: "hit_building",
+                    hitBuildingId: result.buildingId
                 });
-                continue;
+
+                const building = this.state.buildings.get(result.buildingId);
+                if (!building) {
+                    continue;
+                }
+
+                if (result.isDemolished) {
+                    this.state.buildings.delete(building.id);
+                    this.emit("building.demolished", {
+                        id: building.id,
+                        cityId: building.cityId
+                    });
+                    continue;
+                }
+
+                this.state.buildings.set(building.id, {
+                    ...building,
+                    health: result.nextHealth
+                });
             }
 
-            this.state.buildings.set(building.id, {
-                ...building,
-                health: result.nextHealth
-            });
-        }
-
-        if (snapshotDirty) {
-            this.emitSnapshot();
-        }
+            if (snapshotDirty) {
+                this.emitSnapshot();
+            }
+        });
     }
 
     public getReadonlyState(): Readonly<RuntimeState> {
         return this.state;
     }
 
-    private handleEvent(socketId: string, event: EventEnvelope): void {
+    private handleEvent(socketId: string, event: KnownTypedEventEnvelope): void {
         switch (event.type) {
             case "lobby.join.request": {
-                this.handleLobbyJoin(socketId, event.payload as KnownEventPayloadByType["lobby.join.request"]);
+                this.handleLobbyJoin(socketId, event.payload);
                 return;
             }
             case "player.update": {
-                this.handlePlayerUpdate(socketId, event.payload as KnownEventPayloadByType["player.update"]);
+                this.handlePlayerUpdate(socketId, event.payload);
                 return;
             }
             case "bullet.fire.request": {
-                this.handleBulletFire(socketId, event.payload as KnownEventPayloadByType["bullet.fire.request"]);
+                this.handleBulletFire(socketId, event.payload);
                 return;
             }
             case "building.place.request": {
-                this.handleBuildingPlace(socketId, event.payload as KnownEventPayloadByType["building.place.request"]);
+                this.handleBuildingPlace(socketId, event.payload);
                 return;
             }
             case "building.demolish.request": {
-                this.handleBuildingDemolish(socketId, event.payload as KnownEventPayloadByType["building.demolish.request"]);
+                this.handleBuildingDemolish(socketId, event.payload);
                 return;
             }
             default:
@@ -220,7 +236,7 @@ export class GameRuntime {
             city,
             x: payload.offset.x,
             y: payload.offset.y,
-            direction: normalizeDirection(payload.direction),
+            direction: normalizeHeading32(payload.direction),
             speed: this.config.playerSpeed,
             health: 100,
             maxHealth: 100
@@ -229,7 +245,7 @@ export class GameRuntime {
         const withDirection: RuntimePlayer = {
             ...current,
             city,
-            direction: normalizeDirection(payload.direction)
+            direction: normalizeHeading32(payload.direction)
         };
 
         const next = payload.isMoving
@@ -257,7 +273,7 @@ export class GameRuntime {
             city: player.city,
             x: player.x,
             y: player.y,
-            direction: normalizeDirection(payload.direction),
+            direction: normalizeHeading32(payload.direction),
             speed: this.config.bulletSpeed,
             type: payload.type
         };

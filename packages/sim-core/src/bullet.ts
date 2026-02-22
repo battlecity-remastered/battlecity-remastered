@@ -1,4 +1,5 @@
 import { clamp } from "./geometry.js";
+import { advancePointByHeading32, normalizeHeading32 } from "./motion.js";
 
 export type BulletState = {
     id: string;
@@ -17,12 +18,12 @@ export const advanceBullet = (
     mapMaxX: number,
     mapMaxY: number
 ): BulletState => {
-    const radians = (bullet.direction / 32) * (Math.PI * 2);
-    const distance = bullet.speed * (dtMs / 1000);
-    const nextX = clamp(bullet.x + (Math.cos(radians) * distance), 0, mapMaxX);
-    const nextY = clamp(bullet.y + (Math.sin(radians) * distance), 0, mapMaxY);
+    const advanced = advancePointByHeading32(bullet.x, bullet.y, bullet.direction, bullet.speed, dtMs);
+    const nextX = clamp(advanced.x, 0, mapMaxX);
+    const nextY = clamp(advanced.y, 0, mapMaxY);
     return {
         ...bullet,
+        direction: normalizeHeading32(bullet.direction),
         x: nextX,
         y: nextY
     };

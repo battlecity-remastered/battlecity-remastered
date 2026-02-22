@@ -1,4 +1,5 @@
 import type { BulletState } from "./bullet.js";
+import { advancePointByHeading32, normalizeHeading32 } from "./motion.js";
 
 export type CombatPlayerState = {
     id: string;
@@ -33,11 +34,6 @@ const distanceSquared = (ax: number, ay: number, bx: number, by: number): number
     return sq(ax - bx) + sq(ay - by);
 };
 
-const normalizeDirection = (direction: number): number => {
-    const wrapped = direction % 32;
-    return wrapped < 0 ? wrapped + 32 : wrapped;
-};
-
 const bulletDamage = (bulletType: number): number => {
     switch (bulletType) {
         case 2:
@@ -62,14 +58,13 @@ export const stepBulletAndResolve = (
     players: Iterable<CombatPlayerState>,
     buildings: Iterable<CombatBuildingState>
 ): BulletStepResult => {
-    const direction = normalizeDirection(bullet.direction);
-    const radians = (direction / 32) * (Math.PI * 2);
-    const distance = bullet.speed * (dtMs / 1000);
+    const direction = normalizeHeading32(bullet.direction);
+    const advanced = advancePointByHeading32(bullet.x, bullet.y, direction, bullet.speed, dtMs);
     const nextBullet = {
         ...bullet,
         direction,
-        x: bullet.x + (Math.cos(radians) * distance),
-        y: bullet.y + (Math.sin(radians) * distance)
+        x: advanced.x,
+        y: advanced.y
     };
 
     if (nextBullet.x < 0 || nextBullet.y < 0 || nextBullet.x > mapMaxX || nextBullet.y > mapMaxY) {

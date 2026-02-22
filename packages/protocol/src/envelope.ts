@@ -102,6 +102,7 @@ export const EventEnvelope = Schema.Struct({
 });
 
 export type EventEnvelope = Schema.Schema.Type<typeof EventEnvelope>;
+export type KnownEventType = keyof KnownEventPayloadByType;
 
 type PayloadByEvent<TType extends EventEnvelope["type"]> =
     TType extends keyof KnownEventPayloadByType ? KnownEventPayloadByType[TType] : unknown;
@@ -110,6 +111,13 @@ export type TypedEventEnvelope<TType extends EventEnvelope["type"]> = Omit<Event
     type: TType;
     payload: PayloadByEvent<TType>;
 };
+export type KnownTypedEventEnvelope<TType extends KnownEventType = KnownEventType> =
+    TType extends KnownEventType
+        ? Omit<EventEnvelope, "type" | "payload"> & {
+            type: TType;
+            payload: KnownEventPayloadByType[TType];
+        }
+        : never;
 
 const decodeEnvelope = Schema.decodeUnknownEither(EventEnvelope);
 
@@ -154,6 +162,26 @@ export const decodeTypedEnvelope = (input: unknown) => {
     } as TypedEventEnvelope<EventEnvelope["type"]>);
 };
 
+const hasKnownSchema = (type: EventEnvelope["type"]): type is KnownEventType => {
+    return Object.hasOwn(EventPayloadSchemas, type);
+};
+
+export const decodeKnownEnvelope = (input: unknown) => {
+    const decoded = decodeTypedEnvelope(input);
+    if (decoded._tag === "Left") {
+        return decoded;
+    }
+
+    if (!hasKnownSchema(decoded.right.type)) {
+        return Either.left({
+            _tag: "UnknownEventType",
+            type: decoded.right.type
+        });
+    }
+
+    return Either.right(decoded.right as KnownTypedEventEnvelope);
+};
+
 export const makeTypedEnvelope = <TType extends EventEnvelope["type"]>(
     type: TType,
     seq: number,
@@ -182,4 +210,19 @@ export const makeEnvelope = <TPayload>(
         ts: Date.now(),
         payload
     };
+};
+
+export const makeKnownEnvelope = <TType extends KnownEventType>(
+    type: TType,
+    seq: number,
+    payload: KnownEventPayloadByType[TType],
+    version = "1"
+): KnownTypedEventEnvelope<TType> => {
+    return {
+        type,
+        version,
+        seq,
+        ts: Date.now(),
+        payload
+    } as KnownTypedEventEnvelope<TType>;
 };

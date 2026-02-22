@@ -1,9 +1,8 @@
 import { io, type Socket } from "socket.io-client";
 import {
-    decodeTypedEnvelope,
+    decodeKnownEnvelope,
     makeEnvelope,
-    type EventEnvelope,
-    type KnownEventPayloadByType
+    type KnownTypedEventEnvelope
 } from "@battlecity/protocol";
 import { Effect } from "effect";
 import type { ClientState } from "../app/state.js";
@@ -38,7 +37,7 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     });
 
     socket.on("event", (raw: unknown) => {
-        const program = Effect.sync(() => decodeTypedEnvelope(raw)).pipe(
+        const program = Effect.sync(() => decodeKnownEnvelope(raw)).pipe(
             Effect.flatMap((decoded) => {
                 if (decoded._tag !== "Right") {
                     return Effect.void;
@@ -56,30 +55,27 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     };
 };
 
-const applyEvent = (state: ClientState, event: EventEnvelope) => {
+const applyEvent = (state: ClientState, event: KnownTypedEventEnvelope) => {
     return Effect.sync(() => {
         switch (event.type) {
             case "lobby.assignment": {
-                const payload = event.payload as KnownEventPayloadByType["lobby.assignment"];
-                state.local.id = payload.id;
-                state.local.city = payload.city;
+                state.local.id = event.payload.id;
+                state.local.city = event.payload.city;
                 return;
             }
             case "players.snapshot": {
-                updateFromSnapshot(state, event.payload as KnownEventPayloadByType["players.snapshot"]);
+                updateFromSnapshot(state, event.payload);
                 return;
             }
             case "player.health": {
-                const payload = event.payload as KnownEventPayloadByType["player.health"];
-                if (payload.id === state.local.id) {
-                    state.local.health = payload.health;
-                    state.local.maxHealth = payload.maxHealth;
+                if (event.payload.id === state.local.id) {
+                    state.local.health = event.payload.health;
+                    state.local.maxHealth = event.payload.maxHealth;
                 }
                 return;
             }
             case "player.dead": {
-                const payload = event.payload as KnownEventPayloadByType["player.dead"];
-                if (payload.id === state.local.id) {
+                if (event.payload.id === state.local.id) {
                     state.local.health = 0;
                 }
                 return;

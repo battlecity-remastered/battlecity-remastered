@@ -1,4 +1,5 @@
 import { clamp } from "./geometry.js";
+import { advancePointByHeading32, normalizeHeading32 } from "./motion.js";
 
 export type PlayerState = {
     id: string;
@@ -14,12 +15,12 @@ export const advancePlayer = (
     mapMaxX: number,
     mapMaxY: number
 ): PlayerState => {
-    const radians = (player.direction / 32) * (Math.PI * 2);
-    const distance = player.speed * (dtMs / 1000);
-    const nextX = clamp(player.x + (Math.cos(radians) * distance), 0, mapMaxX);
-    const nextY = clamp(player.y + (Math.sin(radians) * distance), 0, mapMaxY);
+    const advanced = advancePointByHeading32(player.x, player.y, player.direction, player.speed, dtMs);
+    const nextX = clamp(advanced.x, 0, mapMaxX);
+    const nextY = clamp(advanced.y, 0, mapMaxY);
     return {
         ...player,
+        direction: normalizeHeading32(player.direction),
         x: nextX,
         y: nextY
     };

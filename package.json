@@ -24,8 +24,10 @@
         "rewrite:complexity:strict": "node scripts/rewrite-complexity-report.mjs --strict",
         "rewrite:duplication": "node scripts/rewrite-duplication-report.mjs",
         "rewrite:duplication:strict": "node scripts/rewrite-duplication-report.mjs --strict",
-        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication",
-        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict"
+        "rewrite:cycles": "node scripts/rewrite-dependency-cycles.mjs",
+        "rewrite:cycles:strict": "node scripts/rewrite-dependency-cycles.mjs --strict",
+        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication && npm run rewrite:cycles",
+        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict && npm run rewrite:cycles:strict"
     },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
