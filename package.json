@@ -19,7 +19,7 @@
         "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
         "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
         "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
-        "rewrite:test": "node --test --import tsx packages/protocol/test/*.test.ts packages/sim-core/test/*.test.ts apps/server-ts/test/*.test.ts",
+        "rewrite:test": "node --test --import tsx packages/protocol/test/*.test.ts packages/sim-core/test/*.test.ts apps/server-ts/test/*.test.ts apps/client-ts/test/*.test.ts",
         "rewrite:complexity": "node scripts/rewrite-complexity-report.mjs",
         "rewrite:complexity:strict": "node scripts/rewrite-complexity-report.mjs --strict",
         "rewrite:duplication": "node scripts/rewrite-duplication-report.mjs",

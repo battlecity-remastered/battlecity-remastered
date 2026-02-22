@@ -7,7 +7,13 @@ import {
 } from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "./emitter.js";
-import type { CommandResult, RuntimeConfig, RuntimeState } from "./types.js";
+import {
+    okResult,
+    rejectResult,
+    type CommandResult,
+    type RuntimeConfig,
+    type RuntimeState
+} from "./types.js";
 import { asCombatPlayers, removePlayer } from "./player-runtime.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 
@@ -20,7 +26,7 @@ export const createBulletFromRequest = (
 ): CommandResult<BulletState> => {
     const player = state.players.get(socketId);
     if (!player) {
-        return { ok: false, reason: "player_not_joined" };
+        return rejectResult("player_not_joined");
     }
 
     const bullet: BulletState = {
@@ -35,7 +41,7 @@ export const createBulletFromRequest = (
     };
 
     state.bullets.set(bullet.id, bullet);
-    return { ok: true, value: bullet };
+    return okResult(bullet);
 };
 
 type TickContext = {

@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ClientState } from "../app/state.js";
+import { reconcileEntityCache } from "./entity-cache.js";
 
 const TANK_SIZE = 18;
 
@@ -37,6 +38,7 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
 
     const remoteLayer = new Container();
     world.addChild(remoteLayer);
+    const remoteTanks = new Map<string, Graphics>();
 
     const hud = new Text({
         text: "",
@@ -53,12 +55,27 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
         localTank.position.set(state.local.x, state.local.y);
         localTank.rotation = (state.local.direction / 32) * (Math.PI * 2);
 
-        remoteLayer.removeChildren();
+        reconcileEntityCache(
+            remoteTanks,
+            state.remotePlayers.keys(),
+            () => {
+                const tank = makeTank(0xf3655a);
+                remoteLayer.addChild(tank);
+                return tank;
+            },
+            (_remoteId, tank) => {
+                remoteLayer.removeChild(tank);
+                tank.destroy();
+            }
+        );
+
         for (const remote of state.remotePlayers.values()) {
-            const tank = makeTank(0xf3655a);
+            const tank = remoteTanks.get(remote.id);
+            if (!tank) {
+                continue;
+            }
             tank.position.set(remote.x, remote.y);
             tank.rotation = (remote.direction / 32) * (Math.PI * 2);
-            remoteLayer.addChild(tank);
         }
 
         hud.text = [

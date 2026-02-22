@@ -13,6 +13,7 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:8121";
 export type SocketRuntime = {
     socket: Socket;
     send: EventSender;
+    stop: () => void;
 };
 
 export const createSocketRuntime = (state: ClientState): SocketRuntime => {
@@ -31,11 +32,7 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         socket.emit("event", makeEnvelope(type, nextSeq(), payload));
     };
 
-    socket.on("connect", () => {
-        send("lobby.join.request", { desiredCity: 0 });
-    });
-
-    socket.on("event", (raw: unknown) => {
+    const onServerEvent = (raw: unknown): void => {
         const program = Effect.sync(() => decodeKnownEnvelope(raw)).pipe(
             Effect.flatMap((decoded) => {
                 if (decoded._tag !== "Right") {
@@ -48,10 +45,19 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         );
 
         Effect.runSync(program);
+    };
+
+    socket.on("connect", () => {
+        send("lobby.join.request", { desiredCity: state.local.city });
     });
+    socket.on("event", onServerEvent);
 
     return {
         socket,
-        send
+        send,
+        stop: () => {
+            socket.off("event", onServerEvent);
+            socket.disconnect();
+        }
     };
 };

@@ -41,6 +41,14 @@ export type CommandResult<T> =
     | { ok: true; value: T }
     | { ok: false; reason: RuntimeRejectReason };
 
+export const okResult = <T>(value: T): CommandResult<T> => {
+    return { ok: true, value };
+};
+
+export const rejectResult = (reason: RuntimeRejectReason): CommandResult<never> => {
+    return { ok: false, reason };
+};
+
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
     mapMax: 24576,

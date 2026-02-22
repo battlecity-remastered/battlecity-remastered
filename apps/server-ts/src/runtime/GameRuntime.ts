@@ -37,14 +37,17 @@ export class GameRuntime {
     }
 
     public handleRawEventEffect(socketId: string, raw: unknown): Effect.Effect<void> {
-        return Effect.sync(() => {
+        return Effect.suspend(() => {
             const decoded = decodeKnownEnvelope(raw);
             if (decoded._tag !== "Right") {
-                this.broadcaster.reject(socketId, "invalid_envelope");
-                return;
+                return Effect.sync(() => {
+                    this.broadcaster.reject(socketId, "invalid_envelope");
+                });
             }
 
-            this.handleEvent(socketId, decoded.right);
+            return Effect.sync(() => {
+                this.handleEvent(socketId, decoded.right);
+            });
         });
     }
 

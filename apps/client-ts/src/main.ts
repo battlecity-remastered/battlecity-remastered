@@ -5,11 +5,17 @@ import { startGameLoop } from "./app/loop.js";
 import { registerInputHandlers } from "./app/input.js";
 
 const state = createClientState();
-registerInputHandlers(state);
+const unregisterInput = registerInputHandlers(state);
 const network = createSocketRuntime(state);
 const scene = await createSceneRuntime(state);
+const loop = startGameLoop(state, network.send);
 
-startGameLoop(state, network.send);
 scene.app.ticker.add(() => {
     scene.render();
+});
+
+window.addEventListener("beforeunload", () => {
+    loop.stop();
+    unregisterInput();
+    network.stop();
 });

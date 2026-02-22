@@ -9,6 +9,7 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
+        "test": "node --test --import tsx test/*.test.ts",
         "typecheck": "tsc --noEmit -p tsconfig.json"
     },
     "dependencies": {

@@ -7,10 +7,14 @@ import { buildTickPlan } from "./intents.js";
 const TICK_MS = 100;
 const MAP_MAX = 24576;
 
-export const startGameLoop = (state: ClientState, send: EventSender): void => {
+export type LoopRuntime = {
+    stop: () => void;
+};
+
+export const startGameLoop = (state: ClientState, send: EventSender): LoopRuntime => {
     let lastTickAt = Date.now();
 
-    setInterval(() => {
+    const timer = window.setInterval(() => {
         const now = Date.now();
         const dtMs = Math.max(1, now - lastTickAt);
         lastTickAt = now;
@@ -28,10 +32,18 @@ export const startGameLoop = (state: ClientState, send: EventSender): void => {
             state.local.y = moved.y;
         }
 
-        Effect.runSync(Effect.forEach(plan.intents, (intent) => {
-            return Effect.sync(() => {
-                send(intent.type, intent.payload);
-            });
-        }));
+        Effect.runSync(
+            Effect.forEach(plan.intents, (intent) => {
+                return Effect.sync(() => {
+                    send(intent.type, intent.payload);
+                });
+            }, { discard: true })
+        );
     }, TICK_MS);
+
+    return {
+        stop: () => {
+            window.clearInterval(timer);
+        }
+    };
 };

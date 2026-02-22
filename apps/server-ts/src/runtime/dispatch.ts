@@ -25,6 +25,23 @@ type HandlerMap = {
     [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K>;
 };
 
+type RuntimeCommandResult<T> =
+    | { ok: true; value: T }
+    | { ok: false; reason: string };
+
+const handleCommandResult = <T>(
+    socketId: string,
+    context: DispatchContext,
+    result: RuntimeCommandResult<T>,
+    onOk: (value: T) => void
+): void => {
+    if (!result.ok) {
+        context.broadcaster.reject(socketId, result.reason);
+        return;
+    }
+    onOk(result.value);
+};
+
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
         const city = typeof payload.desiredCity === "number"
@@ -46,58 +63,73 @@ const handlers: HandlerMap = {
         emitPlayersSnapshot(context.state, context.emitter);
     },
     "bullet.fire.request": (socketId, payload, context) => {
-        const result = createBulletFromRequest(
-            context.state,
+        handleCommandResult(
             socketId,
-            payload,
-            context.config,
-            context.nextSeq
+            context,
+            createBulletFromRequest(
+                context.state,
+                socketId,
+                payload,
+                context.config,
+                context.nextSeq
+            ),
+            (bullet) => {
+                context.emitter.emit("bullet.fired", {
+                    id: bullet.id,
+                    ownerId: bullet.ownerId,
+                    city: bullet.city,
+                    position: {
+                        x: bullet.x,
+                        y: bullet.y
+                    },
+                    direction: bullet.direction,
+                    type: bullet.type
+                });
+            }
         );
-        if (!result.ok) {
-            context.broadcaster.reject(socketId, result.reason);
-            return;
-        }
-
-        const bullet = result.value;
-        context.emitter.emit("bullet.fired", {
-            id: bullet.id,
-            ownerId: bullet.ownerId,
-            city: bullet.city,
-            position: {
-                x: bullet.x,
-                y: bullet.y
-            },
-            direction: bullet.direction,
-            type: bullet.type
-        });
     },
     "building.place.request": (socketId, payload, context) => {
-        const result = placeBuildingFromRequest(
-            context.state,
+        handleCommandResult(
             socketId,
-            payload,
-            context.config,
-            context.nextSeq
+            context,
+            placeBuildingFromRequest(
+                context.state,
+                socketId,
+                payload,
+                context.config,
+                context.nextSeq
+            ),
+            (building) => {
+                context.emitter.emit("building.placed", building);
+            }
         );
-        if (!result.ok) {
-            context.broadcaster.reject(socketId, result.reason);
-            return;
-        }
-
-        context.emitter.emit("building.placed", result.value);
     },
     "building.demolish.request": (socketId, payload, context) => {
-        const result = demolishBuildingFromRequest(context.state, socketId, payload);
-        if (!result.ok) {
-            context.broadcaster.reject(socketId, result.reason);
-            return;
-        }
-
-        context.emitter.emit("building.demolished", {
-            id: result.value.id,
-            cityId: result.value.cityId
-        });
+        handleCommandResult(
+            socketId,
+            context,
+            demolishBuildingFromRequest(context.state, socketId, payload),
+            (building) => {
+                context.emitter.emit("building.demolished", {
+                    id: building.id,
+                    cityId: building.cityId
+                });
+            }
+        );
     }
+};
+
+const dispatchByType = <TType extends keyof KnownEventPayloadByType>(
+    socketId: string,
+    type: TType,
+    payload: KnownEventPayloadByType[TType],
+    context: DispatchContext
+): void => {
+    const handler = handlers[type] as RuntimeHandler<TType> | undefined;
+    if (!handler) {
+        return;
+    }
+    handler(socketId, payload, context);
 };
 
 export const dispatchRuntimeEvent = (
@@ -105,9 +137,10 @@ export const dispatchRuntimeEvent = (
     event: KnownTypedEventEnvelope,
     context: DispatchContext
 ): void => {
-    const handler = handlers[event.type];
-    if (!handler) {
-        return;
-    }
-    handler(socketId, event.payload as never, context);
+    dispatchByType(
+        socketId,
+        event.type,
+        event.payload as KnownEventPayloadByType[typeof event.type],
+        context
+    );
 };
