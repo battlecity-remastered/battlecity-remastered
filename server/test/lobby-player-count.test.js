@@ -3,10 +3,10 @@
 const assert = require("assert");
 const { test, beforeEach, afterEach } = require("node:test");
 const { fork } = require("child_process");
-const path = require("path");
 const { clearTimeout, setTimeout } = require("timers");
 const { setTimeout: delay } = require("timers/promises");
-const { io } = require(path.join(__dirname, "..", "..", "client", "node_modules", "socket.io-client"));
+const { io } = require("socket.io-client");
+const path = require("path");
 
 let serverProcess = null;
 let port = null;

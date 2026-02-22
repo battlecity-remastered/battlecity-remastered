@@ -18,8 +18,6 @@ test("releasing player inventory frees city stock so factories can rebuild", () 
     const granted = cityManager.recordInventoryPickup(socketId, CITY_ID, ITEM_TYPES.MINE, ITEM_CAPS.MINE);
     assert.equal(granted, ITEM_CAPS.MINE);
 
-    const outstandingBefore = factory.getCityOutstandingItemCount(CITY_ID, ITEM_TYPES.MINE);
-
     cityManager.releasePlayerInventory(socketId);
 
     const outstandingAfter = factory.getCityOutstandingItemCount(CITY_ID, ITEM_TYPES.MINE);

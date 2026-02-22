@@ -51,7 +51,11 @@ const featureFiles = fs.readdirSync(__dirname)
 
 global.__tagFilter = tagFilter;
 
-runFeatures(featureFiles).catch((error) => {
-    process.exitCode = 1;
-    console.error(error);
-});
+runFeatures(featureFiles)
+    .catch((error) => {
+        process.exitCode = 1;
+        console.error(error);
+    })
+    .finally(() => {
+        process.exit(process.exitCode || 0);
+    });

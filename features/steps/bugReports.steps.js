@@ -2,9 +2,18 @@
 
 const assert = require("assert");
 const { setTimeout: delay } = require("timers/promises");
-const { Given, When, Then, Pending } = require("../localCucumber.js");
+const { Given, When, Then, Before, After, Pending } = require("../localCucumber.js");
 
 const pendingReason = "Bug-report scenario not yet automated; implement gameplay harness before enabling assertions.";
+
+Before(async function () {
+    await this.startServer();
+});
+
+After(async function () {
+    await this.closeSockets();
+    await this.stopServer();
+});
 
 [
     "an AI city has been destroyed by an orb",

@@ -2,6 +2,9 @@
   "name": "battlecity-js-remake-root",
   "private": true,
   "workspaces": [
+    "apps/*",
+    "packages/*",
+    "bot",
     "client",
     "server"
   ],
@@ -11,11 +14,16 @@
     "build": "npm run build --workspace client",
     "start": "npm run start --workspace server",
     "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
-    "cucumber": "node features/run-cucumber.js"
+    "cucumber": "node features/run-cucumber.js",
+    "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": "^23.0.0"
   },
   "dependencies": {
     "discord": "^0.8.2",

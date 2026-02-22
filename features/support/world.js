@@ -4,7 +4,7 @@ const path = require("path");
 const { fork } = require("child_process");
 const { pathToFileURL } = require("url");
 const { setTimeout: delay } = require("timers/promises");
-const { io } = require("../../bot/node_modules/socket.io-client");
+const { io } = require("socket.io-client");
 const { setWorldConstructor } = require("../localCucumber.js");
 
 const SERVER_START_TIMEOUT_MS = 10000;
