@@ -15,6 +15,7 @@ This document defines the first implementation guardrails for the TypeScript + E
 - Legacy cucumber harness: `npm run cucumber`
 - Rewrite typecheck: `npm run rewrite:typecheck`
 - Rewrite protocol inventory report: `npm run rewrite:event-inventory`
+- Rewrite strict guardrail: `npm run rewrite:check:strict`
 
 ## Protocol Coverage Guardrail
 
@@ -26,10 +27,11 @@ This document defines the first implementation guardrails for the TypeScript + E
 - It compares discovered event names against `EventType` in `packages/protocol/src/envelope.ts`.
 - Missing events are reported so protocol migration can be tracked incrementally.
 - Use `npm run rewrite:event-inventory:strict` to fail CI once full protocol coverage is reached.
+- CI now runs strict rewrite gates (`npm run rewrite:check:strict`) and legacy tests.
 
 ## Exit Criteria For Phase 0
 
 1. `npm run rewrite:typecheck` passes.
-2. Event inventory report is generated and reviewed.
+2. Event inventory strict check passes with no missing protocol events.
 3. Node version in CI is `23.x`.
 4. Typed protocol decoding is used by rewrite app entrypoints.

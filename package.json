@@ -8,19 +8,20 @@
     "client",
     "server"
   ],
-  "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
-    "test": "npm run test --workspace server && npm run test --workspace client",
-    "lint": "npx eslint client server",
-    "build": "npm run build --workspace client",
-    "start": "npm run start --workspace server",
-    "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
-    "cucumber": "node features/run-cucumber.js",
-    "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
-    "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
-    "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
-    "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:event-inventory"
-  },
+    "scripts": {
+        "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+        "test": "npm run test --workspace server && npm run test --workspace client",
+        "lint": "npx eslint client server",
+        "build": "npm run build --workspace client",
+        "start": "npm run start --workspace server",
+        "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
+        "cucumber": "node features/run-cucumber.js",
+        "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
+        "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
+        "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
+        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:event-inventory",
+        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:event-inventory:strict"
+    },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
     "concurrently": "^8.2.2",

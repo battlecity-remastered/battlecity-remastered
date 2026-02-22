@@ -1,8 +1,81 @@
 import { Schema } from "@effect/schema";
 import { Either } from "effect";
-import { EventPayloadSchemas, type EventPayloadByType } from "./events.js";
+import { EventPayloadSchemas, type KnownEventPayloadByType } from "./events.js";
 
 export const EventType = Schema.Literal(
+    "bot:debug",
+    "bot:debug:defenders",
+    "build:denied",
+    "bullet_shot",
+    "chat:history",
+    "chat:message",
+    "chat:rate_limit",
+    "city:defenses",
+    "city:defenses:clear",
+    "city:finance",
+    "city:info",
+    "city:inspect",
+    "city:layout:import",
+    "city:orbed",
+    "connect",
+    "connect_error",
+    "connected",
+    "connection",
+    "defense:remove",
+    "defense:spawn",
+    "demolish:denied",
+    "demolish_building",
+    "disconnect",
+    "disconnected",
+    "enter_game",
+    "event",
+    "event:rejected",
+    "factory:collect",
+    "factory:purge",
+    "hazard:arm",
+    "hazard:remove",
+    "hazard:spawn",
+    "hazard:update",
+    "icon:drop",
+    "icon:drop:result",
+    "icon:pickup",
+    "icon:pickup:confirmed",
+    "icon:pickup:rejected",
+    "icon:pickup:result",
+    "icon:remove",
+    "identity:ack",
+    "identity:update",
+    "item:use",
+    "item:use:rejected",
+    "latency:ping",
+    "latency:pong",
+    "lobby:assignment",
+    "lobby:denied",
+    "lobby:evicted",
+    "lobby:leave",
+    "lobby:refresh",
+    "lobby:released",
+    "lobby:snapshot",
+    "lobby:update",
+    "new_building",
+    "new_icon",
+    "orb:drop",
+    "orb:lost",
+    "orb:result",
+    "ping",
+    "player",
+    "player:bot_damage",
+    "player:dead",
+    "player:health",
+    "player:rejected",
+    "player:removed",
+    "player:status",
+    "players:snapshot",
+    "pong",
+    "population:update",
+    "request_fire",
+    "research:update",
+    "score:promotion",
     "lobby.join.request",
     "player.update",
     "player.health",
@@ -30,14 +103,17 @@ export const EventEnvelope = Schema.Struct({
 
 export type EventEnvelope = Schema.Schema.Type<typeof EventEnvelope>;
 
+type PayloadByEvent<TType extends EventEnvelope["type"]> =
+    TType extends keyof KnownEventPayloadByType ? KnownEventPayloadByType[TType] : unknown;
+
 export type TypedEventEnvelope<TType extends EventEnvelope["type"]> = Omit<EventEnvelope, "type" | "payload"> & {
     type: TType;
-    payload: EventPayloadByType[TType];
+    payload: PayloadByEvent<TType>;
 };
 
 const decodeEnvelope = Schema.decodeUnknownEither(EventEnvelope);
 
-const payloadDecoders = {
+const payloadDecoders: Partial<Record<EventEnvelope["type"], (input: unknown) => Either.Either<unknown, unknown>>> = {
     "lobby.join.request": Schema.decodeUnknownEither(EventPayloadSchemas["lobby.join.request"]),
     "player.update": Schema.decodeUnknownEither(EventPayloadSchemas["player.update"]),
     "player.health": Schema.decodeUnknownEither(EventPayloadSchemas["player.health"]),
@@ -53,7 +129,7 @@ const payloadDecoders = {
     "building.demolished": Schema.decodeUnknownEither(EventPayloadSchemas["building.demolished"]),
     "lobby.assignment": Schema.decodeUnknownEither(EventPayloadSchemas["lobby.assignment"]),
     "chat.message": Schema.decodeUnknownEither(EventPayloadSchemas["chat.message"])
-} as const;
+};
 
 export const decodeTypedEnvelope = (input: unknown) => {
     const envelopeResult = decodeEnvelope(input);
@@ -62,7 +138,12 @@ export const decodeTypedEnvelope = (input: unknown) => {
     }
 
     const envelope = envelopeResult.right;
-    const payloadResult = payloadDecoders[envelope.type](envelope.payload);
+    const payloadDecoder = payloadDecoders[envelope.type];
+    if (!payloadDecoder) {
+        return Either.right(envelope as TypedEventEnvelope<EventEnvelope["type"]>);
+    }
+
+    const payloadResult = payloadDecoder(envelope.payload);
     if (payloadResult._tag === "Left") {
         return payloadResult;
     }
@@ -76,7 +157,7 @@ export const decodeTypedEnvelope = (input: unknown) => {
 export const makeTypedEnvelope = <TType extends EventEnvelope["type"]>(
     type: TType,
     seq: number,
-    payload: EventPayloadByType[TType],
+    payload: PayloadByEvent<TType>,
     version = "1"
 ): TypedEventEnvelope<TType> => {
     return {

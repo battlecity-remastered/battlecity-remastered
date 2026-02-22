@@ -130,6 +130,8 @@ export const EventPayloadSchemas = {
     "chat.message": ChatMessage
 } as const;
 
-export type EventPayloadByType = {
+export type KnownEventPayloadByType = {
     [K in keyof typeof EventPayloadSchemas]: Schema.Schema.Type<(typeof EventPayloadSchemas)[K]>;
 };
+
+export type EventPayloadByType = KnownEventPayloadByType & Record<string, unknown>;

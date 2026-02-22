@@ -1,8 +1,8 @@
 stages:
-  - lint
+  - verify
 
-lint:
-  stage: lint
+verify:
+  stage: verify
   image: node:23
   cache:
     key: ${CI_COMMIT_REF_SLUG}
@@ -12,3 +12,5 @@ lint:
     - npm ci
   script:
     - npm run lint
+    - npm run test
+    - npm run rewrite:check:strict
