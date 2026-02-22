@@ -30,6 +30,17 @@ export type RuntimeConfig = {
     bulletSpeed: number;
 };
 
+export type RuntimeRejectReason =
+    | "invalid_envelope"
+    | "player_not_joined"
+    | "city_mismatch"
+    | "building_not_found"
+    | "owner_mismatch";
+
+export type CommandResult<T> =
+    | { ok: true; value: T }
+    | { ok: false; reason: RuntimeRejectReason };
+
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
     mapMax: 24576,

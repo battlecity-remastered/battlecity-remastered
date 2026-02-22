@@ -136,10 +136,12 @@ export class GameRuntime {
     }
 
     private handleBulletFire(socketId: string, payload: KnownEventPayloadByType["bullet.fire.request"]): void {
-        const bullet = createBulletFromRequest(this.state, socketId, payload, this.config, () => this.nextSeq());
-        if (!bullet) {
+        const result = createBulletFromRequest(this.state, socketId, payload, this.config, () => this.nextSeq());
+        if (!result.ok) {
+            this.broadcaster.reject(socketId, result.reason);
             return;
         }
+        const bullet = result.value;
 
         this.emitter.emit("bullet.fired", {
             id: bullet.id,
@@ -155,24 +157,28 @@ export class GameRuntime {
     }
 
     private handleBuildingPlace(socketId: string, payload: KnownEventPayloadByType["building.place.request"]): void {
-        const building = placeBuildingFromRequest(
+        const result = placeBuildingFromRequest(
             this.state,
             socketId,
             payload,
             this.config,
             () => this.nextSeq()
         );
-        if (!building) {
+        if (!result.ok) {
+            this.broadcaster.reject(socketId, result.reason);
             return;
         }
+        const building = result.value;
         this.emitter.emit("building.placed", building);
     }
 
     private handleBuildingDemolish(socketId: string, payload: KnownEventPayloadByType["building.demolish.request"]): void {
-        const building = demolishBuildingFromRequest(this.state, socketId, payload);
-        if (!building) {
+        const result = demolishBuildingFromRequest(this.state, socketId, payload);
+        if (!result.ok) {
+            this.broadcaster.reject(socketId, result.reason);
             return;
         }
+        const building = result.value;
 
         this.emitter.emit("building.demolished", {
             id: building.id,

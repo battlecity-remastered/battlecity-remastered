@@ -130,7 +130,7 @@ test("bullet tick resolves hits and emits health + death", () => {
 });
 
 test("building placement enforces assigned city", () => {
-    const { runtime, broadcast } = makeHarness();
+    const { runtime, broadcast, rejected } = makeHarness();
 
     runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
     runtime.handleRawEvent("s1", makeEnvelope("building.place.request", 2, {
@@ -143,10 +143,12 @@ test("building placement enforces assigned city", () => {
 
     const placed = broadcast.filter((event) => event.type === "building.placed");
     assert.equal(placed.length, 0);
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0]?.reason, "city_mismatch");
 });
 
 test("building demolish checks ownerId when provided", () => {
-    const { runtime, broadcast } = makeHarness();
+    const { runtime, broadcast, rejected } = makeHarness();
 
     runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
     runtime.handleRawEvent("s1", makeEnvelope("building.place.request", 2, {
@@ -169,4 +171,34 @@ test("building demolish checks ownerId when provided", () => {
 
     const demolished = broadcast.filter((event) => event.type === "building.demolished");
     assert.equal(demolished.length, 0);
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0]?.reason, "owner_mismatch");
+});
+
+test("bullet fire before join is rejected", () => {
+    const { runtime, rejected } = makeHarness();
+
+    runtime.handleRawEvent("s1", makeEnvelope("bullet.fire.request", 1, {
+        ownerId: "s1",
+        position: { x: 32, y: 32 },
+        direction: 0,
+        type: 0
+    }));
+
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0]?.reason, "player_not_joined");
+});
+
+test("demolish rejects missing building id", () => {
+    const { runtime, rejected } = makeHarness();
+
+    runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("s1", makeEnvelope("building.demolish.request", 2, {
+        id: "missing_building",
+        cityId: 1,
+        ownerId: "s1"
+    }));
+
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0]?.reason, "building_not_found");
 });
