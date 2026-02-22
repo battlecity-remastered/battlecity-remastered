@@ -121,23 +121,18 @@ export type KnownTypedEventEnvelope<TType extends KnownEventType = KnownEventTyp
 
 const decodeEnvelope = Schema.decodeUnknownEither(EventEnvelope);
 
-const payloadDecoders: Partial<Record<EventEnvelope["type"], (input: unknown) => Either.Either<unknown, unknown>>> = {
-    "lobby.join.request": Schema.decodeUnknownEither(EventPayloadSchemas["lobby.join.request"]),
-    "player.update": Schema.decodeUnknownEither(EventPayloadSchemas["player.update"]),
-    "player.health": Schema.decodeUnknownEither(EventPayloadSchemas["player.health"]),
-    "player.dead": Schema.decodeUnknownEither(EventPayloadSchemas["player.dead"]),
-    "player.removed": Schema.decodeUnknownEither(EventPayloadSchemas["player.removed"]),
-    "players.snapshot": Schema.decodeUnknownEither(EventPayloadSchemas["players.snapshot"]),
-    "bullet.fire.request": Schema.decodeUnknownEither(EventPayloadSchemas["bullet.fire.request"]),
-    "bullet.fired": Schema.decodeUnknownEither(EventPayloadSchemas["bullet.fired"]),
-    "bullet.resolved": Schema.decodeUnknownEither(EventPayloadSchemas["bullet.resolved"]),
-    "building.place.request": Schema.decodeUnknownEither(EventPayloadSchemas["building.place.request"]),
-    "building.placed": Schema.decodeUnknownEither(EventPayloadSchemas["building.placed"]),
-    "building.demolish.request": Schema.decodeUnknownEither(EventPayloadSchemas["building.demolish.request"]),
-    "building.demolished": Schema.decodeUnknownEither(EventPayloadSchemas["building.demolished"]),
-    "lobby.assignment": Schema.decodeUnknownEither(EventPayloadSchemas["lobby.assignment"]),
-    "chat.message": Schema.decodeUnknownEither(EventPayloadSchemas["chat.message"])
+export const KnownEventTypes = Object.keys(EventPayloadSchemas) as ReadonlyArray<KnownEventType>;
+
+const decodeUnknownPayload = (eventType: KnownEventType) => {
+    const schema = EventPayloadSchemas[eventType] as unknown as Schema.Schema<unknown, unknown, never>;
+    return Schema.decodeUnknownEither(schema);
 };
+
+const payloadDecoders = Object.fromEntries(
+    KnownEventTypes.map((eventType) => {
+        return [eventType, decodeUnknownPayload(eventType)];
+    })
+) as Partial<Record<EventEnvelope["type"], (input: unknown) => Either.Either<unknown, unknown>>>;
 
 export const decodeTypedEnvelope = (input: unknown) => {
     const envelopeResult = decodeEnvelope(input);
@@ -163,7 +158,7 @@ export const decodeTypedEnvelope = (input: unknown) => {
 };
 
 const hasKnownSchema = (type: EventEnvelope["type"]): type is KnownEventType => {
-    return Object.hasOwn(EventPayloadSchemas, type);
+    return KnownEventTypes.includes(type as KnownEventType);
 };
 
 export const decodeKnownEnvelope = (input: unknown) => {

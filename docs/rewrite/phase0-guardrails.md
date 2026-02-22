@@ -19,6 +19,8 @@ This document defines the first implementation guardrails for the TypeScript + E
 - Rewrite complexity report: `npm run rewrite:complexity`
 - Rewrite duplication report: `npm run rewrite:duplication`
 - Rewrite dependency cycle report: `npm run rewrite:cycles`
+- Rewrite import extension report: `npm run rewrite:imports`
+- Rewrite maintainability report: `npm run rewrite:maintainability`
 - Rewrite strict guardrail: `npm run rewrite:check:strict`
 
 ## Protocol Coverage Guardrail
@@ -36,6 +38,7 @@ This document defines the first implementation guardrails for the TypeScript + E
   - function complexity threshold regressions (`rewrite:complexity:strict`)
   - duplicate block threshold regressions (`rewrite:duplication:strict`)
   - dependency cycles across rewrite modules (`rewrite:cycles:strict`)
+  - relative imports that omit explicit ESM runtime extensions (`rewrite:imports:strict`)
 
 ## Exit Criteria For Phase 0
 
@@ -43,6 +46,7 @@ This document defines the first implementation guardrails for the TypeScript + E
 2. `npm run rewrite:test` passes.
 3. Event inventory strict check passes with no missing protocol events.
 4. Complexity and duplication strict checks pass.
-5. Rewrite dependency cycle strict check passes.
-6. Node version in CI is `23.x`.
-7. Typed protocol decoding is used by rewrite app entrypoints.
+5. Rewrite dependency cycle and import-extension strict checks pass.
+6. Maintainability strict checks pass.
+7. Node version in CI is `23.x`.
+8. Typed protocol decoding is used by rewrite app entrypoints.

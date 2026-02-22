@@ -128,3 +128,45 @@ test("bullet tick resolves hits and emits health + death", () => {
     const deadEvents = broadcast.filter((event) => event.type === "player.dead");
     assert.ok(deadEvents.some((event) => (event.payload as { id: string }).id === "target"));
 });
+
+test("building placement enforces assigned city", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("s1", makeEnvelope("building.place.request", 2, {
+        ownerId: "s1",
+        cityId: 3,
+        type: 109,
+        tileX: 5,
+        tileY: 6
+    }));
+
+    const placed = broadcast.filter((event) => event.type === "building.placed");
+    assert.equal(placed.length, 0);
+});
+
+test("building demolish checks ownerId when provided", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("s1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("s1", makeEnvelope("building.place.request", 2, {
+        ownerId: "s1",
+        cityId: 2,
+        type: 109,
+        tileX: 5,
+        tileY: 6
+    }));
+
+    const placed = broadcast.find((event) => event.type === "building.placed");
+    assert.ok(placed);
+    const placedPayload = placed.payload as { id: string; cityId: number };
+
+    runtime.handleRawEvent("s1", makeEnvelope("building.demolish.request", 3, {
+        id: placedPayload.id,
+        cityId: placedPayload.cityId,
+        ownerId: "someone-else"
+    }));
+
+    const demolished = broadcast.filter((event) => event.type === "building.demolished");
+    assert.equal(demolished.length, 0);
+});

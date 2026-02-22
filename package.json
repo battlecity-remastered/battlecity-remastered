@@ -26,10 +26,12 @@
         "rewrite:duplication:strict": "node scripts/rewrite-duplication-report.mjs --strict",
         "rewrite:cycles": "node scripts/rewrite-dependency-cycles.mjs",
         "rewrite:cycles:strict": "node scripts/rewrite-dependency-cycles.mjs --strict",
+        "rewrite:imports": "node scripts/rewrite-import-extension-report.mjs",
+        "rewrite:imports:strict": "node scripts/rewrite-import-extension-report.mjs --strict",
         "rewrite:maintainability": "node scripts/rewrite-maintainability-report.mjs",
         "rewrite:maintainability:strict": "node scripts/rewrite-maintainability-report.mjs --strict",
-        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication && npm run rewrite:cycles && npm run rewrite:maintainability",
-        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict && npm run rewrite:cycles:strict && npm run rewrite:maintainability:strict"
+        "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication && npm run rewrite:cycles && npm run rewrite:imports && npm run rewrite:maintainability",
+        "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict && npm run rewrite:cycles:strict && npm run rewrite:imports:strict && npm run rewrite:maintainability:strict"
     },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
