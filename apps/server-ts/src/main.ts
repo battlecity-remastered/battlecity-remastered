@@ -10,8 +10,8 @@ import {
     BulletFireRequest as BulletFireRequestSchema,
     BulletFired as BulletFiredSchema,
     BulletResolved as BulletResolvedSchema,
+    decodeTypedEnvelope,
     type EventEnvelope,
-    EventEnvelope as EventEnvelopeSchema,
     LobbyAssignment as LobbyAssignmentSchema,
     LobbyJoinRequest as LobbyJoinRequestSchema,
     makeEnvelope,
@@ -57,7 +57,6 @@ const state: RuntimeState = {
     seq: 0
 };
 
-const decodeEnvelope = Schema.decodeUnknownEither(EventEnvelopeSchema);
 const decodeBuildingPlaceRequest = Schema.decodeUnknownEither(BuildingPlaceRequestSchema);
 const decodeBulletFireRequest = Schema.decodeUnknownEither(BulletFireRequestSchema);
 const decodeBulletFired = Schema.decodeUnknownEither(BulletFiredSchema);
@@ -398,7 +397,7 @@ const tickBullets = (): void => {
 
 io.on("connection", (socket) => {
     socket.on("event", (raw: unknown) => {
-        const decoded = decodeEnvelope(raw);
+        const decoded = decodeTypedEnvelope(raw);
         if (decoded._tag !== "Right") {
             socket.emit("event:rejected", { reason: "invalid_envelope" });
             return;

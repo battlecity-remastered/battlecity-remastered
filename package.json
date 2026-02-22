@@ -16,7 +16,10 @@
     "start": "npm run start --workspace server",
     "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
     "cucumber": "node features/run-cucumber.js",
-    "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts"
+    "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
+    "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
+    "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
+    "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:event-inventory"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

@@ -93,3 +93,43 @@ export const PlayerDead = Schema.Struct({
     id: Schema.String,
     by: Schema.optional(Schema.String)
 });
+
+export const PlayerRemoved = Schema.Struct({
+    id: Schema.String
+});
+
+export const BuildingDemolishRequest = Schema.Struct({
+    id: Schema.String,
+    cityId: Schema.Number,
+    ownerId: Schema.optional(Schema.String)
+});
+
+export const ChatMessage = Schema.Struct({
+    id: Schema.optional(Schema.String),
+    from: Schema.optional(Schema.String),
+    city: Schema.optional(Schema.Number),
+    text: Schema.optional(Schema.String),
+    ts: Schema.optional(Schema.Number)
+});
+
+export const EventPayloadSchemas = {
+    "lobby.join.request": LobbyJoinRequest,
+    "player.update": PlayerUpdate,
+    "player.health": PlayerHealthUpdate,
+    "player.dead": PlayerDead,
+    "player.removed": PlayerRemoved,
+    "players.snapshot": PlayersSnapshot,
+    "bullet.fire.request": BulletFireRequest,
+    "bullet.fired": BulletFired,
+    "bullet.resolved": BulletResolved,
+    "building.place.request": BuildingPlaceRequest,
+    "building.placed": BuildingPlaced,
+    "building.demolish.request": BuildingDemolishRequest,
+    "building.demolished": BuildingDemolished,
+    "lobby.assignment": LobbyAssignment,
+    "chat.message": ChatMessage
+} as const;
+
+export type EventPayloadByType = {
+    [K in keyof typeof EventPayloadSchemas]: Schema.Schema.Type<(typeof EventPayloadSchemas)[K]>;
+};

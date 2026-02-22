@@ -1,13 +1,11 @@
 import { Application } from "pixi.js";
 import { io } from "socket.io-client";
-import { Schema } from "@effect/schema";
 import {
-    EventEnvelope as EventEnvelopeSchema,
+    decodeTypedEnvelope,
     makeEnvelope,
     type EventEnvelope
 } from "@battlecity/protocol";
 
-const decodeEnvelope = Schema.decodeUnknownEither(EventEnvelopeSchema);
 let seq = 0;
 const nextSeq = () => {
     seq += 1;
@@ -88,7 +86,7 @@ setInterval(() => {
 }, 100);
 
 socket.on("event", (payload: unknown) => {
-    const decoded = decodeEnvelope(payload);
+    const decoded = decodeTypedEnvelope(payload);
     if (decoded._tag !== "Right") {
         return;
     }
