@@ -234,6 +234,10 @@ The rewrite should only be considered complete when:
   - Additional S1/S3 authority slice: team chat delivery is now city-scoped, global chat remains broadcast, and join-time chat history is filtered by visibility scope.
   - Additional S5 parity slice: runtime chat tests now assert team/global routing semantics plus join-time history filtering.
   - Additional S4 maintainability slice: dispatch helper extraction (`dispatch-support.ts`) keeps strict file-size gate green while preserving handler behavior.
+  - Additional S2/S3 client ingress slice: typed network router (`decodeServerEnvelope`) now centralizes alias normalization + schema decode before event application, with explicit malformed-envelope regression tests.
+  - Additional S2 keyboard parity slice: client key aliases now include `S/Down`, `E`, `O`, `H`, and `Delete` while preserving prior request intents.
+  - Additional S1/S4 adapter slice: orb notifier now resolves canonical runtime user identity and uses an Effect-based Discord webhook transport when configured.
+  - Additional S5 parity slice: notifier adapter behavior and router decode/canonicalization paths now have dedicated tests.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.
   - Full legacy build-tree, inventory icon, defense, fake-city, bot, and map-loader parity.

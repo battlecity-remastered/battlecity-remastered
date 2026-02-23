@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (authoritative chat visibility/history parity, dispatch maintainability refactor, and regression tests).
+- `S5` checkpoint after additional `S2 -> S4 -> S5` parity slice delivery (client ingress router hardening, keyboard semantic expansion, async-safe Discord adapter integration, and regression tests).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -30,17 +30,17 @@
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
 | S1-18 | done | Defense authority now covers occupancy, damage/update/remove, and orb city cleanup lifecycle |
 | S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards and runtime blocking tiles (`hit_terrain`); full map-loader-fed terrain parity remains coupled to S1-24 |
-| S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow and validated by runtime test harness |
+| S1-26 | done | Orb victory notifier now resolves canonical runtime user identity, posts through Effect-based Discord webhook adapter when configured, and remains covered by runtime tests |
 | S1-12 | done | House attachment + population tick/remove authority implemented via `PopulationService` with canonical `population.update` emissions |
 | S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract compatibility expanded with legacy aliases for `bullet:fired`, `bullet:resolved`, `new_building`, `demolish_building`, and `population:update` in addition to prior payload coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, orb cleanup emission, and scoped chat routing (`team` vs `global`) |
-| S3-04 | in_progress | Client apply path expanded for profile/defense/building lifecycle plus bullet/icon lifecycle and `population.update` state |
+| S3-04 | in_progress | Client apply path remains expanded for profile/defense/building lifecycle plus bullet/icon/population state, with new typed ingress decode router boundary (`network/event-router.ts`) |
 | S3-05 | done | Versioning strategy kept current |
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
-| S2-15 | in_progress | Extended keyboard semantics + new request intents |
-| S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update`, `building.placed`, `building.demolished`, `population.update`, `bullet.fired`, `bullet.resolved`, and `icon.pickup.confirmed` application |
+| S2-15 | in_progress | Keyboard aliases now include legacy-friendly bindings (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing request intents |
+| S2-01 | in_progress | Client event ingress now routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) before application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
 | S4-02 | done | Typed domain errors + rejection mapping (`errors.ts`, `rejections.ts`) |
@@ -49,18 +49,23 @@
 | S4-05 | done | Ref-based runtime state remains active |
 | S4-07 | done | Runtime scope lifecycle remains active |
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
-| S4-08 | in_progress | Effect-based persistence/notification adapters now exercised by live orb/profile flows (`UserStoreAdapter`, `DiscordNotifier`) |
+| S4-08 | done | Effect-based persistence/notification adapters now exercised by live orb/profile flows; Discord adapter supports configured webhook transport with test coverage |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with house/population attachment growth + cleanup authority in addition to identity/profile + defense + bullet/hazard/terrain + orb notifier coverage |
-| S5-09 | in_progress | Client network/event state coverage expanded for `population.update`, `score.profile`, `defense.*`, and bullet/icon lifecycle state |
+| S5-09 | in_progress | Client network/event coverage now also validates typed ingress decode router canonicalization and malformed envelope rejection |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/src/domain/chat/ChatService.ts`
+- `apps/client-ts/src/app/input.ts`
+- `apps/client-ts/src/network/event-router.ts`
+- `apps/client-ts/src/network/socket.ts`
+- `apps/client-ts/test/event-router.test.ts`
+- `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts`
 - `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/src/runtime/dispatch-support.ts`
+- `apps/server-ts/test/discord-notifier.test.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
 - `docs/parity-checklist.md`
 - `docs/event-parity-matrix.md`
+- `docs/event-versioning.md`
 - `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`

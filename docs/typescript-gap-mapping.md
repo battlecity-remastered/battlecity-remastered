@@ -18,9 +18,9 @@ Legend:
 
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
-| S0-01 Full gameplay contract inventory | `GameRules.md`; `AGENTS.md`; `client/src/SocketListener.js`; `server/src/*Factory.js` | `docs/typescript-gap-analysis.md` (exists), `docs/typescript-gap-mapping.md` (exists), `docs/parity-checklist.md` (new) | open |
-| S0-02 Event parity matrix (71 runtime events) | `client/src/SocketListener.js::listen`; `server/src/*::listen` | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `docs/event-parity-matrix.md` (new) | open |
-| S0-03 Branch acceptance criteria by subsystem | `server/test/*`; `client/test/*`; `features/*` | `docs/parity-acceptance-criteria.md` (new) | open |
+| S0-01 Full gameplay contract inventory | `GameRules.md`; `AGENTS.md`; `client/src/SocketListener.js`; `server/src/*Factory.js` | `docs/typescript-gap-analysis.md` (exists), `docs/typescript-gap-mapping.md` (exists), `docs/parity-checklist.md` (new) | done |
+| S0-02 Event parity matrix (71 runtime events) | `client/src/SocketListener.js::listen`; `server/src/*::listen` | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `docs/event-parity-matrix.md` (new) | done |
+| S0-03 Branch acceptance criteria by subsystem | `server/test/*`; `client/test/*`; `features/*` | `docs/parity-acceptance-criteria.md` (new) | done |
 
 ## Stage 1: Server Authoritative Gameplay Parity (TS + Effect)
 
@@ -51,7 +51,7 @@ Legend:
 | S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | open |
 | S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new) | open |
 | S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `packages/sim-core/src/collision-world.ts` (new) | in_progress |
-| S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | in_progress |
+| S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | done |
 
 ## Stage 2: Client Gameplay + Rendering + UX Parity (TS)
 
@@ -109,7 +109,7 @@ Legend:
 | S4-05 Replace mutable singleton maps with `Ref`/`SynchronizedRef` state capsules | current `createRuntimeState` map mutation | `apps/server-ts/src/runtime/state/RuntimeStateRef.ts` (new), `apps/client-ts/src/app/ClientStateRef.ts` (new) | done |
 | S4-06 Structured logging/metrics/tracing through Effects | current ad hoc console/debug patterns | `apps/server-ts/src/observability/*.ts` (new), `apps/client-ts/src/observability/*.ts` (new) | in_progress |
 | S4-07 Resource lifecycle management for sockets and scene runtime | current imperative start/stop in `apps/client-ts/src/main.ts` and server main | `apps/client-ts/src/runtime/RuntimeScope.ts` (new), `apps/server-ts/src/runtime/RuntimeScope.ts` (new) | done |
-| S4-08 Effect-based integration adapters (persistence/discord/auth) | legacy adapters in `server/src/users/*`, `server/src/utils/DiscordNotifier.js` | `apps/server-ts/src/adapters/*` (new) | in_progress |
+| S4-08 Effect-based integration adapters (persistence/discord/auth) | legacy adapters in `server/src/users/*`, `server/src/utils/DiscordNotifier.js` | `apps/server-ts/src/adapters/*` (new) | done |
 
 ## Stage 5: Test Parity Mapping
 
@@ -214,20 +214,20 @@ apps/client-ts/src/
 - `S4-01`: in_progress (runtime bootstrap through Layer)
 - `S4-02`: done (typed domain errors + rejection mapping)
 - `S4-06`: in_progress (runtime/client observability modules wired with Effect log programs)
-- `S4-08`: in_progress (persistence + discord adapter scaffolding added)
+- `S4-08`: done (persistence + discord adapters now include webhook transport behavior and dedicated test coverage)
 - `S1-03`: done (identity binding on join)
 - `S1-04`: done (score profile hydration + orb score profile updates)
 - `S1-18`: done (defense deploy + damage/update/remove + city-orbed cleanup + footprint/hazard occupancy parity slice)
-- `S1-26`: in_progress (orb notifier invocation wired + runtime adapter invocation test coverage added)
+- `S1-26`: done (orb notifier now uses canonical runtime user identity and async-safe Effect dispatch with adapter tests)
 - `S1-12`: done (house attachment/population parity slice implemented in `PopulationService` and wired through dispatch/system ticks)
 - `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, legacy bullet/build alias support, plus `population.update` schema coverage)
 - `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, `inventory:update`, `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`)
 - `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
-- `S3-04`: in_progress (client apply expanded for profile + defense + building + bullet/icon lifecycle and `population.update` state)
+- `S3-04`: in_progress (client apply path includes explicit typed ingress decode router + profile/defense/building/bullet/icon/population state handling)
 - `S1-21`: done (team chat now routes only to same-city sockets, global chat remains broadcast, and join-time chat history is visibility-filtered)
 - `S3-03`: in_progress (dispatch chat path now includes explicit scoped routing semantics and helper extraction for strict maintainability compliance)
-- `S2-01`: in_progress (event apply now covers `population.update` in addition to prior server-authoritative world events)
+- `S2-01`: in_progress (event ingress now routes through typed decode/canonicalization boundary before apply, retaining prior authoritative world event handling)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
-- `S5-01,S5-09`: in_progress (server/client/protocol tests expanded for population attachment growth, remove semantics, and alias decode coverage)
+- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter and client ingress router decode/canonicalization behavior)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

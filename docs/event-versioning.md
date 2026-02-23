@@ -14,7 +14,8 @@
 ## Migration Strategy
 1. Keep ingress alias table for legacy clients.
 2. Emit canonical events end-to-end.
-3. Add metrics for alias-hit volume before eventual alias removal.
+3. Route inbound payloads through explicit decode boundaries on both ends (`normalizeInboundEnvelopeType` and client `decodeServerEnvelope`) before applying handlers.
+4. Add metrics for alias-hit volume before eventual alias removal.
 
 ## Compatibility Rule Examples
 - Ingress: `player:health` -> canonical `player.health`.

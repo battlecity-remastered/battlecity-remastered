@@ -20,6 +20,7 @@
 | `lobby:snapshot` | `lobby.snapshot` | server -> client | yes | emit | apply | done |
 | `lobby:released` | `lobby.released` | server -> client | yes | emit | apply | done |
 | `lobby:leave` | `lobby.leave.request` | client -> server | yes | dispatch | send-ready | done |
+| `lobby:join:request` | `lobby.join.request` | client -> server | yes | dispatch | send-ready | done |
 | `build:denied` | `build.denied` | server -> client | yes | emit | apply | done |
 | `demolish:denied` | `demolish.denied` | server -> client | yes | emit | apply | done |
 | `chat:history` | `chat.history` | server -> client | yes | emit | apply | done |
@@ -48,5 +49,6 @@
 
 ## Known Gaps
 - Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
+- Client ingress now canonicalizes aliases through `decodeServerEnvelope`, but broad UI module parity is still incomplete.
 - Hazard events are now state-applied and include orb city cleanup reasons; dedicated hazard art/animation parity remains partial.
 - Inventory/item/icon/defense/building/population events are authoritative and state-applied, but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.
