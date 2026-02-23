@@ -147,6 +147,13 @@ export type ClientState = {
         surfaceWidth: number;
         surfaceHeight: number;
     };
+    ui: {
+        showHud: boolean;
+        showHelpModal: boolean;
+        showMapModal: boolean;
+        showOptionsModal: boolean;
+        overlaysOpacity: number;
+    };
 };
 
 export const createClientState = (): ClientState => {
@@ -221,6 +228,13 @@ export const createClientState = (): ClientState => {
             inside: false,
             surfaceWidth: 0,
             surfaceHeight: 0
+        },
+        ui: {
+            showHud: true,
+            showHelpModal: false,
+            showMapModal: false,
+            showOptionsModal: false,
+            overlaysOpacity: 0.66
         }
     };
 };

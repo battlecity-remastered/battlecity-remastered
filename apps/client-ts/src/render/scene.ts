@@ -303,7 +303,10 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
             sprite.position.set(bullet.x, bullet.y);
         }
 
-        hud.text = buildHudLines(state).join("\n");
+        hud.visible = state.ui.showHud;
+        if (state.ui.showHud) {
+            hud.text = buildHudLines(state).join("\n");
+        }
     };
 
     return {

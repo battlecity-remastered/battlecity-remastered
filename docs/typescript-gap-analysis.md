@@ -267,3 +267,14 @@ The rewrite should only be considered complete when:
 - S5 gate tightening:
   - Added `typecheck` gates to both `.github/workflows/test.yml` and `.gitlab-ci.yml`.
 - Validation gates for this checkpoint all pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.
+
+## Implementation Status Update (2026-02-23, checkpoint 4)
+- S2 modal parity slices:
+  - Added help modal runtime overlay (`apps/client-ts/src/ui/help/HelpModal.ts`) with `F1` hotkey toggle.
+  - Added map modal runtime overlay (`apps/client-ts/src/ui/map/MapModal.ts`) with `F2` hotkey toggle and assignment/world telemetry.
+  - Added options modal runtime overlay (`apps/client-ts/src/ui/options/OptionsModal.ts`) with `F3` hotkey toggle, HUD visibility toggle, and overlay opacity controls.
+  - Added modal hotkey coordinator (`apps/client-ts/src/ui/modals/ModalHotkeys.ts`) and wired all modal lifecycles into `apps/client-ts/src/main.ts`.
+  - Extended client UI state to carry modal visibility and options (`apps/client-ts/src/app/state.ts`) and wired scene HUD visibility to option state (`apps/client-ts/src/render/scene.ts`).
+- S5 client test parity expansion:
+  - Added modal/hotkey/options helper tests in `apps/client-ts/test/help-map-modal.test.ts`, `apps/client-ts/test/modal-hotkeys.test.ts`, and `apps/client-ts/test/options-modal.test.ts`.
+- Validation gates for this checkpoint pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.

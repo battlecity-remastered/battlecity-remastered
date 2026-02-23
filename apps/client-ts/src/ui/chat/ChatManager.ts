@@ -120,6 +120,8 @@ export const createChatManager = (
 
     return {
         render: () => {
+            panel.style.display = state.ui.showOptionsModal ? "none" : "block";
+            panel.style.opacity = String(state.ui.overlaysOpacity);
             output.textContent = buildChatLines(state).join("\n");
         },
         dispose: () => {

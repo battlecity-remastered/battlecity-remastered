@@ -249,3 +249,10 @@ apps/client-ts/src/
 - `S4-06`: done (structured client socket observability logs in `apps/client-ts/src/network/socket.ts`, complementing runtime logger path).
 - `S5-09`: in_progress (additional client parity tests for lobby/chat helper logic and apply coverage landed).
 - `S5-12`: done (`typecheck` added to GitHub + GitLab parity pipelines).
+
+## Status Update (2026-02-23, checkpoint 4)
+- `S2-20`: in_progress (help modal parity slice implemented and runtime-wired in `apps/client-ts/src/ui/help/HelpModal.ts` + `apps/client-ts/src/main.ts`).
+- `S2-21`: in_progress (map modal parity slice implemented and runtime-wired in `apps/client-ts/src/ui/map/MapModal.ts` + `apps/client-ts/src/main.ts`).
+- `S2-22`: in_progress (options modal parity slice implemented with HUD/overlay controls in `apps/client-ts/src/ui/options/OptionsModal.ts` + `apps/client-ts/src/ui/modals/ModalHotkeys.ts`).
+- `S2-08`: in_progress (HUD visibility now option-driven through client state and scene render path).
+- `S5-09`: in_progress (client UI parity tests now include modal/hotkey/options helper coverage).

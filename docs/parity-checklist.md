@@ -25,6 +25,9 @@
 | S2-16 | Mouse semantics + hit-area sync | rewrite | in_progress | Left/right controls, context suppression, hit-area sync |
 | S2-17 | Lobby UX parity | rewrite | in_progress | New lobby overlay manager surfaces assignment/denial/release runtime state |
 | S2-19 | Chat UX parity | rewrite | in_progress | New chat overlay manager renders history/rate-limit and sends team/global chat requests |
+| S2-20 | Help modal parity | rewrite | in_progress | New help modal (`F1`) now renders control reference overlay parity slice |
+| S2-21 | Map modal parity | rewrite | in_progress | New map modal (`F2`) now renders city/assignment/world telemetry parity slice |
+| S2-22 | Options modal parity | rewrite | in_progress | New options modal (`F3`) now controls HUD visibility and overlay opacity parity slice |
 | S2-28 | Fullscreen/resize/ui interaction parity | rewrite | in_progress | Window/fullscreen lifecycle service wired |
 | S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Modal/audio/radar/tutorial/build-menu full parity pending |
 | S4-01 | Layer-composed domain services | rewrite | in_progress | Runtime bootstrap composed through `RuntimeLayer` |
@@ -37,7 +40,7 @@
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence/discord adapters exercised by authority flows |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | Server parity matrix ports | rewrite | in_progress | Server authority regressions continuously expanded |
 | S5-07 | Client collision/movement tests | rewrite | in_progress | Sim-core + client movement parity tests active |
-| S5-09 | Client UI/network parity tests | rewrite | in_progress | Ingress canonicalization + handler inventory + lobby/chat overlay helper tests added |
+| S5-09 | Client UI/network parity tests | rewrite | in_progress | Ingress canonicalization + handler inventory + lobby/chat/help/map/options modal helper tests added |
 | S5-12 | CI parity gate tightening | rewrite | done | Added `typecheck` gates to both GitHub and GitLab pipelines |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Remaining legacy feature/UI behavior porting tracked explicitly |
 

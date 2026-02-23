@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after closing explicit dispatch/apply coverage assertions, landing lobby/chat client parity slices, and tightening CI typecheck parity gates.
+- `S2` checkpoint after landing help/map/options modal parity slices with runtime hotkeys and coverage tests.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -43,11 +43,14 @@
 | S2-01 | done | Client ingress routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) |
 | S2-02 | done | Client movement uses collision-aware stepping + nearest-safe unstick fallback |
 | S2-03 | done | Client collision helpers landed and wired in gameplay loop |
-| S2-08 | in_progress | HUD + primitive world rendering parity slices active (finance/research/population/building/defense/hazard/bullet/chat telemetry) |
+| S2-08 | in_progress | HUD + primitive world rendering parity slices active (finance/research/population/building/defense/hazard/bullet/chat telemetry) plus options-driven HUD visibility toggle |
 | S2-15 | in_progress | Keyboard aliases include legacy-friendly bindings while preserving intent model |
 | S2-16 | in_progress | Mouse controls/hit-area sync/pointer tracking parity slice active |
 | S2-17 | in_progress | Lobby overlay manager now mirrors assignment/denial/release state in runtime UI layer |
 | S2-19 | in_progress | Chat overlay manager now renders history/rate-limit state and sends team/global requests |
+| S2-20 | in_progress | Help modal parity slice landed with runtime `F1` toggle and control reference surface |
+| S2-21 | in_progress | Map modal parity slice landed with runtime `F2` toggle and assignment/world telemetry surface |
+| S2-22 | in_progress | Options modal parity slice landed with runtime `F3` toggle (`HUD` visibility + overlay opacity controls) |
 | S2-28 | in_progress | Window/fullscreen service handles resize sync and dbl-click toggle lifecycle |
 | Other S2 IDs | deferred | Full visual/audio/modal parity remains documented and intentionally staged |
 | S4-01 | in_progress | Runtime layer composition remains active in server bootstrap |
@@ -60,28 +63,25 @@
 | S4-08 | done | Effect-based persistence/notification adapters exercised by live flows |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests remain expanded across gameplay authority domains |
 | S5-07 | in_progress | Collision/movement parity tests active in sim-core + client suites |
-| S5-09 | in_progress | Client parity tests expanded with ingress canonicalization and handler inventory coverage |
+| S5-09 | in_progress | Client parity tests expanded with ingress canonicalization, handler inventory coverage, and modal hotkey/options helper assertions |
 | S5-12 | done | CI parity gates now include explicit `typecheck` in both GitHub and GitLab pipelines |
 | Other S5 IDs | deferred | Broader legacy behavior-matrix ports remain tracked and explicit |
 
 ## Exact Files Changed In This Delivery
-- `.github/workflows/test.yml`
-- `.gitlab-ci.yml`
-- `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/test/dispatch-coverage.test.ts`
-- `apps/client-ts/src/app/network-events.ts`
+- `apps/client-ts/src/app/state.ts`
 - `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/network/socket.ts`
-- `apps/client-ts/src/ui/lobby/LobbyManager.ts`
+- `apps/client-ts/src/render/scene.ts`
 - `apps/client-ts/src/ui/chat/ChatManager.ts`
-- `apps/client-ts/test/network-handler-coverage.test.ts`
-- `apps/client-ts/test/lobby-manager.test.ts`
-- `apps/client-ts/test/chat-manager.test.ts`
+- `apps/client-ts/src/ui/lobby/LobbyManager.ts`
+- `apps/client-ts/src/ui/help/HelpModal.ts`
+- `apps/client-ts/src/ui/map/MapModal.ts`
+- `apps/client-ts/src/ui/options/OptionsModal.ts`
+- `apps/client-ts/src/ui/modals/ModalHotkeys.ts`
+- `apps/client-ts/test/help-map-modal.test.ts`
+- `apps/client-ts/test/modal-hotkeys.test.ts`
+- `apps/client-ts/test/options-modal.test.ts`
 - `docs/rewrite-progress.md`
 - `docs/parity-checklist.md`
-- `docs/event-parity-matrix.md`
-- `docs/parity-acceptance-criteria.md`
-- `docs/event-versioning.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 

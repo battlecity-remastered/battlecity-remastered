@@ -54,6 +54,8 @@ export const createLobbyManager = (
 
     return {
         render: () => {
+            panel.style.display = state.ui.showOptionsModal ? "none" : "block";
+            panel.style.opacity = String(state.ui.overlaysOpacity);
             panel.textContent = buildLobbyLines(state).join("\n");
         },
         dispose: () => {
