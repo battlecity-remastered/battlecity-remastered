@@ -7,6 +7,7 @@ import { Effect } from "effect";
 import type { ClientState } from "../app/state.js";
 import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
+import { normalizeInboundEnvelopeType } from "./event-adapter.js";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:8121";
 
@@ -33,7 +34,7 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     };
 
     const onServerEvent = (raw: unknown): void => {
-        const program = Effect.sync(() => decodeKnownEnvelope(raw)).pipe(
+        const program = Effect.sync(() => decodeKnownEnvelope(normalizeInboundEnvelopeType(raw))).pipe(
             Effect.flatMap((decoded) => {
                 if (decoded._tag !== "Right") {
                     return Effect.void;

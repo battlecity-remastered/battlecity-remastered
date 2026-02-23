@@ -1,6 +1,7 @@
 import { Schema } from "@effect/schema";
 import { Either } from "effect";
 import { EventPayloadSchemas, type KnownEventPayloadByType } from "./events.js";
+import { canonicalizeEventType } from "./event-type-adapter.js";
 
 export const EventType = Schema.Literal(
     "bot:debug",
@@ -52,11 +53,16 @@ export const EventType = Schema.Literal(
     "lobby:assignment",
     "lobby:denied",
     "lobby:evicted",
+    "lobby:join:request",
     "lobby:leave",
     "lobby:refresh",
     "lobby:released",
     "lobby:snapshot",
     "lobby:update",
+    "lobby.leave.request",
+    "lobby.denied",
+    "lobby.released",
+    "lobby.snapshot",
     "new_building",
     "new_icon",
     "orb:drop",
@@ -141,18 +147,23 @@ export const decodeTypedEnvelope = (input: unknown) => {
     }
 
     const envelope = envelopeResult.right;
-    const payloadDecoder = payloadDecoders[envelope.type];
+    const canonicalType = canonicalizeEventType(envelope.type) as EventEnvelope["type"];
+    const canonicalEnvelope = {
+        ...envelope,
+        type: canonicalType
+    };
+    const payloadDecoder = payloadDecoders[canonicalType];
     if (!payloadDecoder) {
-        return Either.right(envelope as TypedEventEnvelope<EventEnvelope["type"]>);
+        return Either.right(canonicalEnvelope as TypedEventEnvelope<EventEnvelope["type"]>);
     }
 
-    const payloadResult = payloadDecoder(envelope.payload);
+    const payloadResult = payloadDecoder(canonicalEnvelope.payload);
     if (payloadResult._tag === "Left") {
         return payloadResult;
     }
 
     return Either.right({
-        ...envelope,
+        ...canonicalEnvelope,
         payload: payloadResult.right
     } as TypedEventEnvelope<EventEnvelope["type"]>);
 };
@@ -198,8 +209,9 @@ export const makeEnvelope = <TPayload>(
     payload: TPayload,
     version = "1"
 ): EventEnvelope => {
+    const canonicalType = canonicalizeEventType(type);
     return {
-        type,
+        type: canonicalType as EventEnvelope["type"],
         version,
         seq,
         ts: Date.now(),

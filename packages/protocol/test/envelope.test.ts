@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+    canonicalizeEventType,
     decodeKnownEnvelope,
     decodeTypedEnvelope,
     makeKnownEnvelope,
@@ -60,4 +61,28 @@ test("decodeKnownEnvelope rejects unknown event types", () => {
     });
 
     assert.equal(decoded._tag, "Left");
+});
+
+test("decodeKnownEnvelope normalizes legacy alias type names", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "player:health",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            id: "p1",
+            health: 90,
+            maxHealth: 100
+        }
+    });
+
+    assert.equal(decoded._tag, "Right");
+    if (decoded._tag === "Right") {
+        assert.equal(decoded.right.type, "player.health");
+    }
+});
+
+test("canonicalizeEventType maps known legacy aliases to canonical names", () => {
+    assert.equal(canonicalizeEventType("players:snapshot"), "players.snapshot");
+    assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
