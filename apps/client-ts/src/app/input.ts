@@ -13,7 +13,15 @@ const KEY_TO_CONTROL: Record<string, ControlKey> = {
     arrowright: "turnRight",
     " ": "shoot",
     space: "shoot",
-    spacebar: "shoot"
+    spacebar: "shoot",
+    shift: "shift",
+    control: "ctrl",
+    b: "build",
+    x: "demolish",
+    u: "useItem",
+    l: "leaveLobby",
+    r: "research",
+    c: "collectFactory"
 };
 
 const setControlFromKey = (state: ClientState, key: string, value: boolean): void => {

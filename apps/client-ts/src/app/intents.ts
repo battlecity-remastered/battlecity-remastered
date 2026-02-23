@@ -11,6 +11,7 @@ export type Intent<TType extends EnvelopeType = EnvelopeType> = {
 
 const TURN_SPEED_STEPS_PER_SECOND = 12;
 const SHOT_COOLDOWN_MS = 1000;
+const ACTION_COOLDOWN_MS = 800;
 
 export type TickPlan = {
     intents: ReadonlyArray<Intent>;
@@ -45,6 +46,99 @@ const asInitialBuildingIntent = (state: ClientState): Intent<"building.place.req
             tileY: 10
         }
     };
+};
+
+const hasCooldownElapsed = (nowMs: number, lastAt: number): boolean => {
+    return nowMs - lastAt > ACTION_COOLDOWN_MS;
+};
+
+const appendResearchIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.research || !hasCooldownElapsed(nowMs, state.local.lastResearchAt)) {
+        return;
+    }
+    state.local.lastResearchAt = nowMs;
+    intents.push({
+        type: "research.start.request",
+        payload: {
+            cityId: state.local.city,
+            researchType: 1
+        }
+    });
+};
+
+const appendFactoryCollectIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.collectFactory || !hasCooldownElapsed(nowMs, state.local.lastFactoryCollectAt)) {
+        return;
+    }
+    state.local.lastFactoryCollectAt = nowMs;
+    intents.push({
+        type: "factory.collect.request",
+        payload: {
+            cityId: state.local.city,
+            itemType: 0,
+            amount: 1
+        }
+    });
+};
+
+const appendHazardDeployIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.useItem || !hasCooldownElapsed(nowMs, state.local.lastHazardAt)) {
+        return;
+    }
+    state.local.lastHazardAt = nowMs;
+    intents.push({
+        type: "hazard.deploy.request",
+        payload: {
+            cityId: state.local.city,
+            type: 1,
+            position: {
+                x: state.local.x,
+                y: state.local.y
+            },
+            radius: 96,
+            damage: 35,
+            fuseMs: 1500
+        }
+    });
+};
+
+const appendOrbDropIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.build || !hasCooldownElapsed(nowMs, state.local.lastOrbAt)) {
+        return;
+    }
+    state.local.lastOrbAt = nowMs;
+    intents.push({
+        type: "orb.drop.request",
+        payload: {
+            sourceCityId: state.local.city,
+            targetCityId: (state.local.city + 1) % 8
+        }
+    });
+};
+
+const appendLobbyLeaveIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.leaveLobby || !hasCooldownElapsed(nowMs, state.local.lastLobbyLeaveAt)) {
+        return;
+    }
+    state.local.lastLobbyLeaveAt = nowMs;
+    intents.push({
+        type: "lobby.leave.request",
+        payload: {}
+    });
+};
+
+const appendChatIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.ctrl || !state.controls.shift || !hasCooldownElapsed(nowMs, state.local.lastFactoryCollectAt)) {
+        return;
+    }
+    state.local.lastFactoryCollectAt = nowMs;
+    intents.push({
+        type: "chat.message.request",
+        payload: {
+            text: "status",
+            scope: "team"
+        }
+    });
 };
 
 const resolveDirection = (state: ClientState, dtMs: number): number => {
@@ -97,6 +191,13 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
         state.local.placedInitialBuilding = true;
         intents.push(asInitialBuildingIntent(state));
     }
+
+    appendResearchIntent(state, nowMs, intents);
+    appendFactoryCollectIntent(state, nowMs, intents);
+    appendHazardDeployIntent(state, nowMs, intents);
+    appendOrbDropIntent(state, nowMs, intents);
+    appendLobbyLeaveIntent(state, nowMs, intents);
+    appendChatIntent(state, nowMs, intents);
 
     return {
         intents,

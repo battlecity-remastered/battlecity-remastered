@@ -75,6 +75,49 @@ const handlers: {
             return;
         }
         state.remotePlayers.delete(payload.id);
+    },
+    "chat.history": (state, payload) => {
+        state.chat.history = [...payload];
+    },
+    "chat.message": (state, payload) => {
+        state.chat.history.push(payload);
+        if (state.chat.history.length > 100) {
+            state.chat.history.shift();
+        }
+    },
+    "chat.rate_limit": (state, payload) => {
+        state.chat.rateLimitedUntil = payload.retryAt;
+    },
+    "city.finance": (state, payload) => {
+        state.cityFinance.set(payload.cityId, {
+            cash: payload.cash,
+            income: payload.income,
+            score: payload.score,
+            researchLevel: payload.researchLevel
+        });
+    },
+    "research.update": (state, payload) => {
+        if (payload.active) {
+            state.research.set(payload.cityId, {
+                active: payload.active,
+                completed: [...payload.completed]
+            });
+            return;
+        }
+        state.research.set(payload.cityId, {
+            completed: [...payload.completed]
+        });
+    },
+    "factory.stock": (state, payload) => {
+        const city = state.factoryStock.get(payload.cityId) ?? new Map<number, number>();
+        city.set(payload.itemType, payload.stock);
+        state.factoryStock.set(payload.cityId, city);
+    },
+    "city.orbed": (state, payload) => {
+        state.events.lastOrbedCityId = payload.targetCityId;
+    },
+    "score.promotion": (state, payload) => {
+        state.events.promotions.push(payload);
     }
 };
 
