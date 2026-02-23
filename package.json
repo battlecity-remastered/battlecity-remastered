@@ -1,21 +1,19 @@
 {
-  "name": "battlecity-js-remake-root",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "bot",
-    "client",
-    "server"
-  ],
+    "name": "battlecity-ts-root",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
     "scripts": {
-        "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
-        "test": "npm run test --workspace server && npm run test --workspace client",
-        "lint": "npx eslint client server",
-        "build": "npm run build --workspace client",
-        "start": "npm run start --workspace server",
-        "coverage": "npm run coverage --workspace server && npm run coverage --workspace client",
-        "cucumber": "node features/run-cucumber.js",
+        "dev": "concurrently \"npm run dev --workspace @battlecity/client-ts\" \"npm run dev --workspace @battlecity/server-ts\"",
+        "dev:client": "npm run dev --workspace @battlecity/client-ts",
+        "dev:server": "npm run dev --workspace @battlecity/server-ts",
+        "build": "npm run build --workspace @battlecity/client-ts",
+        "start": "npm run start --workspace @battlecity/server-ts",
+        "test": "npm run rewrite:test",
+        "lint": "npx eslint scripts/*.mjs eslint.config.js",
+        "typecheck": "npm run rewrite:typecheck",
         "rewrite:typecheck": "npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts",
         "rewrite:event-inventory": "node scripts/rewrite-event-inventory.mjs",
         "rewrite:event-inventory:strict": "node scripts/rewrite-event-inventory.mjs --strict",
@@ -34,16 +32,13 @@
         "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication && npm run rewrite:cycles && npm run rewrite:imports && npm run rewrite:maintainability && npm run rewrite:unused",
         "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict && npm run rewrite:cycles:strict && npm run rewrite:imports:strict && npm run rewrite:maintainability:strict && npm run rewrite:unused"
     },
-  "devDependencies": {
-    "@eslint/js": "^9.39.0",
-    "concurrently": "^8.2.2",
-    "typescript": "^5.9.3"
-  },
-  "engines": {
-    "node": "^23.0.0"
-  },
-  "dependencies": {
-    "discord": "^0.8.2",
-    "discord.js": "^14.25.1"
-  }
+    "devDependencies": {
+        "@eslint/js": "^9.39.0",
+        "concurrently": "^8.2.2",
+        "tsx": "^4.20.6",
+        "typescript": "^5.9.3"
+    },
+    "engines": {
+        "node": "^23.0.0"
+    }
 }

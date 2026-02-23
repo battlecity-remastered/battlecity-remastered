@@ -1,47 +1,36 @@
 # syntax=docker/dockerfile:1.7
-ARG VITE_SOCKET_URL
+ARG VITE_SERVER_URL
 
-# Build the client assets and prepare the workspace
 FROM node:20-bookworm AS builder
-ENV VITE_SOCKET_URL=${VITE_SOCKET_URL}
+ENV VITE_SERVER_URL=${VITE_SERVER_URL}
 WORKDIR /app
 
-# Install dependencies (uses npm workspaces)
 COPY package*.json ./
-COPY client/package*.json client/
-COPY server/package*.json server/
+COPY tsconfig.base.json ./
+COPY apps/client-ts/package*.json apps/client-ts/
+COPY apps/server-ts/package*.json apps/server-ts/
+COPY packages/protocol/package*.json packages/protocol/
+COPY packages/sim-core/package*.json packages/sim-core/
 RUN npm ci
 
-# Copy source code and build the client bundle
 COPY . .
 RUN npm run build
 
-# Production image with only runtime dependencies
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN apk add --no-cache sqlite
+ENV PORT=8121
 
-# Copy static assets and shared modules
-COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/client/data ./client/data
-# Standalone city builder HTML
-COPY --from=builder /app/city-builder.html ./city-builder.html
-
-# Install server production dependencies without bringing over builder node_modules
-WORKDIR /app/server
-COPY --from=builder /app/server/package*.json ./
+COPY package*.json ./
+COPY tsconfig.base.json ./
+COPY apps/client-ts/package*.json apps/client-ts/
+COPY apps/server-ts/package*.json apps/server-ts/
+COPY packages/protocol/package*.json packages/protocol/
+COPY packages/sim-core/package*.json packages/sim-core/
 RUN npm ci --omit=dev
 
-# Copy server source after installing prod dependencies
-COPY --from=builder /app/server ./
-# Seed data assets (e.g., city templates) into a separate seed directory
-COPY --from=builder /app/server/data ./data-seed
+COPY --from=builder /app/apps ./apps
+COPY --from=builder /app/packages ./packages
 
-# Provide an entrypoint that seeds /app/server/data if the mounted volume is empty
-COPY server/docker-entrypoint.sh /app/server/docker-entrypoint.sh
-RUN chmod +x /app/server/docker-entrypoint.sh
-
-EXPOSE 8021
-CMD ["/app/server/docker-entrypoint.sh"]
+EXPOSE 8121
+CMD ["npm", "run", "start", "--workspace", "@battlecity/server-ts"]

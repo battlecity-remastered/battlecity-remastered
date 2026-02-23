@@ -1,5 +1,5 @@
 {
-  description = "BattleCity JS Remake - Nix flake for client/server development";
+  description = "BattleCity TypeScript monorepo dev shell";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -19,21 +19,14 @@
             pkgs.esbuild
             pkgs.watchexec
             pkgs.pre-commit
-            (pkgs.python311.withPackages (ps: [
-              ps.numpy
-              ps.matplotlib
-            ]))
           ];
 
           shellHook = ''
             export BATTLECITY_ROOT="$(pwd)"
-            export PATH="$BATTLECITY_ROOT/client/node_modules/.bin:$BATTLECITY_ROOT/server/node_modules/.bin:$PATH"
-            echo "BattleCity dev shell ready (node $(node --version))."
-            echo "Install deps once: (cd client && npm install) && (cd server && npm install)"
-            echo "Install git hooks: pre-commit install --install-hooks"
-            echo "Run dev servers:"
-            echo "  client -> cd client && npm run dev"
-            echo "  server -> cd server && npm run dev"
+            export PATH="$BATTLECITY_ROOT/node_modules/.bin:$PATH"
+            echo "BattleCity TypeScript dev shell ready (node $(node --version))."
+            echo "Install deps once: npm install"
+            echo "Run dev servers: npm run dev"
           '';
         };
       });

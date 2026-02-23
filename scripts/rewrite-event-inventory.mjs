@@ -44,7 +44,13 @@ const collectProtocolEventTypes = (text) => {
     return events;
 };
 
-const fileListRaw = run("rg", ["--files", "client/src", "server", "apps/client-ts/src", "apps/server-ts/src"]);
+const fileListRaw = run("rg", [
+    "--files",
+    "apps/client-ts/src",
+    "apps/server-ts/src",
+    "packages/protocol/src",
+    "packages/sim-core/src"
+]);
 const files = fileListRaw.split("\n").filter(Boolean);
 const legacyEvents = new Set();
 

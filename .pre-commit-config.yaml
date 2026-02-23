@@ -29,12 +29,12 @@ repos:
         pass_filenames: false
         files: '\.(js|jsx|ts|tsx)$'
 
-  # Tests (run both client and server suites)
+  # Tests (run TypeScript workspace suites)
   - repo: local
     hooks:
       - id: node-tests
-        name: node tests (client + server)
-        entry: bash -c 'npm test --prefix client && npm test --prefix server'
+        name: node tests (ts workspaces)
+        entry: npm run test
         language: system
         pass_filenames: false
 

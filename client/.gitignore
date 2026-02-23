@@ -1,5 +1,0 @@
-./node_modules
-.idea
-static/
-.env.local
-src/defenders/wasm/*.wasm

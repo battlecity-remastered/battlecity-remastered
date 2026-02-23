@@ -1,13 +1,11 @@
 node_modules
-client/node_modules
-server/node_modules
-client/dist
+**/node_modules
+coverage
+**/coverage
 .git
 .github
 .env
 .env.*
-Dockerfile
-.gitignore
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

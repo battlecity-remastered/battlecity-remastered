@@ -14,7 +14,7 @@ jobs:
     environment: build
     runs-on: ubuntu-latest
     env:
-      VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+      VITE_SERVER_URL: ${{ secrets.VITE_SERVER_URL }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
           context: .
           file: Dockerfile
           build-args: |
-            VITE_SOCKET_URL=${{ env.VITE_SOCKET_URL }}
+            VITE_SERVER_URL=${{ env.VITE_SERVER_URL }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

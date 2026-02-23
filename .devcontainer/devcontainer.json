@@ -1,34 +1,24 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
-  "name": "BattleCity JS Remake",
+  "name": "BattleCity TypeScript",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bookworm",
-
-  // Features to add to the dev container. More info: https://containers.dev/features.
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11",
       "installTools": true
     }
   },
-
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [8020, 8021],
+  "forwardPorts": [8220, 8121],
   "portsAttributes": {
-    "8020": {
-      "label": "Vite Dev Server",
+    "8220": {
+      "label": "Client (Vite)",
       "onAutoForward": "notify"
     },
-    "8021": {
-      "label": "Express + Socket.IO Server",
+    "8121": {
+      "label": "Server (Socket.IO)",
       "onAutoForward": "notify"
     }
   },
-
-  // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-
-  // Configure tool-specific properties.
   "customizations": {
     "vscode": {
       "extensions": [
@@ -46,16 +36,12 @@
           "source.fixAll.eslint": "explicit"
         },
         "vim.useSystemClipboard": true,
-        "eslint.validate": ["javascript", "javascriptreact"],
-        "eslint.workingDirectories": ["client", "server"]
+        "eslint.validate": ["javascript", "typescript"]
       }
     }
   },
-
-  // Set environment variables
   "remoteEnv": {
     "BATTLECITY_ROOT": "${containerWorkspaceFolder}",
-    "PATH": "/usr/local/share/npm-global/bin:${containerWorkspaceFolder}/client/node_modules/.bin:${containerWorkspaceFolder}/server/node_modules/.bin:${env:PATH}"
-  },
-  "welcomeMessage": "🚀 Just run `npm run dev` in the root when ready. Dependencies for all workspaces and dev tools are already installed!"
+    "PATH": "/usr/local/share/npm-global/bin:${containerWorkspaceFolder}/node_modules/.bin:${env:PATH}"
+  }
 }

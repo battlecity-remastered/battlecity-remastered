@@ -1,49 +1,22 @@
-version: '3.9'
+version: "3.9"
 
 services:
-  battlecity:
-    image: ghcr.io/your-org/battlecity-js-remake:latest
-    pull_policy: always
-    container_name: battlecity-server
+  battlecity-ts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SERVER_URL: ${VITE_SERVER_URL:-http://localhost:8121}
+    container_name: battlecity-server-ts
     restart: unless-stopped
     environment:
-      # Set to production to ensure caching/static asset behaviour is correct
       NODE_ENV: production
-      # Comma or space separated list of allowed client origins for Socket.IO CORS handling
-      CLIENT_ORIGINS: ${CLIENT_ORIGINS:-https://battlecity.alanhollis.com}
-      # Optional single origin override if you prefer to supply one value
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-}
-      # Google OAuth client IDs allowed to authenticate (comma or semicolon separated)
-      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
-      # Optional legacy single Google client ID
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      # Public base URL that in-world systems use when they need to resolve the server externally
-      BATTLECITY_SERVER: ${BATTLECITY_SERVER:-https://battlecity.alanhollis.com}
-      # Disable procedural fake cities if they are not desired in production
-      SERVER_DISABLE_FAKE_CITIES: ${SERVER_DISABLE_FAKE_CITIES:-false}
-      # Enable the loop profiler only when diagnosing production issues
-      SERVER_LOOP_PROFILER: ${SERVER_LOOP_PROFILER:-false}
-      SERVER_LOOP_REPORT_MS: ${SERVER_LOOP_REPORT_MS:-5000}
-      SERVER_LOOP_SAMPLE_SIZE: ${SERVER_LOOP_SAMPLE_SIZE:-600}
-      # Override if sqlite3 binary lives at a different path in your base image
-      SQLITE3_PATH: ${SQLITE3_PATH:-/usr/bin/sqlite3}
-      # Honour the runtime port if you need to map to something else inside the container
-      PORT: ${PORT:-8021}
+      PORT: ${PORT:-8121}
     ports:
-      - "8021:8021"
-    volumes:
-      - battlecity_data:/app/server/data
+      - "${PORT:-8121}:8121"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || '8021') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || '8121') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
-    labels:
-      # Example: inform caddy or other reverse proxies about the upstream target
-      caddy: battlecity.alanhollis.com
-      caddy.reverse_proxy: "{{upstreams 8021}}"
-
-volumes:
-  battlecity_data:
-    driver: local
