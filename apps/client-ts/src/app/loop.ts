@@ -3,6 +3,7 @@ import type { ClientState } from "./state.js";
 import type { EventSender } from "../network/events.js";
 import { buildTickPlan } from "./intents.js";
 import { moveLocalPlayer } from "../gameplay/player-movement.js";
+import { stepClientBullets } from "../gameplay/bullets/BulletClientService.js";
 
 const TICK_MS = 100;
 
@@ -22,6 +23,7 @@ export const startGameLoop = (state: ClientState, send: EventSender): LoopRuntim
         if (plan.isMoving && state.local.id) {
             moveLocalPlayer(state, plan.direction, dtMs);
         }
+        stepClientBullets(state, dtMs);
 
         Effect.runSync(
             Effect.forEach(plan.intents, (intent) => {

@@ -20,6 +20,8 @@
 | S2-01 | Client event handling surface | rewrite | done | Typed decode/canonicalization boundary active before apply |
 | S2-02 | Core movement + unstick + nearest-safe fallback | rewrite | done | Collision-aware movement with safe fallback |
 | S2-03 | Client collision helpers parity | rewrite | done | Helper modules landed and tested |
+| S2-04 | Building placement client rules + sync behavior | rewrite | in_progress | `Ctrl+B` pointer-tile placement + `Ctrl+X/Delete` pointer-targeted demolish intents now emitted with cooldowns |
+| S2-07 | Bullet client visuals/semantics parity | rewrite | in_progress | Loop-time bullet stepping now updates world bullet positions using type-aware speed mapping |
 | S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD + primitive world render parity slice active |
 | S2-15 | Keyboard semantics | rewrite | in_progress | Legacy-friendly aliases expanded |
 | S2-16 | Mouse semantics + hit-area sync | rewrite | in_progress | Left/right controls, context suppression, hit-area sync |

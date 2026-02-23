@@ -227,6 +227,7 @@ test("bullet lifecycle and icon pickup confirmation apply to local state", () =>
 
     assert.equal(state.bullets.size, 1);
     assert.equal(state.bullets.get("bullet_1")?.x, 320);
+    assert.equal(state.bullets.get("bullet_1")?.speed, 720);
     assert.equal(state.events.lastIconPickupConfirmed?.itemType, 0);
 
     applyServerEvent(state, makeKnownEnvelope("bullet.resolved", 3, {

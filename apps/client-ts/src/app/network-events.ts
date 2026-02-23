@@ -4,6 +4,7 @@ import type {
 } from "@battlecity/protocol";
 import type { ClientState } from "./state.js";
 import { updateFromSnapshot } from "./state.js";
+import { resolveBulletSpeed } from "../gameplay/bullets/BulletClientService.js";
 
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
@@ -121,6 +122,7 @@ const handlers: {
             x: payload.position.x,
             y: payload.position.y,
             direction: payload.direction,
+            speed: resolveBulletSpeed(payload.type),
             type: payload.type
         });
     },

@@ -13,8 +13,9 @@ export type LocalState = {
     lastHazardAt: number;
     lastItemUseAt: number;
     lastOrbAt: number;
+    lastBuildAt: number;
+    lastDemolishAt: number;
     lastLobbyLeaveAt: number;
-    placedInitialBuilding: boolean;
 };
 
 export type RemotePlayer = {
@@ -69,6 +70,7 @@ export type ClientState = {
         x: number;
         y: number;
         direction: number;
+        speed: number;
         type: number;
     }>;
     buildings: Map<string, {
@@ -173,8 +175,9 @@ export const createClientState = (): ClientState => {
             lastHazardAt: 0,
             lastItemUseAt: 0,
             lastOrbAt: 0,
+            lastBuildAt: 0,
+            lastDemolishAt: 0,
             lastLobbyLeaveAt: 0,
-            placedInitialBuilding: false
         },
         remotePlayers: new Map(),
         lobby: {

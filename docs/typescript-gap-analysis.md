@@ -258,6 +258,14 @@ The rewrite should only be considered complete when:
 - S3 contract hardening:
   - Server dispatch coverage is now explicit and regression-enforced via exported handler inventory (`HANDLED_RUNTIME_EVENT_TYPES`) and `apps/server-ts/test/dispatch-coverage.test.ts`.
   - Client apply coverage is now explicit and regression-enforced via exported handler inventory (`APPLIED_SERVER_EVENT_TYPES`) and `apps/client-ts/test/network-handler-coverage.test.ts`.
+
+## Implementation Status Update (2026-02-23, checkpoint 6)
+- Additional S2 gameplay parity slice:
+  - Client input intents now support pointer-tile build placement (`Ctrl+B`) and pointer-targeted demolish requests (`Ctrl+X/Delete`) with cooldown gating.
+- Additional S2 visual parity slice:
+  - Client bullets now advance every loop tick with type-aware speeds (`BulletClientService`) instead of rendering as static spawn markers.
+- Additional S5 parity slice:
+  - Added dedicated bullet-step client tests and expanded item/bullet intent tests to assert build/demolish control semantics.
 - S2 client parity slice expansion:
   - Added lobby overlay manager (`apps/client-ts/src/ui/lobby/LobbyManager.ts`) rendering assignment/denial/release parity telemetry.
   - Added chat overlay manager (`apps/client-ts/src/ui/chat/ChatManager.ts`) rendering history/rate-limit state and sending team/global chat requests (`/g` prefix for global).

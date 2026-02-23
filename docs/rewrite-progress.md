@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S2` checkpoint after landing help/map/options modal parity slices with runtime hotkeys and coverage tests.
+- `S2` checkpoint after landing pointer-tile building/demolish intent parity and client bullet-step visual lifecycle parity.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -43,6 +43,8 @@
 | S2-01 | done | Client ingress routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) |
 | S2-02 | done | Client movement uses collision-aware stepping + nearest-safe unstick fallback |
 | S2-03 | done | Client collision helpers landed and wired in gameplay loop |
+| S2-04 | in_progress | `Ctrl+B` now emits pointer-tile `building.place.request` intents; `Ctrl+X/Delete` now emits pointer-targeted `building.demolish.request` intents |
+| S2-07 | in_progress | Client bullets now step every loop tick with type-aware speed mapping (`BulletClientService`) |
 | S2-08 | in_progress | HUD + primitive world rendering parity slices active (finance/research/population/building/defense/hazard/bullet/chat telemetry) plus options-driven HUD visibility toggle |
 | S2-15 | in_progress | Keyboard aliases include legacy-friendly bindings while preserving intent model |
 | S2-16 | in_progress | Mouse controls/hit-area sync/pointer tracking parity slice active |
@@ -69,21 +71,16 @@
 | Other S5 IDs | deferred | Broader legacy behavior-matrix ports remain tracked and explicit |
 
 ## Exact Files Changed In This Delivery
+- `apps/client-ts/src/app/intents.ts`
+- `apps/client-ts/src/app/loop.ts`
+- `apps/client-ts/src/app/network-events.ts`
 - `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/src/ui/chat/ChatManager.ts`
-- `apps/client-ts/src/ui/lobby/LobbyManager.ts`
-- `apps/client-ts/src/ui/help/HelpModal.ts`
-- `apps/client-ts/src/ui/map/MapModal.ts`
-- `apps/client-ts/src/ui/options/OptionsModal.ts`
-- `apps/client-ts/src/ui/modals/ModalHotkeys.ts`
-- `apps/client-ts/test/help-map-modal.test.ts`
-- `apps/client-ts/test/modal-hotkeys.test.ts`
-- `apps/client-ts/test/options-modal.test.ts`
+- `apps/client-ts/src/gameplay/bullets/BulletClientService.ts`
+- `apps/client-ts/test/bullet-client-service.test.ts`
 - `apps/client-ts/test/item-bullet-intents.test.ts`
-- `docs/rewrite-progress.md`
+- `apps/client-ts/test/network-events.test.ts`
 - `docs/parity-checklist.md`
+- `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 
