@@ -43,6 +43,8 @@
 | S3-04 | Client apply handler expansion | rewrite | in_progress | Added typed ingress router (`decodeServerEnvelope`) ahead of apply path plus prior profile/defense/building/bullet/icon/population handling |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
 | S2-01 | Client event handling surface | rewrite | in_progress | Event ingestion now decodes/canonicalizes through explicit router boundary before apply, including legacy alias coverage |
+| S2-02 | Core movement + unstick + nearest-safe fallback | rewrite | done | Added collision-aware movement (`moveLocalPlayer`) with nearest-safe unstick fallback using `CollisionWorld` primitives |
+| S2-03 | Client collision helpers parity | rewrite | done | Added gameplay collision helpers (`collision-helpers.ts`, `collision-player.ts`) and loop integration |
 | S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD parity slice retained; scene now renders authoritative building/defense/hazard/bullet world objects and city population telemetry |
 | S2-15 | Keyboard semantics | rewrite | in_progress | Extended key aliases (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing gameplay intents |
 | S2-16 | Mouse semantics + hit-area sync | rewrite | in_progress | Added `registerMouseInputHandlers` for left/right click behavior, context-menu suppression, resize-time surface sync, and pointer tracking |
@@ -57,6 +59,7 @@
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence adapter and Discord webhook adapter are exercised by join/orb authority flows with dedicated regression tests |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests now also cover fake-city activation/cooldown, defender/rogue bot authority, and `player:bot_damage` compatibility handling |
+| S5-07 | Client collision/movement parity tests | rewrite | in_progress | Added sim-core collision-world tests and client `moveLocalPlayer` parity tests for blocking + unstick behavior |
 | S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client parity tests now include typed ingress router coverage, mouse semantics, and window/fullscreen service behavior assertions |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 

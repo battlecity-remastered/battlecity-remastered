@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S3` checkpoint after closing S1 fake-city/bot authority parity and extending protocol compatibility with `player:bot_damage`.
+- `S2` checkpoint after landing client collision-aware movement parity slice (`S2-02`/`S2-03`) and movement/collision tests (`S5-07`).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -41,6 +41,8 @@
 | S3-04 | in_progress | Client apply path remains expanded for profile/defense/building lifecycle plus bullet/icon/population state, with new typed ingress decode router boundary (`network/event-router.ts`) |
 | S3-05 | done | Versioning strategy kept current |
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
+| S2-02 | done | Client movement now uses collision-aware stepping + nearest-safe unstick fallback through `moveLocalPlayer` and `CollisionWorld` primitives |
+| S2-03 | done | Client collision helper modules landed (`collision-helpers.ts`, `collision-player.ts`) and are wired in gameplay loop |
 | S2-15 | in_progress | Keyboard aliases now include legacy-friendly bindings (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing request intents |
 | S2-16 | in_progress | Mouse input now maps left/right click controls, suppresses context menu, syncs interaction surface dimensions on resize, and tracks pointer position/inside state |
 | S2-28 | in_progress | Window/fullscreen service now handles resize-driven renderer synchronization and double-click fullscreen toggle lifecycle management |
@@ -56,31 +58,20 @@
 | S4-08 | done | Effect-based persistence/notification adapters now exercised by live orb/profile flows; Discord adapter supports configured webhook transport with test coverage |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with house/population attachment growth + cleanup authority, map decode/loader coverage, city layout parsing coverage, terrain bullet blocking, and orb notifier coverage |
 | S5-09 | in_progress | Client network/event coverage now also validates typed ingress decode router canonicalization and malformed envelope rejection |
+| S5-07 | in_progress | Collision/movement parity tests now include sim-core collision-world coverage and client movement blocking/unstick assertions |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/data/fakeCities.json`
-- `apps/server-ts/src/domain/fake-cities/FakeCityService.ts`
-- `apps/server-ts/src/domain/bots/BotShared.ts`
-- `apps/server-ts/src/domain/bots/DefenderBotService.ts`
-- `apps/server-ts/src/domain/bots/RogueBotService.ts`
-- `apps/server-ts/src/runtime/dispatch-combat.ts`
-- `apps/server-ts/src/layers/RuntimeLayer.ts`
-- `apps/server-ts/src/runtime/system-runtime.ts`
-- `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/src/runtime/types.ts`
-- `apps/server-ts/test/game-runtime.test.ts`
-- `apps/server-ts/test/runtime-layer.test.ts`
-- `packages/protocol/src/events.ts`
-- `packages/protocol/src/event-type-adapter.ts`
-- `packages/protocol/src/envelope.ts`
-- `packages/protocol/test/envelope.test.ts`
-- `docs/event-parity-matrix.md`
-- `docs/event-versioning.md`
-- `docs/parity-acceptance-criteria.md`
+- `apps/client-ts/src/app/loop.ts`
+- `apps/client-ts/src/gameplay/player-movement.ts`
+- `apps/client-ts/src/gameplay/collision/collision-helpers.ts`
+- `apps/client-ts/src/gameplay/collision/collision-player.ts`
+- `apps/client-ts/test/player-movement.test.ts`
+- `packages/sim-core/src/collision-world.ts`
+- `packages/sim-core/src/index.ts`
+- `packages/sim-core/test/collision-world.test.ts`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
-- `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 
 ## Validation Results

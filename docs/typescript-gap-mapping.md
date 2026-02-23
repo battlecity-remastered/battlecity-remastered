@@ -58,8 +58,8 @@ Legend:
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
 | S2-01 Full socket event handling surface | `client/src/SocketListener.js::listen/handleBulletShot/applyHealthUpdate/...` | `apps/client-ts/src/network/socket.ts` (exists), `apps/client-ts/src/app/network-events.ts` (exists), `apps/client-ts/src/network/event-router.ts` (new) | in_progress |
-| S2-02 Core movement + unstick + nearest-safe fallback | `client/src/play.js::movePlayer/attemptUnstick/findNearestSafeOffset` | `apps/client-ts/src/gameplay/player-movement.ts` (new), `packages/sim-core/src/collision-world.ts` (new) | open |
-| S2-03 Client collision helpers parity | `client/src/collision/collision-player.js`; `collision-building.js`; `collision-bullet.js`; `collision-helpers.js` | `apps/client-ts/src/gameplay/collision/*.ts` (new) | open |
+| S2-02 Core movement + unstick + nearest-safe fallback | `client/src/play.js::movePlayer/attemptUnstick/findNearestSafeOffset` | `apps/client-ts/src/gameplay/player-movement.ts` (new), `packages/sim-core/src/collision-world.ts` (new) | done |
+| S2-03 Client collision helpers parity | `client/src/collision/collision-player.js`; `collision-building.js`; `collision-bullet.js`; `collision-helpers.js` | `apps/client-ts/src/gameplay/collision/*.ts` (new) | done |
 | S2-04 Building placement client rules + sync behavior | `client/src/factories/BuildingFactory.js::newBuilding/demolishBuilding/recomputeCityBuildPermissions` | `apps/client-ts/src/gameplay/buildings/BuildingClientService.ts` (new), `apps/client-ts/src/app/intents.ts` (exists) | open |
 | S2-05 Inventory icon stack/select/arm/drop semantics | `client/src/factories/IconFactory.js::pickupIcon/dropSelectedIcon/toggleBombArming/confirmPickup` | `apps/client-ts/src/gameplay/items/IconInventoryService.ts` (new) | open |
 | S2-06 Items/hazards lifecycle on client | `client/src/factories/ItemFactory.js::triggerMine/detonateBombAt/fireBullet/pickupOrbItem/...` | `apps/client-ts/src/gameplay/items/ItemWorldService.ts` (new), `apps/client-ts/src/gameplay/hazards/HazardClientService.ts` (new) | in_progress |
@@ -121,7 +121,7 @@ Legend:
 | S5-04 Port server lobby/assignment/release tests | `server/test/lobby-player-count.test.js`; `player-factory-*.test.js` | `apps/server-ts/test/lobby/*.test.ts` (new) | open |
 | S5-05 Port server inventory/factory duplication tests | `server/test/factory-duplication.test.js`; `icon-drop*.test.js` | `apps/server-ts/test/inventory/*.test.ts` (new) | open |
 | S5-06 Port server security validation tests | `server/test/security-validation.test.js` | `apps/server-ts/test/security/*.test.ts` (new) | open |
-| S5-07 Port client collision/movement tests | `client/test/collision-*.test.*`; `defender-*.test.js` | `apps/client-ts/test/collision/*.test.ts` (new), `packages/sim-core/test/*.test.ts` (exists/expand) | open |
+| S5-07 Port client collision/movement tests | `client/test/collision-*.test.*`; `defender-*.test.js` | `apps/client-ts/test/collision/*.test.ts` (new), `packages/sim-core/test/*.test.ts` (exists/expand) | in_progress |
 | S5-08 Port client item/icon/bullet behavior tests | `client/test/item-factory-*.test.js`; `icon-factory-*.test.js`; `bullet-shot.test.mjs` | `apps/client-ts/test/items/*.test.ts`, `apps/client-ts/test/bullets/*.test.ts` (new) | open |
 | S5-09 Port client UI/label/tutorial tests | `client/test/name-labels.test.mjs`; `tutorial-toggle-visibility.test.mjs`; `input-mouse-hit-area.test.js` | `apps/client-ts/test/ui/*.test.ts` (new) | open |
 | S5-10 Port benchmark/serialization coverage | `server/test/json-bench.js`; `client/test/json-client-bench.js`; `proto-client-bench.js` | `apps/*/test/bench/*.test.ts` (new), `packages/protocol/test` (exists/expand) | open |
@@ -232,6 +232,9 @@ apps/client-ts/src/
 - `S2-16`: in_progress (mouse input module now handles left/right click semantics, context-menu suppression, hit-area sync on resize, and pointer-state tracking)
 - `S2-28`: in_progress (window mode service now synchronizes renderer size on resize and supports fullscreen toggling with lifecycle cleanup)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
+- `S2-02`: done (client movement now uses collision-aware stepping with nearest-safe unstick fallback in `moveLocalPlayer`)
+- `S2-03`: done (client collision helpers now exist under `apps/client-ts/src/gameplay/collision/*` and are wired into loop movement)
+- `S5-07`: in_progress (new sim-core/client movement collision tests added for blocking and unstick behavior)
 - `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, window mode service behaviors, and map/city loader parity coverage)
 - `S1-22`: done (fake-city activation/cooldown lifecycle ported and wired into system ticks/orb cooldown path through `FakeCityService`)
 - `S1-23`: done (defender + rogue bot authority ported with server-side spawn/move/fire/cleanup behavior through `DefenderBotService` + `RogueBotService`)
