@@ -45,6 +45,7 @@
 | S2-01 | Client event handling surface | rewrite | in_progress | Event ingestion now decodes/canonicalizes through explicit router boundary before apply, including legacy alias coverage |
 | S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD parity slice retained; scene now renders authoritative building/defense/hazard/bullet world objects and city population telemetry |
 | S2-15 | Keyboard semantics | rewrite | in_progress | Extended key aliases (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing gameplay intents |
+| S2-16 | Mouse semantics + hit-area sync | rewrite | in_progress | Added `registerMouseInputHandlers` for left/right click behavior, context-menu suppression, resize-time surface sync, and pointer tracking |
 | S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Full parity restoral pending |
 | S4-01 | Layer-composed domain services | rewrite | in_progress | Server bootstrap now composes runtime through `RuntimeLayer` |
 | S4-02 | Typed domain errors/rejections | rewrite | done | Domain error ADT + centralized rejection mapping added |
@@ -55,7 +56,7 @@
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence adapter and Discord webhook adapter are exercised by join/orb authority flows with dedicated regression tests |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for house/population attachment growth + removal semantics, terrain bullet blocking, and orb cleanup emissions |
-| S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network tests now include typed ingress router canonicalization and malformed envelope rejection paths |
+| S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client parity tests now include typed ingress router coverage and mouse input semantics/hit-area synchronization assertions |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 
 ## Exit Criteria Tracking

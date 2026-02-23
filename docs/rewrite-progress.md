@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S2 -> S4 -> S5` parity slice delivery (client ingress router hardening, keyboard semantic expansion, async-safe Discord adapter integration, and regression tests).
+- `S5` checkpoint after additional `S2 -> S5` parity slice delivery (mouse semantics, hit-area sync, right-click behavior, and regression tests).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -40,6 +40,7 @@
 | S3-05 | done | Versioning strategy kept current |
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
 | S2-15 | in_progress | Keyboard aliases now include legacy-friendly bindings (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing request intents |
+| S2-16 | in_progress | Mouse input now maps left/right click controls, suppresses context menu, syncs interaction surface dimensions on resize, and tracks pointer position/inside state |
 | S2-01 | in_progress | Client event ingress now routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) before application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
@@ -55,17 +56,12 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/app/input.ts`
-- `apps/client-ts/src/network/event-router.ts`
-- `apps/client-ts/src/network/socket.ts`
-- `apps/client-ts/test/event-router.test.ts`
-- `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts`
-- `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/test/discord-notifier.test.ts`
-- `apps/server-ts/test/game-runtime.test.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/input/mouse-input.ts`
+- `apps/client-ts/src/main.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/test/mouse-input.test.ts`
 - `docs/parity-checklist.md`
-- `docs/event-parity-matrix.md`
-- `docs/event-versioning.md`
 - `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`

@@ -184,6 +184,7 @@ const buildHudLines = (state: ClientState): string[] => {
         `last pickup: ${lastPickupLine}`,
         `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
         `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`,
+        `pointer: ${Math.round(state.pointer.x)},${Math.round(state.pointer.y)} (${state.pointer.inside ? "in" : "out"})`,
         "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
     ];
 };

@@ -138,6 +138,13 @@ export type ClientState = {
         research: boolean;
         collectFactory: boolean;
     };
+    pointer: {
+        x: number;
+        y: number;
+        inside: boolean;
+        surfaceWidth: number;
+        surfaceHeight: number;
+    };
 };
 
 export const createClientState = (): ClientState => {
@@ -203,6 +210,13 @@ export const createClientState = (): ClientState => {
             leaveLobby: false,
             research: false,
             collectFactory: false
+        },
+        pointer: {
+            x: 0,
+            y: 0,
+            inside: false,
+            surfaceWidth: 0,
+            surfaceHeight: 0
         }
     };
 };

@@ -72,7 +72,7 @@ Legend:
 | S2-13 Muzzle flash + floating points + camera shake | `client/src/effects/muzzleFlash.js`; `floatingPoints.js`; `camera-shake.js` | `apps/client-ts/src/render/effects/*.ts` (new) | open |
 | S2-14 Map loader/orientation behavior | `client/src/mapBuilder.js`; `client/src/cityBuilder.js` | `apps/client-ts/src/world/map-loader.ts` (new), `apps/client-ts/src/world/city-layout.ts` (new) | open |
 | S2-15 Full keyboard semantics (`Shift`, `Ctrl`, `B`, `D`, `U`, etc.) | `client/src/input/input-keyboard.js::attemptPrimaryFire/dropInventoryItem/...` | `apps/client-ts/src/app/input.ts` (exists), `apps/client-ts/src/app/intents.ts` (exists) | in_progress |
-| S2-16 Mouse semantics, hit-area sync, right-click behaviors | `client/src/input/input-mouse-core.js::setupMouseInputsWithPixi/syncHitArea`; `input-mouse.js` | `apps/client-ts/src/input/mouse-input.ts` (new) | open |
+| S2-16 Mouse semantics, hit-area sync, right-click behaviors | `client/src/input/input-mouse-core.js::setupMouseInputsWithPixi/syncHitArea`; `input-mouse.js` | `apps/client-ts/src/input/mouse-input.ts` (new) | in_progress |
 | S2-17 Lobby UX parity (city list, join, denial, release, high scores) | `client/src/lobby/LobbyManager.js::*` | `apps/client-ts/src/ui/lobby/LobbyManager.ts` (new), `apps/client-ts/src/app/network-events.ts` (exists) | open |
 | S2-18 Identity UX parity (Google and local identity flows) | `client/src/identity/IdentityManager.js::*` | `apps/client-ts/src/ui/identity/IdentityManager.ts` (new) | open |
 | S2-19 Chat UX parity | `client/src/ui/ChatManager.js::*` | `apps/client-ts/src/ui/chat/ChatManager.ts` (new) | open |
@@ -228,6 +228,7 @@ apps/client-ts/src/
 - `S1-21`: done (team chat now routes only to same-city sockets, global chat remains broadcast, and join-time chat history is visibility-filtered)
 - `S3-03`: in_progress (dispatch chat path now includes explicit scoped routing semantics and helper extraction for strict maintainability compliance)
 - `S2-01`: in_progress (event ingress now routes through typed decode/canonicalization boundary before apply, retaining prior authoritative world event handling)
+- `S2-16`: in_progress (mouse input module now handles left/right click semantics, context-menu suppression, hit-area sync on resize, and pointer-state tracking)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
-- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter and client ingress router decode/canonicalization behavior)
+- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, and mouse input semantics)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
