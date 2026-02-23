@@ -1056,7 +1056,7 @@ test("orb drop clears target defenses and updates actor score profile", () => {
     assert.ok(hazardRemoved);
 });
 
-test("orb drop invokes notifier adapter with authoritative payload", () => {
+test("orb drop invokes notifier adapter with authoritative payload", async () => {
     const notifications: Array<{ playerId: string; sourceCityId: number; targetCityId: number }> = [];
     const { runtime } = makeHarness({}, {
         notifyOrbVictory: (playerId, sourceCityId, targetCityId) => {
@@ -1074,8 +1074,12 @@ test("orb drop invokes notifier adapter with authoritative payload", () => {
         targetCityId: 2
     }));
 
+    await new Promise<void>((resolve) => {
+        setTimeout(resolve, 0);
+    });
+
     assert.equal(notifications.length, 1);
-    assert.equal(notifications[0]?.playerId, "attacker");
+    assert.equal(notifications[0]?.playerId, "u-attacker");
     assert.equal(notifications[0]?.sourceCityId, 1);
     assert.equal(notifications[0]?.targetCityId, 2);
 });

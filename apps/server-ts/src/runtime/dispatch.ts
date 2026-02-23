@@ -281,7 +281,8 @@ const handlers: HandlerMap = {
                 context.emitter.emitTo(socketId, "score.profile", profile);
             }
             if (context.notifyOrbVictory) {
-                Effect.runSync(context.notifyOrbVictory(socketId, payload.sourceCityId, payload.targetCityId));
+                const userId = resolveSocketUserId(context.state, socketId);
+                Effect.runFork(context.notifyOrbVictory(userId, payload.sourceCityId, payload.targetCityId));
             }
         });
     },
