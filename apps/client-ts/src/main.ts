@@ -11,6 +11,7 @@ import { createHelpModal } from "./ui/help/HelpModal.js";
 import { createMapModal } from "./ui/map/MapModal.js";
 import { createOptionsModal } from "./ui/options/OptionsModal.js";
 import { registerModalHotkeys } from "./ui/modals/ModalHotkeys.js";
+import { createBuildMenu, registerBuildMenuHotkeys } from "./ui/build-menu/BuildMenu.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -21,9 +22,11 @@ const chatUi = createChatManager(state, network.send);
 const helpModal = createHelpModal(state);
 const mapModal = createMapModal(state);
 const optionsModal = createOptionsModal(state);
+const buildMenu = createBuildMenu(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
+const unregisterBuildMenuHotkeys = registerBuildMenuHotkeys(state);
 const loop = startGameLoop(state, network.send);
 
 scene.app.ticker.add(() => {
@@ -33,6 +36,7 @@ scene.app.ticker.add(() => {
     helpModal.render();
     mapModal.render();
     optionsModal.render();
+    buildMenu.render();
 });
 
 window.addEventListener("beforeunload", () => {
@@ -41,10 +45,12 @@ window.addEventListener("beforeunload", () => {
     unregisterMouse();
     unregisterWindowMode();
     unregisterModalHotkeys();
+    unregisterBuildMenuHotkeys();
     lobbyUi.dispose();
     chatUi.dispose();
     helpModal.dispose();
     mapModal.dispose();
     optionsModal.dispose();
+    buildMenu.dispose();
     network.stop();
 });

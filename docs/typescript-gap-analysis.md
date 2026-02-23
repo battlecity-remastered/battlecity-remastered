@@ -238,8 +238,11 @@ The rewrite should only be considered complete when:
   - Additional S2 keyboard parity slice: client key aliases now include `S/Down`, `E`, `O`, `H`, and `Delete` while preserving prior request intents.
   - Additional S2 mouse parity slice: client now wires mouse left/right controls, context-menu suppression, and resize-time interaction hit-area synchronization via `registerMouseInputHandlers`.
   - Additional S2 window parity slice: `WindowModeService` now applies renderer resize synchronization and double-click fullscreen toggling with explicit runtime teardown.
+  - Additional S2 build parity slice: build menu overlay + hotkey-driven selected building types now exist in `BuildMenu`, and placement intents now honor selected build types instead of fixed ids.
+  - Additional S2 render parity slice: pointer-tile ghost placement preview now renders with occupancy feedback through `GhostPlacement` + scene integration.
   - Additional S1/S4 adapter slice: orb notifier now resolves canonical runtime user identity and uses an Effect-based Discord webhook transport when configured.
   - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
+  - Additional S5 parity slice: build-menu/ghost-placement behaviors and selected-type placement intents are now regression-covered by dedicated client tests.
   - Additional S2 parity slice: client movement now uses collision-aware stepping with nearest-safe unstick fallback (`moveLocalPlayer` + gameplay collision helpers + `CollisionWorld` primitives).
   - Additional S5 parity slice: sim-core and client movement/collision tests now cover blocking-tile collisions and unstick fallback behavior.
   - Additional S3/S2 parity slice: canonical `event.rejected` contract now ships end-to-end (protocol schema + legacy alias normalization + server emit + client apply telemetry).

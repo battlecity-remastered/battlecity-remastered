@@ -51,6 +51,23 @@ test("ctrl+b emits building.place.request using pointer tile instead of orb drop
     });
 });
 
+test("ctrl+b uses selected build menu type for building.place.request", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.controls.build = true;
+    state.controls.ctrl = true;
+    state.pointer.inside = true;
+    state.pointer.x = 144;
+    state.pointer.y = 96;
+    state.ui.selectedBuildType = 300;
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    const buildingIntent = plan.intents.find((intent) => intent.type === "building.place.request");
+    assert.ok(buildingIntent);
+    assert.equal(buildingIntent.payload.type, 300);
+});
+
 test("ctrl+demolish emits building.demolish.request for pointer tile building", () => {
     const state = createClientState();
     state.local.id = "local";

@@ -1,6 +1,8 @@
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ClientState } from "../app/state.js";
 import { reconcileEntityCache } from "./entity-cache.js";
+import { resolveGhostPlacement } from "../ui/build-menu/GhostPlacement.js";
+import { buildHudLines } from "./hud-lines.js";
 
 const TANK_SIZE = 18;
 const TILE_SIZE = 48;
@@ -113,104 +115,6 @@ const syncBulletEntities = (
     );
 };
 
-const readFinance = (state: ClientState): { cash: string; income: string } => {
-    const finance = state.cityFinance.get(state.local.city);
-    if (!finance) {
-        return { cash: "-", income: "-" };
-    }
-    return {
-        cash: String(finance.cash),
-        income: String(finance.income)
-    };
-};
-
-const readResearch = (state: ClientState): string => {
-    const research = state.research.get(state.local.city);
-    if (!research) {
-        return "0";
-    }
-    const completed = String(research.completed.length);
-    if (!research.active) {
-        return completed;
-    }
-    return `${completed} (active)`;
-};
-
-const readFactoryStock = (state: ClientState): number => {
-    return state.factoryStock.get(state.local.city)?.get(0) ?? 0;
-};
-
-const readCityPopulation = (state: ClientState): number => {
-    let total = 0;
-    for (const building of state.buildings.values()) {
-        if (building.cityId !== state.local.city) {
-            continue;
-        }
-        total += building.population;
-    }
-    return total;
-};
-
-const buildHudIdentityLines = (state: ClientState): string[] => {
-    return [
-        `id: ${state.local.id ?? "(joining...)"}`,
-        `user: ${state.scoreProfile.userId ?? "-"}`,
-        `city: ${state.local.city}`,
-        `rank: ${state.scoreProfile.rank ?? "-"} (${state.scoreProfile.score})`,
-        `health: ${state.local.health}/${state.local.maxHealth}`,
-        `remote: ${state.remotePlayers.size}`
-    ];
-};
-
-const buildHudWorldLines = (
-    state: ClientState,
-    finance: { cash: string; income: string },
-    researchLine: string
-): string[] => {
-    return [
-        `cash: ${finance.cash}`,
-        `income: ${finance.income}`,
-        `research: ${researchLine}`,
-        `population: ${readCityPopulation(state)}`,
-        `factory item0: ${readFactoryStock(state)}`,
-        `medkits: ${state.inventory.get(0) ?? 0}`,
-        `hazards: ${state.hazards.size}`,
-        `bullets: ${state.bullets.size}`,
-        `defenses: ${state.defenses.size}`,
-        `chat: ${state.chat.history.length}`
-    ];
-};
-
-const buildHudEventLines = (state: ClientState): string[] => {
-    const lastIconPickup = state.events.lastIconPickupConfirmed;
-    const lastPickupLine = lastIconPickup
-        ? `${lastIconPickup.itemType} x${lastIconPickup.amount}`
-        : "-";
-    return [
-        `last pickup: ${lastPickupLine}`,
-        `rejections: ${state.events.rejectionCount} (${state.events.lastRejectedReason ?? "-"})`,
-        `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
-        `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`
-    ];
-};
-
-const buildHudLines = (state: ClientState): string[] => {
-    const finance = readFinance(state);
-    const researchLine = readResearch(state);
-    return [
-        ...buildHudIdentityLines(state),
-        ...buildHudWorldLines(state, finance, researchLine),
-        ...buildHudEventLines(state),
-        `pointer: ${Math.round(state.pointer.x)},${Math.round(state.pointer.y)} (${state.pointer.inside ? "in" : "out"})`,
-        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
-    ];
-};
-
-export type SceneRuntime = {
-    app: Application;
-    render: () => void;
-};
-
 const attachCanvasToRoot = (app: Application): void => {
     const root = document.getElementById("app");
     if (root) {
@@ -232,6 +136,135 @@ const createHud = (app: Application): Text => {
     return hud;
 };
 
+type SceneLayers = {
+    localTank: Graphics;
+    remoteLayer: Container;
+    remoteTanks: Map<string, Graphics>;
+    objectLayer: Container;
+    buildingSprites: Map<string, Graphics>;
+    defenseSprites: Map<string, Graphics>;
+    hazardSprites: Map<string, Graphics>;
+    bulletSprites: Map<string, Graphics>;
+    ghostPlacementSprite: Graphics;
+    hud: Text;
+};
+
+const createSceneLayers = (app: Application): SceneLayers => {
+    const world = new Container();
+    app.stage.addChild(world);
+
+    const localTank = makeTank(0x7fe66f);
+    world.addChild(localTank);
+
+    const remoteLayer = new Container();
+    world.addChild(remoteLayer);
+
+    const objectLayer = new Container();
+    world.addChild(objectLayer);
+
+    const ghostPlacementSprite = new Graphics();
+    ghostPlacementSprite.visible = false;
+    objectLayer.addChild(ghostPlacementSprite);
+
+    return {
+        localTank,
+        remoteLayer,
+        remoteTanks: new Map<string, Graphics>(),
+        objectLayer,
+        buildingSprites: new Map<string, Graphics>(),
+        defenseSprites: new Map<string, Graphics>(),
+        hazardSprites: new Map<string, Graphics>(),
+        bulletSprites: new Map<string, Graphics>(),
+        ghostPlacementSprite,
+        hud: createHud(app)
+    };
+};
+
+const renderGhostPlacement = (state: ClientState, sprite: Graphics): void => {
+    const ghostPlacement = resolveGhostPlacement(state);
+    if (!ghostPlacement) {
+        sprite.visible = false;
+        return;
+    }
+
+    sprite.visible = true;
+    sprite.clear();
+    sprite
+        .rect(0, 0, TILE_SIZE, TILE_SIZE)
+        .fill({
+            color: ghostPlacement.blocked ? 0xff5a6f : 0x4ae18f,
+            alpha: 0.3
+        })
+        .stroke({
+            color: ghostPlacement.blocked ? 0xffa7b1 : 0xc2ffd6,
+            alpha: 0.9,
+            width: 2
+        });
+    sprite.position.set(
+        ghostPlacement.tileX * TILE_SIZE,
+        ghostPlacement.tileY * TILE_SIZE
+    );
+};
+
+const renderTiles = (state: ClientState, layers: SceneLayers): void => {
+    syncTileEntities(layers.buildingSprites, layers.objectLayer, state.buildings.keys(), 0x3f85ff);
+    for (const building of state.buildings.values()) {
+        const sprite = layers.buildingSprites.get(building.id);
+        if (sprite) {
+            sprite.position.set(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE);
+        }
+    }
+
+    syncTileEntities(layers.defenseSprites, layers.objectLayer, state.defenses.keys(), 0xffb347);
+    for (const defense of state.defenses.values()) {
+        const sprite = layers.defenseSprites.get(defense.id);
+        if (sprite) {
+            sprite.position.set(defense.tileX * TILE_SIZE, defense.tileY * TILE_SIZE);
+        }
+    }
+};
+
+const renderDynamicEntities = (state: ClientState, layers: SceneLayers): void => {
+    syncCircleEntities(layers.hazardSprites, layers.objectLayer, state.hazards.keys(), 0xff5e73);
+    for (const hazard of state.hazards.values()) {
+        const sprite = layers.hazardSprites.get(hazard.id);
+        if (sprite) {
+            sprite.position.set(hazard.x, hazard.y);
+        }
+    }
+
+    syncBulletEntities(layers.bulletSprites, layers.objectLayer, state.bullets.keys());
+    for (const bullet of state.bullets.values()) {
+        const sprite = layers.bulletSprites.get(bullet.id);
+        if (sprite) {
+            sprite.position.set(bullet.x, bullet.y);
+        }
+    }
+};
+
+const renderHud = (state: ClientState, hud: Text): void => {
+    hud.visible = state.ui.showHud;
+    if (state.ui.showHud) {
+        hud.text = buildHudLines(state).join("\n");
+    }
+};
+
+const renderSceneFrame = (state: ClientState, layers: SceneLayers): void => {
+    applyLocalTank(state, layers.localTank);
+    syncRemoteTanks(state, layers.remoteLayer, layers.remoteTanks);
+    applyRemoteTankTransforms(state, layers.remoteTanks);
+
+    renderTiles(state, layers);
+    renderDynamicEntities(state, layers);
+    renderGhostPlacement(state, layers.ghostPlacementSprite);
+    renderHud(state, layers.hud);
+};
+
+export type SceneRuntime = {
+    app: Application;
+    render: () => void;
+};
+
 export const createSceneRuntime = async (state: ClientState): Promise<SceneRuntime> => {
     const app = new Application();
     await app.init({
@@ -242,75 +275,12 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     });
 
     attachCanvasToRoot(app);
-
-    const world = new Container();
-    app.stage.addChild(world);
-
-    const localTank = makeTank(0x7fe66f);
-    world.addChild(localTank);
-
-    const remoteLayer = new Container();
-    world.addChild(remoteLayer);
-    const remoteTanks = new Map<string, Graphics>();
-
-    const objectLayer = new Container();
-    world.addChild(objectLayer);
-    const buildingSprites = new Map<string, Graphics>();
-    const defenseSprites = new Map<string, Graphics>();
-    const hazardSprites = new Map<string, Graphics>();
-    const bulletSprites = new Map<string, Graphics>();
-
-    const hud = createHud(app);
-
-    const render = (): void => {
-        applyLocalTank(state, localTank);
-        syncRemoteTanks(state, remoteLayer, remoteTanks);
-        applyRemoteTankTransforms(state, remoteTanks);
-
-        syncTileEntities(buildingSprites, objectLayer, state.buildings.keys(), 0x3f85ff);
-        for (const building of state.buildings.values()) {
-            const sprite = buildingSprites.get(building.id);
-            if (!sprite) {
-                continue;
-            }
-            sprite.position.set(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE);
-        }
-
-        syncTileEntities(defenseSprites, objectLayer, state.defenses.keys(), 0xffb347);
-        for (const defense of state.defenses.values()) {
-            const sprite = defenseSprites.get(defense.id);
-            if (!sprite) {
-                continue;
-            }
-            sprite.position.set(defense.tileX * TILE_SIZE, defense.tileY * TILE_SIZE);
-        }
-
-        syncCircleEntities(hazardSprites, objectLayer, state.hazards.keys(), 0xff5e73);
-        for (const hazard of state.hazards.values()) {
-            const sprite = hazardSprites.get(hazard.id);
-            if (!sprite) {
-                continue;
-            }
-            sprite.position.set(hazard.x, hazard.y);
-        }
-
-        syncBulletEntities(bulletSprites, objectLayer, state.bullets.keys());
-        for (const bullet of state.bullets.values()) {
-            const sprite = bulletSprites.get(bullet.id);
-            if (!sprite) {
-                continue;
-            }
-            sprite.position.set(bullet.x, bullet.y);
-        }
-
-        hud.visible = state.ui.showHud;
-        if (state.ui.showHud) {
-            hud.text = buildHudLines(state).join("\n");
-        }
-    };
+    const layers = createSceneLayers(app);
 
     return {
         app,
-        render
+        render: () => {
+            renderSceneFrame(state, layers);
+        }
     };
 };

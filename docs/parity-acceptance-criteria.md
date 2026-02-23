@@ -25,6 +25,7 @@
 - Client applies authoritative `population.update` events and surfaces city population in HUD telemetry.
 - Client includes lobby/chat runtime UI parity slices (assignment/denial/release + history/rate-limit/send semantics).
 - Client includes help/map/options modal parity slices with explicit runtime toggle controls (`F1`/`F2`/`F3`).
+- Client includes build menu parity slice with selected-type hotkeys and pointer-tile ghost placement preview.
 - Client world state applies authoritative building/bullet/icon/hazard/defense lifecycle events and visualizes core world objects.
 
 ## Stage S4

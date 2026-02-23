@@ -44,7 +44,7 @@ const asBuildingPlaceIntent = (state: ClientState): Intent<"building.place.reque
         payload: {
             ownerId: state.local.id ?? "",
             cityId: state.local.city,
-            type: 109,
+            type: state.ui.selectedBuildType,
             tileX,
             tileY
         }

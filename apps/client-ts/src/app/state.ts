@@ -154,6 +154,8 @@ export type ClientState = {
         showHelpModal: boolean;
         showMapModal: boolean;
         showOptionsModal: boolean;
+        showBuildMenu: boolean;
+        selectedBuildType: number;
         overlaysOpacity: number;
     };
 };
@@ -237,6 +239,8 @@ export const createClientState = (): ClientState => {
             showHelpModal: false,
             showMapModal: false,
             showOptionsModal: false,
+            showBuildMenu: true,
+            selectedBuildType: 109,
             overlaysOpacity: 0.66
         }
     };

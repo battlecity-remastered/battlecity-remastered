@@ -65,7 +65,7 @@ Legend:
 | S2-06 Items/hazards lifecycle on client | `client/src/factories/ItemFactory.js::triggerMine/detonateBombAt/fireBullet/pickupOrbItem/...` | `apps/client-ts/src/gameplay/items/ItemWorldService.ts` (new), `apps/client-ts/src/gameplay/hazards/HazardClientService.ts` (new) | in_progress |
 | S2-07 Bullet client visuals/semantics parity | `client/src/factories/BulletFactory.js::*` | `apps/client-ts/src/gameplay/bullets/BulletClientService.ts` (new), `packages/sim-core/src/bullet.ts` (exists) | in_progress |
 | S2-08 Draw panel + finance + inventory + radar | `client/src/draw/draw-panel-interface.js::drawPanel/drawFinance/drawItems/updateRadar/drawHealth` | `apps/client-ts/src/render/scene.ts` (exists) | in_progress |
-| S2-09 Build menu UI and ghost placement | `client/src/draw/draw-building-interface.js::setupBuildingMenu/drawBuilding` | `apps/client-ts/src/ui/build-menu/BuildMenu.ts` (new), `apps/client-ts/src/ui/build-menu/GhostPlacement.ts` (new) | open |
+| S2-09 Build menu UI and ghost placement | `client/src/draw/draw-building-interface.js::setupBuildingMenu/drawBuilding` | `apps/client-ts/src/ui/build-menu/BuildMenu.ts` (new), `apps/client-ts/src/ui/build-menu/GhostPlacement.ts` (new) | in_progress |
 | S2-10 Item drawing priorities and hidden enemy mines | `client/src/draw/draw-items.js::drawMine/drawDFG/getItemRenderPriority` | `apps/client-ts/src/render/items/ItemRenderer.ts` (new) | open |
 | S2-11 Ground/tile/changing layer rendering | `client/src/draw/draw-ground.js`; `draw-tiles.js`; `draw-changing.js` | `apps/client-ts/src/render/layers/*.ts` (new) | open |
 | S2-12 Name labels rank/callsign/city rendering | `client/src/draw/nameLabels.js`; `draw-changing.js` | `apps/client-ts/src/render/labels/NameLabelRenderer.ts` (new) | open |
@@ -264,3 +264,8 @@ apps/client-ts/src/
 - `S2-04`: in_progress (`Ctrl+B` now emits pointer-tile `building.place.request`, and `Ctrl+X/Delete` emits pointer-targeted `building.demolish.request` through `apps/client-ts/src/app/intents.ts`).
 - `S2-07`: in_progress (loop-time bullet progression now runs via `apps/client-ts/src/gameplay/bullets/BulletClientService.ts`, and server bullet ingress now seeds type-aware speed in `apps/client-ts/src/app/network-events.ts`).
 - `S5-08`: in_progress (added `apps/client-ts/test/bullet-client-service.test.ts` and expanded `apps/client-ts/test/item-bullet-intents.test.ts` to enforce build/demolish intent semantics).
+
+## Status Update (2026-02-23, checkpoint 7)
+- `S2-09`: in_progress (build menu parity slice now implemented via `apps/client-ts/src/ui/build-menu/BuildMenu.ts` and pointer-tile ghost placement via `apps/client-ts/src/ui/build-menu/GhostPlacement.ts`, wired through `apps/client-ts/src/main.ts` + `apps/client-ts/src/render/scene.ts`).
+- `S2-04`: in_progress (building placement intent now uses build-menu-selected building type instead of fixed type id).
+- `S5-08`: in_progress (added dedicated client parity tests for build menu + ghost placement + selected-type placement intent behavior).

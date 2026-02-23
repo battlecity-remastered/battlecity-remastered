@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S2` checkpoint after landing pointer-tile building/demolish intent parity and client bullet-step visual lifecycle parity.
+- `S2` checkpoint after landing build-menu selection + pointer ghost placement parity slices and strict maintainability-safe scene refactor.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -43,9 +43,10 @@
 | S2-01 | done | Client ingress routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) |
 | S2-02 | done | Client movement uses collision-aware stepping + nearest-safe unstick fallback |
 | S2-03 | done | Client collision helpers landed and wired in gameplay loop |
-| S2-04 | in_progress | `Ctrl+B` now emits pointer-tile `building.place.request` intents; `Ctrl+X/Delete` now emits pointer-targeted `building.demolish.request` intents |
+| S2-04 | in_progress | `Ctrl+B` emits pointer-tile `building.place.request` intents using build-menu-selected type; `Ctrl+X/Delete` emits pointer-targeted demolish intents |
 | S2-07 | in_progress | Client bullets now step every loop tick with type-aware speed mapping (`BulletClientService`) |
 | S2-08 | in_progress | HUD + primitive world rendering parity slices active (finance/research/population/building/defense/hazard/bullet/chat telemetry) plus options-driven HUD visibility toggle |
+| S2-09 | in_progress | Build menu overlay + hotkey type selection + pointer ghost placement preview parity slice active |
 | S2-15 | in_progress | Keyboard aliases include legacy-friendly bindings while preserving intent model |
 | S2-16 | in_progress | Mouse controls/hit-area sync/pointer tracking parity slice active |
 | S2-17 | in_progress | Lobby overlay manager now mirrors assignment/denial/release state in runtime UI layer |
@@ -65,24 +66,27 @@
 | S4-08 | done | Effect-based persistence/notification adapters exercised by live flows |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests remain expanded across gameplay authority domains |
 | S5-07 | in_progress | Collision/movement parity tests active in sim-core + client suites |
-| S5-08 | in_progress | Added dedicated client item/bullet intent behavior assertions (`item-bullet-intents.test.ts`) covering fire/pickup/use/hazard intent emission |
+| S5-08 | in_progress | Added client intent parity assertions plus dedicated build-menu/ghost-placement tests for selected-type placement flows |
 | S5-09 | in_progress | Client parity tests expanded with ingress canonicalization, handler inventory coverage, and modal hotkey/options helper assertions |
 | S5-12 | done | CI parity gates now include explicit `typecheck` in both GitHub and GitLab pipelines |
 | Other S5 IDs | deferred | Broader legacy behavior-matrix ports remain tracked and explicit |
 
 ## Exact Files Changed In This Delivery
 - `apps/client-ts/src/app/intents.ts`
-- `apps/client-ts/src/app/loop.ts`
-- `apps/client-ts/src/app/network-events.ts`
 - `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/gameplay/bullets/BulletClientService.ts`
-- `apps/client-ts/test/bullet-client-service.test.ts`
+- `apps/client-ts/src/main.ts`
+- `apps/client-ts/src/render/hud-lines.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/src/ui/build-menu/BuildMenu.ts`
+- `apps/client-ts/src/ui/build-menu/GhostPlacement.ts`
+- `apps/client-ts/test/build-menu.test.ts`
+- `apps/client-ts/test/ghost-placement.test.ts`
 - `apps/client-ts/test/item-bullet-intents.test.ts`
-- `apps/client-ts/test/network-events.test.ts`
+- `docs/parity-acceptance-criteria.md`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
-- `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
+- `docs/typescript-gap-analysis.md`
 
 ## Validation Results
 - `npm run lint`: pass

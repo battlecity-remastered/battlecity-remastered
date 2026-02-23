@@ -52,4 +52,4 @@
 
 ## Known Gaps
 - Many legacy events remain intentionally deferred (auth UX, full modal/tutorial/audio/map UI, and non-gameplay telemetry flows).
-- Client UI parity is still a staged subset: HUD + lobby/chat overlays + primitive world rendering are active, while full legacy panel/radar/tutorial/options parity remains tracked in S2 deferred items.
+- Client UI parity is still a staged subset: HUD + lobby/chat overlays + build-menu/ghost placement + primitive world rendering are active, while full legacy panel/radar/tutorial/options parity remains tracked in S2 deferred items.
