@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` final closure checkpoint: parity docs normalized, staged ledger closed (`done` across `S0..S5`), and strict validation reconfirmed on `2026-02-23` against HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`.
+- `S5` final closure checkpoint: parity docs normalized, staged ledger closed (`done` across `S0..S5`), and strict validation reconfirmed on `2026-02-23` against current HEAD at validation time.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -46,7 +46,7 @@
 - `docs/typescript-gap-mapping.md`
 
 ## Validation Results
-- `npm run lint`: pass (2026-02-23, HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`)
-- `npm run typecheck`: pass (2026-02-23, HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`)
-- `npm run test`: pass (2026-02-23, HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`, 138/138)
-- `npm run rewrite:check:strict`: pass (2026-02-23, HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`)
+- `npm run lint`: pass (2026-02-23, current HEAD at validation time)
+- `npm run typecheck`: pass (2026-02-23, current HEAD at validation time)
+- `npm run test`: pass (2026-02-23, current HEAD at validation time, 138/138)
+- `npm run rewrite:check:strict`: pass (2026-02-23, current HEAD at validation time)
