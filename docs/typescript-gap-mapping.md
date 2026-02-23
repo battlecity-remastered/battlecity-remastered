@@ -210,4 +210,4 @@ apps/client-ts/src/
 - Protocol/event parity is explicit and locked with canonical dot names plus ingress-only colon alias compatibility.
 - Effect architecture hardening items are complete (`Layer`, typed errors, queue ingress, scheduler, `Ref` state capsules, scoped lifecycle, observability, adapters).
 - Current per-S-ID truth source: `docs/rewrite-progress.md` and `docs/parity-checklist.md`.
-- Validation reconfirmed on HEAD `504e9606b0afb33bcf8f45c3ec7016495859b577`.
+- Validation reconfirmed on HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f`.

@@ -203,7 +203,7 @@ The rewrite should only be considered complete when:
 - Protocol coverage, dispatch/apply inventories, and compatibility behavior (`:` ingress aliases, `.` canonical egress) are explicit and regression-enforced.
 - Runtime architecture is Effect-native in core composition (`Layer`, typed error mapping, ingress queue, deterministic scheduler, `Ref` state, scoped lifecycle, observability).
 - Validation gates at this checkpoint: `lint`, `typecheck`, `test`, and `rewrite:check:strict` all pass.
-- Validation reconfirmed on HEAD `504e9606b0afb33bcf8f45c3ec7016495859b577` with the same gate set passing.
+- Validation reconfirmed on HEAD `4c4a38baccb30f015ed8120ee147d6acd7205f9f` with the same gate set passing.
 
 ## Remaining Risks (Non-critical)
 - High-fidelity visual/audio asset-pack parity remains a polish track beyond functional parity closure.
