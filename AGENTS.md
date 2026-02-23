@@ -37,3 +37,14 @@
 - Prefer ESM imports with explicit extensions for relative imports.
 - Keep protocol changes coordinated across app handlers.
 - Keep shared gameplay math in `packages/sim-core` to avoid drift.
+
+## Rewrite Docs
+- Parity source docs are committed in-worktree under `docs/`:
+  - `docs/typescript-gap-analysis.md`
+  - `docs/typescript-gap-mapping.md`
+- Maintain execution tracking in:
+  - `docs/rewrite-progress.md`
+  - `docs/parity-checklist.md`
+  - `docs/event-parity-matrix.md`
+  - `docs/parity-acceptance-criteria.md`
+  - `docs/event-versioning.md`
