@@ -9,6 +9,7 @@ import {
 } from "./types.js";
 import { canBuildInCity, validateBuildResearch } from "../domain/buildings/BuildingRulesService.js";
 import { spendCityCash } from "../domain/economy/CityEconomyService.js";
+import { registerBuildingPopulation, unregisterBuildingPopulation } from "../domain/population/PopulationService.js";
 
 export const placeBuildingFromRequest = (
     state: RuntimeState,
@@ -16,7 +17,10 @@ export const placeBuildingFromRequest = (
     payload: KnownEventPayloadByType["building.place.request"],
     config: RuntimeConfig,
     nextSeq: () => number
-): CommandResult<RuntimeBuilding> => {
+): CommandResult<{
+    building: RuntimeBuilding;
+    populationUpdates: KnownEventPayloadByType["population.update"][];
+}> => {
     const city = state.socketCities.get(socketId);
     if (city === undefined) {
         return rejectResult("player_not_joined");
@@ -52,18 +56,25 @@ export const placeBuildingFromRequest = (
         tileX,
         tileY,
         health: config.defaultBuildingHealth,
-        maxHealth: config.defaultBuildingHealth
+        maxHealth: config.defaultBuildingHealth,
+        population: 0
     };
 
     state.buildings.set(building.id, building);
-    return okResult(building);
+    return okResult({
+        building,
+        populationUpdates: registerBuildingPopulation(state, building)
+    });
 };
 
 export const demolishBuildingFromRequest = (
     state: RuntimeState,
     socketId: string,
     payload: KnownEventPayloadByType["building.demolish.request"]
-): CommandResult<RuntimeBuilding> => {
+): CommandResult<{
+    building: RuntimeBuilding;
+    populationUpdates: KnownEventPayloadByType["population.update"][];
+}> => {
     const city = state.socketCities.get(socketId);
     const building = state.buildings.get(payload.id);
     if (city === undefined) {
@@ -84,5 +95,8 @@ export const demolishBuildingFromRequest = (
     }
 
     state.buildings.delete(building.id);
-    return okResult(building);
+    return okResult({
+        building,
+        populationUpdates: unregisterBuildingPopulation(state, building)
+    });
 };

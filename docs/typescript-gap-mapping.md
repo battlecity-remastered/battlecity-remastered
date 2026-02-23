@@ -37,7 +37,7 @@ Legend:
 | S1-09 Building placement permissions, adjacency, costs | `server/src/BuildingFactory.js::handleNewBuilding/getCityCanBuild/searchTree`; `CityManager.recordBuildingCost` | `apps/server-ts/src/runtime/building-runtime.ts` (exists), `apps/server-ts/src/domain/buildings/BuildingRulesService.ts` (new) | done |
 | S1-10 Demolish deny reasons + authoritative feedback | `server/src/BuildingFactory.js::handleDemolish/emitDemolishDenied` | `apps/server-ts/src/runtime/building-runtime.ts` (exists), `apps/server-ts/src/domain/buildings/DemolishService.ts` (new) | done |
 | S1-11 Research lifecycle and dependency tree gating | `server/src/BuildingFactory.js::startResearch/completeResearch/applyResearchState/getRequiredResearchType` | `apps/server-ts/src/domain/research/ResearchService.ts` (new), `packages/protocol/src/events.ts` (exists) | done |
-| S1-12 House attachment/population model parity | `server/src/BuildingFactory.js::applyPopulationUpdate/attachment methods`; `server/src/Building.js` | `apps/server-ts/src/domain/population/PopulationService.ts` (new), `apps/server-ts/src/domain/buildings/BuildingState.ts` (new) | open |
+| S1-12 House attachment/population model parity | `server/src/BuildingFactory.js::applyPopulationUpdate/attachment methods`; `server/src/Building.js` | `apps/server-ts/src/domain/population/PopulationService.ts` (new), `apps/server-ts/src/domain/buildings/BuildingState.ts` (new) | done |
 | S1-13 Economy income/spend cycle parity | `server/src/CityManager.js::cycle/addIncome/spendForResearch/spendForHospital/trySpendForFactory` | `apps/server-ts/src/domain/economy/CityEconomyService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | done |
 | S1-14 Inventory caps and stock release semantics | `server/src/CityManager.js::recordInventoryPickup/recordInventoryConsumption/releasePlayerInventory` | `apps/server-ts/src/domain/inventory/InventoryService.ts` (new) | done |
 | S1-15 Factory production cycle and item stock accounting | `server/src/FactoryBuilding.js::cycle`; `BuildingFactory.handleFactoryCollect/registerFactoryIcon/cycle` | `apps/server-ts/src/domain/factories/FactoryService.ts` (new) | done |
@@ -96,7 +96,7 @@ Legend:
 | S3-02 Remove event-name split-brain (legacy colon names vs dot names) without losing compatibility | legacy uses `player:health`, `players:snapshot`, etc.; TS currently uses dot variants in handlers | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `apps/*/event-adapter.ts` (new) | done |
 | S3-03 Expand server dispatch beyond 5 handlers | `server/src/PlayerFactory.js`, `BuildingFactory.js`, `BulletFactory.js`, `HazardManager.js`, `DefenseManager.js` | `apps/server-ts/src/runtime/dispatch.ts` (exists, expand heavily) | in_progress |
 | S3-04 Expand client applyServerEvent beyond 5 handlers | `client/src/SocketListener.js` handlers | `apps/client-ts/src/app/network-events.ts` (exists, expand heavily) | in_progress |
-| S3-05 Versioned envelope migration policy | implicit envelope usage in legacy socket events | `packages/protocol/src/envelope.ts` (exists), `docs/event-versioning.md` (new) | open |
+| S3-05 Versioned envelope migration policy | implicit envelope usage in legacy socket events | `packages/protocol/src/envelope.ts` (exists), `docs/event-versioning.md` (new) | done |
 
 ## Stage 4: Effect.ts Architecture Mapping
 
@@ -104,11 +104,11 @@ Legend:
 |---|---|---|---|
 | S4-01 Domain services composed via `Layer` | current TS runtime is mutable-map + `Effect.runSync` wrappers (`apps/server-ts/src/runtime/GameRuntime.ts`) | `apps/server-ts/src/layers/RuntimeLayer.ts` (new), `apps/server-ts/src/domain/*Service.ts` (new) | in_progress |
 | S4-02 Typed domain error ADTs and mapping to rejection events | current reject strings in `apps/server-ts/src/runtime/types.ts` | `apps/server-ts/src/domain/errors.ts` (new), `apps/server-ts/src/runtime/rejections.ts` (new) | done |
-| S4-03 Effectful event ingress queue/backpressure | current direct socket dispatch path in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/EventIngress.ts` (new), `apps/server-ts/src/runtime/EventQueue.ts` (new) | open |
-| S4-04 Deterministic schedulers for ticks | current `setInterval` tick in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/TickScheduler.ts` (new) | open |
-| S4-05 Replace mutable singleton maps with `Ref`/`SynchronizedRef` state capsules | current `createRuntimeState` map mutation | `apps/server-ts/src/runtime/state/RuntimeStateRef.ts` (new), `apps/client-ts/src/app/ClientStateRef.ts` (new) | open |
+| S4-03 Effectful event ingress queue/backpressure | current direct socket dispatch path in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/EventIngress.ts` (new), `apps/server-ts/src/runtime/EventQueue.ts` (new) | done |
+| S4-04 Deterministic schedulers for ticks | current `setInterval` tick in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/TickScheduler.ts` (new) | done |
+| S4-05 Replace mutable singleton maps with `Ref`/`SynchronizedRef` state capsules | current `createRuntimeState` map mutation | `apps/server-ts/src/runtime/state/RuntimeStateRef.ts` (new), `apps/client-ts/src/app/ClientStateRef.ts` (new) | done |
 | S4-06 Structured logging/metrics/tracing through Effects | current ad hoc console/debug patterns | `apps/server-ts/src/observability/*.ts` (new), `apps/client-ts/src/observability/*.ts` (new) | in_progress |
-| S4-07 Resource lifecycle management for sockets and scene runtime | current imperative start/stop in `apps/client-ts/src/main.ts` and server main | `apps/client-ts/src/runtime/RuntimeScope.ts` (new), `apps/server-ts/src/runtime/RuntimeScope.ts` (new) | open |
+| S4-07 Resource lifecycle management for sockets and scene runtime | current imperative start/stop in `apps/client-ts/src/main.ts` and server main | `apps/client-ts/src/runtime/RuntimeScope.ts` (new), `apps/server-ts/src/runtime/RuntimeScope.ts` (new) | done |
 | S4-08 Effect-based integration adapters (persistence/discord/auth) | legacy adapters in `server/src/users/*`, `server/src/utils/DiscordNotifier.js` | `apps/server-ts/src/adapters/*` (new) | in_progress |
 
 ## Stage 5: Test Parity Mapping
@@ -219,9 +219,13 @@ apps/client-ts/src/
 - `S1-04`: done (score profile hydration + orb score profile updates)
 - `S1-18`: done (defense deploy + damage/update/remove + city-orbed cleanup + footprint/hazard occupancy parity slice)
 - `S1-26`: in_progress (orb notifier invocation wired + runtime adapter invocation test coverage added)
-- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, and legacy bullet/build alias support)
+- `S1-12`: done (house attachment/population parity slice implemented in `PopulationService` and wired through dispatch/system ticks)
+- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, legacy bullet/build alias support, plus `population.update` schema coverage)
 - `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, `inventory:update`, `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`)
 - `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
-- `S3-04`: in_progress (client apply expanded for profile + defense + building + bullet lifecycle and icon pickup confirmation state)
+- `S3-04`: in_progress (client apply expanded for profile + defense + building + bullet/icon lifecycle and `population.update` state)
+- `S2-01`: in_progress (event apply now covers `population.update` in addition to prior server-authoritative world events)
+- `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
+- `S5-01,S5-09`: in_progress (server/client/protocol tests expanded for population attachment growth, remove semantics, and alias decode coverage)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

@@ -30,6 +30,7 @@ const legacyToCanonicalType = {
     "city:orbed": "city.orbed",
     "score:promotion": "score.promotion",
     "score:profile": "score.profile",
+    "population:update": "population.update",
     "defense:deploy": "defense.deploy.request",
     "defense:spawn": "defense.spawn",
     "defense:update": "defense.update",

@@ -133,7 +133,10 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, result.reason);
             return;
         }
-        context.emitter.emit("building.placed", result.value);
+        context.emitter.emit("building.placed", result.value.building);
+        for (const update of result.value.populationUpdates) {
+            context.emitter.emit("population.update", update);
+        }
     },
     "building.demolish.request": (socketId, payload, context) => {
         const result = demolishBuildingFromRequest(context.state, socketId, payload);
@@ -146,9 +149,12 @@ const handlers: HandlerMap = {
             return;
         }
         context.emitter.emit("building.demolished", {
-            id: result.value.id,
-            cityId: result.value.cityId
+            id: result.value.building.id,
+            cityId: result.value.building.cityId
         });
+        for (const update of result.value.populationUpdates) {
+            context.emitter.emit("population.update", update);
+        }
     },
     "chat.message.request": (socketId, payload, context) => {
         const result = addChatMessage(context.state, socketId, payload, context.config);

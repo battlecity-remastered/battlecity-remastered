@@ -22,7 +22,7 @@
 | S1-09 | Building rules/cost/adjacency | rewrite | done | Mayor gate + city budget spend + research/collision/chain checks implemented |
 | S1-10 | Demolish deny semantics | rewrite | done | Explicit `demolish.denied` reason feedback added for reject paths |
 | S1-11 | Research lifecycle/tree | rewrite | done | Research start/tick/completion with authoritative updates |
-| S1-12 | Population/house model | rewrite | deferred | Not yet ported |
+| S1-12 | Population/house model | rewrite | done | House attachment + population tick/remove lifecycle implemented with authoritative `population.update` events |
 | S1-13 | Economy tick parity | rewrite | done | City economy tick and finance broadcasts implemented |
 | S1-14 | Inventory caps/release | rewrite | done | Per-player inventory cap and disconnect release semantics added |
 | S1-15 | Factory production/stock | rewrite | done | Tick-based stock production and collect flow implemented |
@@ -37,13 +37,13 @@
 | S1-24 | Map/layout loaders | rewrite | deferred | Not yet ported |
 | S1-25 | Bullet terrain/structure/hazard parity | rewrite | in_progress | Authoritative bullet collisions handle buildings/defenses/hazards and runtime blocking tiles (`hit_terrain`); map-loader-fed terrain parity remains tied to S1-24 |
 | S1-26 | Discord notifications | rewrite | in_progress | Orb victory notifier invoked from authoritative orb drop flow and covered by runtime adapter-invocation test |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Added legacy alias normalization for `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building` in addition to prior payload coverage |
+| S3-01 | Full gameplay schemas | rewrite | in_progress | Added `population.update` schema and `population:update` legacy alias handling in addition to prior payload expansions |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode including `defense:*` aliases and `inventory:update` -> `inventory.update` |
 | S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile + defense authority and orb cleanup emission (`building.demolished`/`hazard.remove`) paths |
-| S3-04 | Client apply handler expansion | rewrite | in_progress | Added bullet fired/resolved and icon pickup confirmation application alongside prior profile + defense + building lifecycle handling |
+| S3-04 | Client apply handler expansion | rewrite | in_progress | Added `population.update` application alongside prior profile + defense + building + bullet/icon lifecycle handling |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
-| S2-01 | Client event handling surface | rewrite | in_progress | Event application now includes `building.placed`/`building.demolished`/`bullet.fired`/`bullet.resolved`/`icon.pickup.confirmed` in addition to profile/defense/inventory flows |
-| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD parity slice retained; scene now renders authoritative building/defense/hazard/bullet world objects and last icon pickup telemetry |
+| S2-01 | Client event handling surface | rewrite | in_progress | Event application now includes `population.update` in addition to profile/defense/building/bullet/icon/inventory flows |
+| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD parity slice retained; scene now renders authoritative building/defense/hazard/bullet world objects and city population telemetry |
 | S2-15 | Keyboard semantics | rewrite | in_progress | Extended keybind state and new gameplay intents |
 | S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Full parity restoral pending |
 | S4-01 | Layer-composed domain services | rewrite | in_progress | Server bootstrap now composes runtime through `RuntimeLayer` |
@@ -54,8 +54,8 @@
 | S4-06 | Structured observability | rewrite | in_progress | Effect-based runtime/client log modules added and wired in server bootstrap |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | in_progress | Persistence + Discord adapters now exercised by join/orb authority flows |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for terrain bullet blocking and orb city cleanup emission (building/hazard/defense) plus prior authority slices |
-| S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network-event tests for bullet lifecycle + icon pickup confirmation in addition to prior profile/defense/building coverage |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for house/population attachment growth + removal semantics, terrain bullet blocking, and orb cleanup emissions |
+| S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network-event tests for `population.update` alongside bullet lifecycle + icon pickup + profile/defense/building coverage |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 
 ## Exit Criteria Tracking

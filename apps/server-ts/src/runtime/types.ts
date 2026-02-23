@@ -9,6 +9,8 @@ export type RuntimePlayer = PlayerState & {
 export type RuntimeBuilding = CombatBuildingState & {
     ownerId: string;
     type: number;
+    population: number;
+    attachedHouseId?: string;
 };
 
 export type RuntimeDefense = {
@@ -76,6 +78,7 @@ export type RuntimeState = {
     blockingTiles: Set<string>;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
+    populationTickAccumulatorMs: number;
     seq: number;
 };
 
@@ -108,6 +111,7 @@ export type RuntimeConfig = {
     hospitalHealPerTick: number;
     defenseCost: number;
     tileSize: number;
+    populationTickMs: number;
 };
 
 export type RuntimeRejectReason =
@@ -172,7 +176,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     hospitalBuildingType: 300,
     hospitalHealPerTick: 2,
     defenseCost: 75,
-    tileSize: 48
+    tileSize: 48,
+    populationTickMs: 250
 };
 
 export const createRuntimeState = (): RuntimeState => {
@@ -194,6 +199,7 @@ export const createRuntimeState = (): RuntimeState => {
         blockingTiles: new Set(),
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
+        populationTickAccumulatorMs: 0,
         seq: 0
     };
 };

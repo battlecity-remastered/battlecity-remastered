@@ -5,6 +5,7 @@ import { tickResearch } from "../domain/research/ResearchService.js";
 import { tickFactories } from "../domain/factories/FactoryService.js";
 import { tickHazards } from "../domain/hazards/HazardService.js";
 import { tickHospitalHealing } from "../domain/health/HealingService.js";
+import { tickPopulation } from "../domain/population/PopulationService.js";
 
 export const tickRuntimeSystems = (
     state: RuntimeState,
@@ -17,4 +18,8 @@ export const tickRuntimeSystems = (
     tickFactories(state, config, emitter, deltaMs);
     tickHazards(state, emitter, deltaMs);
     tickHospitalHealing(state, config, emitter);
+    const populationUpdates = tickPopulation(state, config, deltaMs);
+    for (const update of populationUpdates) {
+        emitter.emit("population.update", update);
+    }
 };

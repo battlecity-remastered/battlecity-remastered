@@ -140,11 +140,23 @@ const readFactoryStock = (state: ClientState): number => {
     return state.factoryStock.get(state.local.city)?.get(0) ?? 0;
 };
 
+const readCityPopulation = (state: ClientState): number => {
+    let total = 0;
+    for (const building of state.buildings.values()) {
+        if (building.cityId !== state.local.city) {
+            continue;
+        }
+        total += building.population;
+    }
+    return total;
+};
+
 const buildHudLines = (state: ClientState): string[] => {
     const localId = state.local.id ?? "(joining...)";
     const finance = readFinance(state);
     const researchLine = readResearch(state);
     const factoryItem0 = readFactoryStock(state);
+    const population = readCityPopulation(state);
     const medkits = state.inventory.get(0) ?? 0;
     const rank = state.scoreProfile.rank ?? "-";
     const lastIconPickup = state.events.lastIconPickupConfirmed;
@@ -162,6 +174,7 @@ const buildHudLines = (state: ClientState): string[] => {
         `cash: ${finance.cash}`,
         `income: ${finance.income}`,
         `research: ${researchLine}`,
+        `population: ${population}`,
         `factory item0: ${factoryItem0}`,
         `medkits: ${medkits}`,
         `hazards: ${state.hazards.size}`,

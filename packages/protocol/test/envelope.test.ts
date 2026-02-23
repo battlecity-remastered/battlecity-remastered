@@ -93,6 +93,7 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("defense:deploy"), "defense.deploy.request");
     assert.equal(canonicalizeEventType("defense:update"), "defense.update");
     assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");
+    assert.equal(canonicalizeEventType("population:update"), "population.update");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -187,4 +188,44 @@ test("decodeKnownEnvelope supports extended removal/reason payloads", () => {
         }
     });
     assert.equal(bullet._tag, "Right");
+});
+
+test("decodeKnownEnvelope validates population updates and legacy alias", () => {
+    const canonical = decodeKnownEnvelope({
+        type: "population.update",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            id: "building_1",
+            cityId: 2,
+            type: 109,
+            tileX: 10,
+            tileY: 12,
+            population: 20,
+            attachedHouseId: "house_1",
+            removed: false
+        }
+    });
+    assert.equal(canonical._tag, "Right");
+
+    const legacy = decodeKnownEnvelope({
+        type: "population:update",
+        version: "1",
+        seq: 2,
+        ts: Date.now(),
+        payload: {
+            id: "building_1",
+            cityId: 2,
+            type: 109,
+            tileX: 10,
+            tileY: 12,
+            population: 0,
+            removed: true
+        }
+    });
+    assert.equal(legacy._tag, "Right");
+    if (legacy._tag === "Right") {
+        assert.equal(legacy.right.type, "population.update");
+    }
 });

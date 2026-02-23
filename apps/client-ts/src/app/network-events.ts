@@ -73,11 +73,30 @@ const handlers: {
             tileX: payload.tileX,
             tileY: payload.tileY,
             health: payload.health,
-            maxHealth: payload.maxHealth
+            maxHealth: payload.maxHealth,
+            population: 0
         });
     },
     "building.demolished": (state, payload) => {
         state.buildings.delete(payload.id);
+    },
+    "population.update": (state, payload) => {
+        const existing = state.buildings.get(payload.id);
+        if (payload.removed) {
+            if (existing) {
+                state.buildings.delete(payload.id);
+            }
+            return;
+        }
+        if (!existing) {
+            return;
+        }
+        existing.population = payload.population;
+        if (payload.attachedHouseId) {
+            existing.attachedHouseId = payload.attachedHouseId;
+        } else {
+            delete existing.attachedHouseId;
+        }
     },
     "players.snapshot": (state, payload) => {
         updateFromSnapshot(state, payload);

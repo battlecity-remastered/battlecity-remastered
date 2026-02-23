@@ -85,7 +85,6 @@ Missing for true Effect rewrite standard:
 - Terrain/building collision resolution parity.
 - Building footprint/bay rules parity.
 - Inventory system and item usage logic parity.
-- House attachment/population systems.
 - Research unlock and production gating.
 - Economy ticks and spending/refund rules.
 - Orb destruction lifecycle and city reset rules.
@@ -220,6 +219,9 @@ The rewrite should only be considered complete when:
   - S2 client slice: profile + defense event application and HUD visibility parity.
   - S2 client slice: building placed/demolished application and primitive world rendering for buildings/defenses/hazards.
   - S2/S3 client+protocol slice: bullet fired/resolved and icon pickup confirmation now apply into client state, bullets now render in world layer, and HUD surfaces bullet + last pickup telemetry.
+  - Additional S1 authority slice: house attachment and population tick/remove lifecycle parity via `PopulationService` with authoritative `population.update` emission.
+  - Additional S3 contract slice: canonical `population.update` schema with legacy `population:update` ingress normalization coverage.
+  - Additional S2 client slice: `population.update` state application plus HUD city-population telemetry from authoritative server updates.
   - S3 compatibility slice: added ingress alias normalization for `inventory:update`.
   - S3 compatibility slice: added ingress alias normalization for `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`.
   - S5 parity tests expanded for identity/profile + defense authority + bullet-hazard collision authority in server/client/protocol/sim-core suites.
@@ -227,6 +229,7 @@ The rewrite should only be considered complete when:
   - S5 parity tests expanded to assert orb notifier adapter invocation payloads.
   - S5 parity tests expanded for defense placement occupancy semantics and defense alias decode coverage.
   - S5 parity tests expanded for bullet lifecycle state application and icon pickup confirmation application in client network event suites, plus protocol alias decode coverage for legacy bullet/build aliases.
+  - S5 parity tests expanded for population attachment growth/cleanup authority and client/protocol population event handling.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.

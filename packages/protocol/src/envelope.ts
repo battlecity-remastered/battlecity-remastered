@@ -98,6 +98,7 @@ export const EventType = Schema.Literal(
     "players:snapshot",
     "pong",
     "population:update",
+    "population.update",
     "request_fire",
     "research:update",
     "research.start.request",

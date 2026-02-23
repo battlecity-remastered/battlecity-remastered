@@ -80,6 +80,8 @@ export type ClientState = {
         tileY: number;
         health: number;
         maxHealth: number;
+        population: number;
+        attachedHouseId?: string;
     }>;
     defenses: Map<string, {
         id: string;

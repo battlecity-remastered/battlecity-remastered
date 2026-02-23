@@ -31,6 +31,7 @@
 | `icon:pickup` | `icon.pickup.request` | client -> server | yes | dispatch | send-ready | done |
 | `icon:pickup:confirmed` | `icon.pickup.confirmed` | server -> client | yes | emit | apply | done |
 | `inventory:update` | `inventory.update` | server -> client | yes | emit | apply | done |
+| `population:update` | `population.update` | server -> client | yes | emit | apply | done |
 | `item:use` | `item.use.request` | client -> server | yes | dispatch | send-ready | done |
 | `hazard:spawn` | `hazard.spawn` | server -> client | yes | emit | apply | done |
 | `hazard:remove` | `hazard.remove` | server -> client | yes | emit | apply | done |
@@ -48,4 +49,4 @@
 ## Known Gaps
 - Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
 - Hazard events are now state-applied and include orb city cleanup reasons; dedicated hazard art/animation parity remains partial.
-- Inventory/item/icon/defense/building events are authoritative and state-applied, but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.
+- Inventory/item/icon/defense/building/population events are authoritative and state-applied, but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.

@@ -91,6 +91,16 @@ export const BuildingDemolished = Schema.Struct({
     id: Schema.String,
     cityId: Schema.Number
 });
+export const PopulationUpdate = Schema.Struct({
+    id: Schema.String,
+    cityId: Schema.Number,
+    type: Schema.Number,
+    tileX: Schema.Number,
+    tileY: Schema.Number,
+    population: Schema.Number,
+    attachedHouseId: Schema.optional(Schema.String),
+    removed: Schema.Boolean
+});
 export const PlayerDead = Schema.Struct({
     id: Schema.String,
     by: Schema.optional(Schema.String)
@@ -266,6 +276,7 @@ export const EventPayloadSchemas = {
     "building.demolish.request": BuildingDemolishRequest,
     "demolish.denied": DemolishDenied,
     "building.demolished": BuildingDemolished,
+    "population.update": PopulationUpdate,
     "lobby.assignment": LobbyAssignment,
     "chat.message": ChatMessage,
     "chat.message.request": ChatMessageRequest,

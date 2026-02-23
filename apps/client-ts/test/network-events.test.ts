@@ -232,3 +232,41 @@ test("bullet lifecycle and icon pickup confirmation apply to local state", () =>
 
     assert.equal(state.bullets.size, 0);
 });
+
+test("population.update mutates known buildings and respects removed flag", () => {
+    const state = createClientState();
+    applyServerEvent(state, makeKnownEnvelope("building.placed", 1, {
+        id: "b1",
+        ownerId: "p-local",
+        cityId: 2,
+        type: 109,
+        tileX: 8,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120
+    }));
+
+    applyServerEvent(state, makeKnownEnvelope("population.update", 2, {
+        id: "b1",
+        cityId: 2,
+        type: 109,
+        tileX: 8,
+        tileY: 9,
+        population: 25,
+        attachedHouseId: "house_1",
+        removed: false
+    }));
+    assert.equal(state.buildings.get("b1")?.population, 25);
+    assert.equal(state.buildings.get("b1")?.attachedHouseId, "house_1");
+
+    applyServerEvent(state, makeKnownEnvelope("population.update", 3, {
+        id: "b1",
+        cityId: 2,
+        type: 109,
+        tileX: 8,
+        tileY: 9,
+        population: 0,
+        removed: true
+    }));
+    assert.equal(state.buildings.has("b1"), false);
+});

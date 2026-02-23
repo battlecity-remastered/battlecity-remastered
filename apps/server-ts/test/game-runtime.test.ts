@@ -242,6 +242,71 @@ test("building placement enforces research, chain, collision and budget rules", 
     assert.ok(rejected.some((entry) => entry.reason === "InsufficientFunds"));
 });
 
+test("house attachment population updates grow over ticks and clear on house demolish", () => {
+    const { runtime, broadcast } = makeHarness({ buildingCost: 10 });
+
+    runtime.handleRawEvent("mayor", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("mayor", makeEnvelope("building.place.request", 2, {
+        ownerId: "mayor",
+        cityId: 1,
+        type: 300,
+        tileX: 6,
+        tileY: 6
+    }));
+    runtime.handleRawEvent("mayor", makeEnvelope("building.place.request", 3, {
+        ownerId: "mayor",
+        cityId: 1,
+        type: 200,
+        tileX: 7,
+        tileY: 6
+    }));
+
+    const placed = broadcast.filter((event) => event.type === "building.placed");
+    const houseId = (placed[0]?.payload as { id: string } | undefined)?.id;
+    const hospitalId = (placed[1]?.payload as { id: string } | undefined)?.id;
+    assert.ok(houseId);
+    assert.ok(hospitalId);
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const updates = broadcast
+        .filter((event) => event.type === "population.update")
+        .map((event) => event.payload as {
+            id: string;
+            population: number;
+            removed: boolean;
+            attachedHouseId?: string;
+        });
+    const factoryUpdate = updates.find((update) => {
+        return update.id === hospitalId && update.population > 0 && update.removed === false;
+    });
+    assert.ok(factoryUpdate);
+    assert.equal(factoryUpdate?.attachedHouseId, houseId);
+
+    runtime.handleRawEvent("mayor", makeEnvelope("building.demolish.request", 4, {
+        id: houseId,
+        cityId: 1
+    }));
+
+    const finalUpdates = broadcast
+        .filter((event) => event.type === "population.update")
+        .map((event) => event.payload as {
+            id: string;
+            population: number;
+            removed: boolean;
+        });
+    const houseRemoved = finalUpdates.find((update) => {
+        return update.id === houseId && update.removed;
+    });
+    const factoryCleared = [...finalUpdates].reverse().find((update) => {
+        return update.id === hospitalId;
+    });
+    assert.ok(houseRemoved);
+    assert.equal(factoryCleared?.population, 0);
+});
+
 test("building demolish checks ownerId when provided", () => {
     const { runtime, broadcast, rejected } = makeHarness();
 
