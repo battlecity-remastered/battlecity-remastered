@@ -12,5 +12,6 @@ verify:
     - npm ci
   script:
     - npm run lint
+    - npm run typecheck
     - npm run test
     - npm run rewrite:check:strict

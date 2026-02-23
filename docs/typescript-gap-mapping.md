@@ -240,3 +240,12 @@ apps/client-ts/src/
 - `S1-23`: done (defender + rogue bot authority ported with server-side spawn/move/fire/cleanup behavior through `DefenderBotService` + `RogueBotService`)
 - `S3-01`: in_progress (`event.rejected` schema + `event:rejected` alias canonicalization added alongside `player.bot_damage` and prior protocol expansions)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
+
+## Status Update (2026-02-23, checkpoint 3)
+- `S3-03`: done (dispatch inventory exported and test-locked in `apps/server-ts/src/runtime/dispatch.ts` + `apps/server-ts/test/dispatch-coverage.test.ts`).
+- `S3-04`: done (client apply inventory exported and test-locked in `apps/client-ts/src/app/network-events.ts` + `apps/client-ts/test/network-handler-coverage.test.ts`).
+- `S2-17`: in_progress (lobby overlay parity slice implemented via `apps/client-ts/src/ui/lobby/LobbyManager.ts` and wired in `apps/client-ts/src/main.ts`).
+- `S2-19`: in_progress (chat overlay parity slice implemented via `apps/client-ts/src/ui/chat/ChatManager.ts` and wired in `apps/client-ts/src/main.ts`).
+- `S4-06`: done (structured client socket observability logs in `apps/client-ts/src/network/socket.ts`, complementing runtime logger path).
+- `S5-09`: in_progress (additional client parity tests for lobby/chat helper logic and apply coverage landed).
+- `S5-12`: done (`typecheck` added to GitHub + GitLab parity pipelines).

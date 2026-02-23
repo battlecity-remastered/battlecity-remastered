@@ -17,18 +17,21 @@
 ## Stage S3
 - Protocol has explicit canonical event naming and legacy alias compatibility strategy.
 - Protocol explicitly covers `population.update` with `population:update` ingress compatibility.
-- Contract behavior is tested at decode/dispatch/apply boundaries.
+- Server dispatch coverage for all implemented inbound authoritative request types is explicit and test-enforced.
+- Client apply coverage for all implemented server->client gameplay event types is explicit and test-enforced.
 
 ## Stage S2
 - Client state updates for key server events are complete and tested.
 - Client applies authoritative `population.update` events and surfaces city population in HUD telemetry.
-- UI parity restoration tracked and tested subsystem-by-subsystem.
-- Client world state applies authoritative building/bullet/icon lifecycle events and visualizes core world objects.
+- Client includes lobby/chat runtime UI parity slices (assignment/denial/release + history/rate-limit/send semantics).
+- Client world state applies authoritative building/bullet/icon/hazard/defense lifecycle events and visualizes core world objects.
 
 ## Stage S4
 - Core runtime lifecycle uses Effect queue/scheduler/ref patterns.
 - Runtime rejection and lifecycle behavior has typed, testable boundaries.
+- Structured logging is available for runtime/client socket lifecycle and decode-failure paths.
 
 ## Stage S5
 - Lint/typecheck/test/strict checks pass.
+- CI parity gates run lint/typecheck/test/strict on both GitHub and GitLab pipelines.
 - Parity status table has no silent skips: each S-ID is done/blocked/deferred with reason.

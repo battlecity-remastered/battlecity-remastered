@@ -253,3 +253,17 @@ The rewrite should only be considered complete when:
   - Identity/persistence/rank hydration integrations.
   - Full legacy build-tree and inventory icon parity.
   - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).
+
+## Implementation Status Update (2026-02-23, checkpoint 3)
+- S3 contract hardening:
+  - Server dispatch coverage is now explicit and regression-enforced via exported handler inventory (`HANDLED_RUNTIME_EVENT_TYPES`) and `apps/server-ts/test/dispatch-coverage.test.ts`.
+  - Client apply coverage is now explicit and regression-enforced via exported handler inventory (`APPLIED_SERVER_EVENT_TYPES`) and `apps/client-ts/test/network-handler-coverage.test.ts`.
+- S2 client parity slice expansion:
+  - Added lobby overlay manager (`apps/client-ts/src/ui/lobby/LobbyManager.ts`) rendering assignment/denial/release parity telemetry.
+  - Added chat overlay manager (`apps/client-ts/src/ui/chat/ChatManager.ts`) rendering history/rate-limit state and sending team/global chat requests (`/g` prefix for global).
+  - Wired both managers into runtime lifecycle in `apps/client-ts/src/main.ts`.
+- S4 observability hardening:
+  - Client socket runtime now emits structured log events for connect/disconnect, ignored inbound envelopes, and decode failure paths with metadata.
+- S5 gate tightening:
+  - Added `typecheck` gates to both `.github/workflows/test.yml` and `.gitlab-ci.yml`.
+- Validation gates for this checkpoint all pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.
