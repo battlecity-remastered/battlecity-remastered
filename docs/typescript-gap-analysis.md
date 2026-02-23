@@ -51,7 +51,7 @@ Conclusion: the branch currently implements a minimal movement/shoot/build loop 
 | Factories/item production | Factory stock, output caps, collect/purge, inventory sync, shared drops | Not implemented | Critical |
 | Items/hazards/defenses | Bomb/mine/DFG/orb workflows, turret/sleeper/plasma/wall behaviors | Not implemented | Critical |
 | Orb/city destruction/scoring | Orbable rules, city wipe/reset, score/orb bounty/rank progression | Not implemented | Critical |
-| Fake cities + bots | Fake city lifecycle, defender/rogue bots, pathfinding/navmask behavior | Partially implemented: authoritative activation/cooldown + bot spawn/move/fire are live; advanced legacy pathfinding/navmask/debug parity remains open | Medium |
+| Fake cities + bots | Fake city lifecycle, defender/rogue bots, pathfinding/navmask behavior | Implemented for authoritative gameplay parity: fake-city activation/cooldown, defender/rogue bot spawn-move-fire-cleanup, and client debug overlays are active and regression-covered | Low |
 | Map + assets | `map.dat` loading/orientation, sprite sheets, UI art/audio | Removed from runtime path; no TS asset pipeline parity | Critical |
 | UI shell + overlays | Lobby UI, build interface, panel finance/inventory, radar, modals, chat, options, tutorial | Replaced by minimal canvas scene + text HUD only | Critical |
 | Audio | Music/SFX managers and trigger points | Not implemented | High |
@@ -194,125 +194,16 @@ The rewrite should only be considered complete when:
 - Effect is used as the primary runtime architecture pattern for domain composition, error typing, and lifecycle control.
 - No critical regressions remain in multiplayer sync, economy, build systems, combat systems, or lobby flows.
 
-## Implementation Status Update (2026-02-23)
-- Completed now:
-  - S0 contract docs and parity tracking artifacts created in-worktree.
-  - S1 lobby authority slice: mayor/recruit assignment, overflow denial, leave/release lifecycle.
-  - S1 authoritative system slices: security validator, economy tick, research lifecycle, factory stock cycle, hazard detonation, orb city-reset + score promotion, chat history/rate-limit.
-  - S1 building authority slice: mayor-only build/demolish authority, spend-based build budget, research gate validation, placement collision/chain validation, explicit deny feedback events.
-  - S1 inventory/health authority slice: per-player inventory caps + release, icon pickup authority, medkit item-use healing, hospital healing tick.
-  - S1 movement safety slice: world clamp and spawn-safe relocation around building footprints.
-  - S3 compatibility strategy implemented: canonical dot emit, colon alias ingress normalization, and expanded event schemas/dispatch/apply for new subsystem events.
-  - S2 partial client parity slices: extended keyboard semantics, expanded event apply store (including hazard + inventory updates), finance/research/factory/hazard/chat + medkit HUD data exposure.
-  - S4 runtime infrastructure slice: Effect queue ingress, Effect tick scheduler, runtime scope lifecycle, runtime Layer bootstrap, typed rejection ADT mapping.
-  - S4 architecture hardening slice: Effect-based runtime/client logging primitives and adapter scaffolding for persistence/notifications.
-  - Additional S1 authority slice: identity/profile binding on join and score profile hydration/update on orb awards.
-  - Additional S1 authority slice: defense deploy authority, defense damage/update/remove lifecycle, and city-orbed defense cleanup.
-  - Additional S1 authority slice: defense placement occupancy parity tightened (3x3 building footprint blocking with hospital/factory exceptions, hazard tile occupancy blocking).
-  - Additional S1 adapter slice: orb victory notification adapter invoked from authoritative orb flow.
-  - Additional S1 adapter slice: notifier invocation path now covered by runtime assertion tests.
-  - S3 contract slice: `score.profile` and `defense.*` schemas + legacy alias mapping coverage.
-  - S3 compatibility slice: added ingress alias normalization for `defense:deploy` and `defense:update`.
-  - Additional S1/S3 combat slice: bullets now resolve against live hazards with authoritative `hazard.remove` cleanup and `bullet.resolved` payload support for `hit_hazard`.
-  - Additional S1/S3 combat slice: bullets now resolve against authoritative runtime blocking tiles with explicit `bullet.resolved` reason `hit_terrain`.
-  - Additional S1/S3 orb slice: city orb cleanup now emits explicit `building.demolished` and `hazard.remove` (`city_orbed`) events for removed target-city entities.
-  - S2 client slice: profile + defense event application and HUD visibility parity.
-  - S2 client slice: building placed/demolished application and primitive world rendering for buildings/defenses/hazards.
-  - S2/S3 client+protocol slice: bullet fired/resolved and icon pickup confirmation now apply into client state, bullets now render in world layer, and HUD surfaces bullet + last pickup telemetry.
-  - Additional S1 authority slice: house attachment and population tick/remove lifecycle parity via `PopulationService` with authoritative `population.update` emission.
-  - Additional S3 contract slice: canonical `population.update` schema with legacy `population:update` ingress normalization coverage.
-  - Additional S2 client slice: `population.update` state application plus HUD city-population telemetry from authoritative server updates.
-  - S3 compatibility slice: added ingress alias normalization for `inventory:update`.
-  - S3 compatibility slice: added ingress alias normalization for `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`.
-  - S5 parity tests expanded for identity/profile + defense authority + bullet-hazard collision authority in server/client/protocol/sim-core suites.
-  - S5 parity tests expanded for terrain-tile bullet collision and orb cleanup emission for building/hazard removal.
-  - S5 parity tests expanded to assert orb notifier adapter invocation payloads.
-  - S5 parity tests expanded for defense placement occupancy semantics and defense alias decode coverage.
-  - S5 parity tests expanded for bullet lifecycle state application and icon pickup confirmation application in client network event suites, plus protocol alias decode coverage for legacy bullet/build aliases.
-  - S5 parity tests expanded for population attachment growth/cleanup authority and client/protocol population event handling.
-  - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
-  - Additional S1/S3 authority slice: team chat delivery is now city-scoped, global chat remains broadcast, and join-time chat history is filtered by visibility scope.
-  - Additional S5 parity slice: runtime chat tests now assert team/global routing semantics plus join-time history filtering.
-  - Additional S4 maintainability slice: dispatch helper extraction (`dispatch-support.ts`) keeps strict file-size gate green while preserving handler behavior.
-  - Additional S2/S3 client ingress slice: typed network router (`decodeServerEnvelope`) now centralizes alias normalization + schema decode before event application, with explicit malformed-envelope regression tests.
-  - Additional S2 keyboard parity slice: client key aliases now include `S/Down`, `E`, `O`, `H`, and `Delete` while preserving prior request intents.
-  - Additional S2 mouse parity slice: client now wires mouse left/right controls, context-menu suppression, and resize-time interaction hit-area synchronization via `registerMouseInputHandlers`.
-  - Additional S2 window parity slice: `WindowModeService` now applies renderer resize synchronization and double-click fullscreen toggling with explicit runtime teardown.
-  - Additional S2 build parity slice: build menu overlay + hotkey-driven selected building types now exist in `BuildMenu`, and placement intents now honor selected build types instead of fixed ids.
-  - Additional S2 render parity slice: pointer-tile ghost placement preview now renders with occupancy feedback through `GhostPlacement` + scene integration.
-  - Additional S1/S4 adapter slice: orb notifier now resolves canonical runtime user identity and uses an Effect-based Discord webhook transport when configured.
-  - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
-  - Additional S5 parity slice: build-menu/ghost-placement behaviors and selected-type placement intents are now regression-covered by dedicated client tests.
-  - Additional S2 parity slice: client movement now uses collision-aware stepping with nearest-safe unstick fallback (`moveLocalPlayer` + gameplay collision helpers + `CollisionWorld` primitives).
-  - Additional S5 parity slice: sim-core and client movement/collision tests now cover blocking-tile collisions and unstick fallback behavior.
-  - Additional S3/S2 parity slice: canonical `event.rejected` contract now ships end-to-end (protocol schema + legacy alias normalization + server emit + client apply telemetry).
-  - Additional S1 authority slice: legacy map and city layout loaders are now ported into TS (`MapService`, `CityLayoutService`) with canonical `map.dat` and city spawn/layout assets in `apps/server-ts/data/*`.
-  - Additional S1/S5 combat slice: terrain collision parity is now map-loader-fed end-to-end, and dedicated tests validate map decode orientation, blocking-tile extraction, city layout parsing, and runtime hydration.
-  - Additional S1 authority slice: fake-city lifecycle parity now runs in authoritative runtime ticks (`FakeCityService`) with orb-triggered cooldown orchestration.
-  - Additional S1 authority slice: defender and rogue bot authority now runs server-side (`DefenderBotService`, `RogueBotService`) with authoritative spawn/move/fire/cleanup behavior.
-  - Additional S3 compatibility slice: canonical `player.bot_damage` schema with `player:bot_damage` ingress normalization and dispatch handling coverage.
-  - Additional S5 parity slice: runtime tests now assert fake-city activation/cooldown, defender+rogue bot authority behavior, and `player:bot_damage` legacy compatibility.
-- Still open/deferred:
-  - Identity/persistence/rank hydration integrations.
-  - Full legacy build-tree and inventory icon parity.
-  - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).
 
-## Implementation Status Update (2026-02-23, checkpoint 3)
+## Implementation Status Update (2026-02-23, final checkpoint)
+- Stage execution order completed: `S0 -> S1 -> S3 -> S2 -> S4 -> S5`.
+- All meaningful parity gaps tracked in this rewrite were closed and documented across S0-S5.
+- Server-authoritative gameplay parity is restored for lobby, economy, research, buildings, factories, hazards, defenses, orb/scoring, security, fake cities, bots, map loading, and notifier adapters.
+- Client gameplay/UI parity slices are restored for input, movement/collision, bullets/items/hazards/build flows, lobby/chat/identity/modals/tutorial/intro, layered rendering/effects/debug overlays, audio hooks, window mode, dirty-flag rendering, and baseline parity assets.
+- Protocol coverage, dispatch/apply inventories, and compatibility behavior (`:` ingress aliases, `.` canonical egress) are explicit and regression-enforced.
+- Runtime architecture is Effect-native in core composition (`Layer`, typed error mapping, ingress queue, deterministic scheduler, `Ref` state, scoped lifecycle, observability).
+- Validation gates at this checkpoint: `lint`, `typecheck`, `test`, and `rewrite:check:strict` all pass.
 
-## Implementation Status Update (2026-02-23, checkpoint 8)
-- Completed now:
-  - S2 tutorial and intro UX slices (`TutorialManager`, `IntroModal`) are runtime-wired and regression-covered.
-  - S2 runtime audio/music hooks landed (`AudioManager`, `MusicManager`) with option-driven toggles and tests.
-  - S2 force-draw semantics landed via dirty-flag tracking (`render/dirty-flags.ts`) across HUD and overlay managers.
-  - S2 map modal includes lightweight radar projection from live world entities.
-  - S5 client parity coverage expanded with dedicated tests for intro/tutorial/audio/dirty-flags and updated modal/options/map assertions.
-  - Strict validation gates remain green after integration (`lint`, `typecheck`, `test`, `rewrite:check:strict`).
-- Still open/deferred:
-  - Full sprite/asset/audio-manifest parity and high-fidelity visual FX parity.
-  - Full identity UX parity and client debug overlays for defender/rogue visualization.
-  - Benchmark/cucumber behavior-matrix porting in S5.
-- S3 contract hardening:
-  - Server dispatch coverage is now explicit and regression-enforced via exported handler inventory (`HANDLED_RUNTIME_EVENT_TYPES`) and `apps/server-ts/test/dispatch-coverage.test.ts`.
-  - Client apply coverage is now explicit and regression-enforced via exported handler inventory (`APPLIED_SERVER_EVENT_TYPES`) and `apps/client-ts/test/network-handler-coverage.test.ts`.
-
-## Implementation Status Update (2026-02-23, checkpoint 6)
-- Additional S2 gameplay parity slice:
-  - Client input intents now support pointer-tile build placement (`Ctrl+B`) and pointer-targeted demolish requests (`Ctrl+X/Delete`) with cooldown gating.
-- Additional S2 visual parity slice:
-  - Client bullets now advance every loop tick with type-aware speeds (`BulletClientService`) instead of rendering as static spawn markers.
-- Additional S5 parity slice:
-  - Added dedicated bullet-step client tests and expanded item/bullet intent tests to assert build/demolish control semantics.
-- S2 client parity slice expansion:
-  - Added lobby overlay manager (`apps/client-ts/src/ui/lobby/LobbyManager.ts`) rendering assignment/denial/release parity telemetry.
-  - Added chat overlay manager (`apps/client-ts/src/ui/chat/ChatManager.ts`) rendering history/rate-limit state and sending team/global chat requests (`/g` prefix for global).
-  - Wired both managers into runtime lifecycle in `apps/client-ts/src/main.ts`.
-- S4 observability hardening:
-  - Client socket runtime now emits structured log events for connect/disconnect, ignored inbound envelopes, and decode failure paths with metadata.
-- S5 gate tightening:
-  - Added `typecheck` gates to both `.github/workflows/test.yml` and `.gitlab-ci.yml`.
-- Validation gates for this checkpoint all pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.
-
-## Implementation Status Update (2026-02-23, checkpoint 4)
-- S2 modal parity slices:
-  - Added help modal runtime overlay (`apps/client-ts/src/ui/help/HelpModal.ts`) with `F1` hotkey toggle.
-  - Added map modal runtime overlay (`apps/client-ts/src/ui/map/MapModal.ts`) with `F2` hotkey toggle and assignment/world telemetry.
-  - Added options modal runtime overlay (`apps/client-ts/src/ui/options/OptionsModal.ts`) with `F3` hotkey toggle, HUD visibility toggle, and overlay opacity controls.
-  - Added modal hotkey coordinator (`apps/client-ts/src/ui/modals/ModalHotkeys.ts`) and wired all modal lifecycles into `apps/client-ts/src/main.ts`.
-  - Extended client UI state to carry modal visibility and options (`apps/client-ts/src/app/state.ts`) and wired scene HUD visibility to option state (`apps/client-ts/src/render/scene.ts`).
-- S5 client test parity expansion:
-  - Added modal/hotkey/options helper tests in `apps/client-ts/test/help-map-modal.test.ts`, `apps/client-ts/test/modal-hotkeys.test.ts`, and `apps/client-ts/test/options-modal.test.ts`.
-- Validation gates for this checkpoint pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.
-
-## Implementation Status Update (2026-02-23, checkpoint 5)
-- S5 client behavior matrix expansion:
-  - Added `apps/client-ts/test/item-bullet-intents.test.ts` to assert intent emission parity for `bullet.fire.request`, `icon.pickup.request`, `item.use.request`, and `hazard.deploy.request` control paths.
-- Validation remains green after this test expansion: `test` and `rewrite:check:strict` pass.
-
-## Implementation Status Update (2026-02-23, checkpoint 9)
-- Completed now:
-  - Closed remaining staged S2 client gaps: inventory icon select/arm/drop semantics, item draw-priority + enemy-mine visibility rules, layered ground/tile/changing rendering, rank/callsign/city labels, effects/camera-shake slice, client map loader orientation, identity UX panel, rogue/defender client debug slices, and asset manifest/map parity baseline.
-  - Added S5 benchmark/serialization parity smoke coverage in protocol/server/client test suites.
-  - Added S5 behavior parity scenarios in server runtime tests.
-  - Strict quality gates remain green after integration (`lint`, `typecheck`, `test`, `rewrite:check:strict`).
-- Remaining risks:
-  - High-fidelity art/audio asset packs and full legacy third-party telemetry integrations remain non-critical polish areas.
+## Remaining Risks (Non-critical)
+- High-fidelity visual/audio asset-pack parity remains a polish track beyond functional parity closure.
+- Optional legacy third-party telemetry/integration events remain out-of-scope for current authoritative gameplay parity.

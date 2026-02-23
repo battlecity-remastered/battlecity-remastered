@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after closing remaining `S2` deferred client parity slices and adding `S5` benchmark/behavior parity coverage.
+- `S5` final closure checkpoint: parity docs normalized, staged ledger closed (`done` across `S0..S5`), and strict validation reconfirmed.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -41,45 +41,12 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/public/assets/map.dat`
-- `apps/client-ts/public/assets/README.txt`
-- `apps/client-ts/src/app/intents-actions.ts`
-- `apps/client-ts/src/app/intents.ts`
-- `apps/client-ts/src/app/network-events.ts`
-- `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/assets/manifest.ts`
-- `apps/client-ts/src/gameplay/defenders/DefenderDebugService.ts`
-- `apps/client-ts/src/gameplay/items/IconInventoryService.ts`
-- `apps/client-ts/src/gameplay/rogue/RogueTankService.ts`
-- `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/network/socket.ts`
-- `apps/client-ts/src/render/debug/BotDebugLayer.ts`
-- `apps/client-ts/src/render/effects/EffectsRenderer.ts`
-- `apps/client-ts/src/render/hud-lines.ts`
-- `apps/client-ts/src/render/items/ItemRenderer.ts`
-- `apps/client-ts/src/render/labels/NameLabelRenderer.ts`
-- `apps/client-ts/src/render/layers/ChangingLayer.ts`
-- `apps/client-ts/src/render/layers/GroundLayer.ts`
-- `apps/client-ts/src/render/layers/TileLayer.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/src/ui/identity/IdentityManager.ts`
-- `apps/client-ts/src/ui/map/MapModal.ts`
-- `apps/client-ts/src/ui/options/OptionsModal.ts`
-- `apps/client-ts/src/world/city-layout.ts`
-- `apps/client-ts/src/world/map-loader.ts`
-- `apps/client-ts/test/assets-manifest.test.ts`
-- `apps/client-ts/test/icon-inventory-service.test.ts`
-- `apps/client-ts/test/identity-manager.test.ts`
-- `apps/client-ts/test/item-bullet-intents.test.ts`
-- `apps/client-ts/test/map-loader.test.ts`
-- `apps/client-ts/test/options-modal.test.ts`
-- `apps/client-ts/test/serialization-bench.test.ts`
-- `apps/server-ts/test/behavior-parity.test.ts`
-- `apps/server-ts/test/serialization-bench.test.ts`
-- `packages/protocol/test/serialization-bench.test.ts`
+- `docs/rewrite-progress.md`
+- `docs/typescript-gap-analysis.md`
+- `docs/typescript-gap-mapping.md`
 
 ## Validation Results
-- `npm run lint`: pass
-- `npm run typecheck`: pass
-- `npm run test`: pass
-- `npm run rewrite:check:strict`: pass
+- `npm run lint`: pass (2026-02-23 final checkpoint)
+- `npm run typecheck`: pass (2026-02-23 final checkpoint)
+- `npm run test`: pass (2026-02-23 final checkpoint, 138/138)
+- `npm run rewrite:check:strict`: pass (2026-02-23 final checkpoint)

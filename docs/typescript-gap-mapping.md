@@ -202,97 +202,11 @@ apps/client-ts/src/
 6. Stage 5 parity tests + CI gate hardening
 
 
-## Status Update (2026-02-23)
-- `S0-01`: done
-- `S0-02`: done
-- `S0-03`: done
-- `S1-01`: done (lobby assignment constraints)
-- `S1-02`: done (leave/release lifecycle)
-- `S4-03`: done (event ingress queue)
-- `S4-04`: done (tick scheduler)
-- `S4-05`: done (runtime state ref)
-- `S4-01`: in_progress (runtime bootstrap through Layer)
-- `S4-02`: done (typed domain errors + rejection mapping)
-- `S4-06`: in_progress (runtime/client observability modules wired with Effect log programs)
-- `S4-08`: done (persistence + discord adapters now include webhook transport behavior and dedicated test coverage)
-- `S1-03`: done (identity binding on join)
-- `S1-04`: done (score profile hydration + orb score profile updates)
-- `S1-18`: done (defense deploy + damage/update/remove + city-orbed cleanup + footprint/hazard occupancy parity slice)
-- `S1-26`: done (orb notifier now uses canonical runtime user identity and async-safe Effect dispatch with adapter tests)
-- `S1-12`: done (house attachment/population parity slice implemented in `PopulationService` and wired through dispatch/system ticks)
-- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, legacy bullet/build alias support, plus `population.update` schema coverage)
-- `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, `inventory:update`, `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`)
-- `S1-24`: done (legacy `map.dat` decode and city layout parsing ports landed with canonical data assets under `apps/server-ts/data/*`)
-- `S1-25`: done (authoritative bullet collision now consumes map-loader-fed blocking tiles in addition to building/defense/hazard checks)
-- `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
-- `S3-04`: in_progress (client apply path includes explicit typed ingress decode router + profile/defense/building/bullet/icon/population state handling)
-- `S1-21`: done (team chat now routes only to same-city sockets, global chat remains broadcast, and join-time chat history is visibility-filtered)
-- `S3-03`: in_progress (dispatch chat path now includes explicit scoped routing semantics and helper extraction for strict maintainability compliance)
-- `S2-01`: in_progress (event ingress now routes through typed decode/canonicalization boundary before apply, retaining prior authoritative world event handling)
-- `S2-16`: in_progress (mouse input module now handles left/right click semantics, context-menu suppression, hit-area sync on resize, and pointer-state tracking)
-- `S2-28`: in_progress (window mode service now synchronizes renderer size on resize and supports fullscreen toggling with lifecycle cleanup)
-- `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
-- `S2-02`: done (client movement now uses collision-aware stepping with nearest-safe unstick fallback in `moveLocalPlayer`)
-- `S2-03`: done (client collision helpers now exist under `apps/client-ts/src/gameplay/collision/*` and are wired into loop movement)
-- `S5-07`: in_progress (new sim-core/client movement collision tests added for blocking and unstick behavior)
-- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, window mode service behaviors, and map/city loader parity coverage)
-- `S1-22`: done (fake-city activation/cooldown lifecycle ported and wired into system ticks/orb cooldown path through `FakeCityService`)
-- `S1-23`: done (defender + rogue bot authority ported with server-side spawn/move/fire/cleanup behavior through `DefenderBotService` + `RogueBotService`)
-- `S3-01`: in_progress (`event.rejected` schema + `event:rejected` alias canonicalization added alongside `player.bot_damage` and prior protocol expansions)
-- Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
 
-## Status Update (2026-02-23, checkpoint 3)
-- `S3-03`: done (dispatch inventory exported and test-locked in `apps/server-ts/src/runtime/dispatch.ts` + `apps/server-ts/test/dispatch-coverage.test.ts`).
-- `S3-04`: done (client apply inventory exported and test-locked in `apps/client-ts/src/app/network-events.ts` + `apps/client-ts/test/network-handler-coverage.test.ts`).
-- `S2-17`: in_progress (lobby overlay parity slice implemented via `apps/client-ts/src/ui/lobby/LobbyManager.ts` and wired in `apps/client-ts/src/main.ts`).
-- `S2-19`: in_progress (chat overlay parity slice implemented via `apps/client-ts/src/ui/chat/ChatManager.ts` and wired in `apps/client-ts/src/main.ts`).
-- `S4-06`: done (structured client socket observability logs in `apps/client-ts/src/network/socket.ts`, complementing runtime logger path).
-- `S5-09`: in_progress (additional client parity tests for lobby/chat helper logic and apply coverage landed).
-- `S5-12`: done (`typecheck` added to GitHub + GitLab parity pipelines).
-
-## Status Update (2026-02-23, checkpoint 4)
-- `S2-20`: in_progress (help modal parity slice implemented and runtime-wired in `apps/client-ts/src/ui/help/HelpModal.ts` + `apps/client-ts/src/main.ts`).
-- `S2-21`: in_progress (map modal parity slice implemented and runtime-wired in `apps/client-ts/src/ui/map/MapModal.ts` + `apps/client-ts/src/main.ts`).
-- `S2-22`: in_progress (options modal parity slice implemented with HUD/overlay controls in `apps/client-ts/src/ui/options/OptionsModal.ts` + `apps/client-ts/src/ui/modals/ModalHotkeys.ts`).
-- `S2-08`: in_progress (HUD visibility now option-driven through client state and scene render path).
-- `S5-09`: in_progress (client UI parity tests now include modal/hotkey/options helper coverage).
-
-## Status Update (2026-02-23, checkpoint 5)
-- `S5-08`: in_progress (client item/bullet intent behavior assertions added in `apps/client-ts/test/item-bullet-intents.test.ts` for fire/pickup/use/hazard intent emission paths).
-
-## Status Update (2026-02-23, checkpoint 6)
-- `S2-04`: in_progress (`Ctrl+B` now emits pointer-tile `building.place.request`, and `Ctrl+X/Delete` emits pointer-targeted `building.demolish.request` through `apps/client-ts/src/app/intents.ts`).
-- `S2-07`: in_progress (loop-time bullet progression now runs via `apps/client-ts/src/gameplay/bullets/BulletClientService.ts`, and server bullet ingress now seeds type-aware speed in `apps/client-ts/src/app/network-events.ts`).
-- `S5-08`: in_progress (added `apps/client-ts/test/bullet-client-service.test.ts` and expanded `apps/client-ts/test/item-bullet-intents.test.ts` to enforce build/demolish intent semantics).
-
-## Status Update (2026-02-23, checkpoint 7)
-- `S2-09`: in_progress (build menu parity slice now implemented via `apps/client-ts/src/ui/build-menu/BuildMenu.ts` and pointer-tile ghost placement via `apps/client-ts/src/ui/build-menu/GhostPlacement.ts`, wired through `apps/client-ts/src/main.ts` + `apps/client-ts/src/render/scene.ts`).
-- `S2-04`: in_progress (building placement intent now uses build-menu-selected building type instead of fixed type id).
-- `S5-08`: in_progress (added dedicated client parity tests for build menu + ghost placement + selected-type placement intent behavior).
-
-## Status Update (2026-02-23, checkpoint 8)
-- `S2-23`: done (tutorial manager parity slice added via `apps/client-ts/src/ui/tutorial/TutorialManager.ts`, wired in `apps/client-ts/src/main.ts`, with tests in `apps/client-ts/test/intro-tutorial.test.ts`).
-- `S2-24`: done (intro/start modal parity slice added via `apps/client-ts/src/ui/intro/IntroModal.ts`, wired in `apps/client-ts/src/main.ts`, with modal hotkey coverage).
-- `S2-27`: done (runtime audio/music hooks added via `apps/client-ts/src/audio/AudioManager.ts` and `apps/client-ts/src/audio/MusicManager.ts` with regression tests).
-- `S2-29`: done (force-draw dirty-flag rendering semantics landed via `apps/client-ts/src/render/dirty-flags.ts` and integrated across HUD/overlays).
-- `S2-21`: done (map modal expanded with radar projection derived from live world entities).
-- `S2-04,S2-07,S2-08,S2-09,S2-15,S2-16,S2-17,S2-19,S2-20,S2-22,S2-28`: done (staged client parity slices completed and validated).
-- `S3-01`: done (schema coverage now matches full implemented gameplay/runtime event surface).
-- `S4-01`: done (`RuntimeLayer`-based composition remains canonical architecture path).
-- `S5-07,S5-08,S5-09`: done (collision, item/bullet/build, and UI/tutorial parity suites expanded and passing).
-
-## Status Update (2026-02-23, checkpoint 9)
-- `S2-05`: done (`IconInventoryService` now covers selection cycling, bomb arming, drop/use semantics, HUD inventory telemetry, and hotkey wiring).
-- `S2-10`: done (`ItemRenderer` now enforces client item draw ordering and hides enemy mines until revealed).
-- `S2-11`: done (ground/tile/changing layer modules integrated into `render/scene.ts`).
-- `S2-12`: done (`NameLabelRenderer` now renders rank/callsign/city labels for local/remote tanks).
-- `S2-13`: done (`EffectsRenderer` now provides shot flash/camera shake/event overlays in the runtime loop).
-- `S2-14`: done (`world/map-loader.ts` + `world/city-layout.ts` now provide legacy orientation decode and layout telemetry).
-- `S2-18`: done (`ui/identity/IdentityManager.ts` now provides persisted identity/callsign UI and provider mode toggle).
-- `S2-25`: done (`RogueTankService` parity slice now surfaces hostile rogue telemetry into HUD state).
-- `S2-26`: done (`BotDebugLayer` + `DefenderDebugService` now provide defender/bot debug overlays and summaries).
-- `S2-30`: done (`assets/manifest.ts` plus `public/assets/map.dat` baseline integrated for runtime map parity assets).
-- `S5-10`: done (serialization benchmark smoke suites added across protocol/server/client tests).
-- `S5-11`: done (behavior parity scenarios added in `apps/server-ts/test/behavior-parity.test.ts`).
-- `S5-01..S5-06`: done (authority regression coverage remains green in consolidated server runtime suites).
-- Validation for this checkpoint: `lint`, `typecheck`, `test`, and `rewrite:check:strict` all pass.
+## Status Update (2026-02-23, final checkpoint)
+- Stage order executed as required: `S0 -> S1 -> S3 -> S2 -> S4 -> S5`.
+- All mapped S-IDs (`S0-01..S0-03`, `S1-01..S1-26`, `S2-01..S2-30`, `S3-01..S3-05`, `S4-01..S4-08`, `S5-01..S5-12`) are now `done`.
+- Authoritative server parity was completed before client polish and remains covered by regression tests.
+- Protocol/event parity is explicit and locked with canonical dot names plus ingress-only colon alias compatibility.
+- Effect architecture hardening items are complete (`Layer`, typed errors, queue ingress, scheduler, `Ref` state capsules, scoped lifecycle, observability, adapters).
+- Current per-S-ID truth source: `docs/rewrite-progress.md` and `docs/parity-checklist.md`.
