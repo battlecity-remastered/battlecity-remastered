@@ -29,6 +29,7 @@ export type CombatHazardState = {
 export type BulletStepResult =
     | { kind: "none"; bullet: BulletState }
     | { kind: "out_of_bounds"; bulletId: string }
+    | { kind: "hit_terrain"; bulletId: string }
     | { kind: "hit_player"; bulletId: string; playerId: string; nextHealth: number; isDead: boolean }
     | { kind: "hit_building"; bulletId: string; buildingId: string; nextHealth: number; isDemolished: boolean }
     | { kind: "hit_hazard"; bulletId: string; hazardId: string };
@@ -36,6 +37,7 @@ export type BulletStepResult =
 const TILE_SIZE = 48;
 const PLAYER_HIT_RADIUS = 24;
 const BUILDING_HIT_RADIUS = 28;
+const BULLET_SIZE = 4;
 
 const sq = (value: number): number => value * value;
 const distanceSquared = (ax: number, ay: number, bx: number, by: number): number => {
@@ -125,6 +127,36 @@ const resolveHazardHit = (
     return undefined;
 };
 
+const resolveTerrainHit = (
+    nextBullet: BulletState,
+    bulletId: string,
+    isBlockedTile?: (tileX: number, tileY: number) => boolean
+): BulletStepResult | undefined => {
+    if (!isBlockedTile) {
+        return undefined;
+    }
+
+    const corners = [
+        { x: nextBullet.x, y: nextBullet.y },
+        { x: nextBullet.x + (BULLET_SIZE - 1), y: nextBullet.y },
+        { x: nextBullet.x, y: nextBullet.y + (BULLET_SIZE - 1) },
+        { x: nextBullet.x + (BULLET_SIZE - 1), y: nextBullet.y + (BULLET_SIZE - 1) }
+    ];
+
+    for (const corner of corners) {
+        const tileX = Math.floor(corner.x / TILE_SIZE);
+        const tileY = Math.floor(corner.y / TILE_SIZE);
+        if (isBlockedTile(tileX, tileY)) {
+            return {
+                kind: "hit_terrain",
+                bulletId
+            };
+        }
+    }
+
+    return undefined;
+};
+
 export const stepBulletAndResolve = (
     bullet: BulletState,
     dtMs: number,
@@ -132,7 +164,8 @@ export const stepBulletAndResolve = (
     mapMaxY: number,
     players: Iterable<CombatPlayerState>,
     buildings: Iterable<CombatBuildingState>,
-    hazards: Iterable<CombatHazardState> = []
+    hazards: Iterable<CombatHazardState> = [],
+    isBlockedTile?: (tileX: number, tileY: number) => boolean
 ): BulletStepResult => {
     const direction = normalizeHeading32(bullet.direction);
     const advanced = advancePointByHeading32(bullet.x, bullet.y, direction, bullet.speed, dtMs);
@@ -145,6 +178,11 @@ export const stepBulletAndResolve = (
 
     if (nextBullet.x < 0 || nextBullet.y < 0 || nextBullet.x > mapMaxX || nextBullet.y > mapMaxY) {
         return { kind: "out_of_bounds", bulletId: bullet.id };
+    }
+
+    const terrainHit = resolveTerrainHit(nextBullet, bullet.id, isBlockedTile);
+    if (terrainHit) {
+        return terrainHit;
     }
 
     const playerHit = resolvePlayerHit(nextBullet, bullet, players);

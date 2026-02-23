@@ -31,18 +31,9 @@ type DispatchContext = {
     userStore?: UserStoreAdapter;
     notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
 };
-type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (
-    socketId: string,
-    payload: KnownEventPayloadByType[TType],
-    context: DispatchContext
-) => void;
+type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
-const handleCommandResult = <T>(
-    socketId: string,
-    context: DispatchContext,
-    result: CommandResult<T>,
-    onOk: (value: T) => void
-): void => {
+const handleCommandResult = <T>(socketId: string, context: DispatchContext, result: CommandResult<T>, onOk: (value: T) => void): void => {
     if (!result.ok) {
         if (result.reason === "lobby_full") {
             context.emitter.emitTo(socketId, "lobby.denied", {
@@ -258,11 +249,23 @@ const handlers: HandlerMap = {
             socketId,
             payload,
             context.config
-        ), ({ cityOrbed, scorePromotion, removedDefenseIds }) => {
+        ), ({ cityOrbed, scorePromotion, removedBuildingIds, removedHazardIds, removedDefenseIds }) => {
             context.emitter.emit("city.orbed", cityOrbed);
             context.emitter.emit("score.promotion", scorePromotion);
             emitCityFinance(context.state, payload.sourceCityId, context.config, context.emitter);
             emitCityFinance(context.state, payload.targetCityId, context.config, context.emitter);
+            for (const buildingId of removedBuildingIds) {
+                context.emitter.emit("building.demolished", {
+                    id: buildingId,
+                    cityId: payload.targetCityId
+                });
+            }
+            for (const hazardId of removedHazardIds) {
+                context.emitter.emit("hazard.remove", {
+                    id: hazardId,
+                    reason: "city_orbed"
+                });
+            }
             for (const defenseId of removedDefenseIds) {
                 context.emitter.emit("defense.remove", {
                     id: defenseId,
@@ -297,12 +300,7 @@ const handlers: HandlerMap = {
         });
     }
 };
-const dispatchByType = <TType extends keyof KnownEventPayloadByType>(
-    socketId: string,
-    type: TType,
-    payload: KnownEventPayloadByType[TType],
-    context: DispatchContext
-): void => {
+const dispatchByType = <TType extends keyof KnownEventPayloadByType>(socketId: string, type: TType, payload: KnownEventPayloadByType[TType], context: DispatchContext): void => {
     const handler = handlers[type] as RuntimeHandler<TType> | undefined;
     if (!handler) {
         return;

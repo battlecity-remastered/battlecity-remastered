@@ -26,6 +26,8 @@
 - Ingress: `score:profile` -> canonical `score.profile`.
 - Ingress: `defense:deploy` -> canonical `defense.deploy.request`.
 - Ingress: `defense:update` -> canonical `defense.update`.
+- Ingress: `inventory:update` -> canonical `inventory.update`.
 - Ingress: `defense:spawn` -> canonical `defense.spawn`.
-- Egress payload: `bullet.resolved` now supports reason `hit_hazard` with `hitHazardId`.
+- Egress payload: `bullet.resolved` supports reason `hit_hazard` with `hitHazardId` and `hit_terrain` for blocking tile collisions.
+- Egress payload: `hazard.remove` supports reason `city_orbed` for orb-driven city cleanup.
 - Egress: always `players.snapshot`.

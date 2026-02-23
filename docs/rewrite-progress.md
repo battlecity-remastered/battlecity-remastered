@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (defense placement occupancy parity + `defense:*` legacy alias compatibility + notifier invocation test coverage).
+- `S5` checkpoint after additional `S1 -> S3 -> S2 -> S5` parity slice delivery (authoritative orb cleanup event emission, terrain tile bullet blocking, protocol alias/reason expansion, and client building world-state/render application).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -28,18 +28,18 @@
 | S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
 | S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
-| S1-18 | in_progress | Defense deploy now enforces legacy-like occupancy rules (3x3 building footprint, hospital/factory exceptions, hazard tile blocking) plus damage/update + city-orbed cleanup |
-| S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards; terrain tile collision still deferred pending map loader parity |
+| S1-18 | done | Defense authority now covers occupancy, damage/update/remove, and orb city cleanup lifecycle |
+| S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards and runtime blocking tiles (`hit_terrain`); full map-loader-fed terrain parity remains coupled to S1-24 |
 | S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow and validated by runtime test harness |
 | S1-12,S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, and `bullet.resolved` hazard-hit payload coverage |
-| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`) |
-| S3-03 | in_progress | Dispatch expanded for identity/profile + defense deploy authority paths |
-| S3-04 | in_progress | Client apply path expanded for profile + defense event lifecycle |
+| S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, `bullet.resolved.hit_terrain`, and `hazard.remove.city_orbed` payload coverage |
+| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update` and `inventory:update`) |
+| S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, and orb cleanup emission (`building.demolished` + `hazard.remove`) |
+| S3-04 | in_progress | Client apply path expanded for profile/defense lifecycle plus building placed/demolished world state |
 | S3-05 | done | Versioning strategy kept current |
-| S2-08 | in_progress | HUD now reflects score profile and defense counts alongside finance/research/factory/hazard/chat + deny counters |
+| S2-08 | in_progress | HUD now reflects score profile and defense counts alongside finance/research/factory/hazard/chat + deny counters; world rendering now includes authoritative building/defense/hazard objects |
 | S2-15 | in_progress | Extended keyboard semantics + new request intents |
-| S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update` application |
+| S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update`, `building.placed`, and `building.demolished` application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
 | S4-02 | done | Typed domain errors + rejection mapping (`errors.ts`, `rejections.ts`) |
@@ -54,9 +54,27 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
+- `packages/sim-core/src/combat.ts`
+- `packages/sim-core/test/combat.test.ts`
+- `packages/protocol/src/events.ts`
+- `packages/protocol/src/event-type-adapter.ts`
+- `packages/protocol/src/envelope.ts`
+- `packages/protocol/test/envelope.test.ts`
+- `apps/server-ts/src/runtime/types.ts`
+- `apps/server-ts/src/runtime/bullet-runtime.ts`
+- `apps/server-ts/src/domain/orb/OrbService.ts`
+- `apps/server-ts/src/runtime/dispatch.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/app/network-events.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/src/app/intents.ts`
+- `apps/client-ts/test/network-events.test.ts`
 - `docs/rewrite-progress.md`
 - `docs/parity-checklist.md`
+- `docs/event-parity-matrix.md`
+- `docs/event-versioning.md`
+- `docs/parity-acceptance-criteria.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 

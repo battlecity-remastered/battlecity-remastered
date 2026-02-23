@@ -65,7 +65,7 @@ export const BulletFired = Schema.Struct({
 });
 export const BulletResolved = Schema.Struct({
     id: Schema.String,
-    reason: Schema.Literal("out_of_bounds", "hit_player", "hit_building", "hit_hazard"),
+    reason: Schema.Literal("out_of_bounds", "hit_terrain", "hit_player", "hit_building", "hit_hazard"),
     hitPlayerId: Schema.optional(Schema.String),
     hitBuildingId: Schema.optional(Schema.String),
     hitHazardId: Schema.optional(Schema.String)
@@ -199,7 +199,7 @@ export const HazardSpawn = Schema.Struct({
 });
 export const HazardRemove = Schema.Struct({
     id: Schema.String,
-    reason: Schema.Literal("detonated", "expired", "cleared")
+    reason: Schema.Literal("detonated", "expired", "cleared", "city_orbed")
 });
 export const OrbDropRequest = Schema.Struct({
     sourceCityId: Schema.Number,

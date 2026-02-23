@@ -12,6 +12,7 @@ export type Intent<TType extends EnvelopeType = EnvelopeType> = {
 const TURN_SPEED_STEPS_PER_SECOND = 12;
 const SHOT_COOLDOWN_MS = 1000;
 const ACTION_COOLDOWN_MS = 800;
+const TILE_SIZE = 48;
 
 export type TickPlan = {
     intents: ReadonlyArray<Intent>;
@@ -139,8 +140,8 @@ const appendDefenseDeployIntent = (state: ClientState, nowMs: number, intents: I
         payload: {
             cityId: state.local.city,
             type: 8,
-            tileX: Math.floor(state.local.x / 32),
-            tileY: Math.floor(state.local.y / 32)
+            tileX: Math.floor(state.local.x / TILE_SIZE),
+            tileY: Math.floor(state.local.y / TILE_SIZE)
         }
     });
 };

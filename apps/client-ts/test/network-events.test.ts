@@ -71,7 +71,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     }));
     applyServerEvent(state, makeKnownEnvelope("hazard.remove", 5, {
         id: "hazard_1",
-        reason: "detonated"
+        reason: "city_orbed"
     }));
     applyServerEvent(state, makeKnownEnvelope("chat.history", 6, [{
         id: "c1",
@@ -122,6 +122,20 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         id: "d1",
         reason: "destroyed"
     }));
+    applyServerEvent(state, makeKnownEnvelope("building.placed", 14, {
+        id: "b1",
+        ownerId: "p-local",
+        cityId: 2,
+        type: 300,
+        tileX: 8,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120
+    }));
+    applyServerEvent(state, makeKnownEnvelope("building.demolished", 15, {
+        id: "b1",
+        cityId: 2
+    }));
     applyServerEvent(state, makeKnownEnvelope("build.denied", 11, {
         reason: "research_required",
         cityId: 2,
@@ -144,6 +158,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.events.lastOrbedCityId, 2);
     assert.equal(state.events.promotions[0]?.rank, "captain");
     assert.equal(state.defenses.size, 0);
+    assert.equal(state.buildings.size, 0);
     assert.equal(state.events.lastBuildDeniedReason, "research_required");
     assert.equal(state.events.lastDemolishDeniedReason, "not_mayor");
 });

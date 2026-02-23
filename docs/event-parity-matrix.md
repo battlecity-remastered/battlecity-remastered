@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|---|
 | `lobby:assignment` | `lobby.assignment` | server -> client | yes | emit | apply | done |
 | `players:snapshot` | `players.snapshot` | server -> client | yes | emit | apply | done |
-| `n/a` | `bullet.resolved` | server -> client | yes | emit | receive-ready | in_progress |
+| `n/a` | `bullet.resolved` | server -> client | yes | emit (`out_of_bounds`,`hit_terrain`,`hit_player`,`hit_building`,`hit_hazard`) | receive-ready | in_progress |
 | `player:health` | `player.health` | server -> client | yes | emit | apply | done |
 | `player:dead` | `player.dead` | server -> client | yes | emit | apply | done |
 | `player:removed` | `player.removed` | server -> client | yes | emit | apply | done |
@@ -33,6 +33,8 @@
 | `item:use` | `item.use.request` | client -> server | yes | dispatch | send-ready | done |
 | `hazard:spawn` | `hazard.spawn` | server -> client | yes | emit | apply | done |
 | `hazard:remove` | `hazard.remove` | server -> client | yes | emit | apply | done |
+| `new_building` | `building.placed` | server -> client | yes | emit | apply | in_progress |
+| `demolish_building` | `building.demolished` | server -> client | yes | emit | apply | in_progress |
 | `orb:drop` | `orb.drop.request` | client -> server | yes | dispatch | send-ready | done |
 | `city:orbed` | `city.orbed` | server -> client | yes | emit | apply | done |
 | `score:promotion` | `score.promotion` | server -> client | yes | emit | apply | done |
@@ -44,5 +46,5 @@
 
 ## Known Gaps
 - Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
-- Hazard events are now state-applied; bullet-to-hazard cleanup is authoritative, but visual parity remains partial (no dedicated renderer layer yet).
-- Inventory/item/icon/defense events are authoritative but UI parity is still HUD-level, not full legacy panel/icon UX.
+- Hazard events are now state-applied and include orb city cleanup reasons; dedicated hazard art/animation parity remains partial.
+- Inventory/item/icon/defense/building events are authoritative but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.

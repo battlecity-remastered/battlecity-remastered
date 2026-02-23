@@ -57,6 +57,13 @@ const handleOutOfBounds = (emitter: RuntimeEmitter, bulletId: string): void => {
     });
 };
 
+const handleTerrainHit = (emitter: RuntimeEmitter, bulletId: string): void => {
+    emitter.emit("bullet.resolved", {
+        id: bulletId,
+        reason: "hit_terrain"
+    });
+};
+
 const handlePlayerHit = (
     context: TickContext,
     bullet: BulletState,
@@ -199,6 +206,11 @@ const resolveBulletStep = (
         return false;
     }
 
+    if (result.kind === "hit_terrain") {
+        handleTerrainHit(context.emitter, bulletId);
+        return false;
+    }
+
     if (result.kind === "hit_player") {
         return handlePlayerHit(context, bullet, bulletId, result);
     }
@@ -225,6 +237,10 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
         y: hazard.y,
         radius: hazard.radius
     })) as CombatHazardState[];
+    const blockedTileSet = state.blockingTiles;
+    const isBlockedTile = (tileX: number, tileY: number): boolean => {
+        return blockedTileSet.has(`${tileX},${tileY}`);
+    };
 
     for (const [bulletId, bullet] of state.bullets.entries()) {
         const result = stepBulletAndResolve(
@@ -234,7 +250,8 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
             config.mapMax,
             asCombatPlayers(state),
             combatTargets,
-            combatHazards
+            combatHazards,
+            isBlockedTile
         );
         snapshotDirty = resolveBulletStep(context, bullet, bulletId, result) || snapshotDirty;
     }

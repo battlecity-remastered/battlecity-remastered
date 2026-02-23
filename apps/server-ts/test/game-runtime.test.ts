@@ -675,6 +675,33 @@ test("bullet collision removes active hazards authoritatively", () => {
     assert.ok(hazardRemoved);
 });
 
+test("bullet collision resolves against blocking terrain tiles", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.getReadonlyState().blockingTiles.add("3,2");
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const hitTerrain = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_terrain";
+    });
+    assert.ok(hitTerrain);
+});
+
 test("orb drop emits city.orbed and score.promotion", () => {
     const { runtime, broadcast } = makeHarness();
 
@@ -847,7 +874,9 @@ test("bullets can damage and remove defenses", () => {
 });
 
 test("orb drop clears target defenses and updates actor score profile", () => {
-    const { runtime, broadcast, direct } = makeHarness();
+    const { runtime, broadcast, direct } = makeHarness({
+        cityStartingCash: 1000
+    });
 
     runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, {
         desiredCity: 1,
@@ -860,8 +889,23 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         tileX: 7,
         tileY: 7
     }));
+    runtime.handleRawEvent("target", makeEnvelope("building.place.request", 4, {
+        ownerId: "target",
+        cityId: 2,
+        type: 300,
+        tileX: 12,
+        tileY: 12
+    }));
+    runtime.handleRawEvent("target", makeEnvelope("hazard.deploy.request", 5, {
+        cityId: 2,
+        type: 1,
+        position: { x: 576, y: 576 },
+        radius: 64,
+        damage: 10,
+        fuseMs: 5000
+    }));
 
-    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 4, {
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 6, {
         sourceCityId: 1,
         targetCityId: 2
     }));
@@ -875,6 +919,16 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         .map((entry) => entry.event.payload as { score: number });
     assert.ok(profileUpdates.length >= 2);
     assert.equal(profileUpdates.at(-1)?.score, 250);
+
+    const buildingRemoved = broadcast.find((event) => event.type === "building.demolished");
+    assert.ok(buildingRemoved);
+    assert.equal((buildingRemoved.payload as { cityId: number }).cityId, 2);
+
+    const hazardRemoved = broadcast.find((event) => {
+        return event.type === "hazard.remove"
+            && (event.payload as { reason?: string }).reason === "city_orbed";
+    });
+    assert.ok(hazardRemoved);
 });
 
 test("orb drop invokes notifier adapter with authoritative payload", () => {

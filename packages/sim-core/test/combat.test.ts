@@ -82,3 +82,18 @@ test("bullet can resolve against hazards", () => {
         assert.equal(result.hazardId, "h1");
     }
 });
+
+test("bullet resolves against blocking terrain tiles", () => {
+    const result = stepBulletAndResolve(
+        mkBullet(),
+        100,
+        2000,
+        2000,
+        [],
+        [],
+        [],
+        (tileX, tileY) => tileX === 3 && tileY === 2
+    );
+
+    assert.equal(result.kind, "hit_terrain");
+});

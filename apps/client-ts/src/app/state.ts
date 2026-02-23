@@ -62,6 +62,16 @@ export type ClientState = {
         y: number;
         radius: number;
     }>;
+    buildings: Map<string, {
+        id: string;
+        ownerId: string;
+        cityId: number;
+        type: number;
+        tileX: number;
+        tileY: number;
+        health: number;
+        maxHealth: number;
+    }>;
     defenses: Map<string, {
         id: string;
         cityId: number;
@@ -144,6 +154,7 @@ export const createClientState = (): ClientState => {
         factoryStock: new Map(),
         inventory: new Map(),
         hazards: new Map(),
+        buildings: new Map(),
         defenses: new Map(),
         scoreProfile: {
             userId: null,

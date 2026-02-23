@@ -9,6 +9,8 @@
 - Runtime dispatch validates and handles authoritative lobby state transitions.
 - Authoritative building placement/demolish gates (mayor/city/cost/research/collision/chain) emit explicit deny reasons.
 - Inventory/item authority (collect/pickup/use/release) and hospital healing tick are server-driven and test-covered.
+- Orb city reset flow emits explicit cleanup events for removed defenses/buildings/hazards.
+- Bullet authority includes structure/hazard and blocking-tile terrain collision outcomes.
 
 ## Stage S3
 - Protocol has explicit canonical event naming and legacy alias compatibility strategy.
@@ -17,6 +19,7 @@
 ## Stage S2
 - Client state updates for key server events are complete and tested.
 - UI parity restoration tracked and tested subsystem-by-subsystem.
+- Client world state applies authoritative building lifecycle events and visualizes core world objects.
 
 ## Stage S4
 - Core runtime lifecycle uses Effect queue/scheduler/ref patterns.

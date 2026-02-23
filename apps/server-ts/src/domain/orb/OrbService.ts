@@ -19,6 +19,8 @@ const resolveRank = (score: number): string => {
 export type OrbDropResult = {
     cityOrbed: KnownEventPayloadByType["city.orbed"];
     scorePromotion: KnownEventPayloadByType["score.promotion"];
+    removedBuildingIds: string[];
+    removedHazardIds: string[];
     removedDefenseIds: string[];
 };
 
@@ -43,14 +45,18 @@ export const dropOrb = (
     target.orbCount = 0;
     state.cities.set(target.cityId, target);
 
+    const removedBuildingIds: string[] = [];
     for (const [buildingId, building] of state.buildings.entries()) {
         if (building.cityId === target.cityId) {
             state.buildings.delete(buildingId);
+            removedBuildingIds.push(buildingId);
         }
     }
+    const removedHazardIds: string[] = [];
     for (const [hazardId, hazard] of state.hazards.entries()) {
         if (hazard.cityId === target.cityId) {
             state.hazards.delete(hazardId);
+            removedHazardIds.push(hazardId);
         }
     }
     const removedDefenseIds = clearCityDefenses(state, target.cityId);
@@ -72,6 +78,8 @@ export const dropOrb = (
             score,
             rank
         },
+        removedBuildingIds,
+        removedHazardIds,
         removedDefenseIds
     });
 };

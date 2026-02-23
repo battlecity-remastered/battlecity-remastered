@@ -43,7 +43,7 @@ Legend:
 | S1-15 Factory production cycle and item stock accounting | `server/src/FactoryBuilding.js::cycle`; `BuildingFactory.handleFactoryCollect/registerFactoryIcon/cycle` | `apps/server-ts/src/domain/factories/FactoryService.ts` (new) | done |
 | S1-16 Icon drop authoritative collect/pickup flows | `server/src/IconDropManager.js::handleDrop/handlePickup/decrementFactoryStock` | `apps/server-ts/src/domain/icons/IconDropService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-17 Hazard lifecycle (mine/bomb/DFG), area damage, cleanup | `server/src/hazards/HazardManager.js::updateMine/updateBomb/detonateBomb/damagePlayersInRadius/updateDFG` | `apps/server-ts/src/domain/hazards/HazardService.ts` (new) | done |
-| S1-18 Defense placement/damage/replenishment parity | `server/src/DefenseManager.js::handleSpawn/applyDefenseDamage/removeDefensesByType` | `apps/server-ts/src/domain/defense/DefenseService.ts` (new) | in_progress |
+| S1-18 Defense placement/damage/replenishment parity | `server/src/DefenseManager.js::handleSpawn/applyDefenseDamage/removeDefensesByType` | `apps/server-ts/src/domain/defense/DefenseService.ts` (new) | done |
 | S1-19 Orb drop validation + city wipe/reset | `server/src/orb/OrbManager.js::handleDrop/resolveTargetCity`; `CityManager.resetCity`; `PlayerFactory` eviction interactions | `apps/server-ts/src/domain/orb/OrbService.ts` (new) | done |
 | S1-20 Score/rank updates + promotion events | `server/src/users/ScoreService.js::resolveRank/recordOrbVictory/recordDeath`; `score:promotion` event path | `apps/server-ts/src/domain/orb/OrbService.ts` (new), `packages/protocol/src/events.ts` (exists) | done |
 | S1-21 Chat + history + rate-limit parity | `server/src/chat/ChatManager.js::handleChatMessage/sendHistoryForSocket/isRateLimited` | `apps/server-ts/src/domain/chat/ChatService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
@@ -93,7 +93,7 @@ Legend:
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
 | S3-01 Move from partial typed payload set to full gameplay schemas | `client/src/SocketListener.js` + `server/src/*` event payload handling | `packages/protocol/src/events.ts` (exists, expand) | in_progress |
-| S3-02 Remove event-name split-brain (legacy colon names vs dot names) without losing compatibility | legacy uses `player:health`, `players:snapshot`, etc.; TS currently uses dot variants in handlers | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `apps/*/event-adapter.ts` (new) | open |
+| S3-02 Remove event-name split-brain (legacy colon names vs dot names) without losing compatibility | legacy uses `player:health`, `players:snapshot`, etc.; TS currently uses dot variants in handlers | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `apps/*/event-adapter.ts` (new) | done |
 | S3-03 Expand server dispatch beyond 5 handlers | `server/src/PlayerFactory.js`, `BuildingFactory.js`, `BulletFactory.js`, `HazardManager.js`, `DefenseManager.js` | `apps/server-ts/src/runtime/dispatch.ts` (exists, expand heavily) | in_progress |
 | S3-04 Expand client applyServerEvent beyond 5 handlers | `client/src/SocketListener.js` handlers | `apps/client-ts/src/app/network-events.ts` (exists, expand heavily) | in_progress |
 | S3-05 Versioned envelope migration policy | implicit envelope usage in legacy socket events | `packages/protocol/src/envelope.ts` (exists), `docs/event-versioning.md` (new) | open |
@@ -208,10 +208,6 @@ apps/client-ts/src/
 - `S0-03`: done
 - `S1-01`: done (lobby assignment constraints)
 - `S1-02`: done (leave/release lifecycle)
-- `S3-02`: done (canonical emit + ingress alias adapter)
-- `S3-01`: in_progress (economy/research/factory/hazard/orb/chat/score plus inventory/item/icon schemas added)
-- `S3-03`: in_progress (dispatch expanded for new authoritative subsystems)
-- `S3-04`: in_progress (client apply path expanded for deny + hazard subsystem events)
 - `S4-03`: done (event ingress queue)
 - `S4-04`: done (tick scheduler)
 - `S4-05`: done (runtime state ref)
@@ -221,11 +217,11 @@ apps/client-ts/src/
 - `S4-08`: in_progress (persistence + discord adapter scaffolding added)
 - `S1-03`: done (identity binding on join)
 - `S1-04`: done (score profile hydration + orb score profile updates)
-- `S1-18`: in_progress (defense deploy + damage/update + city-orbed cleanup + footprint/hazard occupancy parity slice)
+- `S1-18`: done (defense deploy + damage/update/remove + city-orbed cleanup + footprint/hazard occupancy parity slice)
 - `S1-26`: in_progress (orb notifier invocation wired + runtime adapter invocation test coverage added)
-- `S3-01`: in_progress (`score.profile`, `defense.*`, and `bullet.resolved` hazard-hit schema coverage + alias support)
-- `S3-02`: done (alias map expanded with `defense:deploy` and `defense:update`)
-- `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards landed; terrain tile blocking still deferred pending map loader parity)
-- `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy)
-- `S3-04`: in_progress (client apply expanded for profile + defense lifecycle)
+- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, and `hazard.remove` city-orbed reason coverage + alias support)
+- `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, and `inventory:update`)
+- `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
+- `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
+- `S3-04`: in_progress (client apply expanded for profile + defense lifecycle + building placed/demolished state)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

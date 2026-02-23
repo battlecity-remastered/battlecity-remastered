@@ -20,6 +20,7 @@ const legacyToCanonicalType = {
     "factory:collect": "factory.collect.request",
     "icon:pickup": "icon.pickup.request",
     "icon:pickup:confirmed": "icon.pickup.confirmed",
+    "inventory:update": "inventory.update",
     "item:use": "item.use.request",
     "hazard:spawn": "hazard.spawn",
     "hazard:remove": "hazard.remove",

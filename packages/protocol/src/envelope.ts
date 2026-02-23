@@ -60,6 +60,7 @@ export const EventType = Schema.Literal(
     "icon:pickup:rejected",
     "icon:pickup:result",
     "icon:remove",
+    "inventory:update",
     "identity:ack",
     "identity:update",
     "item:use",

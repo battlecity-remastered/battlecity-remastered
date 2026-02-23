@@ -73,6 +73,7 @@ export type RuntimeState = {
     socketUserIds: Map<string, string>;
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
+    blockingTiles: Set<string>;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
     seq: number;
@@ -106,6 +107,7 @@ export type RuntimeConfig = {
     hospitalBuildingType: number;
     hospitalHealPerTick: number;
     defenseCost: number;
+    tileSize: number;
 };
 
 export type RuntimeRejectReason =
@@ -169,7 +171,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     inventoryPerItemCap: 5,
     hospitalBuildingType: 300,
     hospitalHealPerTick: 2,
-    defenseCost: 75
+    defenseCost: 75,
+    tileSize: 48
 };
 
 export const createRuntimeState = (): RuntimeState => {
@@ -188,6 +191,7 @@ export const createRuntimeState = (): RuntimeState => {
         socketUserIds: new Map(),
         chatHistory: [],
         chatRateLimit: new Map(),
+        blockingTiles: new Set(),
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
         seq: 0

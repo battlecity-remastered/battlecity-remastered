@@ -3,6 +3,7 @@ import type { ClientState } from "../app/state.js";
 import { reconcileEntityCache } from "./entity-cache.js";
 
 const TANK_SIZE = 18;
+const TILE_SIZE = 48;
 
 const makeTank = (color: number): Graphics => {
     const tank = new Graphics();
@@ -45,6 +46,50 @@ const applyRemoteTankTransforms = (state: ClientState, remoteTanks: Map<string, 
         tank.position.set(remote.x, remote.y);
         tank.rotation = (remote.direction / 32) * (Math.PI * 2);
     }
+};
+
+const syncTileEntities = (
+    cache: Map<string, Graphics>,
+    layer: Container,
+    desiredIds: Iterable<string>,
+    color: number
+): void => {
+    reconcileEntityCache(
+        cache,
+        desiredIds,
+        () => {
+            const entity = new Graphics();
+            entity.rect(0, 0, TILE_SIZE, TILE_SIZE).fill(color);
+            layer.addChild(entity);
+            return entity;
+        },
+        (_id, entity) => {
+            layer.removeChild(entity);
+            entity.destroy();
+        }
+    );
+};
+
+const syncCircleEntities = (
+    cache: Map<string, Graphics>,
+    layer: Container,
+    desiredIds: Iterable<string>,
+    color: number
+): void => {
+    reconcileEntityCache(
+        cache,
+        desiredIds,
+        () => {
+            const entity = new Graphics();
+            entity.circle(0, 0, TILE_SIZE / 3).fill(color);
+            layer.addChild(entity);
+            return entity;
+        },
+        (_id, entity) => {
+            layer.removeChild(entity);
+            entity.destroy();
+        }
+    );
 };
 
 const readFinance = (state: ClientState): { cash: string; income: string } => {
@@ -132,6 +177,12 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     world.addChild(remoteLayer);
     const remoteTanks = new Map<string, Graphics>();
 
+    const objectLayer = new Container();
+    world.addChild(objectLayer);
+    const buildingSprites = new Map<string, Graphics>();
+    const defenseSprites = new Map<string, Graphics>();
+    const hazardSprites = new Map<string, Graphics>();
+
     const hud = new Text({
         text: "",
         style: {
@@ -147,6 +198,34 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
         applyLocalTank(state, localTank);
         syncRemoteTanks(state, remoteLayer, remoteTanks);
         applyRemoteTankTransforms(state, remoteTanks);
+
+        syncTileEntities(buildingSprites, objectLayer, state.buildings.keys(), 0x3f85ff);
+        for (const building of state.buildings.values()) {
+            const sprite = buildingSprites.get(building.id);
+            if (!sprite) {
+                continue;
+            }
+            sprite.position.set(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE);
+        }
+
+        syncTileEntities(defenseSprites, objectLayer, state.defenses.keys(), 0xffb347);
+        for (const defense of state.defenses.values()) {
+            const sprite = defenseSprites.get(defense.id);
+            if (!sprite) {
+                continue;
+            }
+            sprite.position.set(defense.tileX * TILE_SIZE, defense.tileY * TILE_SIZE);
+        }
+
+        syncCircleEntities(hazardSprites, objectLayer, state.hazards.keys(), 0xff5e73);
+        for (const hazard of state.hazards.values()) {
+            const sprite = hazardSprites.get(hazard.id);
+            if (!sprite) {
+                continue;
+            }
+            sprite.position.set(hazard.x, hazard.y);
+        }
+
         hud.text = buildHudLines(state).join("\n");
     };
 

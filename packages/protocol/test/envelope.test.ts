@@ -88,6 +88,7 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("score:profile"), "score.profile");
     assert.equal(canonicalizeEventType("defense:deploy"), "defense.deploy.request");
     assert.equal(canonicalizeEventType("defense:update"), "defense.update");
+    assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -156,4 +157,30 @@ test("decodeKnownEnvelope normalizes defense legacy aliases", () => {
     if (update._tag === "Right") {
         assert.equal(update.right.type, "defense.update");
     }
+});
+
+test("decodeKnownEnvelope supports extended removal/reason payloads", () => {
+    const hazard = decodeKnownEnvelope({
+        type: "hazard.remove",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            id: "h1",
+            reason: "city_orbed"
+        }
+    });
+    assert.equal(hazard._tag, "Right");
+
+    const bullet = decodeKnownEnvelope({
+        type: "bullet.resolved",
+        version: "1",
+        seq: 2,
+        ts: Date.now(),
+        payload: {
+            id: "b1",
+            reason: "hit_terrain"
+        }
+    });
+    assert.equal(bullet._tag, "Right");
 });

@@ -64,6 +64,21 @@ const handlers: {
     "build.denied": (state, payload) => {
         state.events.lastBuildDeniedReason = payload.reason;
     },
+    "building.placed": (state, payload) => {
+        state.buildings.set(payload.id, {
+            id: payload.id,
+            ownerId: payload.ownerId,
+            cityId: payload.cityId,
+            type: payload.type,
+            tileX: payload.tileX,
+            tileY: payload.tileY,
+            health: payload.health,
+            maxHealth: payload.maxHealth
+        });
+    },
+    "building.demolished": (state, payload) => {
+        state.buildings.delete(payload.id);
+    },
     "players.snapshot": (state, payload) => {
         updateFromSnapshot(state, payload);
     },
