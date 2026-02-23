@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S2 -> S5` parity slice delivery (window/fullscreen resize lifecycle wiring and regression tests).
+- `S1` subsystem checkpoint after map/layout loader parity delivery and authoritative terrain collision hydration.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -29,10 +29,11 @@
 | S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
 | S1-18 | done | Defense authority now covers occupancy, damage/update/remove, and orb city cleanup lifecycle |
-| S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards and runtime blocking tiles (`hit_terrain`); full map-loader-fed terrain parity remains coupled to S1-24 |
+| S1-24 | done | Legacy map and city layout loaders ported (`MapService`, `CityLayoutService`) with canonical assets hydrated under `apps/server-ts/data/*` |
+| S1-25 | done | Bullet collision now resolves against buildings/defenses/hazards and map-loader-fed runtime blocking tiles (`hit_terrain`) |
 | S1-26 | done | Orb victory notifier now resolves canonical runtime user identity, posts through Effect-based Discord webhook adapter when configured, and remains covered by runtime tests |
 | S1-12 | done | House attachment + population tick/remove authority implemented via `PopulationService` with canonical `population.update` emissions |
-| S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
+| S1-22,S1-23 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract compatibility expanded with legacy aliases for `bullet:fired`, `bullet:resolved`, `new_building`, `demolish_building`, and `population:update` in addition to prior payload coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, orb cleanup emission, and scoped chat routing (`team` vs `global`) |
@@ -52,14 +53,20 @@
 | S4-07 | done | Runtime scope lifecycle remains active |
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
 | S4-08 | done | Effect-based persistence/notification adapters now exercised by live orb/profile flows; Discord adapter supports configured webhook transport with test coverage |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with house/population attachment growth + cleanup authority in addition to identity/profile + defense + bullet/hazard/terrain + orb notifier coverage |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with house/population attachment growth + cleanup authority, map decode/loader coverage, city layout parsing coverage, terrain bullet blocking, and orb notifier coverage |
 | S5-09 | in_progress | Client network/event coverage now also validates typed ingress decode router canonicalization and malformed envelope rejection |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/ui/window/WindowModeService.ts`
-- `apps/client-ts/test/window-mode-service.test.ts`
+- `apps/server-ts/data/cities/*`
+- `apps/server-ts/data/citySpawns.json`
+- `apps/server-ts/data/map.dat`
+- `apps/server-ts/src/domain/map/CityLayoutService.ts`
+- `apps/server-ts/src/domain/map/MapService.ts`
+- `apps/server-ts/src/layers/RuntimeLayer.ts`
+- `apps/server-ts/src/runtime/types.ts`
+- `apps/server-ts/test/map-services.test.ts`
+- `apps/server-ts/test/runtime-layer.test.ts`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`

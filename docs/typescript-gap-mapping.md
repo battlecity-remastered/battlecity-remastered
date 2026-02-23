@@ -49,8 +49,8 @@ Legend:
 | S1-21 Chat + history + rate-limit parity | `server/src/chat/ChatManager.js::handleChatMessage/sendHistoryForSocket/isRateLimited` | `apps/server-ts/src/domain/chat/ChatService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-22 Fake city lifecycle and cooldown orchestration | `server/src/FakeCityManager.js::update/onCityOrbed/setCityCooldown` | `apps/server-ts/src/domain/fake-cities/FakeCityService.ts` (new) | open |
 | S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | open |
-| S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new) | open |
-| S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `packages/sim-core/src/collision-world.ts` (new) | in_progress |
+| S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new), `apps/server-ts/data/*` (new) | done |
+| S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `apps/server-ts/src/domain/map/MapService.ts` (new) | done |
 | S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | done |
 
 ## Stage 2: Client Gameplay + Rendering + UX Parity (TS)
@@ -222,7 +222,8 @@ apps/client-ts/src/
 - `S1-12`: done (house attachment/population parity slice implemented in `PopulationService` and wired through dispatch/system ticks)
 - `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, legacy bullet/build alias support, plus `population.update` schema coverage)
 - `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, `inventory:update`, `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`)
-- `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
+- `S1-24`: done (legacy `map.dat` decode and city layout parsing ports landed with canonical data assets under `apps/server-ts/data/*`)
+- `S1-25`: done (authoritative bullet collision now consumes map-loader-fed blocking tiles in addition to building/defense/hazard checks)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
 - `S3-04`: in_progress (client apply path includes explicit typed ingress decode router + profile/defense/building/bullet/icon/population state handling)
 - `S1-21`: done (team chat now routes only to same-city sockets, global chat remains broadcast, and join-time chat history is visibility-filtered)
@@ -231,5 +232,5 @@ apps/client-ts/src/
 - `S2-16`: in_progress (mouse input module now handles left/right click semantics, context-menu suppression, hit-area sync on resize, and pointer-state tracking)
 - `S2-28`: in_progress (window mode service now synchronizes renderer size on resize and supports fullscreen toggling with lifecycle cleanup)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
-- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, and window mode service behaviors)
+- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, window mode service behaviors, and map/city loader parity coverage)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

@@ -240,8 +240,9 @@ The rewrite should only be considered complete when:
   - Additional S2 window parity slice: `WindowModeService` now applies renderer resize synchronization and double-click fullscreen toggling with explicit runtime teardown.
   - Additional S1/S4 adapter slice: orb notifier now resolves canonical runtime user identity and uses an Effect-based Discord webhook transport when configured.
   - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
+  - Additional S1 authority slice: legacy map and city layout loaders are now ported into TS (`MapService`, `CityLayoutService`) with canonical `map.dat` and city spawn/layout assets in `apps/server-ts/data/*`.
+  - Additional S1/S5 combat slice: terrain collision parity is now map-loader-fed end-to-end, and dedicated tests validate map decode orientation, blocking-tile extraction, city layout parsing, and runtime hydration.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.
-  - Full legacy build-tree, inventory icon, defense, fake-city, bot, and map-loader parity.
-  - Map-loader-fed terrain parity remains deferred; runtime tile blocking infrastructure is now in place but not yet sourced from legacy map data loaders.
+  - Full legacy build-tree, inventory icon, defense, fake-city, and bot parity.
   - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).

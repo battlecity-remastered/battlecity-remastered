@@ -180,7 +180,11 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     populationTickMs: 250
 };
 
-export const createRuntimeState = (): RuntimeState => {
+type RuntimeStateInit = {
+    blockingTiles?: Set<string>;
+};
+
+export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState => {
     return {
         players: new Map(),
         bullets: new Map(),
@@ -196,7 +200,7 @@ export const createRuntimeState = (): RuntimeState => {
         socketUserIds: new Map(),
         chatHistory: [],
         chatRateLimit: new Map(),
-        blockingTiles: new Set(),
+        blockingTiles: init.blockingTiles ?? new Set(),
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
         populationTickAccumulatorMs: 0,

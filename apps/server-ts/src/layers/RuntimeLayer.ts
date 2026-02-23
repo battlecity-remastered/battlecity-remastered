@@ -5,6 +5,7 @@ import type { Broadcaster } from "../runtime/emitter.js";
 import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../runtime/types.js";
 import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { notifyOrbVictory } from "../adapters/notifications/DiscordNotifier.js";
+import { loadBlockingTiles } from "../domain/map/MapService.js";
 
 export type RuntimeServices = {
     runtime: GameRuntime;
@@ -19,7 +20,8 @@ export const makeRuntimeServices = (
 ): RuntimeServices => {
     const resolvedConfig = { ...DEFAULT_RUNTIME_CONFIG, ...config };
     const userStore = new UserStoreAdapter();
-    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState(), {
+    const blockingTiles = loadBlockingTiles();
+    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState({ blockingTiles }), {
         userStore,
         notifyOrbVictory
     });
