@@ -1,13 +1,13 @@
 import { io, type Socket } from "socket.io-client";
 import {
-    decodeKnownEnvelope,
     makeEnvelope,
 } from "@battlecity/protocol";
 import { Effect } from "effect";
 import type { ClientState } from "../app/state.js";
 import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
-import { normalizeInboundEnvelopeType } from "./event-adapter.js";
+import { decodeServerEnvelope } from "./event-router.js";
+import { logClient } from "../observability/ClientLogger.js";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:8121";
 
@@ -34,15 +34,16 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     };
 
     const onServerEvent = (raw: unknown): void => {
-        const program = Effect.sync(() => decodeKnownEnvelope(normalizeInboundEnvelopeType(raw))).pipe(
+        const program = decodeServerEnvelope(raw).pipe(
             Effect.flatMap((decoded) => {
-                if (decoded._tag !== "Right") {
-                    return Effect.void;
+                if (!decoded) {
+                    return logClient("socket.event.ignored");
                 }
                 return Effect.sync(() => {
-                    applyServerEvent(state, decoded.right);
+                    applyServerEvent(state, decoded);
                 });
-            })
+            }),
+            Effect.catchAll(() => logClient("socket.event.decode_error"))
         );
 
         Effect.runSync(program);
