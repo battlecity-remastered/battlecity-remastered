@@ -84,8 +84,12 @@ test("decodeKnownEnvelope normalizes legacy alias type names", () => {
 
 test("canonicalizeEventType maps known legacy aliases to canonical names", () => {
     assert.equal(canonicalizeEventType("players:snapshot"), "players.snapshot");
+    assert.equal(canonicalizeEventType("bullet:fired"), "bullet.fired");
+    assert.equal(canonicalizeEventType("bullet:resolved"), "bullet.resolved");
     assert.equal(canonicalizeEventType("city:finance"), "city.finance");
     assert.equal(canonicalizeEventType("score:profile"), "score.profile");
+    assert.equal(canonicalizeEventType("new_building"), "building.placed");
+    assert.equal(canonicalizeEventType("demolish_building"), "building.demolished");
     assert.equal(canonicalizeEventType("defense:deploy"), "defense.deploy.request");
     assert.equal(canonicalizeEventType("defense:update"), "defense.update");
     assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");

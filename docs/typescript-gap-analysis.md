@@ -219,11 +219,14 @@ The rewrite should only be considered complete when:
   - Additional S1/S3 orb slice: city orb cleanup now emits explicit `building.demolished` and `hazard.remove` (`city_orbed`) events for removed target-city entities.
   - S2 client slice: profile + defense event application and HUD visibility parity.
   - S2 client slice: building placed/demolished application and primitive world rendering for buildings/defenses/hazards.
+  - S2/S3 client+protocol slice: bullet fired/resolved and icon pickup confirmation now apply into client state, bullets now render in world layer, and HUD surfaces bullet + last pickup telemetry.
   - S3 compatibility slice: added ingress alias normalization for `inventory:update`.
+  - S3 compatibility slice: added ingress alias normalization for `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`.
   - S5 parity tests expanded for identity/profile + defense authority + bullet-hazard collision authority in server/client/protocol/sim-core suites.
   - S5 parity tests expanded for terrain-tile bullet collision and orb cleanup emission for building/hazard removal.
   - S5 parity tests expanded to assert orb notifier adapter invocation payloads.
   - S5 parity tests expanded for defense placement occupancy semantics and defense alias decode coverage.
+  - S5 parity tests expanded for bullet lifecycle state application and icon pickup confirmation application in client network event suites, plus protocol alias decode coverage for legacy bullet/build aliases.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.

@@ -92,6 +92,27 @@ const syncCircleEntities = (
     );
 };
 
+const syncBulletEntities = (
+    cache: Map<string, Graphics>,
+    layer: Container,
+    desiredIds: Iterable<string>
+): void => {
+    reconcileEntityCache(
+        cache,
+        desiredIds,
+        () => {
+            const bullet = new Graphics();
+            bullet.circle(0, 0, 4).fill(0xf8e45c);
+            layer.addChild(bullet);
+            return bullet;
+        },
+        (_id, bullet) => {
+            layer.removeChild(bullet);
+            bullet.destroy();
+        }
+    );
+};
+
 const readFinance = (state: ClientState): { cash: string; income: string } => {
     const finance = state.cityFinance.get(state.local.city);
     if (!finance) {
@@ -126,6 +147,10 @@ const buildHudLines = (state: ClientState): string[] => {
     const factoryItem0 = readFactoryStock(state);
     const medkits = state.inventory.get(0) ?? 0;
     const rank = state.scoreProfile.rank ?? "-";
+    const lastIconPickup = state.events.lastIconPickupConfirmed;
+    const lastPickupLine = lastIconPickup
+        ? `${lastIconPickup.itemType} x${lastIconPickup.amount}`
+        : "-";
 
     return [
         `id: ${localId}`,
@@ -140,8 +165,10 @@ const buildHudLines = (state: ClientState): string[] => {
         `factory item0: ${factoryItem0}`,
         `medkits: ${medkits}`,
         `hazards: ${state.hazards.size}`,
+        `bullets: ${state.bullets.size}`,
         `defenses: ${state.defenses.size}`,
         `chat: ${state.chat.history.length}`,
+        `last pickup: ${lastPickupLine}`,
         `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
         `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`,
         "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
@@ -153,6 +180,27 @@ export type SceneRuntime = {
     render: () => void;
 };
 
+const attachCanvasToRoot = (app: Application): void => {
+    const root = document.getElementById("app");
+    if (root) {
+        root.appendChild(app.canvas);
+    }
+};
+
+const createHud = (app: Application): Text => {
+    const hud = new Text({
+        text: "",
+        style: {
+            fontFamily: "monospace",
+            fontSize: 16,
+            fill: 0xffffff
+        }
+    });
+    hud.position.set(16, 16);
+    app.stage.addChild(hud);
+    return hud;
+};
+
 export const createSceneRuntime = async (state: ClientState): Promise<SceneRuntime> => {
     const app = new Application();
     await app.init({
@@ -162,10 +210,7 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
         antialias: false
     });
 
-    const root = document.getElementById("app");
-    if (root) {
-        root.appendChild(app.canvas);
-    }
+    attachCanvasToRoot(app);
 
     const world = new Container();
     app.stage.addChild(world);
@@ -182,17 +227,9 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     const buildingSprites = new Map<string, Graphics>();
     const defenseSprites = new Map<string, Graphics>();
     const hazardSprites = new Map<string, Graphics>();
+    const bulletSprites = new Map<string, Graphics>();
 
-    const hud = new Text({
-        text: "",
-        style: {
-            fontFamily: "monospace",
-            fontSize: 16,
-            fill: 0xffffff
-        }
-    });
-    hud.position.set(16, 16);
-    app.stage.addChild(hud);
+    const hud = createHud(app);
 
     const render = (): void => {
         applyLocalTank(state, localTank);
@@ -224,6 +261,15 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
                 continue;
             }
             sprite.position.set(hazard.x, hazard.y);
+        }
+
+        syncBulletEntities(bulletSprites, objectLayer, state.bullets.keys());
+        for (const bullet of state.bullets.values()) {
+            const sprite = bulletSprites.get(bullet.id);
+            if (!sprite) {
+                continue;
+            }
+            sprite.position.set(bullet.x, bullet.y);
         }
 
         hud.text = buildHudLines(state).join("\n");

@@ -62,6 +62,15 @@ export type ClientState = {
         y: number;
         radius: number;
     }>;
+    bullets: Map<string, {
+        id: string;
+        ownerId: string;
+        city: number;
+        x: number;
+        y: number;
+        direction: number;
+        type: number;
+    }>;
     buildings: Map<string, {
         id: string;
         ownerId: string;
@@ -106,6 +115,12 @@ export type ClientState = {
         }>;
         lastBuildDeniedReason: string | null;
         lastDemolishDeniedReason: string | null;
+        lastIconPickupConfirmed: {
+            playerId: string;
+            cityId: number;
+            itemType: number;
+            amount: number;
+        } | null;
     };
     controls: {
         moveForward: boolean;
@@ -154,6 +169,7 @@ export const createClientState = (): ClientState => {
         factoryStock: new Map(),
         inventory: new Map(),
         hazards: new Map(),
+        bullets: new Map(),
         buildings: new Map(),
         defenses: new Map(),
         scoreProfile: {
@@ -169,7 +185,8 @@ export const createClientState = (): ClientState => {
             lastOrbedCityId: null,
             promotions: [],
             lastBuildDeniedReason: null,
-            lastDemolishDeniedReason: null
+            lastDemolishDeniedReason: null,
+            lastIconPickupConfirmed: null
         },
         controls: {
             moveForward: false,

@@ -200,3 +200,35 @@ test("score.profile updates local profile only", () => {
     assert.equal(state.scoreProfile.score, 320);
     assert.equal(state.scoreProfile.rank, "sergeant");
 });
+
+test("bullet lifecycle and icon pickup confirmation apply to local state", () => {
+    const state = createClientState();
+    state.local.id = "local";
+
+    applyServerEvent(state, makeKnownEnvelope("bullet.fired", 1, {
+        id: "bullet_1",
+        ownerId: "local",
+        city: 2,
+        position: { x: 320, y: 448 },
+        direction: 0,
+        type: 2
+    }));
+    applyServerEvent(state, makeKnownEnvelope("icon.pickup.confirmed", 2, {
+        playerId: "local",
+        cityId: 2,
+        itemType: 0,
+        amount: 1
+    }));
+
+    assert.equal(state.bullets.size, 1);
+    assert.equal(state.bullets.get("bullet_1")?.x, 320);
+    assert.equal(state.events.lastIconPickupConfirmed?.itemType, 0);
+
+    applyServerEvent(state, makeKnownEnvelope("bullet.resolved", 3, {
+        id: "bullet_1",
+        reason: "hit_hazard",
+        hitHazardId: "haz_1"
+    }));
+
+    assert.equal(state.bullets.size, 0);
+});

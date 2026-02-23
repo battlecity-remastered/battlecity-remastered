@@ -12,6 +12,8 @@ const legacyToCanonicalType = {
     "player:dead": "player.dead",
     "player:removed": "player.removed",
     "players:snapshot": "players.snapshot",
+    "bullet:fired": "bullet.fired",
+    "bullet:resolved": "bullet.resolved",
     "chat:message": "chat.message",
     "chat:history": "chat.history",
     "chat:rate_limit": "chat.rate_limit",
@@ -33,7 +35,9 @@ const legacyToCanonicalType = {
     "defense:update": "defense.update",
     "defense:remove": "defense.remove",
     "build:denied": "build.denied",
-    "demolish:denied": "demolish.denied"
+    "demolish:denied": "demolish.denied",
+    new_building: "building.placed",
+    demolish_building: "building.demolished"
 } as const;
 
 export type LegacyEventType = keyof typeof legacyToCanonicalType;

@@ -219,9 +219,9 @@ apps/client-ts/src/
 - `S1-04`: done (score profile hydration + orb score profile updates)
 - `S1-18`: done (defense deploy + damage/update/remove + city-orbed cleanup + footprint/hazard occupancy parity slice)
 - `S1-26`: in_progress (orb notifier invocation wired + runtime adapter invocation test coverage added)
-- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, and `hazard.remove` city-orbed reason coverage + alias support)
-- `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, and `inventory:update`)
+- `S3-01`: in_progress (`score.profile`, `defense.*`, `bullet.resolved` terrain/hazard reasons, `hazard.remove` city-orbed reason coverage, and legacy bullet/build alias support)
+- `S3-02`: done (alias map expanded with `defense:deploy`, `defense:update`, `inventory:update`, `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building`)
 - `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
-- `S3-04`: in_progress (client apply expanded for profile + defense lifecycle + building placed/demolished state)
+- `S3-04`: in_progress (client apply expanded for profile + defense + building + bullet lifecycle and icon pickup confirmation state)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

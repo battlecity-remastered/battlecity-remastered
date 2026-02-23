@@ -94,6 +94,20 @@ const handlers: {
         }
         state.remotePlayers.delete(payload.id);
     },
+    "bullet.fired": (state, payload) => {
+        state.bullets.set(payload.id, {
+            id: payload.id,
+            ownerId: payload.ownerId,
+            city: payload.city,
+            x: payload.position.x,
+            y: payload.position.y,
+            direction: payload.direction,
+            type: payload.type
+        });
+    },
+    "bullet.resolved": (state, payload) => {
+        state.bullets.delete(payload.id);
+    },
     "chat.history": (state, payload) => {
         state.chat.history = [...payload];
     },
@@ -139,6 +153,17 @@ const handlers: {
         for (const item of payload.items) {
             state.inventory.set(item.itemType, item.count);
         }
+    },
+    "icon.pickup.confirmed": (state, payload) => {
+        if (payload.playerId !== state.local.id) {
+            return;
+        }
+        state.events.lastIconPickupConfirmed = {
+            playerId: payload.playerId,
+            cityId: payload.cityId,
+            itemType: payload.itemType,
+            amount: payload.amount
+        };
     },
     "hazard.spawn": (state, payload) => {
         state.hazards.set(payload.id, {

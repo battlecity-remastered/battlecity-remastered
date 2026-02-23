@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S2 -> S5` parity slice delivery (authoritative orb cleanup event emission, terrain tile bullet blocking, protocol alias/reason expansion, and client building world-state/render application).
+- `S5` checkpoint after additional `S3 -> S2 -> S5` parity slice delivery (legacy alias expansion for bullet/build events, client bullet/icon event application, and bullet world rendering parity).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -32,14 +32,14 @@
 | S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards and runtime blocking tiles (`hit_terrain`); full map-loader-fed terrain parity remains coupled to S1-24 |
 | S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow and validated by runtime test harness |
 | S1-12,S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, `bullet.resolved.hit_terrain`, and `hazard.remove.city_orbed` payload coverage |
-| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update` and `inventory:update`) |
+| S3-01 | in_progress | Contract compatibility expanded with legacy aliases for `bullet:fired`, `bullet:resolved`, `new_building`, and `demolish_building` in addition to prior payload coverage |
+| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, and orb cleanup emission (`building.demolished` + `hazard.remove`) |
-| S3-04 | in_progress | Client apply path expanded for profile/defense lifecycle plus building placed/demolished world state |
+| S3-04 | in_progress | Client apply path expanded for profile/defense/building lifecycle plus bullet fired/resolved and icon pickup confirmation state |
 | S3-05 | done | Versioning strategy kept current |
-| S2-08 | in_progress | HUD now reflects score profile and defense counts alongside finance/research/factory/hazard/chat + deny counters; world rendering now includes authoritative building/defense/hazard objects |
+| S2-08 | in_progress | HUD now reflects score profile, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
 | S2-15 | in_progress | Extended keyboard semantics + new request intents |
-| S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update`, `building.placed`, and `building.demolished` application |
+| S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update`, `building.placed`, `building.demolished`, `bullet.fired`, `bullet.resolved`, and `icon.pickup.confirmed` application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
 | S4-02 | done | Typed domain errors + rejection mapping (`errors.ts`, `rejections.ts`) |
@@ -50,25 +50,15 @@
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
 | S4-08 | in_progress | Effect-based persistence/notification adapters now exercised by live orb/profile flows (`UserStoreAdapter`, `DiscordNotifier`) |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority + bullet-hazard authority + orb notifier invocation coverage in `game-runtime.test.ts` |
-| S5-09 | in_progress | Client network/event state coverage expanded for `score.profile` + `defense.*` |
+| S5-09 | in_progress | Client network/event state coverage expanded for `score.profile`, `defense.*`, and bullet/icon lifecycle state |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `packages/sim-core/src/combat.ts`
-- `packages/sim-core/test/combat.test.ts`
-- `packages/protocol/src/events.ts`
 - `packages/protocol/src/event-type-adapter.ts`
-- `packages/protocol/src/envelope.ts`
 - `packages/protocol/test/envelope.test.ts`
-- `apps/server-ts/src/runtime/types.ts`
-- `apps/server-ts/src/runtime/bullet-runtime.ts`
-- `apps/server-ts/src/domain/orb/OrbService.ts`
-- `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/test/game-runtime.test.ts`
 - `apps/client-ts/src/app/state.ts`
 - `apps/client-ts/src/app/network-events.ts`
 - `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/src/app/intents.ts`
 - `apps/client-ts/test/network-events.test.ts`
 - `docs/rewrite-progress.md`
 - `docs/parity-checklist.md`

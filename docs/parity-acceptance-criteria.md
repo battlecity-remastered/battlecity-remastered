@@ -19,7 +19,7 @@
 ## Stage S2
 - Client state updates for key server events are complete and tested.
 - UI parity restoration tracked and tested subsystem-by-subsystem.
-- Client world state applies authoritative building lifecycle events and visualizes core world objects.
+- Client world state applies authoritative building/bullet/icon lifecycle events and visualizes core world objects.
 
 ## Stage S4
 - Core runtime lifecycle uses Effect queue/scheduler/ref patterns.
