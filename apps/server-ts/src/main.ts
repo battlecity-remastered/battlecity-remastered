@@ -2,9 +2,7 @@ import express, { type Request, type Response } from "express";
 import http from "node:http";
 import { Server } from "socket.io";
 import { Effect } from "effect";
-import { GameRuntime } from "./runtime/GameRuntime.js";
-import { DEFAULT_RUNTIME_CONFIG } from "./runtime/types.js";
-import { RuntimeScope } from "./runtime/RuntimeScope.js";
+import { buildRuntimeServices } from "./layers/RuntimeLayer.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -15,7 +13,7 @@ const io = new Server(server, {
     }
 });
 
-const runtime = new GameRuntime({
+const { runtime, runtimeScope } = buildRuntimeServices({
     emitAll: (event) => {
         io.emit("event", event);
     },
@@ -26,7 +24,6 @@ const runtime = new GameRuntime({
         io.to(socketId).emit("event:rejected", { reason });
     }
 });
-const runtimeScope = RuntimeScope.open(runtime, DEFAULT_RUNTIME_CONFIG);
 
 app.get("/health", (_req: Request, res: Response) => {
     res.json({ ok: true, service: "server-ts" });
