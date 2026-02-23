@@ -18,18 +18,20 @@
 | `lobby:snapshot` | `lobby.snapshot` | server -> client | yes | emit | apply | done |
 | `lobby:released` | `lobby.released` | server -> client | yes | emit | apply | done |
 | `lobby:leave` | `lobby.leave.request` | client -> server | yes | dispatch | send-ready | done |
+| `build:denied` | `build.denied` | server -> client | yes | emit | apply | done |
+| `demolish:denied` | `demolish.denied` | server -> client | yes | emit | apply | done |
 | `chat:history` | `chat.history` | server -> client | yes | emit | apply | done |
 | `chat:rate_limit` | `chat.rate_limit` | server -> client | yes | emit | apply | done |
 | `city:finance` | `city.finance` | server -> client | yes | emit | apply | done |
 | `research:update` | `research.update` | server -> client | yes | emit | apply | done |
 | `factory:collect` | `factory.collect.request` | client -> server | yes | dispatch | send-ready | done |
 | `factory.stock` | `factory.stock` | server -> client | yes | emit | apply | done |
-| `hazard:spawn` | `hazard.spawn` | server -> client | yes | emit | pending | in_progress |
-| `hazard:remove` | `hazard.remove` | server -> client | yes | emit | pending | in_progress |
+| `hazard:spawn` | `hazard.spawn` | server -> client | yes | emit | apply | done |
+| `hazard:remove` | `hazard.remove` | server -> client | yes | emit | apply | done |
 | `orb:drop` | `orb.drop.request` | client -> server | yes | dispatch | send-ready | done |
 | `city:orbed` | `city.orbed` | server -> client | yes | emit | apply | done |
 | `score:promotion` | `score.promotion` | server -> client | yes | emit | apply | done |
 
 ## Known Gaps
 - Many legacy events remain unimplemented (identity, inventory icons, defenses, bots, map/tutorial/audio flows).
-- Hazard client visual/application parity remains partial (`hazard.spawn`/`hazard.remove` not yet rendered).
+- Hazard events are now state-applied; visual parity remains partial (no dedicated renderer layer yet).

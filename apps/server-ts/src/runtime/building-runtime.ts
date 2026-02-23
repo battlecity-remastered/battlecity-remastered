@@ -7,6 +7,8 @@ import {
     type RuntimeBuilding,
     type RuntimeState
 } from "./types.js";
+import { canBuildInCity, validateBuildResearch } from "../domain/buildings/BuildingRulesService.js";
+import { spendCityCash } from "../domain/economy/CityEconomyService.js";
 
 export const placeBuildingFromRequest = (
     state: RuntimeState,
@@ -22,14 +24,33 @@ export const placeBuildingFromRequest = (
     if (city !== payload.cityId) {
         return rejectResult("city_mismatch");
     }
+    if (state.socketRoles.get(socketId) !== "mayor") {
+        return rejectResult("not_mayor");
+    }
+
+    const tileX = Math.max(0, Math.floor(payload.tileX));
+    const tileY = Math.max(0, Math.floor(payload.tileY));
+    const placement = canBuildInCity(state, city, tileX, tileY, config);
+    if (placement === "collision") {
+        return rejectResult("building_collision");
+    }
+    if (placement === "too_far") {
+        return rejectResult("build_too_far");
+    }
+    if (!validateBuildResearch(state, city, payload.type)) {
+        return rejectResult("research_required");
+    }
+    if (!spendCityCash(state, city, config.buildingCost, config)) {
+        return rejectResult("insufficient_funds");
+    }
 
     const building: RuntimeBuilding = {
         id: `building_${nextSeq()}`,
         ownerId: socketId,
         cityId: city,
         type: payload.type,
-        tileX: Math.max(0, Math.floor(payload.tileX)),
-        tileY: Math.max(0, Math.floor(payload.tileY)),
+        tileX,
+        tileY,
         health: config.defaultBuildingHealth,
         maxHealth: config.defaultBuildingHealth
     };
@@ -53,6 +74,9 @@ export const demolishBuildingFromRequest = (
     }
     if (building.cityId !== city || payload.cityId !== city) {
         return rejectResult("city_mismatch");
+    }
+    if (state.socketRoles.get(socketId) !== "mayor") {
+        return rejectResult("not_mayor");
     }
 
     if (payload.ownerId && payload.ownerId !== building.ownerId) {

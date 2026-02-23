@@ -19,4 +19,6 @@
 ## Compatibility Rule Examples
 - Ingress: `player:health` -> canonical `player.health`.
 - Ingress: `players:snapshot` -> canonical `players.snapshot`.
+- Ingress: `build:denied` -> canonical `build.denied`.
+- Ingress: `demolish:denied` -> canonical `demolish.denied`.
 - Egress: always `players.snapshot`.

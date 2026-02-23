@@ -147,6 +147,90 @@ test("building placement enforces assigned city", () => {
     assert.equal(rejected[0]?.reason, "ValidationFailed");
 });
 
+test("recruit cannot place building and receives build.denied reason", () => {
+    const { runtime, direct, rejected } = makeHarness();
+
+    runtime.handleRawEvent("mayor", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("recruit", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+    runtime.handleRawEvent("recruit", makeEnvelope("building.place.request", 3, {
+        ownerId: "recruit",
+        cityId: 1,
+        type: 109,
+        tileX: 7,
+        tileY: 7
+    }));
+
+    const denied = direct.filter((entry) => {
+        return entry.socketId === "recruit" && entry.event.type === "build.denied";
+    });
+    assert.equal(denied.length, 1);
+    assert.equal((denied[0]?.event.payload as { reason: string }).reason, "not_mayor");
+    assert.equal(rejected.at(-1)?.reason, "ValidationFailed");
+});
+
+test("building placement enforces research, chain, collision and budget rules", () => {
+    const { runtime, broadcast, direct, rejected } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 107,
+        tileX: 10,
+        tileY: 10
+    }));
+    assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "research_required");
+
+    runtime.handleRawEvent("p1", makeEnvelope("research.start.request", 3, {
+        cityId: 1,
+        researchType: 407
+    }));
+    for (let i = 0; i < 40; i += 1) {
+        runtime.tickBullets();
+    }
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 4, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 107,
+        tileX: 10,
+        tileY: 10
+    }));
+    const placed = broadcast.filter((event) => event.type === "building.placed");
+    assert.equal(placed.length, 1);
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 5, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 107,
+        tileX: 10,
+        tileY: 10
+    }));
+    assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "building_collision");
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 6, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 107,
+        tileX: 200,
+        tileY: 200
+    }));
+    assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "build_too_far");
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 7, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 300,
+        tileX: 12,
+        tileY: 12
+    }));
+    assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "insufficient_funds");
+
+    assert.ok(rejected.filter((entry) => entry.reason === "ValidationFailed").length >= 3);
+    assert.ok(rejected.some((entry) => entry.reason === "InsufficientFunds"));
+});
+
 test("building demolish checks ownerId when provided", () => {
     const { runtime, broadcast, rejected } = makeHarness();
 
@@ -154,7 +238,7 @@ test("building demolish checks ownerId when provided", () => {
     runtime.handleRawEvent("s1", makeEnvelope("building.place.request", 2, {
         ownerId: "s1",
         cityId: 2,
-        type: 109,
+        type: 300,
         tileX: 5,
         tileY: 6
     }));
@@ -173,6 +257,37 @@ test("building demolish checks ownerId when provided", () => {
     assert.equal(demolished.length, 0);
     assert.equal(rejected.length, 1);
     assert.equal(rejected[0]?.reason, "ValidationFailed");
+});
+
+test("demolish deny emits explicit reason event", () => {
+    const { runtime, direct } = makeHarness();
+
+    runtime.handleRawEvent("mayor", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("recruit", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("mayor", makeEnvelope("building.place.request", 3, {
+        ownerId: "mayor",
+        cityId: 2,
+        type: 300,
+        tileX: 9,
+        tileY: 9
+    }));
+    const placed = direct.find((entry) => entry.socketId === "mayor" && entry.event.type === "build.denied");
+    assert.equal(placed, undefined);
+
+    const built = runtime.getReadonlyState();
+    const firstBuilding = Array.from(built.buildings.values())[0];
+    assert.ok(firstBuilding);
+
+    runtime.handleRawEvent("recruit", makeEnvelope("building.demolish.request", 4, {
+        id: firstBuilding.id,
+        cityId: 2
+    }));
+
+    const denied = direct.filter((entry) => {
+        return entry.socketId === "recruit" && entry.event.type === "demolish.denied";
+    });
+    assert.equal(denied.length, 1);
+    assert.equal((denied[0]?.event.payload as { reason: string }).reason, "not_mayor");
 });
 
 test("bullet fire before join is rejected", () => {

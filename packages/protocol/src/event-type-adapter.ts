@@ -22,7 +22,9 @@ const legacyToCanonicalType = {
     "hazard:remove": "hazard.remove",
     "orb:drop": "orb.drop.request",
     "city:orbed": "city.orbed",
-    "score:promotion": "score.promotion"
+    "score:promotion": "score.promotion",
+    "build:denied": "build.denied",
+    "demolish:denied": "demolish.denied"
 } as const;
 
 export type LegacyEventType = keyof typeof legacyToCanonicalType;

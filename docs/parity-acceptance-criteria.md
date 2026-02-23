@@ -7,6 +7,7 @@
 ## Stage S1
 - Server authoritative join/leave assignment and rejection semantics covered by tests.
 - Runtime dispatch validates and handles authoritative lobby state transitions.
+- Authoritative building placement/demolish gates (mayor/city/cost/research/collision/chain) emit explicit deny reasons.
 
 ## Stage S3
 - Protocol has explicit canonical event naming and legacy alias compatibility strategy.

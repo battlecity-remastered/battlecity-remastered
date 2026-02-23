@@ -116,33 +116,42 @@ const handlers: HandlerMap = {
         );
     },
     "building.place.request": (socketId, payload, context) => {
-        handleCommandResult(
+        const result = placeBuildingFromRequest(
+            context.state,
             socketId,
-            context,
-            placeBuildingFromRequest(
-                context.state,
-                socketId,
-                payload,
-                context.config,
-                context.nextSeq
-            ),
-            (building) => {
-                context.emitter.emit("building.placed", building);
-            }
+            payload,
+            context.config,
+            context.nextSeq
         );
+        if (!result.ok) {
+            context.emitter.emitTo(socketId, "build.denied", {
+                reason: result.reason,
+                cityId: payload.cityId,
+                type: payload.type,
+                tileX: payload.tileX,
+                tileY: payload.tileY
+            });
+            rejectSocket(context.broadcaster, socketId, result.reason);
+            return;
+        }
+
+        context.emitter.emit("building.placed", result.value);
     },
     "building.demolish.request": (socketId, payload, context) => {
-        handleCommandResult(
-            socketId,
-            context,
-            demolishBuildingFromRequest(context.state, socketId, payload),
-            (building) => {
-                context.emitter.emit("building.demolished", {
-                    id: building.id,
-                    cityId: building.cityId
-                });
-            }
-        );
+        const result = demolishBuildingFromRequest(context.state, socketId, payload);
+        if (!result.ok) {
+            context.emitter.emitTo(socketId, "demolish.denied", {
+                id: payload.id,
+                reason: result.reason
+            });
+            rejectSocket(context.broadcaster, socketId, result.reason);
+            return;
+        }
+
+        context.emitter.emit("building.demolished", {
+            id: result.value.id,
+            cityId: result.value.cityId
+        });
     },
     "chat.message.request": (socketId, payload, context) => {
         const result = addChatMessage(context.state, socketId, payload, context.config);

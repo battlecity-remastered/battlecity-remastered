@@ -80,6 +80,8 @@ export type RuntimeConfig = {
     cityBaseIncome: number;
     researchCost: number;
     researchDurationMs: number;
+    buildingCost: number;
+    maxBuildingChainDistanceTiles: number;
     factoryProductionTickMs: number;
     factoryStockCap: number;
     hazardDefaultFuseMs: number;
@@ -103,7 +105,11 @@ export type RuntimeRejectReason =
     | "factory_empty"
     | "hazard_invalid"
     | "orb_invalid"
-    | "chat_rate_limited";
+    | "chat_rate_limited"
+    | "not_mayor"
+    | "building_collision"
+    | "build_too_far"
+    | "research_required";
 
 export type CommandResult<T> =
     | { ok: true; value: T }
@@ -132,6 +138,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     cityBaseIncome: 15,
     researchCost: 100,
     researchDurationMs: 3000,
+    buildingCost: 150,
+    maxBuildingChainDistanceTiles: 20,
     factoryProductionTickMs: 1000,
     factoryStockCap: 8,
     hazardDefaultFuseMs: 2000,

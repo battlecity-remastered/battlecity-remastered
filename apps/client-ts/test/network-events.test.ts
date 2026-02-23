@@ -58,7 +58,18 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         itemType: 0,
         stock: 4
     }));
-    applyServerEvent(state, makeKnownEnvelope("chat.history", 4, [{
+    applyServerEvent(state, makeKnownEnvelope("hazard.spawn", 4, {
+        id: "hazard_1",
+        cityId: 2,
+        type: 2,
+        position: { x: 128, y: 256 },
+        radius: 72
+    }));
+    applyServerEvent(state, makeKnownEnvelope("hazard.remove", 5, {
+        id: "hazard_1",
+        reason: "detonated"
+    }));
+    applyServerEvent(state, makeKnownEnvelope("chat.history", 6, [{
         id: "c1",
         from: "p1",
         city: 2,
@@ -66,7 +77,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         ts: Date.now(),
         scope: "team"
     }]));
-    applyServerEvent(state, makeKnownEnvelope("chat.message", 5, {
+    applyServerEvent(state, makeKnownEnvelope("chat.message", 7, {
         id: "c2",
         from: "p2",
         city: 2,
@@ -74,27 +85,41 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         ts: Date.now(),
         scope: "global"
     }));
-    applyServerEvent(state, makeKnownEnvelope("chat.rate_limit", 6, {
+    applyServerEvent(state, makeKnownEnvelope("chat.rate_limit", 8, {
         scope: "team",
         retryAt: 99999
     }));
-    applyServerEvent(state, makeKnownEnvelope("city.orbed", 7, {
+    applyServerEvent(state, makeKnownEnvelope("city.orbed", 9, {
         sourceCityId: 1,
         targetCityId: 2,
         by: "p1",
         awardedScore: 250
     }));
-    applyServerEvent(state, makeKnownEnvelope("score.promotion", 8, {
+    applyServerEvent(state, makeKnownEnvelope("score.promotion", 10, {
         cityId: 1,
         score: 1250,
         rank: "captain"
+    }));
+    applyServerEvent(state, makeKnownEnvelope("build.denied", 11, {
+        reason: "research_required",
+        cityId: 2,
+        type: 107,
+        tileX: 10,
+        tileY: 10
+    }));
+    applyServerEvent(state, makeKnownEnvelope("demolish.denied", 12, {
+        id: "building_1",
+        reason: "not_mayor"
     }));
 
     assert.equal(state.cityFinance.get(2)?.cash, 300);
     assert.equal(state.research.get(2)?.completed.length, 2);
     assert.equal(state.factoryStock.get(2)?.get(0), 4);
+    assert.equal(state.hazards.size, 0);
     assert.equal(state.chat.history.length, 2);
     assert.equal(state.chat.rateLimitedUntil, 99999);
     assert.equal(state.events.lastOrbedCityId, 2);
     assert.equal(state.events.promotions[0]?.rank, "captain");
+    assert.equal(state.events.lastBuildDeniedReason, "research_required");
+    assert.equal(state.events.lastDemolishDeniedReason, "not_mayor");
 });

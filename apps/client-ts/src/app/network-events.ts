@@ -61,6 +61,9 @@ const handlers: {
     "lobby.released": (state, payload) => {
         state.lobby.lastReleasedPlayerId = payload.id;
     },
+    "build.denied": (state, payload) => {
+        state.events.lastBuildDeniedReason = payload.reason;
+    },
     "players.snapshot": (state, payload) => {
         updateFromSnapshot(state, payload);
     },
@@ -113,11 +116,27 @@ const handlers: {
         city.set(payload.itemType, payload.stock);
         state.factoryStock.set(payload.cityId, city);
     },
+    "hazard.spawn": (state, payload) => {
+        state.hazards.set(payload.id, {
+            id: payload.id,
+            cityId: payload.cityId,
+            type: payload.type,
+            x: payload.position.x,
+            y: payload.position.y,
+            radius: payload.radius
+        });
+    },
+    "hazard.remove": (state, payload) => {
+        state.hazards.delete(payload.id);
+    },
     "city.orbed": (state, payload) => {
         state.events.lastOrbedCityId = payload.targetCityId;
     },
     "score.promotion": (state, payload) => {
         state.events.promotions.push(payload);
+    },
+    "demolish.denied": (state, payload) => {
+        state.events.lastDemolishDeniedReason = payload.reason;
     }
 };
 

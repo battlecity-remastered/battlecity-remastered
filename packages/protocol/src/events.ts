@@ -123,6 +123,19 @@ export const BuildingDemolishRequest = Schema.Struct({
     ownerId: Schema.optional(Schema.String)
 });
 
+export const BuildDenied = Schema.Struct({
+    reason: Schema.String,
+    cityId: Schema.Number,
+    type: Schema.Number,
+    tileX: Schema.Number,
+    tileY: Schema.Number
+});
+
+export const DemolishDenied = Schema.Struct({
+    id: Schema.String,
+    reason: Schema.String
+});
+
 export const ChatMessage = Schema.Struct({
     id: Schema.String,
     from: Schema.String,
@@ -233,8 +246,10 @@ export const EventPayloadSchemas = {
     "bullet.fired": BulletFired,
     "bullet.resolved": BulletResolved,
     "building.place.request": BuildingPlaceRequest,
+    "build.denied": BuildDenied,
     "building.placed": BuildingPlaced,
     "building.demolish.request": BuildingDemolishRequest,
+    "demolish.denied": DemolishDenied,
     "building.demolished": BuildingDemolished,
     "lobby.assignment": LobbyAssignment,
     "chat.message": ChatMessage,

@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after staged delivery in order: `S0 -> S1 -> S3 -> S2 -> S4 -> S5`
+- `S2`/`S3` subsystem chunk (hazard client event parity), following the `S1` building authority slice.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -19,15 +19,17 @@
 | S1-19 | done | Orb drop validation + target-city reset + city/orb events |
 | S1-20 | done | Score promotion event emission on orb success |
 | S1-21 | done | Chat message/history/rate-limit handling |
-| S1-03,S1-04,S1-06,S1-07,S1-08,S1-09,S1-10,S1-12,S1-14,S1-16,S1-18,S1-22,S1-23,S1-24,S1-25,S1-26 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract expanded for economy/research/factory/hazard/orb/chat/score |
+| S1-09 | done | Mayor-only build authority + city spend + collision/chain/research gates |
+| S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
+| S1-03,S1-04,S1-06,S1-07,S1-08,S1-12,S1-14,S1-16,S1-18,S1-22,S1-23,S1-24,S1-25,S1-26 | deferred | Not yet parity-complete vs legacy systems |
+| S3-01 | in_progress | Contract expanded with `build.denied` / `demolish.denied` parity schemas |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter |
 | S3-03 | in_progress | Dispatch expanded for new authoritative subsystems |
-| S3-04 | in_progress | Client event apply path expanded for new subsystems |
+| S3-04 | in_progress | Client event apply path expanded for new subsystems, including hazard lifecycle |
 | S3-05 | done | Versioning strategy kept current |
-| S2-08 | in_progress | HUD now reflects finance/research/factory/chat counters |
+| S2-08 | in_progress | HUD now reflects finance/research/factory/hazard/chat + deny reason counters |
 | S2-15 | in_progress | Extended keyboard semantics + new request intents |
-| S2-01 | in_progress | Client event handling coverage expanded beyond baseline |
+| S2-01 | in_progress | Client event handling coverage expanded beyond baseline, including deny + hazard feedback |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
 | S4-02 | done | Typed domain errors + rejection mapping (`errors.ts`, `rejections.ts`) |
@@ -44,36 +46,22 @@
 - `packages/protocol/src/events.ts`
 - `packages/protocol/src/envelope.ts`
 - `packages/protocol/src/event-type-adapter.ts`
-- `packages/protocol/test/envelope.test.ts`
 - `apps/server-ts/src/runtime/types.ts`
 - `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/src/runtime/GameRuntime.ts`
-- `apps/server-ts/src/runtime/event-adapter.ts`
-- `apps/server-ts/src/runtime/rejections.ts`
-- `apps/server-ts/src/runtime/system-runtime.ts`
-- `apps/server-ts/src/layers/RuntimeLayer.ts`
-- `apps/server-ts/src/main.ts`
-- `apps/server-ts/src/domain/security/PlayerUpdateValidator.ts`
+- `apps/server-ts/src/runtime/building-runtime.ts`
+- `apps/server-ts/src/domain/buildings/BuildingRulesService.ts`
 - `apps/server-ts/src/domain/economy/CityEconomyService.ts`
-- `apps/server-ts/src/domain/research/ResearchService.ts`
-- `apps/server-ts/src/domain/factories/FactoryService.ts`
-- `apps/server-ts/src/domain/hazards/HazardService.ts`
-- `apps/server-ts/src/domain/orb/OrbService.ts`
-- `apps/server-ts/src/domain/chat/ChatService.ts`
 - `apps/server-ts/src/domain/errors.ts`
-- `apps/server-ts/src/domain/shared/distance.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
 - `apps/client-ts/src/app/state.ts`
 - `apps/client-ts/src/app/network-events.ts`
-- `apps/client-ts/src/app/input.ts`
-- `apps/client-ts/src/app/intents.ts`
-- `apps/client-ts/src/network/event-adapter.ts`
 - `apps/client-ts/src/render/scene.ts`
 - `apps/client-ts/test/network-events.test.ts`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 - `docs/parity-checklist.md`
 - `docs/event-parity-matrix.md`
+- `docs/parity-acceptance-criteria.md`
 - `docs/event-versioning.md`
 - `docs/rewrite-progress.md`
 

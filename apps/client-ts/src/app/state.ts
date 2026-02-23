@@ -52,6 +52,14 @@ export type ClientState = {
         completed: number[];
     }>;
     factoryStock: Map<number, Map<number, number>>;
+    hazards: Map<string, {
+        id: string;
+        cityId: number;
+        type: number;
+        x: number;
+        y: number;
+        radius: number;
+    }>;
     chat: {
         history: Array<{
             id: string;
@@ -70,6 +78,8 @@ export type ClientState = {
             score: number;
             rank: string;
         }>;
+        lastBuildDeniedReason: string | null;
+        lastDemolishDeniedReason: string | null;
     };
     controls: {
         moveForward: boolean;
@@ -115,13 +125,16 @@ export const createClientState = (): ClientState => {
         cityFinance: new Map(),
         research: new Map(),
         factoryStock: new Map(),
+        hazards: new Map(),
         chat: {
             history: [],
             rateLimitedUntil: null
         },
         events: {
             lastOrbedCityId: null,
-            promotions: []
+            promotions: [],
+            lastBuildDeniedReason: null,
+            lastDemolishDeniedReason: null
         },
         controls: {
             moveForward: false,

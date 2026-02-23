@@ -6,6 +6,7 @@ import { canonicalizeEventType } from "./event-type-adapter.js";
 export const EventType = Schema.Literal(
     "bot:debug",
     "bot:debug:defenders",
+    "build.denied",
     "build:denied",
     "bullet_shot",
     "chat:history",
@@ -30,6 +31,7 @@ export const EventType = Schema.Literal(
     "defense:remove",
     "defense:spawn",
     "demolish:denied",
+    "demolish.denied",
     "demolish_building",
     "disconnect",
     "disconnected",

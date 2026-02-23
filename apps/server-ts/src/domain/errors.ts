@@ -3,7 +3,17 @@ import type { RuntimeRejectReason } from "../runtime/types.js";
 export type RuntimeDomainError =
     | { _tag: "InvalidEnvelope" }
     | { _tag: "LobbyFull" }
-    | { _tag: "ValidationFailed"; reason: "invalid_player_update" | "city_mismatch" | "owner_mismatch" }
+    | {
+        _tag: "ValidationFailed";
+        reason:
+            | "invalid_player_update"
+            | "city_mismatch"
+            | "owner_mismatch"
+            | "not_mayor"
+            | "building_collision"
+            | "build_too_far"
+            | "research_required";
+    }
     | { _tag: "ResourceNotFound"; reason: "player_not_joined" | "building_not_found" | "factory_empty" }
     | { _tag: "InsufficientFunds" }
     | { _tag: "ResearchConflict" }
@@ -22,8 +32,16 @@ const staticErrorByReason: Partial<Record<RuntimeRejectReason, RuntimeDomainErro
     chat_rate_limited: { _tag: "ChatRateLimited" }
 };
 
-const isValidationReason = (reason: RuntimeRejectReason): reason is "invalid_player_update" | "city_mismatch" | "owner_mismatch" => {
-    return reason === "invalid_player_update" || reason === "city_mismatch" || reason === "owner_mismatch";
+const isValidationReason = (
+    reason: RuntimeRejectReason
+): reason is "invalid_player_update" | "city_mismatch" | "owner_mismatch" | "not_mayor" | "building_collision" | "build_too_far" | "research_required" => {
+    return reason === "invalid_player_update"
+        || reason === "city_mismatch"
+        || reason === "owner_mismatch"
+        || reason === "not_mayor"
+        || reason === "building_collision"
+        || reason === "build_too_far"
+        || reason === "research_required";
 };
 
 const isResourceReason = (reason: RuntimeRejectReason): reason is "player_not_joined" | "building_not_found" | "factory_empty" => {
