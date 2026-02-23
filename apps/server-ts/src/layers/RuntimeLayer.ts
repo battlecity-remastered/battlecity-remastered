@@ -2,7 +2,9 @@ import { Context, Effect, Layer } from "effect";
 import { GameRuntime } from "../runtime/GameRuntime.js";
 import { RuntimeScope } from "../runtime/RuntimeScope.js";
 import type { Broadcaster } from "../runtime/emitter.js";
-import { DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../runtime/types.js";
+import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../runtime/types.js";
+import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
+import { notifyOrbVictory } from "../adapters/notifications/DiscordNotifier.js";
 
 export type RuntimeServices = {
     runtime: GameRuntime;
@@ -16,7 +18,11 @@ export const makeRuntimeServices = (
     config: Partial<RuntimeConfig> = {}
 ): RuntimeServices => {
     const resolvedConfig = { ...DEFAULT_RUNTIME_CONFIG, ...config };
-    const runtime = new GameRuntime(broadcaster, resolvedConfig);
+    const userStore = new UserStoreAdapter();
+    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState(), {
+        userStore,
+        notifyOrbVictory
+    });
     const runtimeScope = RuntimeScope.open(runtime, resolvedConfig);
     return { runtime, runtimeScope };
 };

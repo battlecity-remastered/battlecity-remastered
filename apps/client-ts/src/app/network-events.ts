@@ -144,6 +144,36 @@ const handlers: {
     "score.promotion": (state, payload) => {
         state.events.promotions.push(payload);
     },
+    "score.profile": (state, payload) => {
+        if (payload.playerId !== state.local.id) {
+            return;
+        }
+        state.scoreProfile.userId = payload.userId;
+        state.scoreProfile.score = payload.score;
+        state.scoreProfile.rank = payload.rank;
+    },
+    "defense.spawn": (state, payload) => {
+        state.defenses.set(payload.id, {
+            id: payload.id,
+            cityId: payload.cityId,
+            type: payload.type,
+            tileX: payload.tileX,
+            tileY: payload.tileY,
+            health: payload.health,
+            maxHealth: payload.maxHealth
+        });
+    },
+    "defense.update": (state, payload) => {
+        const existing = state.defenses.get(payload.id);
+        if (!existing) {
+            return;
+        }
+        existing.health = payload.health;
+        existing.maxHealth = payload.maxHealth;
+    },
+    "defense.remove": (state, payload) => {
+        state.defenses.delete(payload.id);
+    },
     "demolish.denied": (state, payload) => {
         state.events.lastDemolishDeniedReason = payload.reason;
     }

@@ -1,40 +1,32 @@
 import { Schema } from "@effect/schema";
-
 export const Vec2 = Schema.Struct({
     x: Schema.Number,
     y: Schema.Number
 });
-
 export const LobbyJoinRequest = Schema.Struct({
     desiredCity: Schema.optional(Schema.Number),
-    callsign: Schema.optional(Schema.String)
+    callsign: Schema.optional(Schema.String),
+    userId: Schema.optional(Schema.String)
 });
-
 export const LobbyLeaveRequest = Schema.Struct({});
-
 export const LobbyAssignment = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
     role: Schema.Literal("mayor", "recruit")
 });
-
 export const LobbyDenied = Schema.Struct({
     reason: Schema.String
 });
-
 export const LobbyReleased = Schema.Struct({
     id: Schema.String,
     city: Schema.Number
 });
-
 export const LobbySnapshotEntry = Schema.Struct({
     city: Schema.Number,
     mayorId: Schema.optional(Schema.String),
     recruitCount: Schema.Number
 });
-
 export const LobbySnapshot = Schema.Array(LobbySnapshotEntry);
-
 export const PlayerUpdate = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
@@ -42,7 +34,6 @@ export const PlayerUpdate = Schema.Struct({
     isMoving: Schema.Boolean,
     offset: Vec2
 });
-
 export const PlayersSnapshotEntry = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
@@ -51,23 +42,19 @@ export const PlayersSnapshotEntry = Schema.Struct({
     health: Schema.optional(Schema.Number),
     maxHealth: Schema.optional(Schema.Number)
 });
-
 export const PlayersSnapshot = Schema.Array(PlayersSnapshotEntry);
-
 export const PlayerHealthUpdate = Schema.Struct({
     id: Schema.String,
     health: Schema.Number,
     maxHealth: Schema.Number,
     source: Schema.optional(Schema.String)
 });
-
 export const BulletFireRequest = Schema.Struct({
     ownerId: Schema.String,
     position: Vec2,
     direction: Schema.Number,
     type: Schema.Number
 });
-
 export const BulletFired = Schema.Struct({
     id: Schema.String,
     ownerId: Schema.String,
@@ -76,14 +63,12 @@ export const BulletFired = Schema.Struct({
     direction: Schema.Number,
     type: Schema.Number
 });
-
 export const BulletResolved = Schema.Struct({
     id: Schema.String,
     reason: Schema.Literal("out_of_bounds", "hit_player", "hit_building"),
     hitPlayerId: Schema.optional(Schema.String),
     hitBuildingId: Schema.optional(Schema.String)
 });
-
 export const BuildingPlaceRequest = Schema.Struct({
     ownerId: Schema.String,
     cityId: Schema.Number,
@@ -91,7 +76,6 @@ export const BuildingPlaceRequest = Schema.Struct({
     tileX: Schema.Number,
     tileY: Schema.Number
 });
-
 export const BuildingPlaced = Schema.Struct({
     id: Schema.String,
     ownerId: Schema.String,
@@ -102,27 +86,22 @@ export const BuildingPlaced = Schema.Struct({
     health: Schema.Number,
     maxHealth: Schema.Number
 });
-
 export const BuildingDemolished = Schema.Struct({
     id: Schema.String,
     cityId: Schema.Number
 });
-
 export const PlayerDead = Schema.Struct({
     id: Schema.String,
     by: Schema.optional(Schema.String)
 });
-
 export const PlayerRemoved = Schema.Struct({
     id: Schema.String
 });
-
 export const BuildingDemolishRequest = Schema.Struct({
     id: Schema.String,
     cityId: Schema.Number,
     ownerId: Schema.optional(Schema.String)
 });
-
 export const BuildDenied = Schema.Struct({
     reason: Schema.String,
     cityId: Schema.Number,
@@ -130,12 +109,10 @@ export const BuildDenied = Schema.Struct({
     tileX: Schema.Number,
     tileY: Schema.Number
 });
-
 export const DemolishDenied = Schema.Struct({
     id: Schema.String,
     reason: Schema.String
 });
-
 export const ChatMessage = Schema.Struct({
     id: Schema.String,
     from: Schema.String,
@@ -144,19 +121,15 @@ export const ChatMessage = Schema.Struct({
     ts: Schema.Number,
     scope: Schema.Literal("team", "global")
 });
-
 export const ChatMessageRequest = Schema.Struct({
     text: Schema.String,
     scope: Schema.optional(Schema.Literal("team", "global"))
 });
-
 export const ChatHistory = Schema.Array(ChatMessage);
-
 export const ChatRateLimit = Schema.Struct({
     scope: Schema.Literal("team", "global"),
     retryAt: Schema.Number
 });
-
 export const CityFinance = Schema.Struct({
     cityId: Schema.Number,
     cash: Schema.Number,
@@ -164,12 +137,10 @@ export const CityFinance = Schema.Struct({
     score: Schema.Number,
     researchLevel: Schema.Number
 });
-
 export const ResearchStartRequest = Schema.Struct({
     cityId: Schema.Number,
     researchType: Schema.Number
 });
-
 export const ResearchUpdate = Schema.Struct({
     cityId: Schema.Number,
     active: Schema.optional(Schema.Struct({
@@ -178,46 +149,38 @@ export const ResearchUpdate = Schema.Struct({
     })),
     completed: Schema.Array(Schema.Number)
 });
-
 export const FactoryCollectRequest = Schema.Struct({
     cityId: Schema.Number,
     itemType: Schema.Number,
     amount: Schema.optional(Schema.Number)
 });
-
 export const FactoryStock = Schema.Struct({
     cityId: Schema.Number,
     itemType: Schema.Number,
     stock: Schema.Number
 });
-
 export const IconPickupRequest = Schema.Struct({
     cityId: Schema.Number,
     itemType: Schema.Number,
     amount: Schema.optional(Schema.Number)
 });
-
 export const IconPickupConfirmed = Schema.Struct({
     playerId: Schema.String,
     cityId: Schema.Number,
     itemType: Schema.Number,
     amount: Schema.Number
 });
-
 export const InventoryItemEntry = Schema.Struct({
     itemType: Schema.Number,
     count: Schema.Number
 });
-
 export const InventoryUpdate = Schema.Struct({
     playerId: Schema.String,
     items: Schema.Array(InventoryItemEntry)
 });
-
 export const ItemUseRequest = Schema.Struct({
     itemType: Schema.Number
 });
-
 export const HazardDeployRequest = Schema.Struct({
     cityId: Schema.Number,
     type: Schema.Number,
@@ -226,7 +189,6 @@ export const HazardDeployRequest = Schema.Struct({
     damage: Schema.optional(Schema.Number),
     fuseMs: Schema.optional(Schema.Number)
 });
-
 export const HazardSpawn = Schema.Struct({
     id: Schema.String,
     cityId: Schema.Number,
@@ -234,30 +196,55 @@ export const HazardSpawn = Schema.Struct({
     position: Vec2,
     radius: Schema.Number
 });
-
 export const HazardRemove = Schema.Struct({
     id: Schema.String,
     reason: Schema.Literal("detonated", "expired", "cleared")
 });
-
 export const OrbDropRequest = Schema.Struct({
     sourceCityId: Schema.Number,
     targetCityId: Schema.Number
 });
-
 export const CityOrbed = Schema.Struct({
     sourceCityId: Schema.Number,
     targetCityId: Schema.Number,
     by: Schema.String,
     awardedScore: Schema.Number
 });
-
 export const ScorePromotion = Schema.Struct({
     cityId: Schema.Number,
     score: Schema.Number,
     rank: Schema.String
 });
-
+export const ScoreProfile = Schema.Struct({
+    playerId: Schema.String,
+    userId: Schema.String,
+    score: Schema.Number,
+    rank: Schema.String
+});
+export const DefenseDeployRequest = Schema.Struct({
+    cityId: Schema.Number,
+    type: Schema.Number,
+    tileX: Schema.Number,
+    tileY: Schema.Number
+});
+export const DefenseSpawn = Schema.Struct({
+    id: Schema.String,
+    cityId: Schema.Number,
+    type: Schema.Number,
+    tileX: Schema.Number,
+    tileY: Schema.Number,
+    health: Schema.Number,
+    maxHealth: Schema.Number
+});
+export const DefenseUpdate = Schema.Struct({
+    id: Schema.String,
+    health: Schema.Number,
+    maxHealth: Schema.Number
+});
+export const DefenseRemove = Schema.Struct({
+    id: Schema.String,
+    reason: Schema.Literal("destroyed", "city_orbed", "cleared")
+});
 export const EventPayloadSchemas = {
     "lobby.join.request": LobbyJoinRequest,
     "lobby.leave.request": LobbyLeaveRequest,
@@ -297,11 +284,14 @@ export const EventPayloadSchemas = {
     "hazard.remove": HazardRemove,
     "orb.drop.request": OrbDropRequest,
     "city.orbed": CityOrbed,
-    "score.promotion": ScorePromotion
+    "score.promotion": ScorePromotion,
+    "score.profile": ScoreProfile,
+    "defense.deploy.request": DefenseDeployRequest,
+    "defense.spawn": DefenseSpawn,
+    "defense.update": DefenseUpdate,
+    "defense.remove": DefenseRemove
 } as const;
-
 export type KnownEventPayloadByType = {
     [K in keyof typeof EventPayloadSchemas]: Schema.Schema.Type<(typeof EventPayloadSchemas)[K]>;
 };
-
 export type EventPayloadByType = KnownEventPayloadByType & Record<string, unknown>;

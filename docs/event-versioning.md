@@ -23,4 +23,6 @@
 - Ingress: `demolish:denied` -> canonical `demolish.denied`.
 - Ingress: `item:use` -> canonical `item.use.request`.
 - Ingress: `icon:pickup` -> canonical `icon.pickup.request`.
+- Ingress: `score:profile` -> canonical `score.profile`.
+- Ingress: `defense:spawn` -> canonical `defense.spawn`.
 - Egress: always `players.snapshot`.

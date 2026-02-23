@@ -1,10 +1,4 @@
-import {
-    normalizeHeading32,
-    stepBulletAndResolve,
-    type BulletStepResult,
-    type BulletState,
-    type CombatBuildingState
-} from "@battlecity/sim-core";
+import { normalizeHeading32, stepBulletAndResolve, type BulletStepResult, type BulletState, type CombatBuildingState } from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "./emitter.js";
 import {
@@ -115,22 +109,45 @@ const handleBuildingHit = (
     });
 
     const building = state.buildings.get(result.buildingId);
-    if (!building) {
-        return;
-    }
+    if (building) {
+        if (result.isDemolished) {
+            state.buildings.delete(building.id);
+            emitter.emit("building.demolished", {
+                id: building.id,
+                cityId: building.cityId
+            });
+            return;
+        }
 
-    if (result.isDemolished) {
-        state.buildings.delete(building.id);
-        emitter.emit("building.demolished", {
-            id: building.id,
-            cityId: building.cityId
+        state.buildings.set(building.id, {
+            ...building,
+            health: result.nextHealth
         });
         return;
     }
 
-    state.buildings.set(building.id, {
-        ...building,
+    const defense = state.defenses.get(result.buildingId);
+    if (!defense) {
+        return;
+    }
+
+    if (result.isDemolished) {
+        state.defenses.delete(defense.id);
+        emitter.emit("defense.remove", {
+            id: defense.id,
+            reason: "destroyed"
+        });
+        return;
+    }
+
+    state.defenses.set(defense.id, {
+        ...defense,
         health: result.nextHealth
+    });
+    emitter.emit("defense.update", {
+        id: defense.id,
+        health: result.nextHealth,
+        maxHealth: defense.maxHealth
     });
 };
 
@@ -163,6 +180,10 @@ const resolveBulletStep = (
 export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter: RuntimeEmitter): void => {
     const context: TickContext = { state, emitter };
     let snapshotDirty = false;
+    const combatTargets = [
+        ...state.buildings.values(),
+        ...state.defenses.values()
+    ] as CombatBuildingState[];
 
     for (const [bulletId, bullet] of state.bullets.entries()) {
         const result = stepBulletAndResolve(
@@ -171,7 +192,7 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
             config.mapMax,
             config.mapMax,
             asCombatPlayers(state),
-            state.buildings.values() as Iterable<CombatBuildingState>
+            combatTargets
         );
         snapshotDirty = resolveBulletStep(context, bullet, bulletId, result) || snapshotDirty;
     }

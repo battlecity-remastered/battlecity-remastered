@@ -3,6 +3,7 @@ import {
     type KnownTypedEventEnvelope
 } from "@battlecity/protocol";
 import { Effect } from "effect";
+import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import {
     createRuntimeState,
     DEFAULT_RUNTIME_CONFIG,
@@ -21,21 +22,29 @@ import { tickRuntimeSystems } from "./system-runtime.js";
 import { rejectSocket } from "./rejections.js";
 import { releasePlayerInventory } from "../domain/inventory/InventoryService.js";
 
+type RuntimeAdapterServices = {
+    userStore?: UserStoreAdapter;
+    notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
+};
+
 export class GameRuntime {
     private readonly stateRef: RuntimeStateRef;
     private readonly config: RuntimeConfig;
     private readonly broadcaster: Broadcaster;
     private readonly emitter: RuntimeEmitter;
+    private readonly services: RuntimeAdapterServices;
 
     constructor(
         broadcaster: Broadcaster,
         config: Partial<RuntimeConfig> = {},
-        initialState: RuntimeState = createRuntimeState()
+        initialState: RuntimeState = createRuntimeState(),
+        services: RuntimeAdapterServices = {}
     ) {
         this.broadcaster = broadcaster;
         this.config = { ...DEFAULT_RUNTIME_CONFIG, ...config };
         this.stateRef = createRuntimeStateRef(initialState);
         this.emitter = createRuntimeEmitter(readRuntimeState(this.stateRef), this.broadcaster);
+        this.services = services;
     }
 
     public handleRawEvent(socketId: string, raw: unknown): void {
@@ -66,6 +75,7 @@ export class GameRuntime {
             const state = readRuntimeState(this.stateRef);
             const released = leaveLobby(state, socketId);
             state.chatRateLimit.delete(socketId);
+            state.socketUserIds.delete(socketId);
             if (state.players.has(socketId)) {
                 this.emitter.emit("player.removed", { id: socketId });
             }
@@ -103,13 +113,20 @@ export class GameRuntime {
 
     private handleEvent(socketId: string, event: KnownTypedEventEnvelope): void {
         const state = readRuntimeState(this.stateRef);
-        dispatchRuntimeEvent(socketId, event, {
+        const context = {
             state,
             config: this.config,
             emitter: this.emitter,
             broadcaster: this.broadcaster,
             nextSeq: () => this.nextSeq()
-        });
+        };
+        if (this.services.userStore) {
+            Object.assign(context, { userStore: this.services.userStore });
+        }
+        if (this.services.notifyOrbVictory) {
+            Object.assign(context, { notifyOrbVictory: this.services.notifyOrbVictory });
+        }
+        dispatchRuntimeEvent(socketId, event, context);
     }
 
     private nextSeq(): number {

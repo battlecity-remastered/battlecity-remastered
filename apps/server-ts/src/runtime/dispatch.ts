@@ -1,7 +1,7 @@
 import type { KnownEventPayloadByType, KnownTypedEventEnvelope } from "@battlecity/protocol";
+import { Effect } from "effect";
 import { emitPlayersSnapshot } from "./snapshot.js";
-import type { RuntimeEmitter } from "./emitter.js";
-import type { Broadcaster } from "./emitter.js";
+import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
 import type { CommandResult, RuntimeConfig, RuntimeState } from "./types.js";
 import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { createBulletFromRequest } from "./bullet-runtime.js";
@@ -18,25 +18,25 @@ import { addInventoryItem, emitInventoryState } from "../domain/inventory/Invent
 import { useItem } from "../domain/items/ItemUseService.js";
 import { pickupIcon } from "../domain/icons/IconDropService.js";
 import { rejectSocket } from "./rejections.js";
-
+import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
+import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
+import { awardOrbProfileScore, profileForSocket } from "../domain/score/ScoreService.js";
+import { deployDefense } from "../domain/defense/DefenseService.js";
 type DispatchContext = {
     state: RuntimeState;
     config: RuntimeConfig;
     emitter: RuntimeEmitter;
     broadcaster: Broadcaster;
     nextSeq: () => number;
+    userStore?: UserStoreAdapter;
+    notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
 };
-
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (
     socketId: string,
     payload: KnownEventPayloadByType[TType],
     context: DispatchContext
 ) => void;
-
-type HandlerMap = {
-    [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K>;
-};
-
+type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
 const handleCommandResult = <T>(
     socketId: string,
     context: DispatchContext,
@@ -54,9 +54,9 @@ const handleCommandResult = <T>(
     }
     onOk(result.value);
 };
-
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
+        const userId = bindSocketIdentity(context.state, socketId, payload);
         handleCommandResult(socketId, context, joinLobby(
             context.state,
             socketId,
@@ -71,6 +71,10 @@ const handlers: HandlerMap = {
             emitCityFinance(context.state, assignment.city, context.config, context.emitter);
             emitResearchState(context.state, assignment.city, context.emitter);
             emitPlayersSnapshot(context.state, context.emitter);
+            if (context.userStore) {
+                const profile = Effect.runSync(profileForSocket(context.userStore, socketId, userId));
+                context.emitter.emitTo(socketId, "score.profile", profile);
+            }
         });
     },
     "lobby.leave.request": (socketId, _payload, context) => {
@@ -138,7 +142,6 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, result.reason);
             return;
         }
-
         context.emitter.emit("building.placed", result.value);
     },
     "building.demolish.request": (socketId, payload, context) => {
@@ -151,7 +154,6 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, result.reason);
             return;
         }
-
         context.emitter.emit("building.demolished", {
             id: result.value.id,
             cityId: result.value.cityId
@@ -256,15 +258,45 @@ const handlers: HandlerMap = {
             socketId,
             payload,
             context.config
-        ), ({ cityOrbed, scorePromotion }) => {
+        ), ({ cityOrbed, scorePromotion, removedDefenseIds }) => {
             context.emitter.emit("city.orbed", cityOrbed);
             context.emitter.emit("score.promotion", scorePromotion);
             emitCityFinance(context.state, payload.sourceCityId, context.config, context.emitter);
             emitCityFinance(context.state, payload.targetCityId, context.config, context.emitter);
+            for (const defenseId of removedDefenseIds) {
+                context.emitter.emit("defense.remove", {
+                    id: defenseId,
+                    reason: "city_orbed"
+                });
+            }
+            if (context.userStore) {
+                const userId = resolveSocketUserId(context.state, socketId);
+                const profile = Effect.runSync(awardOrbProfileScore(
+                    context.userStore,
+                    socketId,
+                    userId,
+                    context.config.orbScoreAward
+                ));
+                context.emitter.emitTo(socketId, "score.profile", profile);
+            }
+            if (context.notifyOrbVictory) {
+                Effect.runSync(context.notifyOrbVictory(socketId, payload.sourceCityId, payload.targetCityId));
+            }
+        });
+    },
+    "defense.deploy.request": (socketId, payload, context) => {
+        handleCommandResult(socketId, context, deployDefense(
+            context.state,
+            socketId,
+            payload,
+            context.config,
+            context.nextSeq
+        ), (spawned) => {
+            context.emitter.emit("defense.spawn", spawned);
+            emitCityFinance(context.state, payload.cityId, context.config, context.emitter);
         });
     }
 };
-
 const dispatchByType = <TType extends keyof KnownEventPayloadByType>(
     socketId: string,
     type: TType,
@@ -277,16 +309,6 @@ const dispatchByType = <TType extends keyof KnownEventPayloadByType>(
     }
     handler(socketId, payload, context);
 };
-
-export const dispatchRuntimeEvent = (
-    socketId: string,
-    event: KnownTypedEventEnvelope,
-    context: DispatchContext
-): void => {
-    dispatchByType(
-        socketId,
-        event.type,
-        event.payload as KnownEventPayloadByType[typeof event.type],
-        context
-    );
+export const dispatchRuntimeEvent = (socketId: string, event: KnownTypedEventEnvelope, context: DispatchContext): void => {
+    dispatchByType(socketId, event.type, event.payload as KnownEventPayloadByType[typeof event.type], context);
 };

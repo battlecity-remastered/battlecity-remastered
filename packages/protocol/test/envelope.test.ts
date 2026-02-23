@@ -85,6 +85,7 @@ test("decodeKnownEnvelope normalizes legacy alias type names", () => {
 test("canonicalizeEventType maps known legacy aliases to canonical names", () => {
     assert.equal(canonicalizeEventType("players:snapshot"), "players.snapshot");
     assert.equal(canonicalizeEventType("city:finance"), "city.finance");
+    assert.equal(canonicalizeEventType("score:profile"), "score.profile");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -97,6 +98,23 @@ test("decodeKnownEnvelope validates research.start.request payload", () => {
         payload: {
             cityId: 1,
             researchType: 2
+        }
+    });
+
+    assert.equal(decoded._tag, "Right");
+});
+
+test("decodeKnownEnvelope validates defense.deploy.request payload", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "defense.deploy.request",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            cityId: 2,
+            type: 8,
+            tileX: 10,
+            tileY: 10
         }
     });
 

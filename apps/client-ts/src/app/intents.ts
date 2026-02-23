@@ -116,7 +116,7 @@ const appendItemUseIntent = (state: ClientState, nowMs: number, intents: Intent[
 };
 
 const appendOrbDropIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
-    if (!state.controls.build || !hasCooldownElapsed(nowMs, state.local.lastOrbAt)) {
+    if (!state.controls.build || state.controls.shift || !hasCooldownElapsed(nowMs, state.local.lastOrbAt)) {
         return;
     }
     state.local.lastOrbAt = nowMs;
@@ -125,6 +125,22 @@ const appendOrbDropIntent = (state: ClientState, nowMs: number, intents: Intent[
         payload: {
             sourceCityId: state.local.city,
             targetCityId: (state.local.city + 1) % 8
+        }
+    });
+};
+
+const appendDefenseDeployIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.build || !state.controls.shift || !hasCooldownElapsed(nowMs, state.local.lastOrbAt)) {
+        return;
+    }
+    state.local.lastOrbAt = nowMs;
+    intents.push({
+        type: "defense.deploy.request",
+        payload: {
+            cityId: state.local.city,
+            type: 8,
+            tileX: Math.floor(state.local.x / 32),
+            tileY: Math.floor(state.local.y / 32)
         }
     });
 };
@@ -209,6 +225,7 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
     appendFactoryCollectIntent(state, nowMs, intents);
     appendHazardDeployIntent(state, nowMs, intents);
     appendItemUseIntent(state, nowMs, intents);
+    appendDefenseDeployIntent(state, nowMs, intents);
     appendOrbDropIntent(state, nowMs, intents);
     appendLobbyLeaveIntent(state, nowMs, intents);
     appendChatIntent(state, nowMs, intents);

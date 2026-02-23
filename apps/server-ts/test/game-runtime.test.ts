@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeEnvelope, type EventEnvelope } from "@battlecity/protocol";
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
+import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
+import { createRuntimeState } from "../src/runtime/types.js";
 
 const makeHarness = () => {
     const broadcast: EventEnvelope[] = [];
@@ -18,6 +20,8 @@ const makeHarness = () => {
         reject: (socketId, reason) => {
             rejected.push({ socketId, reason });
         }
+    }, {}, createRuntimeState(), {
+        userStore: new UserStoreAdapter()
     });
 
     return { runtime, broadcast, direct, rejected };
@@ -655,4 +659,111 @@ test("chat message emits history and rate limit for spam", () => {
     assert.ok(broadcast.some((event) => event.type === "chat.message"));
     assert.ok(direct.some((entry) => entry.event.type === "chat.history"));
     assert.ok(direct.some((entry) => entry.event.type === "chat.rate_limit"));
+});
+
+test("lobby join hydrates score profile for bound user id", () => {
+    const { runtime, direct } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, {
+        desiredCity: 0,
+        userId: "google:user-1"
+    }));
+
+    const profile = direct.find((entry) => entry.socketId === "p1" && entry.event.type === "score.profile");
+    assert.ok(profile);
+    assert.equal((profile.event.payload as { userId: string }).userId, "google:user-1");
+    assert.equal((profile.event.payload as { score: number }).score, 0);
+});
+
+test("defense deploy is authoritative and emits spawn + finance update", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("p1", makeEnvelope("defense.deploy.request", 2, {
+        cityId: 2,
+        type: 8,
+        tileX: 10,
+        tileY: 10
+    }));
+
+    assert.equal(rejected.length, 0);
+    const spawned = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(spawned);
+    const finance = broadcast.filter((event) => event.type === "city.finance").at(-1);
+    assert.ok(finance);
+    assert.ok((finance.payload as { cash: number }).cash < 200);
+});
+
+test("bullets can damage and remove defenses", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("defender", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("defender", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 1,
+        type: 8,
+        tileX: 10,
+        tileY: 10
+    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("player.update", 4, {
+        id: "attacker",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 420, y: 504 }
+    }));
+
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
+        ownerId: "attacker",
+        position: { x: 420, y: 504 },
+        direction: 0,
+        type: 2
+    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
+        ownerId: "attacker",
+        position: { x: 420, y: 504 },
+        direction: 0,
+        type: 2
+    }));
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const updates = broadcast.filter((event) => event.type === "defense.update");
+    assert.ok(updates.length >= 1);
+    const latest = updates.at(-1);
+    assert.ok(latest);
+    assert.ok((latest.payload as { health: number }).health < 40);
+});
+
+test("orb drop clears target defenses and updates actor score profile", () => {
+    const { runtime, broadcast, direct } = makeHarness();
+
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, {
+        desiredCity: 1,
+        userId: "u-attacker"
+    }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("target", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 2,
+        type: 8,
+        tileX: 7,
+        tileY: 7
+    }));
+
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 4, {
+        sourceCityId: 1,
+        targetCityId: 2
+    }));
+
+    const defenseRemoved = broadcast.find((event) => event.type === "defense.remove");
+    assert.ok(defenseRemoved);
+    assert.equal((defenseRemoved.payload as { reason: string }).reason, "city_orbed");
+
+    const profileUpdates = direct
+        .filter((entry) => entry.socketId === "attacker" && entry.event.type === "score.profile")
+        .map((entry) => entry.event.payload as { score: number });
+    assert.ok(profileUpdates.length >= 2);
+    assert.equal(profileUpdates.at(-1)?.score, 250);
 });

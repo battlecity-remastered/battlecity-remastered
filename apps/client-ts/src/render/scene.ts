@@ -47,54 +47,59 @@ const applyRemoteTankTransforms = (state: ClientState, remoteTanks: Map<string, 
     }
 };
 
-const buildHudLines = (state: ClientState): string[] => {
+const readFinance = (state: ClientState): { cash: string; income: string } => {
     const finance = state.cityFinance.get(state.local.city);
+    if (!finance) {
+        return { cash: "-", income: "-" };
+    }
+    return {
+        cash: String(finance.cash),
+        income: String(finance.income)
+    };
+};
+
+const readResearch = (state: ClientState): string => {
     const research = state.research.get(state.local.city);
-    const cityStock = state.factoryStock.get(state.local.city);
-    let factoryItem0 = 0;
-    if (cityStock) {
-        const value = cityStock.get(0);
-        if (typeof value === "number") {
-            factoryItem0 = value;
-        }
+    if (!research) {
+        return "0";
     }
+    const completed = String(research.completed.length);
+    if (!research.active) {
+        return completed;
+    }
+    return `${completed} (active)`;
+};
 
-    let localId = "(joining...)";
-    if (state.local.id) {
-        localId = state.local.id;
-    }
+const readFactoryStock = (state: ClientState): number => {
+    return state.factoryStock.get(state.local.city)?.get(0) ?? 0;
+};
 
-    let cash = "-";
-    let income = "-";
-    if (finance) {
-        cash = String(finance.cash);
-        income = String(finance.income);
-    }
-
-    let researchLine = "0";
-    if (research) {
-        researchLine = String(research.completed.length);
-        if (research.active) {
-            researchLine = `${researchLine} (active)`;
-        }
-    }
+const buildHudLines = (state: ClientState): string[] => {
+    const localId = state.local.id ?? "(joining...)";
+    const finance = readFinance(state);
+    const researchLine = readResearch(state);
+    const factoryItem0 = readFactoryStock(state);
     const medkits = state.inventory.get(0) ?? 0;
+    const rank = state.scoreProfile.rank ?? "-";
 
     return [
         `id: ${localId}`,
+        `user: ${state.scoreProfile.userId ?? "-"}`,
         `city: ${state.local.city}`,
+        `rank: ${rank} (${state.scoreProfile.score})`,
         `health: ${state.local.health}/${state.local.maxHealth}`,
         `remote: ${state.remotePlayers.size}`,
-        `cash: ${cash}`,
-        `income: ${income}`,
+        `cash: ${finance.cash}`,
+        `income: ${finance.income}`,
         `research: ${researchLine}`,
         `factory item0: ${factoryItem0}`,
         `medkits: ${medkits}`,
         `hazards: ${state.hazards.size}`,
+        `defenses: ${state.defenses.size}`,
         `chat: ${state.chat.history.length}`,
         `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
         `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`,
-        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X deploy"
+        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
     ];
 };
 

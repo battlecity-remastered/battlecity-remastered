@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { okResult, rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 import { addCityScore, getOrCreateCity } from "../economy/CityEconomyService.js";
+import { clearCityDefenses } from "../defense/DefenseService.js";
 
 const resolveRank = (score: number): string => {
     if (score >= 2000) {
@@ -18,6 +19,7 @@ const resolveRank = (score: number): string => {
 export type OrbDropResult = {
     cityOrbed: KnownEventPayloadByType["city.orbed"];
     scorePromotion: KnownEventPayloadByType["score.promotion"];
+    removedDefenseIds: string[];
 };
 
 export const dropOrb = (
@@ -51,6 +53,7 @@ export const dropOrb = (
             state.hazards.delete(hazardId);
         }
     }
+    const removedDefenseIds = clearCityDefenses(state, target.cityId);
 
     source.orbCount -= 1;
     const sourceAfterScore = addCityScore(state, source.cityId, config.orbScoreAward, config);
@@ -68,6 +71,7 @@ export const dropOrb = (
             cityId: source.cityId,
             score,
             rank
-        }
+        },
+        removedDefenseIds
     });
 };

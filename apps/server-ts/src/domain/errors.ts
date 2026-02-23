@@ -12,7 +12,8 @@ export type RuntimeDomainError =
             | "not_mayor"
             | "building_collision"
             | "build_too_far"
-            | "research_required";
+            | "research_required"
+            | "defense_blocked";
     }
     | { _tag: "ResourceNotFound"; reason: "player_not_joined" | "building_not_found" | "factory_empty" | "inventory_empty" }
     | { _tag: "InsufficientFunds" }
@@ -41,7 +42,8 @@ const isValidationReason = (
         || reason === "not_mayor"
         || reason === "building_collision"
         || reason === "build_too_far"
-        || reason === "research_required";
+        || reason === "research_required"
+        || reason === "defense_blocked";
 };
 
 const isResourceReason = (

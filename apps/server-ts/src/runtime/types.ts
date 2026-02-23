@@ -11,6 +11,16 @@ export type RuntimeBuilding = CombatBuildingState & {
     type: number;
 };
 
+export type RuntimeDefense = {
+    id: string;
+    cityId: number;
+    type: number;
+    tileX: number;
+    tileY: number;
+    health: number;
+    maxHealth: number;
+};
+
 export type RuntimeCity = {
     cityId: number;
     cash: number;
@@ -52,6 +62,7 @@ export type RuntimeState = {
     players: Map<string, RuntimePlayer>;
     bullets: Map<string, BulletState>;
     buildings: Map<string, RuntimeBuilding>;
+    defenses: Map<string, RuntimeDefense>;
     cities: Map<number, RuntimeCity>;
     research: Map<number, RuntimeResearchState>;
     factoryStock: Map<number, Map<number, number>>;
@@ -59,6 +70,7 @@ export type RuntimeState = {
     playerInventory: Map<string, Map<number, number>>;
     socketCities: Map<string, number>;
     socketRoles: Map<string, "mayor" | "recruit">;
+    socketUserIds: Map<string, string>;
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
     economyTickAccumulatorMs: number;
@@ -93,6 +105,7 @@ export type RuntimeConfig = {
     inventoryPerItemCap: number;
     hospitalBuildingType: number;
     hospitalHealPerTick: number;
+    defenseCost: number;
 };
 
 export type RuntimeRejectReason =
@@ -114,7 +127,8 @@ export type RuntimeRejectReason =
     | "not_mayor"
     | "building_collision"
     | "build_too_far"
-    | "research_required";
+    | "research_required"
+    | "defense_blocked";
 
 export type CommandResult<T> =
     | { ok: true; value: T }
@@ -154,7 +168,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     chatHistoryLimit: 50,
     inventoryPerItemCap: 5,
     hospitalBuildingType: 300,
-    hospitalHealPerTick: 2
+    hospitalHealPerTick: 2,
+    defenseCost: 75
 };
 
 export const createRuntimeState = (): RuntimeState => {
@@ -162,6 +177,7 @@ export const createRuntimeState = (): RuntimeState => {
         players: new Map(),
         bullets: new Map(),
         buildings: new Map(),
+        defenses: new Map(),
         cities: new Map(),
         research: new Map(),
         factoryStock: new Map(),
@@ -169,6 +185,7 @@ export const createRuntimeState = (): RuntimeState => {
         playerInventory: new Map(),
         socketCities: new Map(),
         socketRoles: new Map(),
+        socketUserIds: new Map(),
         chatHistory: [],
         chatRateLimit: new Map(),
         economyTickAccumulatorMs: 0,

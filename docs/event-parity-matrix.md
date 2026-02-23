@@ -35,8 +35,12 @@
 | `orb:drop` | `orb.drop.request` | client -> server | yes | dispatch | send-ready | done |
 | `city:orbed` | `city.orbed` | server -> client | yes | emit | apply | done |
 | `score:promotion` | `score.promotion` | server -> client | yes | emit | apply | done |
+| `score:profile` | `score.profile` | server -> client | yes | emit | apply | done |
+| `defense:spawn` | `defense.spawn` | server -> client | yes | emit | apply | done |
+| `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
+| `defense:deploy` | `defense.deploy.request` | client -> server | yes | dispatch | send-ready | done |
 
 ## Known Gaps
-- Many legacy events remain unimplemented (identity, inventory icons, defenses, bots, map/tutorial/audio flows).
+- Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
 - Hazard events are now state-applied; visual parity remains partial (no dedicated renderer layer yet).
-- Inventory/item/icon events are authoritative but UI parity is still HUD-level, not full legacy panel/icon UX.
+- Inventory/item/icon/defense events are authoritative but UI parity is still HUD-level, not full legacy panel/icon UX.

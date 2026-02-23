@@ -104,6 +104,24 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         score: 1250,
         rank: "captain"
     }));
+    applyServerEvent(state, makeKnownEnvelope("defense.spawn", 11, {
+        id: "d1",
+        cityId: 2,
+        type: 8,
+        tileX: 3,
+        tileY: 4,
+        health: 40,
+        maxHealth: 40
+    }));
+    applyServerEvent(state, makeKnownEnvelope("defense.update", 12, {
+        id: "d1",
+        health: 20,
+        maxHealth: 40
+    }));
+    applyServerEvent(state, makeKnownEnvelope("defense.remove", 13, {
+        id: "d1",
+        reason: "destroyed"
+    }));
     applyServerEvent(state, makeKnownEnvelope("build.denied", 11, {
         reason: "research_required",
         cityId: 2,
@@ -125,6 +143,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.chat.rateLimitedUntil, 99999);
     assert.equal(state.events.lastOrbedCityId, 2);
     assert.equal(state.events.promotions[0]?.rank, "captain");
+    assert.equal(state.defenses.size, 0);
     assert.equal(state.events.lastBuildDeniedReason, "research_required");
     assert.equal(state.events.lastDemolishDeniedReason, "not_mayor");
 });
@@ -143,4 +162,26 @@ test("inventory.update applies only to local player", () => {
     }));
 
     assert.equal(state.inventory.get(0), 3);
+});
+
+test("score.profile updates local profile only", () => {
+    const state = createClientState();
+    state.local.id = "local";
+
+    applyServerEvent(state, makeKnownEnvelope("score.profile", 1, {
+        playerId: "local",
+        userId: "u1",
+        score: 320,
+        rank: "sergeant"
+    }));
+    applyServerEvent(state, makeKnownEnvelope("score.profile", 2, {
+        playerId: "other",
+        userId: "u2",
+        score: 999,
+        rank: "captain"
+    }));
+
+    assert.equal(state.scoreProfile.userId, "u1");
+    assert.equal(state.scoreProfile.score, 320);
+    assert.equal(state.scoreProfile.rank, "sergeant");
 });

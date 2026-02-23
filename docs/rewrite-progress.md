@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S4` subsystem chunk (Effect-oriented observability and integration adapter scaffolding), layered after S1 authority slices.
+- `S5` checkpoint after additional `S1 -> S3 -> S2` parity slice delivery (identity/profile + defense authority + protocol/client/test coverage).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -26,13 +26,17 @@
 | S1-21 | done | Chat message/history/rate-limit handling |
 | S1-09 | done | Mayor-only build authority + city spend + collision/chain/research gates |
 | S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
-| S1-03,S1-04,S1-12,S1-18,S1-22,S1-23,S1-24,S1-25,S1-26 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract expanded with inventory/item/icon authority events (`inventory.update`, `item.use.request`, `icon.pickup.*`) |
+| S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
+| S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
+| S1-18 | in_progress | Defense deploy + damage/update + city-orbed cleanup authority landed |
+| S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow |
+| S1-12,S1-22,S1-23,S1-24,S1-25 | deferred | Not yet parity-complete vs legacy systems |
+| S3-01 | in_progress | Contract expanded with `score.profile` + `defense.*` schemas and decode coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter |
-| S3-03 | in_progress | Dispatch expanded for new authoritative subsystems |
-| S3-04 | in_progress | Client event apply path expanded for new subsystems, including hazard lifecycle |
+| S3-03 | in_progress | Dispatch expanded for identity/profile + defense deploy authority paths |
+| S3-04 | in_progress | Client apply path expanded for profile + defense event lifecycle |
 | S3-05 | done | Versioning strategy kept current |
-| S2-08 | in_progress | HUD now reflects inventory/medkit alongside finance/research/factory/hazard/chat + deny counters |
+| S2-08 | in_progress | HUD now reflects score profile and defense counts alongside finance/research/factory/hazard/chat + deny counters |
 | S2-15 | in_progress | Extended keyboard semantics + new request intents |
 | S2-01 | in_progress | Client event handling coverage expanded with authoritative `inventory.update` application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
@@ -43,9 +47,9 @@
 | S4-05 | done | Ref-based runtime state remains active |
 | S4-07 | done | Runtime scope lifecycle remains active |
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
-| S4-08 | in_progress | Effect-based persistence/notification adapters scaffolded (`UserStoreAdapter`, `DiscordNotifier`) |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server runtime parity tests expanded in `game-runtime.test.ts` |
-| S5-09 | in_progress | Client network/event state coverage expanded |
+| S4-08 | in_progress | Effect-based persistence/notification adapters now exercised by live orb/profile flows (`UserStoreAdapter`, `DiscordNotifier`) |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority coverage in `game-runtime.test.ts` |
+| S5-09 | in_progress | Client network/event state coverage expanded for `score.profile` + `defense.*` |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
@@ -62,6 +66,9 @@
 - `apps/server-ts/src/domain/icons/IconDropService.ts`
 - `apps/server-ts/src/domain/inventory/InventoryService.ts`
 - `apps/server-ts/src/domain/items/ItemUseService.ts`
+- `apps/server-ts/src/domain/identity/IdentityService.ts`
+- `apps/server-ts/src/domain/score/ScoreService.ts`
+- `apps/server-ts/src/domain/defense/DefenseService.ts`
 - `apps/server-ts/src/domain/errors.ts`
 - `apps/server-ts/src/runtime/GameRuntime.ts`
 - `apps/server-ts/src/runtime/dispatch.ts`
@@ -76,6 +83,8 @@
 - `apps/client-ts/src/app/state.ts`
 - `apps/client-ts/src/render/scene.ts`
 - `apps/client-ts/test/network-events.test.ts`
+- `packages/protocol/test/envelope.test.ts`
+- `apps/server-ts/test/game-runtime.test.ts`
 - `docs/rewrite-progress.md`
 
 ## Validation Results

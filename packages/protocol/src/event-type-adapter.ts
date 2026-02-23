@@ -26,6 +26,9 @@ const legacyToCanonicalType = {
     "orb:drop": "orb.drop.request",
     "city:orbed": "city.orbed",
     "score:promotion": "score.promotion",
+    "score:profile": "score.profile",
+    "defense:spawn": "defense.spawn",
+    "defense:remove": "defense.remove",
     "build:denied": "build.denied",
     "demolish:denied": "demolish.denied"
 } as const;

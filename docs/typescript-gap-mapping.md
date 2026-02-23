@@ -28,8 +28,8 @@ Legend:
 |---|---|---|---|
 | S1-01 City slot assignment, mayor/recruit constraints, overflow denial | `server/src/PlayerFactory.js::assignCityAndRole`; `emitLobbySnapshot`; `lobby:denied` flow | `apps/server-ts/src/runtime/dispatch.ts` (exists), `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/domain/lobby/LobbySnapshot.ts` (new) | open |
 | S1-02 Enter/leave/evict/release lobby lifecycle | `server/src/PlayerFactory.js::listen`; `lobby:released`; `lobby:evicted` | `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | open |
-| S1-03 Identity + profile binding at join | `server/src/PlayerFactory.js::resolveIdentityFromPayload`; `server/src/users/UserStore.js::*` | `apps/server-ts/src/domain/identity/IdentityService.ts` (new), `apps/server-ts/src/adapters/persistence/UserStoreAdapter.ts` (new) | open |
-| S1-04 Rank/points profile hydration and broadcasts | `server/src/users/ScoreService.js::resolveRank/getProfile/updateUser/recordOrbVictory/recordDeath`; `PlayerFactory.updatePlayerScores` | `apps/server-ts/src/domain/score/ScoreService.ts` (new), `apps/server-ts/src/runtime/player-runtime.ts` (exists) | open |
+| S1-03 Identity + profile binding at join | `server/src/PlayerFactory.js::resolveIdentityFromPayload`; `server/src/users/UserStore.js::*` | `apps/server-ts/src/domain/identity/IdentityService.ts` (new), `apps/server-ts/src/adapters/persistence/UserStoreAdapter.ts` (new) | done |
+| S1-04 Rank/points profile hydration and broadcasts | `server/src/users/ScoreService.js::resolveRank/getProfile/updateUser/recordOrbVictory/recordDeath`; `PlayerFactory.updatePlayerScores` | `apps/server-ts/src/domain/score/ScoreService.ts` (new), `apps/server-ts/src/runtime/player-runtime.ts` (exists) | done |
 | S1-05 Movement anti-cheat/validation pipeline | `server/src/validation/PlayerStateValidator.js::validatePlayerUpdate`; `PlayerFactory.handlePlayerUpdate` | `apps/server-ts/src/domain/security/PlayerUpdateValidator.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-06 World collision clamp + spawn-safe relocation | `server/src/PlayerFactory.js::ensureSpawnIsClear/enforceWorldMovement/resolvePlacementForPlayer` | `apps/server-ts/src/domain/spawn/SpawnService.ts` (new), `apps/server-ts/src/domain/world/CollisionService.ts` (new) | done |
 | S1-07 Hospital healing tick parity | `server/src/PlayerFactory.js::applyHospitalHealingForPlayer` | `apps/server-ts/src/domain/health/HealingService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | done |
@@ -43,7 +43,7 @@ Legend:
 | S1-15 Factory production cycle and item stock accounting | `server/src/FactoryBuilding.js::cycle`; `BuildingFactory.handleFactoryCollect/registerFactoryIcon/cycle` | `apps/server-ts/src/domain/factories/FactoryService.ts` (new) | done |
 | S1-16 Icon drop authoritative collect/pickup flows | `server/src/IconDropManager.js::handleDrop/handlePickup/decrementFactoryStock` | `apps/server-ts/src/domain/icons/IconDropService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-17 Hazard lifecycle (mine/bomb/DFG), area damage, cleanup | `server/src/hazards/HazardManager.js::updateMine/updateBomb/detonateBomb/damagePlayersInRadius/updateDFG` | `apps/server-ts/src/domain/hazards/HazardService.ts` (new) | done |
-| S1-18 Defense placement/damage/replenishment parity | `server/src/DefenseManager.js::handleSpawn/applyDefenseDamage/removeDefensesByType` | `apps/server-ts/src/domain/defense/DefenseService.ts` (new) | open |
+| S1-18 Defense placement/damage/replenishment parity | `server/src/DefenseManager.js::handleSpawn/applyDefenseDamage/removeDefensesByType` | `apps/server-ts/src/domain/defense/DefenseService.ts` (new) | in_progress |
 | S1-19 Orb drop validation + city wipe/reset | `server/src/orb/OrbManager.js::handleDrop/resolveTargetCity`; `CityManager.resetCity`; `PlayerFactory` eviction interactions | `apps/server-ts/src/domain/orb/OrbService.ts` (new) | done |
 | S1-20 Score/rank updates + promotion events | `server/src/users/ScoreService.js::resolveRank/recordOrbVictory/recordDeath`; `score:promotion` event path | `apps/server-ts/src/domain/orb/OrbService.ts` (new), `packages/protocol/src/events.ts` (exists) | done |
 | S1-21 Chat + history + rate-limit parity | `server/src/chat/ChatManager.js::handleChatMessage/sendHistoryForSocket/isRateLimited` | `apps/server-ts/src/domain/chat/ChatService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
@@ -51,7 +51,7 @@ Legend:
 | S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | open |
 | S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new) | open |
 | S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `packages/sim-core/src/collision-world.ts` (new) | open |
-| S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | open |
+| S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | in_progress |
 
 ## Stage 2: Client Gameplay + Rendering + UX Parity (TS)
 
@@ -94,7 +94,7 @@ Legend:
 |---|---|---|---|
 | S3-01 Move from partial typed payload set to full gameplay schemas | `client/src/SocketListener.js` + `server/src/*` event payload handling | `packages/protocol/src/events.ts` (exists, expand) | in_progress |
 | S3-02 Remove event-name split-brain (legacy colon names vs dot names) without losing compatibility | legacy uses `player:health`, `players:snapshot`, etc.; TS currently uses dot variants in handlers | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `apps/*/event-adapter.ts` (new) | open |
-| S3-03 Expand server dispatch beyond 5 handlers | `server/src/PlayerFactory.js`, `BuildingFactory.js`, `BulletFactory.js`, `HazardManager.js`, `DefenseManager.js` | `apps/server-ts/src/runtime/dispatch.ts` (exists, expand heavily) | open |
+| S3-03 Expand server dispatch beyond 5 handlers | `server/src/PlayerFactory.js`, `BuildingFactory.js`, `BulletFactory.js`, `HazardManager.js`, `DefenseManager.js` | `apps/server-ts/src/runtime/dispatch.ts` (exists, expand heavily) | in_progress |
 | S3-04 Expand client applyServerEvent beyond 5 handlers | `client/src/SocketListener.js` handlers | `apps/client-ts/src/app/network-events.ts` (exists, expand heavily) | in_progress |
 | S3-05 Versioned envelope migration policy | implicit envelope usage in legacy socket events | `packages/protocol/src/envelope.ts` (exists), `docs/event-versioning.md` (new) | open |
 
@@ -219,4 +219,11 @@ apps/client-ts/src/
 - `S4-02`: done (typed domain errors + rejection mapping)
 - `S4-06`: in_progress (runtime/client observability modules wired with Effect log programs)
 - `S4-08`: in_progress (persistence + discord adapter scaffolding added)
+- `S1-03`: done (identity binding on join)
+- `S1-04`: done (score profile hydration + orb score profile updates)
+- `S1-18`: in_progress (defense deploy + damage/update + city-orbed cleanup)
+- `S1-26`: in_progress (orb notifier invocation wired)
+- `S3-01`: in_progress (`score.profile` and `defense.*` schemas + alias support)
+- `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy)
+- `S3-04`: in_progress (client apply expanded for profile + defense lifecycle)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
