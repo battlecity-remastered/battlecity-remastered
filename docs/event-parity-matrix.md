@@ -37,9 +37,10 @@
 | `city:orbed` | `city.orbed` | server -> client | yes | emit | apply | done |
 | `score:promotion` | `score.promotion` | server -> client | yes | emit | apply | done |
 | `score:profile` | `score.profile` | server -> client | yes | emit | apply | done |
-| `defense:spawn` | `defense.spawn` | server -> client | yes | emit | apply | done |
-| `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
 | `defense:deploy` | `defense.deploy.request` | client -> server | yes | dispatch | send-ready | done |
+| `defense:spawn` | `defense.spawn` | server -> client | yes | emit | apply | done |
+| `defense:update` | `defense.update` | server -> client | yes | emit | apply | done |
+| `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
 
 ## Known Gaps
 - Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).

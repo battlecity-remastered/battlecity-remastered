@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (authoritative bullet-hazard collision + protocol/test coverage).
+- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (defense placement occupancy parity + `defense:*` legacy alias compatibility + test coverage).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -28,12 +28,12 @@
 | S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
 | S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
-| S1-18 | in_progress | Defense deploy + damage/update + city-orbed cleanup authority landed |
+| S1-18 | in_progress | Defense deploy now enforces legacy-like occupancy rules (3x3 building footprint, hospital/factory exceptions, hazard tile blocking) plus damage/update + city-orbed cleanup |
 | S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards; terrain tile collision still deferred pending map loader parity |
 | S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow |
 | S1-12,S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, and `bullet.resolved` hazard-hit payload coverage |
-| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter |
+| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile + defense deploy authority paths |
 | S3-04 | in_progress | Client apply path expanded for profile + defense event lifecycle |
 | S3-05 | done | Versioning strategy kept current |
@@ -54,11 +54,11 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/src/runtime/bullet-runtime.ts`
+- `apps/server-ts/src/domain/defense/DefenseService.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
-- `packages/protocol/src/events.ts`
-- `packages/sim-core/src/combat.ts`
-- `packages/sim-core/test/combat.test.ts`
+- `packages/protocol/src/event-type-adapter.ts`
+- `packages/protocol/src/envelope.ts`
+- `packages/protocol/test/envelope.test.ts`
 - `docs/parity-checklist.md`
 - `docs/event-parity-matrix.md`
 - `docs/event-versioning.md`

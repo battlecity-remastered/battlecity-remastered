@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { makeEnvelope, type EventEnvelope } from "@battlecity/protocol";
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
-import { createRuntimeState } from "../src/runtime/types.js";
+import { createRuntimeState, type RuntimeConfig } from "../src/runtime/types.js";
 
-const makeHarness = () => {
+const makeHarness = (config: Partial<RuntimeConfig> = {}) => {
     const broadcast: EventEnvelope[] = [];
     const direct: Array<{ socketId: string; event: EventEnvelope }> = [];
     const rejected: Array<{ socketId: string; reason: string }> = [];
@@ -20,7 +20,7 @@ const makeHarness = () => {
         reject: (socketId, reason) => {
             rejected.push({ socketId, reason });
         }
-    }, {}, createRuntimeState(), {
+    }, config, createRuntimeState(), {
         userStore: new UserStoreAdapter()
     });
 
@@ -735,6 +735,65 @@ test("defense deploy is authoritative and emits spawn + finance update", () => {
     const finance = broadcast.filter((event) => event.type === "city.finance").at(-1);
     assert.ok(finance);
     assert.ok((finance.payload as { cash: number }).cash < 200);
+});
+
+test("defense deploy blocks occupied building footprint tiles but allows hospital bottom-row placement", () => {
+    const { runtime, broadcast, rejected } = makeHarness({
+        cityStartingCash: 1000
+    });
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
+        ownerId: "p1",
+        cityId: 2,
+        type: 300,
+        tileX: 10,
+        tileY: 10
+    }));
+
+    runtime.handleRawEvent("p1", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 2,
+        type: 8,
+        tileX: 11,
+        tileY: 11
+    }));
+    runtime.handleRawEvent("p1", makeEnvelope("defense.deploy.request", 4, {
+        cityId: 2,
+        type: 8,
+        tileX: 11,
+        tileY: 12
+    }));
+
+    assert.equal(rejected.filter((entry) => entry.reason === "ValidationFailed").length >= 1, true);
+
+    const spawned = broadcast.filter((event) => event.type === "defense.spawn");
+    assert.equal(spawned.length, 1);
+    const payload = spawned[0]?.payload as { tileX: number; tileY: number };
+    assert.equal(payload.tileX, 11);
+    assert.equal(payload.tileY, 12);
+});
+
+test("defense deploy blocks tiles occupied by active hazards", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("p1", makeEnvelope("hazard.deploy.request", 2, {
+        cityId: 2,
+        type: 3,
+        position: { x: 480, y: 480 },
+        radius: 64,
+        damage: 10,
+        fuseMs: 2000
+    }));
+    runtime.handleRawEvent("p1", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 2,
+        type: 8,
+        tileX: 10,
+        tileY: 10
+    }));
+
+    assert.equal(broadcast.some((event) => event.type === "defense.spawn"), false);
+    assert.equal(rejected.at(-1)?.reason, "ValidationFailed");
 });
 
 test("bullets can damage and remove defenses", () => {

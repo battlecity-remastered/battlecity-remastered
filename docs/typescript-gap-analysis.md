@@ -209,11 +209,14 @@ The rewrite should only be considered complete when:
   - S4 architecture hardening slice: Effect-based runtime/client logging primitives and adapter scaffolding for persistence/notifications.
   - Additional S1 authority slice: identity/profile binding on join and score profile hydration/update on orb awards.
   - Additional S1 authority slice: defense deploy authority, defense damage/update/remove lifecycle, and city-orbed defense cleanup.
+  - Additional S1 authority slice: defense placement occupancy parity tightened (3x3 building footprint blocking with hospital/factory exceptions, hazard tile occupancy blocking).
   - Additional S1 adapter slice: orb victory notification adapter invoked from authoritative orb flow.
   - S3 contract slice: `score.profile` and `defense.*` schemas + legacy alias mapping coverage.
+  - S3 compatibility slice: added ingress alias normalization for `defense:deploy` and `defense:update`.
   - Additional S1/S3 combat slice: bullets now resolve against live hazards with authoritative `hazard.remove` cleanup and `bullet.resolved` payload support for `hit_hazard`.
   - S2 client slice: profile + defense event application and HUD visibility parity.
   - S5 parity tests expanded for identity/profile + defense authority + bullet-hazard collision authority in server/client/protocol/sim-core suites.
+  - S5 parity tests expanded for defense placement occupancy semantics and defense alias decode coverage.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.

@@ -27,7 +27,9 @@ const legacyToCanonicalType = {
     "city:orbed": "city.orbed",
     "score:promotion": "score.promotion",
     "score:profile": "score.profile",
+    "defense:deploy": "defense.deploy.request",
     "defense:spawn": "defense.spawn",
+    "defense:update": "defense.update",
     "defense:remove": "defense.remove",
     "build:denied": "build.denied",
     "demolish:denied": "demolish.denied"

@@ -24,6 +24,8 @@
 - Ingress: `item:use` -> canonical `item.use.request`.
 - Ingress: `icon:pickup` -> canonical `icon.pickup.request`.
 - Ingress: `score:profile` -> canonical `score.profile`.
+- Ingress: `defense:deploy` -> canonical `defense.deploy.request`.
+- Ingress: `defense:update` -> canonical `defense.update`.
 - Ingress: `defense:spawn` -> canonical `defense.spawn`.
 - Egress payload: `bullet.resolved` now supports reason `hit_hazard` with `hitHazardId`.
 - Egress: always `players.snapshot`.

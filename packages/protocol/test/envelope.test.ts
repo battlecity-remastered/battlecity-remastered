@@ -86,6 +86,8 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("players:snapshot"), "players.snapshot");
     assert.equal(canonicalizeEventType("city:finance"), "city.finance");
     assert.equal(canonicalizeEventType("score:profile"), "score.profile");
+    assert.equal(canonicalizeEventType("defense:deploy"), "defense.deploy.request");
+    assert.equal(canonicalizeEventType("defense:update"), "defense.update");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -119,4 +121,39 @@ test("decodeKnownEnvelope validates defense.deploy.request payload", () => {
     });
 
     assert.equal(decoded._tag, "Right");
+});
+
+test("decodeKnownEnvelope normalizes defense legacy aliases", () => {
+    const deploy = decodeKnownEnvelope({
+        type: "defense:deploy",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            cityId: 2,
+            type: 8,
+            tileX: 10,
+            tileY: 10
+        }
+    });
+    assert.equal(deploy._tag, "Right");
+    if (deploy._tag === "Right") {
+        assert.equal(deploy.right.type, "defense.deploy.request");
+    }
+
+    const update = decodeKnownEnvelope({
+        type: "defense:update",
+        version: "1",
+        seq: 2,
+        ts: Date.now(),
+        payload: {
+            id: "d1",
+            health: 25,
+            maxHealth: 40
+        }
+    });
+    assert.equal(update._tag, "Right");
+    if (update._tag === "Right") {
+        assert.equal(update.right.type, "defense.update");
+    }
 });
