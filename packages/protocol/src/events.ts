@@ -49,6 +49,12 @@ export const PlayerHealthUpdate = Schema.Struct({
     maxHealth: Schema.Number,
     source: Schema.optional(Schema.String)
 });
+export const PlayerBotDamage = Schema.Struct({
+    amount: Schema.Number,
+    sourceType: Schema.optional(Schema.String),
+    shooterId: Schema.optional(Schema.String),
+    bulletType: Schema.optional(Schema.Number)
+});
 export const BulletFireRequest = Schema.Struct({
     ownerId: Schema.String,
     position: Vec2,
@@ -264,6 +270,7 @@ export const EventPayloadSchemas = {
     "lobby.snapshot": LobbySnapshot,
     "player.update": PlayerUpdate,
     "player.health": PlayerHealthUpdate,
+    "player.bot_damage": PlayerBotDamage,
     "player.dead": PlayerDead,
     "player.removed": PlayerRemoved,
     "players.snapshot": PlayersSnapshot,

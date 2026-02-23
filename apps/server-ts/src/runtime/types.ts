@@ -4,6 +4,8 @@ export type RuntimePlayer = PlayerState & {
     city: number;
     health: number;
     maxHealth: number;
+    isBot?: boolean;
+    botType?: "defender" | "rogue";
 };
 
 export type RuntimeBuilding = CombatBuildingState & {
@@ -30,6 +32,21 @@ export type RuntimeCity = {
     score: number;
     researchLevel: number;
     orbCount: number;
+};
+
+export type RuntimeFakeCityState = {
+    cityId: number;
+    active: boolean;
+    cooldownUntil: number;
+};
+
+export type RuntimeBotController = {
+    id: string;
+    botType: "defender" | "rogue";
+    homeCityId: number;
+    targetCityId: number;
+    nextRetargetAt: number;
+    nextShotAt: number;
 };
 
 export type RuntimeResearchState = {
@@ -76,9 +93,12 @@ export type RuntimeState = {
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
     blockingTiles: Set<string>;
+    fakeCities: Map<number, RuntimeFakeCityState>;
+    botControllers: Map<string, RuntimeBotController>;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
     populationTickAccumulatorMs: number;
+    botTickAccumulatorMs: number;
     seq: number;
 };
 
@@ -112,6 +132,15 @@ export type RuntimeConfig = {
     defenseCost: number;
     tileSize: number;
     populationTickMs: number;
+    fakeCityPlayerThreshold: number;
+    fakeCityCooldownMs: number;
+    fakeCityDefendersPerCity: number;
+    botTickMs: number;
+    botDetectionRadius: number;
+    botShootIntervalMs: number;
+    botMoveSpeed: number;
+    rogueMaxBots: number;
+    rogueBuildingThreshold: number;
 };
 
 export type RuntimeRejectReason =
@@ -177,14 +206,33 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     hospitalHealPerTick: 2,
     defenseCost: 75,
     tileSize: 48,
-    populationTickMs: 250
+    populationTickMs: 250,
+    fakeCityPlayerThreshold: 20,
+    fakeCityCooldownMs: 5 * 60 * 1000,
+    fakeCityDefendersPerCity: 2,
+    botTickMs: 100,
+    botDetectionRadius: 48 * 18,
+    botShootIntervalMs: 1300,
+    botMoveSpeed: 220,
+    rogueMaxBots: 2,
+    rogueBuildingThreshold: 18
 };
 
 type RuntimeStateInit = {
     blockingTiles?: Set<string>;
+    fakeCityIds?: number[];
 };
 
 export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState => {
+    const fakeCities = new Map<number, RuntimeFakeCityState>();
+    for (const cityId of init.fakeCityIds ?? []) {
+        fakeCities.set(cityId, {
+            cityId,
+            active: false,
+            cooldownUntil: 0
+        });
+    }
+
     return {
         players: new Map(),
         bullets: new Map(),
@@ -201,9 +249,12 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         chatHistory: [],
         chatRateLimit: new Map(),
         blockingTiles: init.blockingTiles ?? new Set(),
+        fakeCities,
+        botControllers: new Map(),
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
         populationTickAccumulatorMs: 0,
+        botTickAccumulatorMs: 0,
         seq: 0
     };
 };

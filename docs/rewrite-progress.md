@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S1` subsystem checkpoint after map/layout loader parity delivery and authoritative terrain collision hydration.
+- `S3` checkpoint after closing S1 fake-city/bot authority parity and extending protocol compatibility with `player:bot_damage`.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -33,8 +33,9 @@
 | S1-25 | done | Bullet collision now resolves against buildings/defenses/hazards and map-loader-fed runtime blocking tiles (`hit_terrain`) |
 | S1-26 | done | Orb victory notifier now resolves canonical runtime user identity, posts through Effect-based Discord webhook adapter when configured, and remains covered by runtime tests |
 | S1-12 | done | House attachment + population tick/remove authority implemented via `PopulationService` with canonical `population.update` emissions |
-| S1-22,S1-23 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract compatibility expanded with legacy aliases for `bullet:fired`, `bullet:resolved`, `new_building`, `demolish_building`, and `population:update` in addition to prior payload coverage |
+| S1-22 | done | Fake-city lifecycle/cooldown authority landed via `FakeCityService` and runtime system-tick integration |
+| S1-23 | done | Defender/rogue bot server authority landed via `DefenderBotService` + `RogueBotService` with runtime movement/fire/cleanup |
+| S3-01 | in_progress | Contract compatibility now also includes canonical `player.bot_damage` with ingress alias normalization for `player:bot_damage` |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, orb cleanup emission, and scoped chat routing (`team` vs `global`) |
 | S3-04 | in_progress | Client apply path remains expanded for profile/defense/building lifecycle plus bullet/icon/population state, with new typed ingress decode router boundary (`network/event-router.ts`) |
@@ -58,15 +59,25 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/data/cities/*`
-- `apps/server-ts/data/citySpawns.json`
-- `apps/server-ts/data/map.dat`
-- `apps/server-ts/src/domain/map/CityLayoutService.ts`
-- `apps/server-ts/src/domain/map/MapService.ts`
+- `apps/server-ts/data/fakeCities.json`
+- `apps/server-ts/src/domain/fake-cities/FakeCityService.ts`
+- `apps/server-ts/src/domain/bots/BotShared.ts`
+- `apps/server-ts/src/domain/bots/DefenderBotService.ts`
+- `apps/server-ts/src/domain/bots/RogueBotService.ts`
+- `apps/server-ts/src/runtime/dispatch-combat.ts`
 - `apps/server-ts/src/layers/RuntimeLayer.ts`
+- `apps/server-ts/src/runtime/system-runtime.ts`
+- `apps/server-ts/src/runtime/dispatch.ts`
 - `apps/server-ts/src/runtime/types.ts`
-- `apps/server-ts/test/map-services.test.ts`
+- `apps/server-ts/test/game-runtime.test.ts`
 - `apps/server-ts/test/runtime-layer.test.ts`
+- `packages/protocol/src/events.ts`
+- `packages/protocol/src/event-type-adapter.ts`
+- `packages/protocol/src/envelope.ts`
+- `packages/protocol/test/envelope.test.ts`
+- `docs/event-parity-matrix.md`
+- `docs/event-versioning.md`
+- `docs/parity-acceptance-criteria.md`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`

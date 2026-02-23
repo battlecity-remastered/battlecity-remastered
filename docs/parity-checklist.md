@@ -32,12 +32,12 @@
 | S1-19 | Orb + city reset parity | rewrite | done | Orb drop validates, resets target city state, and now emits explicit cleanup events for removed buildings/hazards/defenses |
 | S1-20 | Score/promotion events | rewrite | done | Score promotion event emitted from orb flow |
 | S1-21 | Chat history/rate limit | rewrite | done | Chat handling now enforces city-scoped team visibility, global broadcast semantics, and join-time filtered history |
-| S1-22 | Fake city lifecycle | rewrite | deferred | Not yet ported |
-| S1-23 | Defender/rogue bots | rewrite | deferred | Not yet ported |
+| S1-22 | Fake city lifecycle | rewrite | done | Authoritative fake-city activation/cooldown lifecycle now runs in runtime system ticks and orb cooldown paths |
+| S1-23 | Defender/rogue bots | rewrite | done | Defender and rogue bot authority (spawn/move/fire/cleanup) now runs server-side with runtime tests |
 | S1-24 | Map/layout loaders | rewrite | done | Legacy `map.dat` decode + city layout parsing ported to TS (`MapService`, `CityLayoutService`) with canonical data assets in `apps/server-ts/data/*` |
 | S1-25 | Bullet terrain/structure/hazard parity | rewrite | done | Authoritative bullet collisions now consume map-loader-fed blocking tiles plus existing structure/hazard checks (`hit_terrain`) |
 | S1-26 | Discord notifications | rewrite | done | Orb victory notifier now uses canonical runtime user identity and Effect webhook adapter transport when configured |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Added `population.update` schema and `population:update` legacy alias handling in addition to prior payload expansions |
+| S3-01 | Full gameplay schemas | rewrite | in_progress | Added `player.bot_damage` schema + `player:bot_damage` alias handling in addition to prior `population.update`/defense/bullet expansions |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode including `defense:*` aliases and `inventory:update` -> `inventory.update` |
 | S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile + defense authority + orb cleanup emission, plus scoped chat dispatch routing (`team` vs `global`) |
 | S3-04 | Client apply handler expansion | rewrite | in_progress | Added typed ingress router (`decodeServerEnvelope`) ahead of apply path plus prior profile/defense/building/bullet/icon/population handling |
@@ -56,13 +56,13 @@
 | S4-06 | Structured observability | rewrite | in_progress | Effect-based runtime/client log modules added and wired in server bootstrap |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence adapter and Discord webhook adapter are exercised by join/orb authority flows with dedicated regression tests |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for house/population attachment growth + removal semantics, terrain bullet blocking, map/city loader decode/parsing, and orb cleanup emissions |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests now also cover fake-city activation/cooldown, defender/rogue bot authority, and `player:bot_damage` compatibility handling |
 | S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client parity tests now include typed ingress router coverage, mouse semantics, and window/fullscreen service behavior assertions |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 
 ## Exit Criteria Tracking
 - S0: done
-- S1: in_progress
+- S1: done
 - S3: in_progress
 - S2: in_progress
 - S4: in_progress

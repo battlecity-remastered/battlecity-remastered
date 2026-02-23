@@ -6,6 +6,7 @@ import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "
 import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { notifyOrbVictory } from "../adapters/notifications/DiscordNotifier.js";
 import { loadBlockingTiles } from "../domain/map/MapService.js";
+import { loadConfiguredFakeCityIds } from "../domain/fake-cities/FakeCityService.js";
 
 export type RuntimeServices = {
     runtime: GameRuntime;
@@ -21,7 +22,8 @@ export const makeRuntimeServices = (
     const resolvedConfig = { ...DEFAULT_RUNTIME_CONFIG, ...config };
     const userStore = new UserStoreAdapter();
     const blockingTiles = loadBlockingTiles();
-    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState({ blockingTiles }), {
+    const fakeCityIds = loadConfiguredFakeCityIds();
+    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState({ blockingTiles, fakeCityIds }), {
         userStore,
         notifyOrbVictory
     });

@@ -94,6 +94,7 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("defense:update"), "defense.update");
     assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");
     assert.equal(canonicalizeEventType("population:update"), "population.update");
+    assert.equal(canonicalizeEventType("player:bot_damage"), "player.bot_damage");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -227,5 +228,25 @@ test("decodeKnownEnvelope validates population updates and legacy alias", () => 
     assert.equal(legacy._tag, "Right");
     if (legacy._tag === "Right") {
         assert.equal(legacy.right.type, "population.update");
+    }
+});
+
+test("decodeKnownEnvelope validates player bot-damage alias payload", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "player:bot_damage",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            amount: 20,
+            sourceType: "defender_bot",
+            shooterId: "defender_17_1",
+            bulletType: 0
+        }
+    });
+
+    assert.equal(decoded._tag, "Right");
+    if (decoded._tag === "Right") {
+        assert.equal(decoded.right.type, "player.bot_damage");
     }
 });

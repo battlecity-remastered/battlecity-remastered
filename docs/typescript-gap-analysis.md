@@ -51,7 +51,7 @@ Conclusion: the branch currently implements a minimal movement/shoot/build loop 
 | Factories/item production | Factory stock, output caps, collect/purge, inventory sync, shared drops | Not implemented | Critical |
 | Items/hazards/defenses | Bomb/mine/DFG/orb workflows, turret/sleeper/plasma/wall behaviors | Not implemented | Critical |
 | Orb/city destruction/scoring | Orbable rules, city wipe/reset, score/orb bounty/rank progression | Not implemented | Critical |
-| Fake cities + bots | Fake city lifecycle, defender/rogue bots, pathfinding/navmask behavior | Not implemented | High |
+| Fake cities + bots | Fake city lifecycle, defender/rogue bots, pathfinding/navmask behavior | Partially implemented: authoritative activation/cooldown + bot spawn/move/fire are live; advanced legacy pathfinding/navmask/debug parity remains open | Medium |
 | Map + assets | `map.dat` loading/orientation, sprite sheets, UI art/audio | Removed from runtime path; no TS asset pipeline parity | Critical |
 | UI shell + overlays | Lobby UI, build interface, panel finance/inventory, radar, modals, chat, options, tutorial | Replaced by minimal canvas scene + text HUD only | Critical |
 | Audio | Music/SFX managers and trigger points | Not implemented | High |
@@ -242,7 +242,11 @@ The rewrite should only be considered complete when:
   - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
   - Additional S1 authority slice: legacy map and city layout loaders are now ported into TS (`MapService`, `CityLayoutService`) with canonical `map.dat` and city spawn/layout assets in `apps/server-ts/data/*`.
   - Additional S1/S5 combat slice: terrain collision parity is now map-loader-fed end-to-end, and dedicated tests validate map decode orientation, blocking-tile extraction, city layout parsing, and runtime hydration.
+  - Additional S1 authority slice: fake-city lifecycle parity now runs in authoritative runtime ticks (`FakeCityService`) with orb-triggered cooldown orchestration.
+  - Additional S1 authority slice: defender and rogue bot authority now runs server-side (`DefenderBotService`, `RogueBotService`) with authoritative spawn/move/fire/cleanup behavior.
+  - Additional S3 compatibility slice: canonical `player.bot_damage` schema with `player:bot_damage` ingress normalization and dispatch handling coverage.
+  - Additional S5 parity slice: runtime tests now assert fake-city activation/cooldown, defender+rogue bot authority behavior, and `player:bot_damage` legacy compatibility.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.
-  - Full legacy build-tree, inventory icon, defense, fake-city, and bot parity.
+  - Full legacy build-tree and inventory icon parity.
   - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).

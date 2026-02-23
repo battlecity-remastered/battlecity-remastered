@@ -23,6 +23,8 @@ import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.
 import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
 import { awardOrbProfileScore, profileForSocket } from "../domain/score/ScoreService.js";
 import { deployDefense } from "../domain/defense/DefenseService.js";
+import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
+import { handlePlayerBotDamage } from "./dispatch-combat.js";
 
 type DispatchContext = {
     state: RuntimeState;
@@ -78,6 +80,9 @@ const handlers: HandlerMap = {
         }
         upsertPlayerFromUpdate(context.state, socketId, payload, context.config);
         emitPlayersSnapshot(context.state, context.emitter);
+    },
+    "player.bot_damage": (socketId, payload, context) => {
+        handlePlayerBotDamage(socketId, payload, context);
     },
     "bullet.fire.request": (socketId, payload, context) => {
         handleCommandResult(
@@ -250,6 +255,8 @@ const handlers: HandlerMap = {
         ), ({ cityOrbed, scorePromotion, removedBuildingIds, removedHazardIds, removedDefenseIds }) => {
             context.emitter.emit("city.orbed", cityOrbed);
             context.emitter.emit("score.promotion", scorePromotion);
+            markFakeCityCooldown(context.state, payload.targetCityId, Date.now(), context.config);
+            emitPlayersSnapshot(context.state, context.emitter);
             emitCityFinance(context.state, payload.sourceCityId, context.config, context.emitter);
             emitCityFinance(context.state, payload.targetCityId, context.config, context.emitter);
             for (const buildingId of removedBuildingIds) {

@@ -10,6 +10,9 @@ const makeHarness = (
     config: Partial<RuntimeConfig> = {},
     runtimeServices: {
         notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
+    } = {},
+    stateInit: {
+        fakeCityIds?: number[];
     } = {}
 ) => {
     const broadcast: EventEnvelope[] = [];
@@ -26,7 +29,7 @@ const makeHarness = (
         reject: (socketId, reason) => {
             rejected.push({ socketId, reason });
         }
-    }, config, createRuntimeState(), {
+    }, config, createRuntimeState(stateInit), {
         userStore: new UserStoreAdapter(),
         ...runtimeServices
     });
@@ -1082,4 +1085,99 @@ test("orb drop invokes notifier adapter with authoritative payload", async () =>
     assert.equal(notifications[0]?.playerId, "u-attacker");
     assert.equal(notifications[0]?.sourceCityId, 1);
     assert.equal(notifications[0]?.targetCityId, 2);
+});
+
+test("fake city activates under low population and spawns defender bots", () => {
+    const { runtime, broadcast } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        fakeCityDefendersPerCity: 1,
+        fakeCityPlayerThreshold: 10
+    }, {}, {
+        fakeCityIds: [17]
+    });
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const state = runtime.getReadonlyState();
+    assert.equal(state.fakeCities.get(17)?.active, true);
+    assert.ok(Array.from(state.players.values()).some((player) => player.isBot && player.botType === "defender"));
+    assert.ok(broadcast.some((event) => event.type === "players.snapshot"));
+});
+
+test("orbing a fake city applies cooldown and removes its defender bots", () => {
+    const { runtime } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        fakeCityDefendersPerCity: 1,
+        fakeCityPlayerThreshold: 10
+    }, {}, {
+        fakeCityIds: [17]
+    });
+
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.tickBullets();
+    runtime.tickBullets();
+    const defenderBefore = Array.from(runtime.getReadonlyState().players.values())
+        .filter((player) => player.botType === "defender").length;
+    assert.ok(defenderBefore >= 1);
+
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, {
+        sourceCityId: 1,
+        targetCityId: 17
+    }));
+
+    const state = runtime.getReadonlyState();
+    assert.equal(state.fakeCities.get(17)?.active, false);
+    assert.ok((state.fakeCities.get(17)?.cooldownUntil ?? 0) > Date.now());
+    assert.equal(Array.from(state.players.values()).some((player) => player.botType === "defender"), false);
+});
+
+test("rogue bots spawn against developed non-fake cities", () => {
+    const { runtime } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        rogueBuildingThreshold: 2,
+        rogueMaxBots: 1
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    const mutableState = runtime.getReadonlyState() as unknown as {
+        buildings: Map<string, { cityId: number; id: string }>;
+    };
+    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2 });
+    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2 });
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const state = runtime.getReadonlyState();
+    assert.ok(Array.from(state.players.values()).some((player) => player.isBot && player.botType === "rogue"));
+});
+
+test("player:bot_damage legacy alias applies authoritative health updates", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 512, y: 512 }
+    }));
+
+    runtime.handleRawEvent("p1", makeEnvelope("player:bot_damage", 3, {
+        amount: 20,
+        sourceType: "defender_bot",
+        shooterId: "defender_1_1",
+        bulletType: 0
+    }));
+
+    const healthEvent = broadcast
+        .filter((event) => event.type === "player.health")
+        .at(-1);
+    assert.ok(healthEvent);
+    assert.equal((healthEvent.payload as { health: number }).health, 80);
 });

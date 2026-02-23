@@ -12,6 +12,7 @@
 - Inventory/item authority (collect/pickup/use/release) and hospital healing tick are server-driven and test-covered.
 - Orb city reset flow emits explicit cleanup events for removed defenses/buildings/hazards.
 - Bullet authority includes structure/hazard and blocking-tile terrain collision outcomes.
+- Fake-city lifecycle and bot authority (defender/rogue spawn/move/fire/cooldown cleanup) are server-driven and test-covered.
 
 ## Stage S3
 - Protocol has explicit canonical event naming and legacy alias compatibility strategy.

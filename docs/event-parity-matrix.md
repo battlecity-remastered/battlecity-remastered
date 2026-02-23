@@ -15,6 +15,7 @@
 | `player:health` | `player.health` | server -> client | yes | emit | apply | done |
 | `player:dead` | `player.dead` | server -> client | yes | emit | apply | done |
 | `player:removed` | `player.removed` | server -> client | yes | emit | apply | done |
+| `player:bot_damage` | `player.bot_damage` | client -> server | yes | dispatch (authoritative clamp + health/death resolution) | send-ready | done |
 | `chat:message` | `chat.message` | bidirectional | yes | dispatch + scoped emit (`team` city-only, `global` broadcast) | apply | done |
 | `lobby:denied` | `lobby.denied` | server -> client | yes | emit | apply | done |
 | `lobby:snapshot` | `lobby.snapshot` | server -> client | yes | emit | apply | done |
@@ -48,7 +49,7 @@
 | `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
 
 ## Known Gaps
-- Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
+- Many legacy events remain unimplemented (full auth flows, map/tutorial/audio flows).
 - Client ingress now canonicalizes aliases through `decodeServerEnvelope`, but broad UI module parity is still incomplete.
 - Hazard events are now state-applied and include orb city cleanup reasons; dedicated hazard art/animation parity remains partial.
 - Inventory/item/icon/defense/building/population events are authoritative and state-applied, but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.

@@ -90,6 +90,7 @@ export const EventType = Schema.Literal(
     "ping",
     "player",
     "player:bot_damage",
+    "player.bot_damage",
     "player:dead",
     "player:health",
     "player:rejected",

@@ -9,6 +9,7 @@ const legacyToCanonicalType = {
     "lobby:snapshot": "lobby.snapshot",
     "player:update": "player.update",
     "player:health": "player.health",
+    "player:bot_damage": "player.bot_damage",
     "player:dead": "player.dead",
     "player:removed": "player.removed",
     "players:snapshot": "players.snapshot",

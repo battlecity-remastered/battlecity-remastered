@@ -12,8 +12,10 @@ const broadcaster = {
 test("runtime layer hydrates blocking tiles from legacy map data", async () => {
     const services = makeRuntimeServices(broadcaster);
     try {
-        const blockingTiles = services.runtime.getReadonlyState().blockingTiles;
+        const state = services.runtime.getReadonlyState();
+        const blockingTiles = state.blockingTiles;
         assert.ok(blockingTiles.size > 0);
+        assert.ok(state.fakeCities.size > 0);
     } finally {
         await services.runtimeScope.close();
     }

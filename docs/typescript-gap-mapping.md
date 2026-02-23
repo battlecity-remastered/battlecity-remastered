@@ -26,8 +26,8 @@ Legend:
 
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
-| S1-01 City slot assignment, mayor/recruit constraints, overflow denial | `server/src/PlayerFactory.js::assignCityAndRole`; `emitLobbySnapshot`; `lobby:denied` flow | `apps/server-ts/src/runtime/dispatch.ts` (exists), `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/domain/lobby/LobbySnapshot.ts` (new) | open |
-| S1-02 Enter/leave/evict/release lobby lifecycle | `server/src/PlayerFactory.js::listen`; `lobby:released`; `lobby:evicted` | `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | open |
+| S1-01 City slot assignment, mayor/recruit constraints, overflow denial | `server/src/PlayerFactory.js::assignCityAndRole`; `emitLobbySnapshot`; `lobby:denied` flow | `apps/server-ts/src/runtime/dispatch.ts` (exists), `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/domain/lobby/LobbySnapshot.ts` (new) | done |
+| S1-02 Enter/leave/evict/release lobby lifecycle | `server/src/PlayerFactory.js::listen`; `lobby:released`; `lobby:evicted` | `apps/server-ts/src/domain/lobby/LobbyService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | done |
 | S1-03 Identity + profile binding at join | `server/src/PlayerFactory.js::resolveIdentityFromPayload`; `server/src/users/UserStore.js::*` | `apps/server-ts/src/domain/identity/IdentityService.ts` (new), `apps/server-ts/src/adapters/persistence/UserStoreAdapter.ts` (new) | done |
 | S1-04 Rank/points profile hydration and broadcasts | `server/src/users/ScoreService.js::resolveRank/getProfile/updateUser/recordOrbVictory/recordDeath`; `PlayerFactory.updatePlayerScores` | `apps/server-ts/src/domain/score/ScoreService.ts` (new), `apps/server-ts/src/runtime/player-runtime.ts` (exists) | done |
 | S1-05 Movement anti-cheat/validation pipeline | `server/src/validation/PlayerStateValidator.js::validatePlayerUpdate`; `PlayerFactory.handlePlayerUpdate` | `apps/server-ts/src/domain/security/PlayerUpdateValidator.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
@@ -47,8 +47,8 @@ Legend:
 | S1-19 Orb drop validation + city wipe/reset | `server/src/orb/OrbManager.js::handleDrop/resolveTargetCity`; `CityManager.resetCity`; `PlayerFactory` eviction interactions | `apps/server-ts/src/domain/orb/OrbService.ts` (new) | done |
 | S1-20 Score/rank updates + promotion events | `server/src/users/ScoreService.js::resolveRank/recordOrbVictory/recordDeath`; `score:promotion` event path | `apps/server-ts/src/domain/orb/OrbService.ts` (new), `packages/protocol/src/events.ts` (exists) | done |
 | S1-21 Chat + history + rate-limit parity | `server/src/chat/ChatManager.js::handleChatMessage/sendHistoryForSocket/isRateLimited` | `apps/server-ts/src/domain/chat/ChatService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
-| S1-22 Fake city lifecycle and cooldown orchestration | `server/src/FakeCityManager.js::update/onCityOrbed/setCityCooldown` | `apps/server-ts/src/domain/fake-cities/FakeCityService.ts` (new) | open |
-| S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | open |
+| S1-22 Fake city lifecycle and cooldown orchestration | `server/src/FakeCityManager.js::update/onCityOrbed/setCityCooldown` | `apps/server-ts/src/domain/fake-cities/FakeCityService.ts` (new) | done |
+| S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | done |
 | S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new), `apps/server-ts/data/*` (new) | done |
 | S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `apps/server-ts/src/domain/map/MapService.ts` (new) | done |
 | S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | done |
@@ -233,4 +233,7 @@ apps/client-ts/src/
 - `S2-28`: in_progress (window mode service now synchronizes renderer size on resize and supports fullscreen toggling with lifecycle cleanup)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
 - `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, window mode service behaviors, and map/city loader parity coverage)
+- `S1-22`: done (fake-city activation/cooldown lifecycle ported and wired into system ticks/orb cooldown path through `FakeCityService`)
+- `S1-23`: done (defender + rogue bot authority ported with server-side spawn/move/fire/cleanup behavior through `DefenderBotService` + `RogueBotService`)
+- `S3-01`: in_progress (`player.bot_damage` schema and `player:bot_damage` alias canonicalization added alongside prior protocol expansions)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
