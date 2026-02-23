@@ -225,6 +225,8 @@ apps/client-ts/src/
 - `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards plus runtime blocking tiles landed; map-loader-fed terrain parity still tied to S1-24)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy + orb cleanup removal emission)
 - `S3-04`: in_progress (client apply expanded for profile + defense + building + bullet/icon lifecycle and `population.update` state)
+- `S1-21`: done (team chat now routes only to same-city sockets, global chat remains broadcast, and join-time chat history is visibility-filtered)
+- `S3-03`: in_progress (dispatch chat path now includes explicit scoped routing semantics and helper extraction for strict maintainability compliance)
 - `S2-01`: in_progress (event apply now covers `population.update` in addition to prior server-authoritative world events)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
 - `S5-01,S5-09`: in_progress (server/client/protocol tests expanded for population attachment growth, remove semantics, and alias decode coverage)

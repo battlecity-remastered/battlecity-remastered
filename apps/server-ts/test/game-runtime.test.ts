@@ -803,6 +803,66 @@ test("chat message emits history and rate limit for spam", () => {
     assert.ok(direct.some((entry) => entry.event.type === "chat.rate_limit"));
 });
 
+test("team chat is city-scoped while global chat is broadcast", () => {
+    const { runtime, broadcast, direct } = makeHarness();
+
+    runtime.handleRawEvent("city1-a", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("city1-b", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+    runtime.handleRawEvent("city2-a", makeEnvelope("lobby.join.request", 3, { desiredCity: 2 }));
+
+    runtime.handleRawEvent("city1-a", makeEnvelope("chat.message.request", 4, {
+        text: "team-msg",
+        scope: "team"
+    }));
+    runtime.handleRawEvent("city1-a", makeEnvelope("chat.message.request", 5, {
+        text: "global-msg",
+        scope: "global"
+    }));
+
+    const teamDeliveries = direct.filter((entry) => {
+        if (entry.event.type !== "chat.message") {
+            return false;
+        }
+        return (entry.event.payload as { text: string }).text === "team-msg";
+    });
+    assert.equal(teamDeliveries.length, 2);
+    assert.ok(teamDeliveries.some((entry) => entry.socketId === "city1-a"));
+    assert.ok(teamDeliveries.some((entry) => entry.socketId === "city1-b"));
+    assert.ok(!teamDeliveries.some((entry) => entry.socketId === "city2-a"));
+
+    const globalBroadcast = broadcast.filter((event) => {
+        if (event.type !== "chat.message") {
+            return false;
+        }
+        return (event.payload as { text: string }).text === "global-msg";
+    });
+    assert.equal(globalBroadcast.length, 1);
+});
+
+test("chat history excludes other-city team messages on join", () => {
+    const { runtime, direct } = makeHarness();
+
+    runtime.handleRawEvent("city1-a", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("city1-a", makeEnvelope("chat.message.request", 2, {
+        text: "city1-team",
+        scope: "team"
+    }));
+    runtime.handleRawEvent("city1-a", makeEnvelope("chat.message.request", 3, {
+        text: "global-msg",
+        scope: "global"
+    }));
+
+    runtime.handleRawEvent("city2-a", makeEnvelope("lobby.join.request", 4, { desiredCity: 2 }));
+
+    const city2History = direct
+        .filter((entry) => entry.socketId === "city2-a" && entry.event.type === "chat.history")
+        .at(-1);
+    assert.ok(city2History);
+    const messages = city2History.event.payload as Array<{ text: string }>;
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0]?.text, "global-msg");
+});
+
 test("lobby join hydrates score profile for bound user id", () => {
     const { runtime, direct } = makeHarness();
 

@@ -2,7 +2,7 @@ import type { KnownEventPayloadByType, KnownTypedEventEnvelope } from "@battleci
 import { Effect } from "effect";
 import { emitPlayersSnapshot } from "./snapshot.js";
 import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
-import type { CommandResult, RuntimeConfig, RuntimeState } from "./types.js";
+import type { RuntimeConfig, RuntimeState } from "./types.js";
 import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { createBulletFromRequest } from "./bullet-runtime.js";
 import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
@@ -13,15 +13,17 @@ import { emitResearchState, startResearch } from "../domain/research/ResearchSer
 import { collectFactoryStock } from "../domain/factories/FactoryService.js";
 import { deployHazard } from "../domain/hazards/HazardService.js";
 import { dropOrb } from "../domain/orb/OrbService.js";
-import { addChatMessage, getChatHistory } from "../domain/chat/ChatService.js";
+import { addChatMessage, getChatHistoryForSocket } from "../domain/chat/ChatService.js";
 import { addInventoryItem, emitInventoryState } from "../domain/inventory/InventoryService.js";
 import { useItem } from "../domain/items/ItemUseService.js";
 import { pickupIcon } from "../domain/icons/IconDropService.js";
 import { rejectSocket } from "./rejections.js";
+import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.js";
 import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
 import { awardOrbProfileScore, profileForSocket } from "../domain/score/ScoreService.js";
 import { deployDefense } from "../domain/defense/DefenseService.js";
+
 type DispatchContext = {
     state: RuntimeState;
     config: RuntimeConfig;
@@ -33,22 +35,11 @@ type DispatchContext = {
 };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
-const handleCommandResult = <T>(socketId: string, context: DispatchContext, result: CommandResult<T>, onOk: (value: T) => void): void => {
-    if (!result.ok) {
-        if (result.reason === "lobby_full") {
-            context.emitter.emitTo(socketId, "lobby.denied", {
-                reason: result.reason
-            });
-        }
-        rejectSocket(context.broadcaster, socketId, result.reason);
-        return;
-    }
-    onOk(result.value);
-};
+
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
         const userId = bindSocketIdentity(context.state, socketId, payload);
-        handleCommandResult(socketId, context, joinLobby(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, joinLobby(
             context.state,
             socketId,
             payload.desiredCity,
@@ -56,7 +47,7 @@ const handlers: HandlerMap = {
         ), (assignment) => {
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
-            context.emitter.emitTo(socketId, "chat.history", getChatHistory(context.state));
+            context.emitter.emitTo(socketId, "chat.history", getChatHistoryForSocket(context.state, socketId));
             context.emitter.emitTo(socketId, "inventory.update", emitInventoryState(context.state, socketId));
             getOrCreateCity(context.state, assignment.city, context.config);
             emitCityFinance(context.state, assignment.city, context.config, context.emitter);
@@ -91,7 +82,8 @@ const handlers: HandlerMap = {
     "bullet.fire.request": (socketId, payload, context) => {
         handleCommandResult(
             socketId,
-            context,
+            context.emitter,
+            context.broadcaster,
             createBulletFromRequest(
                 context.state,
                 socketId,
@@ -169,7 +161,7 @@ const handlers: HandlerMap = {
             return;
         }
         if (result.value.message) {
-            context.emitter.emit("chat.message", result.value.message);
+            emitScopedChatMessage(context.state, context.emitter, result.value.message);
         }
     },
     "research.start.request": (socketId, payload, context) => {
@@ -178,7 +170,7 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, "city_mismatch");
             return;
         }
-        handleCommandResult(socketId, context, startResearch(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, startResearch(
             context.state,
             payload.cityId,
             payload.researchType,
@@ -194,7 +186,7 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, "city_mismatch");
             return;
         }
-        handleCommandResult(socketId, context, collectFactoryStock(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, collectFactoryStock(
             context.state,
             payload.cityId,
             payload.itemType,
@@ -216,7 +208,7 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, "city_mismatch");
             return;
         }
-        handleCommandResult(socketId, context, pickupIcon(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, pickupIcon(
             context.state,
             socketId,
             payload,
@@ -228,7 +220,7 @@ const handlers: HandlerMap = {
         });
     },
     "item.use.request": (socketId, payload, context) => {
-        handleCommandResult(socketId, context, useItem(context.state, socketId, payload), (result) => {
+        handleCommandResult(socketId, context.emitter, context.broadcaster, useItem(context.state, socketId, payload), (result) => {
             context.emitter.emit("player.health", result.health);
             context.emitter.emitTo(socketId, "inventory.update", result.inventory);
         });
@@ -239,7 +231,7 @@ const handlers: HandlerMap = {
             rejectSocket(context.broadcaster, socketId, "player_not_joined");
             return;
         }
-        handleCommandResult(socketId, context, deployHazard(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, deployHazard(
             context.state,
             city,
             payload,
@@ -250,7 +242,7 @@ const handlers: HandlerMap = {
         });
     },
     "orb.drop.request": (socketId, payload, context) => {
-        handleCommandResult(socketId, context, dropOrb(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, dropOrb(
             context.state,
             socketId,
             payload,
@@ -294,7 +286,7 @@ const handlers: HandlerMap = {
         });
     },
     "defense.deploy.request": (socketId, payload, context) => {
-        handleCommandResult(socketId, context, deployDefense(
+        handleCommandResult(socketId, context.emitter, context.broadcaster, deployDefense(
             context.state,
             socketId,
             payload,

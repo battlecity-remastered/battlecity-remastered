@@ -231,6 +231,9 @@ The rewrite should only be considered complete when:
   - S5 parity tests expanded for bullet lifecycle state application and icon pickup confirmation application in client network event suites, plus protocol alias decode coverage for legacy bullet/build aliases.
   - S5 parity tests expanded for population attachment growth/cleanup authority and client/protocol population event handling.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
+  - Additional S1/S3 authority slice: team chat delivery is now city-scoped, global chat remains broadcast, and join-time chat history is filtered by visibility scope.
+  - Additional S5 parity slice: runtime chat tests now assert team/global routing semantics plus join-time history filtering.
+  - Additional S4 maintainability slice: dispatch helper extraction (`dispatch-support.ts`) keeps strict file-size gate green while preserving handler behavior.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.
   - Full legacy build-tree, inventory icon, defense, fake-city, bot, and map-loader parity.

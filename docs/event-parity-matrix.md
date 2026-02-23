@@ -15,7 +15,7 @@
 | `player:health` | `player.health` | server -> client | yes | emit | apply | done |
 | `player:dead` | `player.dead` | server -> client | yes | emit | apply | done |
 | `player:removed` | `player.removed` | server -> client | yes | emit | apply | done |
-| `chat:message` | `chat.message` | bidirectional | yes | partial | partial | in_progress |
+| `chat:message` | `chat.message` | bidirectional | yes | dispatch + scoped emit (`team` city-only, `global` broadcast) | apply | done |
 | `lobby:denied` | `lobby.denied` | server -> client | yes | emit | apply | done |
 | `lobby:snapshot` | `lobby.snapshot` | server -> client | yes | emit | apply | done |
 | `lobby:released` | `lobby.released` | server -> client | yes | emit | apply | done |

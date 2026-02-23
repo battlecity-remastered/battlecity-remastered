@@ -91,3 +91,22 @@ export const addChatMessage = (
 export const getChatHistory = (state: RuntimeState): KnownEventPayloadByType["chat.history"] => {
     return [...state.chatHistory];
 };
+
+const canSocketSeeMessage = (
+    state: RuntimeState,
+    socketId: string,
+    message: KnownEventPayloadByType["chat.message"]
+): boolean => {
+    if (message.scope === "global") {
+        return true;
+    }
+    const city = state.socketCities.get(socketId);
+    return city !== undefined && city === message.city;
+};
+
+export const getChatHistoryForSocket = (
+    state: RuntimeState,
+    socketId: string
+): KnownEventPayloadByType["chat.history"] => {
+    return state.chatHistory.filter((message) => canSocketSeeMessage(state, socketId, message));
+};

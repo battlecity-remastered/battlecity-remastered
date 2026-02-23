@@ -31,7 +31,7 @@
 | S1-18 | Defense lifecycle parity | rewrite | done | Defense placement/damage/update/remove parity slice is authoritative, including city-orbed cleanup removals |
 | S1-19 | Orb + city reset parity | rewrite | done | Orb drop validates, resets target city state, and now emits explicit cleanup events for removed buildings/hazards/defenses |
 | S1-20 | Score/promotion events | rewrite | done | Score promotion event emitted from orb flow |
-| S1-21 | Chat history/rate limit | rewrite | done | Chat message, history, and rate-limit handling added |
+| S1-21 | Chat history/rate limit | rewrite | done | Chat handling now enforces city-scoped team visibility, global broadcast semantics, and join-time filtered history |
 | S1-22 | Fake city lifecycle | rewrite | deferred | Not yet ported |
 | S1-23 | Defender/rogue bots | rewrite | deferred | Not yet ported |
 | S1-24 | Map/layout loaders | rewrite | deferred | Not yet ported |
@@ -39,7 +39,7 @@
 | S1-26 | Discord notifications | rewrite | in_progress | Orb victory notifier invoked from authoritative orb drop flow and covered by runtime adapter-invocation test |
 | S3-01 | Full gameplay schemas | rewrite | in_progress | Added `population.update` schema and `population:update` legacy alias handling in addition to prior payload expansions |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode including `defense:*` aliases and `inventory:update` -> `inventory.update` |
-| S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile + defense authority and orb cleanup emission (`building.demolished`/`hazard.remove`) paths |
+| S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile + defense authority + orb cleanup emission, plus scoped chat dispatch routing (`team` vs `global`) |
 | S3-04 | Client apply handler expansion | rewrite | in_progress | Added `population.update` application alongside prior profile + defense + building + bullet/icon lifecycle handling |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
 | S2-01 | Client event handling surface | rewrite | in_progress | Event application now includes `population.update` in addition to profile/defense/building/bullet/icon/inventory flows |

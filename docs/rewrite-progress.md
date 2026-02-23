@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S2 -> S5` parity slice delivery (house/population authority lifecycle, protocol compatibility, client apply/HUD population telemetry, and parity tests).
+- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (authoritative chat visibility/history parity, dispatch maintainability refactor, and regression tests).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -23,7 +23,7 @@
 | S1-17 | done | Hazard deploy/tick/detonation/remove flow |
 | S1-19 | done | Orb drop validation + target-city reset + city/orb events |
 | S1-20 | done | Score promotion event emission on orb success |
-| S1-21 | done | Chat message/history/rate-limit handling |
+| S1-21 | done | Chat now enforces city-scoped team delivery, global broadcast, and join-time filtered history |
 | S1-09 | done | Mayor-only build authority + city spend + collision/chain/research gates |
 | S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
 | S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
@@ -35,7 +35,7 @@
 | S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract compatibility expanded with legacy aliases for `bullet:fired`, `bullet:resolved`, `new_building`, `demolish_building`, and `population:update` in addition to prior payload coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
-| S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, and orb cleanup emission (`building.demolished` + `hazard.remove`) |
+| S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, orb cleanup emission, and scoped chat routing (`team` vs `global`) |
 | S3-04 | in_progress | Client apply path expanded for profile/defense/building lifecycle plus bullet/icon lifecycle and `population.update` state |
 | S3-05 | done | Versioning strategy kept current |
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
@@ -55,25 +55,13 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/src/domain/population/PopulationService.ts`
-- `apps/server-ts/src/runtime/system-runtime.ts`
-- `apps/server-ts/src/runtime/building-runtime.ts`
+- `apps/server-ts/src/domain/chat/ChatService.ts`
 - `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/src/runtime/types.ts`
+- `apps/server-ts/src/runtime/dispatch-support.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
-- `packages/protocol/src/events.ts`
-- `packages/protocol/src/envelope.ts`
-- `packages/protocol/src/event-type-adapter.ts`
-- `packages/protocol/test/envelope.test.ts`
-- `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/app/network-events.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/test/network-events.test.ts`
-- `docs/rewrite-progress.md`
 - `docs/parity-checklist.md`
 - `docs/event-parity-matrix.md`
-- `docs/event-versioning.md`
-- `docs/parity-acceptance-criteria.md`
+- `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 
