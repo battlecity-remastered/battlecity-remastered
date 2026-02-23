@@ -63,3 +63,22 @@ test("bullet resolves out_of_bounds", () => {
 
     assert.equal(result.kind, "out_of_bounds");
 });
+
+test("bullet can resolve against hazards", () => {
+    const result = stepBulletAndResolve(
+        mkBullet(),
+        100,
+        2000,
+        2000,
+        [],
+        [],
+        [
+            { id: "h1", x: 190, y: 100, radius: 96 }
+        ]
+    );
+
+    assert.equal(result.kind, "hit_hazard");
+    if (result.kind === "hit_hazard") {
+        assert.equal(result.hazardId, "h1");
+    }
+});

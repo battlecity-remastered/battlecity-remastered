@@ -65,9 +65,10 @@ export const BulletFired = Schema.Struct({
 });
 export const BulletResolved = Schema.Struct({
     id: Schema.String,
-    reason: Schema.Literal("out_of_bounds", "hit_player", "hit_building"),
+    reason: Schema.Literal("out_of_bounds", "hit_player", "hit_building", "hit_hazard"),
     hitPlayerId: Schema.optional(Schema.String),
-    hitBuildingId: Schema.optional(Schema.String)
+    hitBuildingId: Schema.optional(Schema.String),
+    hitHazardId: Schema.optional(Schema.String)
 });
 export const BuildingPlaceRequest = Schema.Struct({
     ownerId: Schema.String,

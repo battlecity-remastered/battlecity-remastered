@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S2` parity slice delivery (identity/profile + defense authority + protocol/client/test coverage).
+- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (authoritative bullet-hazard collision + protocol/test coverage).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -29,9 +29,10 @@
 | S1-03 | done | Join flow now binds canonical runtime user identity (`userId`) and hydrates profile |
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
 | S1-18 | in_progress | Defense deploy + damage/update + city-orbed cleanup authority landed |
+| S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards; terrain tile collision still deferred pending map loader parity |
 | S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow |
-| S1-12,S1-22,S1-23,S1-24,S1-25 | deferred | Not yet parity-complete vs legacy systems |
-| S3-01 | in_progress | Contract expanded with `score.profile` + `defense.*` schemas and decode coverage |
+| S1-12,S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
+| S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, and `bullet.resolved` hazard-hit payload coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter |
 | S3-03 | in_progress | Dispatch expanded for identity/profile + defense deploy authority paths |
 | S3-04 | in_progress | Client apply path expanded for profile + defense event lifecycle |
@@ -48,44 +49,22 @@
 | S4-07 | done | Runtime scope lifecycle remains active |
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
 | S4-08 | in_progress | Effect-based persistence/notification adapters now exercised by live orb/profile flows (`UserStoreAdapter`, `DiscordNotifier`) |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority coverage in `game-runtime.test.ts` |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority + bullet-hazard authority coverage in `game-runtime.test.ts` |
 | S5-09 | in_progress | Client network/event state coverage expanded for `score.profile` + `defense.*` |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/src/observability/RuntimeLogger.ts`
-- `apps/client-ts/src/observability/ClientLogger.ts`
-- `apps/server-ts/src/adapters/persistence/UserStoreAdapter.ts`
-- `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts`
-- `apps/server-ts/src/main.ts`
-- `apps/server-ts/src/domain/spawn/SpawnService.ts`
-- `apps/server-ts/src/domain/world/CollisionService.ts`
-- `apps/server-ts/src/runtime/player-runtime.ts`
-- `apps/server-ts/test/game-runtime.test.ts`
-- `apps/server-ts/src/domain/health/HealingService.ts`
-- `apps/server-ts/src/domain/icons/IconDropService.ts`
-- `apps/server-ts/src/domain/inventory/InventoryService.ts`
-- `apps/server-ts/src/domain/items/ItemUseService.ts`
-- `apps/server-ts/src/domain/identity/IdentityService.ts`
-- `apps/server-ts/src/domain/score/ScoreService.ts`
-- `apps/server-ts/src/domain/defense/DefenseService.ts`
-- `apps/server-ts/src/domain/errors.ts`
-- `apps/server-ts/src/runtime/GameRuntime.ts`
-- `apps/server-ts/src/runtime/dispatch.ts`
-- `apps/server-ts/src/runtime/system-runtime.ts`
-- `apps/server-ts/src/runtime/types.ts`
+- `apps/server-ts/src/runtime/bullet-runtime.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
 - `packages/protocol/src/events.ts`
-- `packages/protocol/src/envelope.ts`
-- `packages/protocol/src/event-type-adapter.ts`
-- `apps/client-ts/src/app/intents.ts`
-- `apps/client-ts/src/app/network-events.ts`
-- `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/test/network-events.test.ts`
-- `packages/protocol/test/envelope.test.ts`
-- `apps/server-ts/test/game-runtime.test.ts`
+- `packages/sim-core/src/combat.ts`
+- `packages/sim-core/test/combat.test.ts`
+- `docs/parity-checklist.md`
+- `docs/event-parity-matrix.md`
+- `docs/event-versioning.md`
 - `docs/rewrite-progress.md`
+- `docs/typescript-gap-analysis.md`
+- `docs/typescript-gap-mapping.md`
 
 ## Validation Results
 - `npm run lint`: pass

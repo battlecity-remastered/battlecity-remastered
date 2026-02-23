@@ -625,6 +625,49 @@ test("hazard deploy detonates and damages nearby players", () => {
     assert.ok(health.length >= 1);
 });
 
+test("bullet collision removes active hazards authoritatively", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("player.update", 3, {
+        id: "enemy",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 4, {
+        cityId: 1,
+        type: 1,
+        position: { x: 190, y: 100 },
+        radius: 96,
+        damage: 20,
+        fuseMs: 5000
+    }));
+    runtime.handleRawEvent("enemy", makeEnvelope("bullet.fire.request", 5, {
+        ownerId: "enemy",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+
+    for (let i = 0; i < 3; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const bulletHitHazard = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_hazard";
+    });
+    assert.ok(bulletHitHazard);
+    const hazardRemoved = broadcast.find((event) => {
+        return event.type === "hazard.remove"
+            && (event.payload as { reason?: string }).reason === "cleared";
+    });
+    assert.ok(hazardRemoved);
+});
+
 test("orb drop emits city.orbed and score.promotion", () => {
     const { runtime, broadcast } = makeHarness();
 

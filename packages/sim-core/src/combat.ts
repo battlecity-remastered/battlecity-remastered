@@ -19,11 +19,19 @@ export type CombatBuildingState = {
     maxHealth: number;
 };
 
+export type CombatHazardState = {
+    id: string;
+    x: number;
+    y: number;
+    radius: number;
+};
+
 export type BulletStepResult =
     | { kind: "none"; bullet: BulletState }
     | { kind: "out_of_bounds"; bulletId: string }
     | { kind: "hit_player"; bulletId: string; playerId: string; nextHealth: number; isDead: boolean }
-    | { kind: "hit_building"; bulletId: string; buildingId: string; nextHealth: number; isDemolished: boolean };
+    | { kind: "hit_building"; bulletId: string; buildingId: string; nextHealth: number; isDemolished: boolean }
+    | { kind: "hit_hazard"; bulletId: string; hazardId: string };
 
 const TILE_SIZE = 48;
 const PLAYER_HIT_RADIUS = 24;
@@ -50,27 +58,11 @@ const buildingCenter = (building: CombatBuildingState): { x: number; y: number }
     };
 };
 
-export const stepBulletAndResolve = (
+const resolvePlayerHit = (
+    nextBullet: BulletState,
     bullet: BulletState,
-    dtMs: number,
-    mapMaxX: number,
-    mapMaxY: number,
-    players: Iterable<CombatPlayerState>,
-    buildings: Iterable<CombatBuildingState>
-): BulletStepResult => {
-    const direction = normalizeHeading32(bullet.direction);
-    const advanced = advancePointByHeading32(bullet.x, bullet.y, direction, bullet.speed, dtMs);
-    const nextBullet = {
-        ...bullet,
-        direction,
-        x: advanced.x,
-        y: advanced.y
-    };
-
-    if (nextBullet.x < 0 || nextBullet.y < 0 || nextBullet.x > mapMaxX || nextBullet.y > mapMaxY) {
-        return { kind: "out_of_bounds", bulletId: bullet.id };
-    }
-
+    players: Iterable<CombatPlayerState>
+): BulletStepResult | undefined => {
     const playerRadiusSq = sq(PLAYER_HIT_RADIUS);
     for (const player of players) {
         if (player.id === bullet.ownerId || player.city === bullet.city || player.health <= 0) {
@@ -87,7 +79,14 @@ export const stepBulletAndResolve = (
             };
         }
     }
+    return undefined;
+};
 
+const resolveBuildingHit = (
+    nextBullet: BulletState,
+    bullet: BulletState,
+    buildings: Iterable<CombatBuildingState>
+): BulletStepResult | undefined => {
     const buildingRadiusSq = sq(BUILDING_HIT_RADIUS);
     for (const building of buildings) {
         if (building.cityId === bullet.city || building.health <= 0) {
@@ -104,6 +103,63 @@ export const stepBulletAndResolve = (
                 isDemolished: nextHealth <= 0
             };
         }
+    }
+    return undefined;
+};
+
+const resolveHazardHit = (
+    nextBullet: BulletState,
+    bulletId: string,
+    hazards: Iterable<CombatHazardState>
+): BulletStepResult | undefined => {
+    for (const hazard of hazards) {
+        const radius = Math.max(16, hazard.radius * 0.5);
+        if (distanceSquared(nextBullet.x, nextBullet.y, hazard.x, hazard.y) <= sq(radius)) {
+            return {
+                kind: "hit_hazard",
+                bulletId,
+                hazardId: hazard.id
+            };
+        }
+    }
+    return undefined;
+};
+
+export const stepBulletAndResolve = (
+    bullet: BulletState,
+    dtMs: number,
+    mapMaxX: number,
+    mapMaxY: number,
+    players: Iterable<CombatPlayerState>,
+    buildings: Iterable<CombatBuildingState>,
+    hazards: Iterable<CombatHazardState> = []
+): BulletStepResult => {
+    const direction = normalizeHeading32(bullet.direction);
+    const advanced = advancePointByHeading32(bullet.x, bullet.y, direction, bullet.speed, dtMs);
+    const nextBullet = {
+        ...bullet,
+        direction,
+        x: advanced.x,
+        y: advanced.y
+    };
+
+    if (nextBullet.x < 0 || nextBullet.y < 0 || nextBullet.x > mapMaxX || nextBullet.y > mapMaxY) {
+        return { kind: "out_of_bounds", bulletId: bullet.id };
+    }
+
+    const playerHit = resolvePlayerHit(nextBullet, bullet, players);
+    if (playerHit) {
+        return playerHit;
+    }
+
+    const buildingHit = resolveBuildingHit(nextBullet, bullet, buildings);
+    if (buildingHit) {
+        return buildingHit;
+    }
+
+    const hazardHit = resolveHazardHit(nextBullet, bullet.id, hazards);
+    if (hazardHit) {
+        return hazardHit;
     }
 
     return { kind: "none", bullet: nextBullet };

@@ -10,6 +10,7 @@
 |---|---|---|---|---|---|---|
 | `lobby:assignment` | `lobby.assignment` | server -> client | yes | emit | apply | done |
 | `players:snapshot` | `players.snapshot` | server -> client | yes | emit | apply | done |
+| `n/a` | `bullet.resolved` | server -> client | yes | emit | receive-ready | in_progress |
 | `player:health` | `player.health` | server -> client | yes | emit | apply | done |
 | `player:dead` | `player.dead` | server -> client | yes | emit | apply | done |
 | `player:removed` | `player.removed` | server -> client | yes | emit | apply | done |
@@ -42,5 +43,5 @@
 
 ## Known Gaps
 - Many legacy events remain unimplemented (full auth flows, bots, map/tutorial/audio flows).
-- Hazard events are now state-applied; visual parity remains partial (no dedicated renderer layer yet).
+- Hazard events are now state-applied; bullet-to-hazard cleanup is authoritative, but visual parity remains partial (no dedicated renderer layer yet).
 - Inventory/item/icon/defense events are authoritative but UI parity is still HUD-level, not full legacy panel/icon UX.

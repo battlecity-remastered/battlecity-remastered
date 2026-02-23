@@ -1,4 +1,11 @@
-import { normalizeHeading32, stepBulletAndResolve, type BulletStepResult, type BulletState, type CombatBuildingState } from "@battlecity/sim-core";
+import {
+    normalizeHeading32,
+    stepBulletAndResolve,
+    type BulletStepResult,
+    type BulletState,
+    type CombatBuildingState,
+    type CombatHazardState
+} from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "./emitter.js";
 import {
@@ -151,6 +158,29 @@ const handleBuildingHit = (
     });
 };
 
+const handleHazardHit = (
+    context: TickContext,
+    bulletId: string,
+    result: Extract<BulletStepResult, { kind: "hit_hazard" }>
+): void => {
+    const { state, emitter } = context;
+    emitter.emit("bullet.resolved", {
+        id: bulletId,
+        reason: "hit_hazard",
+        hitHazardId: result.hazardId
+    });
+
+    if (!state.hazards.has(result.hazardId)) {
+        return;
+    }
+
+    state.hazards.delete(result.hazardId);
+    emitter.emit("hazard.remove", {
+        id: result.hazardId,
+        reason: "cleared"
+    });
+};
+
 const resolveBulletStep = (
     context: TickContext,
     bullet: BulletState,
@@ -173,7 +203,12 @@ const resolveBulletStep = (
         return handlePlayerHit(context, bullet, bulletId, result);
     }
 
-    handleBuildingHit(context, bulletId, result);
+    if (result.kind === "hit_building") {
+        handleBuildingHit(context, bulletId, result);
+        return false;
+    }
+
+    handleHazardHit(context, bulletId, result);
     return false;
 };
 
@@ -184,6 +219,12 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
         ...state.buildings.values(),
         ...state.defenses.values()
     ] as CombatBuildingState[];
+    const combatHazards = [...state.hazards.values()].map((hazard) => ({
+        id: hazard.id,
+        x: hazard.x,
+        y: hazard.y,
+        radius: hazard.radius
+    })) as CombatHazardState[];
 
     for (const [bulletId, bullet] of state.bullets.entries()) {
         const result = stepBulletAndResolve(
@@ -192,7 +233,8 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
             config.mapMax,
             config.mapMax,
             asCombatPlayers(state),
-            combatTargets
+            combatTargets,
+            combatHazards
         );
         snapshotDirty = resolveBulletStep(context, bullet, bulletId, result) || snapshotDirty;
     }

@@ -50,7 +50,7 @@ Legend:
 | S1-22 Fake city lifecycle and cooldown orchestration | `server/src/FakeCityManager.js::update/onCityOrbed/setCityCooldown` | `apps/server-ts/src/domain/fake-cities/FakeCityService.ts` (new) | open |
 | S1-23 Defender/rogue bot behaviors and targeting | `server/src/bots/DefenderBotManager.js::*`; `server/src/bots/RogueBotManager.js::*` | `apps/server-ts/src/domain/bots/DefenderBotService.ts` (new), `apps/server-ts/src/domain/bots/RogueBotService.ts` (new) | open |
 | S1-24 Map and city layout loaders | `server/src/CityFileLoader.js`; `server/src/cityLayoutImporter.js`; `server/src/utils/mapLoader.js` | `apps/server-ts/src/domain/map/CityLayoutService.ts` (new), `apps/server-ts/src/domain/map/MapService.ts` (new) | open |
-| S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `packages/sim-core/src/collision-world.ts` (new) | open |
+| S1-25 Bullet terrain/structure/hazard collision parity | `server/src/BulletFactory.js::hitsBlockingTile/hitsBuilding/hitsHazard/checkTerrainCollision/checkStructureCollision` | `apps/server-ts/src/runtime/bullet-runtime.ts` (exists), `packages/sim-core/src/combat.ts` (exists), `packages/sim-core/src/collision-world.ts` (new) | in_progress |
 | S1-26 Notifications integration (Discord) | `server/src/utils/DiscordNotifier.js`; `server/src/utils/discordMessages.js` | `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts` (new) | in_progress |
 
 ## Stage 2: Client Gameplay + Rendering + UX Parity (TS)
@@ -223,7 +223,8 @@ apps/client-ts/src/
 - `S1-04`: done (score profile hydration + orb score profile updates)
 - `S1-18`: in_progress (defense deploy + damage/update + city-orbed cleanup)
 - `S1-26`: in_progress (orb notifier invocation wired)
-- `S3-01`: in_progress (`score.profile` and `defense.*` schemas + alias support)
+- `S3-01`: in_progress (`score.profile`, `defense.*`, and `bullet.resolved` hazard-hit schema coverage + alias support)
+- `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards landed; terrain tile blocking still deferred pending map loader parity)
 - `S3-03`: in_progress (dispatch expanded for identity/profile + defense deploy)
 - `S3-04`: in_progress (client apply expanded for profile + defense lifecycle)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`
