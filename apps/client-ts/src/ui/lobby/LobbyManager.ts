@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 const MAX_ASSIGNMENTS = 8;
 
@@ -51,14 +52,20 @@ export const createLobbyManager = (
     panel.style.zIndex = "50";
 
     root.appendChild(panel);
+    const dirty = createDirtyFlagTracker();
 
     return {
         render: () => {
             panel.style.display = state.ui.showOptionsModal ? "none" : "block";
             panel.style.opacity = String(state.ui.overlaysOpacity);
-            panel.textContent = buildLobbyLines(state).join("\n");
+            const text = buildLobbyLines(state).join("\n");
+            const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;
+            if (dirty.shouldRender("lobby", signature)) {
+                panel.textContent = text;
+            }
         },
         dispose: () => {
+            dirty.clear();
             panel.remove();
         }
     };

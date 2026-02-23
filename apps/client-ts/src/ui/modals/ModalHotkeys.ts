@@ -1,7 +1,15 @@
 import type { ClientState } from "../../app/state.js";
 import { applyOptionsAction } from "../options/OptionsModal.js";
+import { applyIntroAction } from "../intro/IntroModal.js";
+import { applyTutorialToggle } from "../tutorial/TutorialManager.js";
 
 export const applyModalToggle = (state: ClientState, key: string): boolean => {
+    if (applyIntroAction(state, key)) {
+        return true;
+    }
+    if (applyTutorialToggle(state, key)) {
+        return true;
+    }
     if (key === "F1") {
         state.ui.showHelpModal = !state.ui.showHelpModal;
         if (state.ui.showHelpModal) {

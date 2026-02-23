@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { EventSender } from "../../network/events.js";
 import type { ClientState } from "../../app/state.js";
+import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 const CHAT_HISTORY_LINES = 6;
 
@@ -117,14 +118,20 @@ export const createChatManager = (
     input.addEventListener("keydown", onKeyDown);
     panel.append(output, input);
     root.appendChild(panel);
+    const dirty = createDirtyFlagTracker();
 
     return {
         render: () => {
             panel.style.display = state.ui.showOptionsModal ? "none" : "block";
             panel.style.opacity = String(state.ui.overlaysOpacity);
-            output.textContent = buildChatLines(state).join("\n");
+            const text = buildChatLines(state).join("\n");
+            const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;
+            if (dirty.shouldRender("chat", signature)) {
+                output.textContent = text;
+            }
         },
         dispose: () => {
+            dirty.clear();
             input.removeEventListener("keydown", onKeyDown);
             panel.remove();
         }

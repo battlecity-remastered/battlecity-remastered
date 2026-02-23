@@ -6,6 +6,7 @@ export const buildHelpLines = (): string[] => {
         "F1: Toggle help",
         "F2: Toggle map",
         "F3: Toggle options",
+        "T: Toggle tutorial",
         "W/S or Up/Down: Move",
         "A/D or Left/Right: Turn",
         "Space: Fire",
@@ -13,7 +14,8 @@ export const buildHelpLines = (): string[] => {
         "C: Pickup item",
         "U: Use medkit",
         "X/Delete: Hazard",
-        "B: Orb, Shift+B: Defense"
+        "B: Orb, Shift+B: Defense",
+        "Options: H HUD, M audio, [/] overlay opacity"
     ];
 };
 

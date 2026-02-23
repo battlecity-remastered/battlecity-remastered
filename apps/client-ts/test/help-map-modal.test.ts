@@ -9,6 +9,7 @@ test("buildHelpLines includes modal toggle controls", () => {
     assert.ok(lines.includes("F1: Toggle help"));
     assert.ok(lines.includes("F2: Toggle map"));
     assert.ok(lines.includes("F3: Toggle options"));
+    assert.ok(lines.includes("T: Toggle tutorial"));
 });
 
 test("buildMapLines reflects state counts and assignments", () => {
@@ -20,5 +21,6 @@ test("buildMapLines reflects state counts and assignments", () => {
     const lines = buildMapLines(state);
     assert.equal(lines[0], "Map - City 3");
     assert.ok(lines.includes("Buildings: 0"));
+    assert.ok(lines.includes("Radar (Y=you,P=player,B=building,D=defense,H=hazard)"));
     assert.ok(lines.includes("C3: mayor p1 r2"));
 });

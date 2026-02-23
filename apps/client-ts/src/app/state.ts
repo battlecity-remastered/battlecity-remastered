@@ -155,8 +155,11 @@ export type ClientState = {
         showMapModal: boolean;
         showOptionsModal: boolean;
         showBuildMenu: boolean;
+        showIntroModal: boolean;
+        showTutorial: boolean;
         selectedBuildType: number;
         overlaysOpacity: number;
+        audioEnabled: boolean;
     };
 };
 
@@ -240,8 +243,11 @@ export const createClientState = (): ClientState => {
             showMapModal: false,
             showOptionsModal: false,
             showBuildMenu: true,
+            showIntroModal: true,
+            showTutorial: false,
             selectedBuildType: 109,
-            overlaysOpacity: 0.66
+            overlaysOpacity: 0.66,
+            audioEnabled: true
         }
     };
 };

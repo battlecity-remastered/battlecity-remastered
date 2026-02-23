@@ -3,6 +3,7 @@ import type { ClientState } from "../app/state.js";
 import { reconcileEntityCache } from "./entity-cache.js";
 import { resolveGhostPlacement } from "../ui/build-menu/GhostPlacement.js";
 import { buildHudLines } from "./hud-lines.js";
+import { createDirtyFlagTracker } from "./dirty-flags.js";
 
 const TANK_SIZE = 18;
 const TILE_SIZE = 48;
@@ -147,6 +148,7 @@ type SceneLayers = {
     bulletSprites: Map<string, Graphics>;
     ghostPlacementSprite: Graphics;
     hud: Text;
+    dirty: ReturnType<typeof createDirtyFlagTracker>;
 };
 
 const createSceneLayers = (app: Application): SceneLayers => {
@@ -176,7 +178,8 @@ const createSceneLayers = (app: Application): SceneLayers => {
         hazardSprites: new Map<string, Graphics>(),
         bulletSprites: new Map<string, Graphics>(),
         ghostPlacementSprite,
-        hud: createHud(app)
+        hud: createHud(app),
+        dirty: createDirtyFlagTracker()
     };
 };
 
@@ -242,10 +245,16 @@ const renderDynamicEntities = (state: ClientState, layers: SceneLayers): void =>
     }
 };
 
-const renderHud = (state: ClientState, hud: Text): void => {
+const renderHud = (state: ClientState, layers: SceneLayers): void => {
+    const { hud, dirty } = layers;
     hud.visible = state.ui.showHud;
     if (state.ui.showHud) {
-        hud.text = buildHudLines(state).join("\n");
+        const next = buildHudLines(state).join("\n");
+        if (dirty.shouldRender("hud", next)) {
+            hud.text = next;
+        }
+    } else {
+        dirty.markDirty("hud");
     }
 };
 
@@ -257,7 +266,7 @@ const renderSceneFrame = (state: ClientState, layers: SceneLayers): void => {
     renderTiles(state, layers);
     renderDynamicEntities(state, layers);
     renderGhostPlacement(state, layers.ghostPlacementSprite);
-    renderHud(state, layers.hud);
+    renderHud(state, layers);
 };
 
 export type SceneRuntime = {

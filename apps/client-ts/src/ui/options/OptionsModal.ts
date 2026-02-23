@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 export const applyOptionsAction = (
     state: ClientState,
@@ -7,6 +8,14 @@ export const applyOptionsAction = (
     const normalized = key.toLowerCase();
     if (normalized === "h") {
         state.ui.showHud = !state.ui.showHud;
+        return true;
+    }
+    if (normalized === "m") {
+        state.ui.audioEnabled = !state.ui.audioEnabled;
+        return true;
+    }
+    if (normalized === "t") {
+        state.ui.showTutorial = !state.ui.showTutorial;
         return true;
     }
     if (normalized === "[" || normalized === "{" ) {
@@ -24,6 +33,8 @@ export const buildOptionsLines = (state: ClientState): string[] => {
     return [
         "Options",
         `HUD: ${state.ui.showHud ? "on" : "off"} (press H)`,
+        `Audio: ${state.ui.audioEnabled ? "on" : "off"} (press M)`,
+        `Tutorial: ${state.ui.showTutorial ? "on" : "off"} (press T)`,
         `Overlay opacity: ${state.ui.overlaysOpacity.toFixed(2)} (press [ or ])`,
         "Close: F3"
     ];
@@ -60,15 +71,21 @@ export const createOptionsModal = (
     panel.style.zIndex = "112";
     panel.style.pointerEvents = "none";
     root.appendChild(panel);
+    const dirty = createDirtyFlagTracker();
 
     return {
         render: () => {
             panel.style.display = state.ui.showOptionsModal ? "block" : "none";
             if (state.ui.showOptionsModal) {
-                panel.textContent = buildOptionsLines(state).join("\n");
+                const text = buildOptionsLines(state).join("\n");
+                const signature = `${panel.style.display}|${text}`;
+                if (dirty.shouldRender("options-modal", signature)) {
+                    panel.textContent = text;
+                }
             }
         },
         dispose: () => {
+            dirty.clear();
             panel.remove();
         }
     };

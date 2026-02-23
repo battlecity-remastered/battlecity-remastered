@@ -12,6 +12,10 @@ import { createMapModal } from "./ui/map/MapModal.js";
 import { createOptionsModal } from "./ui/options/OptionsModal.js";
 import { registerModalHotkeys } from "./ui/modals/ModalHotkeys.js";
 import { createBuildMenu, registerBuildMenuHotkeys } from "./ui/build-menu/BuildMenu.js";
+import { createIntroModal } from "./ui/intro/IntroModal.js";
+import { createTutorialManager } from "./ui/tutorial/TutorialManager.js";
+import { createAudioManager } from "./audio/AudioManager.js";
+import { createMusicManager } from "./audio/MusicManager.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -23,6 +27,10 @@ const helpModal = createHelpModal(state);
 const mapModal = createMapModal(state);
 const optionsModal = createOptionsModal(state);
 const buildMenu = createBuildMenu(state);
+const introModal = createIntroModal(state);
+const tutorialUi = createTutorialManager(state);
+const audio = createAudioManager(state);
+const music = createMusicManager(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
@@ -37,6 +45,10 @@ scene.app.ticker.add(() => {
     mapModal.render();
     optionsModal.render();
     buildMenu.render();
+    introModal.render();
+    tutorialUi.render();
+    audio.tick();
+    music.tick();
 });
 
 window.addEventListener("beforeunload", () => {
@@ -52,5 +64,9 @@ window.addEventListener("beforeunload", () => {
     mapModal.dispose();
     optionsModal.dispose();
     buildMenu.dispose();
+    introModal.dispose();
+    tutorialUi.dispose();
+    audio.dispose();
+    music.dispose();
     network.stop();
 });

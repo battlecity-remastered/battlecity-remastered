@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 type BuildMenuEntry = {
     hotkey: string;
@@ -93,14 +94,20 @@ export const createBuildMenu = (
     panel.style.pointerEvents = "none";
     panel.style.zIndex = "70";
     root.appendChild(panel);
+    const dirty = createDirtyFlagTracker();
 
     return {
         render: () => {
             panel.style.display = state.ui.showBuildMenu ? "block" : "none";
             panel.style.opacity = String(state.ui.overlaysOpacity);
-            panel.textContent = buildBuildMenuLines(state).join("\n");
+            const text = buildBuildMenuLines(state).join("\n");
+            const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;
+            if (dirty.shouldRender("build-menu", signature)) {
+                panel.textContent = text;
+            }
         },
         dispose: () => {
+            dirty.clear();
             panel.remove();
         }
     };
