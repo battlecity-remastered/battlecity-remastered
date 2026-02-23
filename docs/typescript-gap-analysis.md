@@ -199,9 +199,12 @@ The rewrite should only be considered complete when:
 - Completed now:
   - S0 contract docs and parity tracking artifacts created in-worktree.
   - S1 lobby authority slice: mayor/recruit assignment, overflow denial, leave/release lifecycle.
-  - S3 compatibility strategy implemented: canonical dot emit, colon alias ingress normalization.
-  - S4 runtime infrastructure slice: Effect queue ingress, Effect tick scheduler, runtime scope lifecycle.
+  - S1 authoritative system slices: security validator, economy tick, research lifecycle, factory stock cycle, hazard detonation, orb city-reset + score promotion, chat history/rate-limit.
+  - S3 compatibility strategy implemented: canonical dot emit, colon alias ingress normalization, and expanded event schemas/dispatch/apply for new subsystem events.
+  - S2 partial client parity slices: extended keyboard semantics, expanded event apply store, finance/research/factory/chat HUD data exposure.
+  - S4 runtime infrastructure slice: Effect queue ingress, Effect tick scheduler, runtime scope lifecycle, runtime Layer bootstrap, typed rejection ADT mapping.
+  - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:
-  - Full authoritative gameplay subsystems (economy/research/factory/hazard/orb/score/security) remain to be ported.
-  - Full client gameplay/UI parity remains to be ported.
-  - Full adapter integrations (identity, persistence, Discord) remain pending.
+  - Identity/persistence/rank hydration integrations.
+  - Full legacy build-tree, inventory icon, defense, fake-city, bot, and map-loader parity.
+  - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).
