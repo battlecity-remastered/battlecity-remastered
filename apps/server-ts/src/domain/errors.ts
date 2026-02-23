@@ -14,7 +14,7 @@ export type RuntimeDomainError =
             | "build_too_far"
             | "research_required";
     }
-    | { _tag: "ResourceNotFound"; reason: "player_not_joined" | "building_not_found" | "factory_empty" }
+    | { _tag: "ResourceNotFound"; reason: "player_not_joined" | "building_not_found" | "factory_empty" | "inventory_empty" }
     | { _tag: "InsufficientFunds" }
     | { _tag: "ResearchConflict" }
     | { _tag: "HazardInvalid" }
@@ -44,8 +44,13 @@ const isValidationReason = (
         || reason === "research_required";
 };
 
-const isResourceReason = (reason: RuntimeRejectReason): reason is "player_not_joined" | "building_not_found" | "factory_empty" => {
-    return reason === "player_not_joined" || reason === "building_not_found" || reason === "factory_empty";
+const isResourceReason = (
+    reason: RuntimeRejectReason
+): reason is "player_not_joined" | "building_not_found" | "factory_empty" | "inventory_empty" => {
+    return reason === "player_not_joined"
+        || reason === "building_not_found"
+        || reason === "factory_empty"
+        || reason === "inventory_empty";
 };
 
 export const toDomainError = (reason: RuntimeRejectReason): RuntimeDomainError => {

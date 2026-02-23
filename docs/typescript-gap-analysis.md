@@ -201,8 +201,9 @@ The rewrite should only be considered complete when:
   - S1 lobby authority slice: mayor/recruit assignment, overflow denial, leave/release lifecycle.
   - S1 authoritative system slices: security validator, economy tick, research lifecycle, factory stock cycle, hazard detonation, orb city-reset + score promotion, chat history/rate-limit.
   - S1 building authority slice: mayor-only build/demolish authority, spend-based build budget, research gate validation, placement collision/chain validation, explicit deny feedback events.
+  - S1 inventory/health authority slice: per-player inventory caps + release, icon pickup authority, medkit item-use healing, hospital healing tick.
   - S3 compatibility strategy implemented: canonical dot emit, colon alias ingress normalization, and expanded event schemas/dispatch/apply for new subsystem events.
-  - S2 partial client parity slices: extended keyboard semantics, expanded event apply store (including hazard spawn/remove), finance/research/factory/hazard/chat HUD data exposure.
+  - S2 partial client parity slices: extended keyboard semantics, expanded event apply store (including hazard + inventory updates), finance/research/factory/hazard/chat + medkit HUD data exposure.
   - S4 runtime infrastructure slice: Effect queue ingress, Effect tick scheduler, runtime scope lifecycle, runtime Layer bootstrap, typed rejection ADT mapping.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:

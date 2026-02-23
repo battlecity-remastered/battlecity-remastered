@@ -58,6 +58,10 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         itemType: 0,
         stock: 4
     }));
+    applyServerEvent(state, makeKnownEnvelope("inventory.update", 4, {
+        playerId: "p-local",
+        items: [{ itemType: 0, count: 2 }]
+    }));
     applyServerEvent(state, makeKnownEnvelope("hazard.spawn", 4, {
         id: "hazard_1",
         cityId: 2,
@@ -115,6 +119,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.cityFinance.get(2)?.cash, 300);
     assert.equal(state.research.get(2)?.completed.length, 2);
     assert.equal(state.factoryStock.get(2)?.get(0), 4);
+    assert.equal(state.inventory.get(0), undefined);
     assert.equal(state.hazards.size, 0);
     assert.equal(state.chat.history.length, 2);
     assert.equal(state.chat.rateLimitedUntil, 99999);
@@ -122,4 +127,20 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.events.promotions[0]?.rank, "captain");
     assert.equal(state.events.lastBuildDeniedReason, "research_required");
     assert.equal(state.events.lastDemolishDeniedReason, "not_mayor");
+});
+
+test("inventory.update applies only to local player", () => {
+    const state = createClientState();
+    state.local.id = "p1";
+
+    applyServerEvent(state, makeKnownEnvelope("inventory.update", 1, {
+        playerId: "p1",
+        items: [{ itemType: 0, count: 3 }]
+    }));
+    applyServerEvent(state, makeKnownEnvelope("inventory.update", 2, {
+        playerId: "p2",
+        items: [{ itemType: 0, count: 1 }]
+    }));
+
+    assert.equal(state.inventory.get(0), 3);
 });

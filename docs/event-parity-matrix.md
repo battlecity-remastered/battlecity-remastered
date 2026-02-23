@@ -26,6 +26,10 @@
 | `research:update` | `research.update` | server -> client | yes | emit | apply | done |
 | `factory:collect` | `factory.collect.request` | client -> server | yes | dispatch | send-ready | done |
 | `factory.stock` | `factory.stock` | server -> client | yes | emit | apply | done |
+| `icon:pickup` | `icon.pickup.request` | client -> server | yes | dispatch | send-ready | done |
+| `icon:pickup:confirmed` | `icon.pickup.confirmed` | server -> client | yes | emit | receive-ready | done |
+| `inventory:update` | `inventory.update` | server -> client | yes | emit | apply | done |
+| `item:use` | `item.use.request` | client -> server | yes | dispatch | send-ready | done |
 | `hazard:spawn` | `hazard.spawn` | server -> client | yes | emit | apply | done |
 | `hazard:remove` | `hazard.remove` | server -> client | yes | emit | apply | done |
 | `orb:drop` | `orb.drop.request` | client -> server | yes | dispatch | send-ready | done |
@@ -35,3 +39,4 @@
 ## Known Gaps
 - Many legacy events remain unimplemented (identity, inventory icons, defenses, bots, map/tutorial/audio flows).
 - Hazard events are now state-applied; visual parity remains partial (no dedicated renderer layer yet).
+- Inventory/item/icon events are authoritative but UI parity is still HUD-level, not full legacy panel/icon UX.

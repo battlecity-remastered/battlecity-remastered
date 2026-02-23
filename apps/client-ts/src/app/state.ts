@@ -11,6 +11,7 @@ export type LocalState = {
     lastResearchAt: number;
     lastFactoryCollectAt: number;
     lastHazardAt: number;
+    lastItemUseAt: number;
     lastOrbAt: number;
     lastLobbyLeaveAt: number;
     placedInitialBuilding: boolean;
@@ -52,6 +53,7 @@ export type ClientState = {
         completed: number[];
     }>;
     factoryStock: Map<number, Map<number, number>>;
+    inventory: Map<number, number>;
     hazards: Map<string, {
         id: string;
         cityId: number;
@@ -112,6 +114,7 @@ export const createClientState = (): ClientState => {
             lastResearchAt: 0,
             lastFactoryCollectAt: 0,
             lastHazardAt: 0,
+            lastItemUseAt: 0,
             lastOrbAt: 0,
             lastLobbyLeaveAt: 0,
             placedInitialBuilding: false
@@ -125,6 +128,7 @@ export const createClientState = (): ClientState => {
         cityFinance: new Map(),
         research: new Map(),
         factoryStock: new Map(),
+        inventory: new Map(),
         hazards: new Map(),
         chat: {
             history: [],

@@ -8,6 +8,7 @@
 - Server authoritative join/leave assignment and rejection semantics covered by tests.
 - Runtime dispatch validates and handles authoritative lobby state transitions.
 - Authoritative building placement/demolish gates (mayor/city/cost/research/collision/chain) emit explicit deny reasons.
+- Inventory/item authority (collect/pickup/use/release) and hospital healing tick are server-driven and test-covered.
 
 ## Stage S3
 - Protocol has explicit canonical event naming and legacy alias compatibility strategy.

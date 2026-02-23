@@ -78,6 +78,7 @@ const buildHudLines = (state: ClientState): string[] => {
             researchLine = `${researchLine} (active)`;
         }
     }
+    const medkits = state.inventory.get(0) ?? 0;
 
     return [
         `id: ${localId}`,
@@ -88,11 +89,12 @@ const buildHudLines = (state: ClientState): string[] => {
         `income: ${income}`,
         `research: ${researchLine}`,
         `factory item0: ${factoryItem0}`,
+        `medkits: ${medkits}`,
         `hazards: ${state.hazards.size}`,
         `chat: ${state.chat.history.length}`,
         `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
         `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`,
-        "controls: W/Up move, A/D turn, Space fire, R research, C collect, U deploy"
+        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X deploy"
     ];
 };
 

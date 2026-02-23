@@ -17,16 +17,16 @@
 | S1-04 | Rank/points profile hydration | rewrite | deferred | Score persistence/promotion parity pending |
 | S1-05 | Movement anti-cheat validation | rewrite | done | Distance-based validator and rejection mapping added |
 | S1-06 | Spawn-safe relocation | rewrite | deferred | Terrain/building safe relocation pending |
-| S1-07 | Hospital healing tick | rewrite | deferred | Not yet ported |
-| S1-08 | Medkit authoritative use | rewrite | deferred | Not yet ported |
+| S1-07 | Hospital healing tick | rewrite | done | `HealingService` heals in-city players when hospital building is present |
+| S1-08 | Medkit authoritative use | rewrite | done | `item.use.request` consumes inventory and emits authoritative health updates |
 | S1-09 | Building rules/cost/adjacency | rewrite | done | Mayor gate + city budget spend + research/collision/chain checks implemented |
 | S1-10 | Demolish deny semantics | rewrite | done | Explicit `demolish.denied` reason feedback added for reject paths |
 | S1-11 | Research lifecycle/tree | rewrite | done | Research start/tick/completion with authoritative updates |
 | S1-12 | Population/house model | rewrite | deferred | Not yet ported |
 | S1-13 | Economy tick parity | rewrite | done | City economy tick and finance broadcasts implemented |
-| S1-14 | Inventory caps/release | rewrite | deferred | Not yet ported |
+| S1-14 | Inventory caps/release | rewrite | done | Per-player inventory cap and disconnect release semantics added |
 | S1-15 | Factory production/stock | rewrite | done | Tick-based stock production and collect flow implemented |
-| S1-16 | Icon drop/pickup authority | rewrite | deferred | Not yet ported |
+| S1-16 | Icon drop/pickup authority | rewrite | done | `icon.pickup.request` decrements factory stock and confirms inventory pickup |
 | S1-17 | Hazard lifecycle parity | rewrite | done | Hazard deploy/tick/detonate/remove flow implemented |
 | S1-18 | Defense lifecycle parity | rewrite | deferred | Not yet ported |
 | S1-19 | Orb + city reset parity | rewrite | done | Orb drop validates, resets target city state, emits city.orbed |
@@ -37,13 +37,13 @@
 | S1-24 | Map/layout loaders | rewrite | deferred | Not yet ported |
 | S1-25 | Bullet terrain/structure parity | rewrite | deferred | Current bullet collision is minimal |
 | S1-26 | Discord notifications | rewrite | deferred | Integration adapter not implemented yet |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Added build/demolish deny schemas in addition to prior subsystem coverage |
+| S3-01 | Full gameplay schemas | rewrite | in_progress | Added inventory/item/icon pickup schemas in addition to prior subsystem coverage |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode |
 | S3-03 | Server dispatch expansion | rewrite | in_progress | Added authoritative build/demolish deny emission alongside prior subsystem handlers |
 | S3-04 | Client apply handler expansion | rewrite | in_progress | Added build/demolish deny and hazard spawn/remove event application alongside prior subsystem handlers |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
-| S2-01 | Client event handling surface | rewrite | in_progress | New subsystem events now decoded/applied, including hazard lifecycle state |
-| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD now renders finance/research/factory/chat counters |
+| S2-01 | Client event handling surface | rewrite | in_progress | New subsystem events now decoded/applied, including hazard and inventory lifecycle state |
+| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD now renders finance/research/factory/chat + medkit inventory counters |
 | S2-15 | Keyboard semantics | rewrite | in_progress | Extended keybind state and new gameplay intents |
 | S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Full parity restoral pending |
 | S4-01 | Layer-composed domain services | rewrite | in_progress | Server bootstrap now composes runtime through `RuntimeLayer` |

@@ -116,6 +116,15 @@ const handlers: {
         city.set(payload.itemType, payload.stock);
         state.factoryStock.set(payload.cityId, city);
     },
+    "inventory.update": (state, payload) => {
+        if (payload.playerId !== state.local.id) {
+            return;
+        }
+        state.inventory.clear();
+        for (const item of payload.items) {
+            state.inventory.set(item.itemType, item.count);
+        }
+    },
     "hazard.spawn": (state, payload) => {
         state.hazards.set(payload.id, {
             id: payload.id,

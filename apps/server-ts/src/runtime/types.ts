@@ -56,6 +56,7 @@ export type RuntimeState = {
     research: Map<number, RuntimeResearchState>;
     factoryStock: Map<number, Map<number, number>>;
     hazards: Map<string, RuntimeHazard>;
+    playerInventory: Map<string, Map<number, number>>;
     socketCities: Map<string, number>;
     socketRoles: Map<string, "mayor" | "recruit">;
     chatHistory: RuntimeChatMessage[];
@@ -89,6 +90,9 @@ export type RuntimeConfig = {
     hazardDefaultDamage: number;
     orbScoreAward: number;
     chatHistoryLimit: number;
+    inventoryPerItemCap: number;
+    hospitalBuildingType: number;
+    hospitalHealPerTick: number;
 };
 
 export type RuntimeRejectReason =
@@ -106,6 +110,7 @@ export type RuntimeRejectReason =
     | "hazard_invalid"
     | "orb_invalid"
     | "chat_rate_limited"
+    | "inventory_empty"
     | "not_mayor"
     | "building_collision"
     | "build_too_far"
@@ -146,7 +151,10 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     hazardDefaultRadius: 96,
     hazardDefaultDamage: 35,
     orbScoreAward: 250,
-    chatHistoryLimit: 50
+    chatHistoryLimit: 50,
+    inventoryPerItemCap: 5,
+    hospitalBuildingType: 300,
+    hospitalHealPerTick: 2
 };
 
 export const createRuntimeState = (): RuntimeState => {
@@ -158,6 +166,7 @@ export const createRuntimeState = (): RuntimeState => {
         research: new Map(),
         factoryStock: new Map(),
         hazards: new Map(),
+        playerInventory: new Map(),
         socketCities: new Map(),
         socketRoles: new Map(),
         chatHistory: [],

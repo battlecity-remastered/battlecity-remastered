@@ -191,6 +191,33 @@ export const FactoryStock = Schema.Struct({
     stock: Schema.Number
 });
 
+export const IconPickupRequest = Schema.Struct({
+    cityId: Schema.Number,
+    itemType: Schema.Number,
+    amount: Schema.optional(Schema.Number)
+});
+
+export const IconPickupConfirmed = Schema.Struct({
+    playerId: Schema.String,
+    cityId: Schema.Number,
+    itemType: Schema.Number,
+    amount: Schema.Number
+});
+
+export const InventoryItemEntry = Schema.Struct({
+    itemType: Schema.Number,
+    count: Schema.Number
+});
+
+export const InventoryUpdate = Schema.Struct({
+    playerId: Schema.String,
+    items: Schema.Array(InventoryItemEntry)
+});
+
+export const ItemUseRequest = Schema.Struct({
+    itemType: Schema.Number
+});
+
 export const HazardDeployRequest = Schema.Struct({
     cityId: Schema.Number,
     type: Schema.Number,
@@ -261,6 +288,10 @@ export const EventPayloadSchemas = {
     "research.update": ResearchUpdate,
     "factory.collect.request": FactoryCollectRequest,
     "factory.stock": FactoryStock,
+    "icon.pickup.request": IconPickupRequest,
+    "icon.pickup.confirmed": IconPickupConfirmed,
+    "inventory.update": InventoryUpdate,
+    "item.use.request": ItemUseRequest,
     "hazard.deploy.request": HazardDeployRequest,
     "hazard.spawn": HazardSpawn,
     "hazard.remove": HazardRemove,

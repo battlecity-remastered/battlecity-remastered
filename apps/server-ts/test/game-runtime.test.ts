@@ -444,7 +444,7 @@ test("research start spends city cash and emits update/finance", () => {
 });
 
 test("factory stock is produced on tick and can be collected", () => {
-    const { runtime, broadcast } = makeHarness();
+    const { runtime, broadcast, direct } = makeHarness();
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
     for (let i = 0; i < 15; i += 1) {
@@ -462,6 +462,109 @@ test("factory stock is produced on tick and can be collected", () => {
     const collected = stockEvents.at(-1);
     assert.ok(collected);
     assert.ok((collected.payload as { stock: number }).stock >= 0);
+    const inventoryUpdate = direct.filter((entry) => entry.event.type === "inventory.update").at(-1);
+    assert.ok(inventoryUpdate);
+    const items = (inventoryUpdate.event.payload as { items: Array<{ itemType: number; count: number }> }).items;
+    assert.equal(items[0]?.itemType, 0);
+    assert.equal(items[0]?.count, 1);
+});
+
+test("icon pickup request decrements stock and updates inventory", () => {
+    const { runtime, broadcast, direct } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    for (let i = 0; i < 15; i += 1) {
+        runtime.tickBullets();
+    }
+    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 2, {
+        cityId: 1,
+        itemType: 0,
+        amount: 1
+    }));
+
+    assert.ok(broadcast.some((event) => event.type === "factory.stock"));
+    assert.ok(direct.some((entry) => entry.event.type === "icon.pickup.confirmed"));
+    assert.ok(direct.some((entry) => entry.event.type === "inventory.update"));
+});
+
+test("medkit use heals player and consumes inventory", () => {
+    const { runtime, direct, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 3, {
+        id: "target",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 220, y: 220 }
+    }));
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 4, {
+        cityId: 1,
+        type: 1,
+        position: { x: 220, y: 220 },
+        radius: 120,
+        damage: 20,
+        fuseMs: 100
+    }));
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    for (let i = 0; i < 15; i += 1) {
+        runtime.tickBullets();
+    }
+    runtime.handleRawEvent("target", makeEnvelope("icon.pickup.request", 5, {
+        cityId: 1,
+        itemType: 0,
+        amount: 1
+    }));
+    runtime.handleRawEvent("target", makeEnvelope("item.use.request", 6, {
+        itemType: 0
+    }));
+
+    const healthEvents = broadcast.filter((event) => event.type === "player.health");
+    assert.ok(healthEvents.some((event) => (event.payload as { source?: string }).source === "medkit"));
+    const inv = direct.filter((entry) => entry.socketId === "target" && entry.event.type === "inventory.update").at(-1);
+    assert.ok(inv);
+    const items = (inv.event.payload as { items: Array<{ itemType: number; count: number }> }).items;
+    assert.equal(items.some((item) => item.itemType === 0), false);
+    assert.equal(rejected.length, 0);
+});
+
+test("hospital building heals players over ticks", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 3 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 3 }));
+    runtime.handleRawEvent("owner", makeEnvelope("building.place.request", 3, {
+        ownerId: "owner",
+        cityId: 3,
+        type: 300,
+        tileX: 12,
+        tileY: 12
+    }));
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 4, {
+        id: "target",
+        city: 3,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 220, y: 220 }
+    }));
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 5, {
+        cityId: 3,
+        type: 1,
+        position: { x: 220, y: 220 },
+        radius: 120,
+        damage: 20,
+        fuseMs: 100
+    }));
+    runtime.tickBullets();
+    runtime.tickBullets();
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const healthEvents = broadcast.filter((event) => event.type === "player.health");
+    assert.ok(healthEvents.some((event) => (event.payload as { source?: string }).source === "hospital"));
 });
 
 test("hazard deploy detonates and damages nearby players", () => {

@@ -19,6 +19,7 @@ import { normalizeInboundEnvelopeType } from "./event-adapter.js";
 import { createRuntimeStateRef, readRuntimeState, type RuntimeStateRef } from "./state/RuntimeStateRef.js";
 import { tickRuntimeSystems } from "./system-runtime.js";
 import { rejectSocket } from "./rejections.js";
+import { releasePlayerInventory } from "../domain/inventory/InventoryService.js";
 
 export class GameRuntime {
     private readonly stateRef: RuntimeStateRef;
@@ -73,6 +74,7 @@ export class GameRuntime {
                 this.emitter.emit("lobby.snapshot", buildLobbySnapshot(state, this.config));
             }
             const removedBulletIds = removePlayer(state, socketId);
+            releasePlayerInventory(state, socketId);
             for (const bulletId of removedBulletIds) {
                 this.emitter.emit("bullet.resolved", {
                     id: bulletId,

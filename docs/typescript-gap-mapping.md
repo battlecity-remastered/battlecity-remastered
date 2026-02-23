@@ -32,16 +32,16 @@ Legend:
 | S1-04 Rank/points profile hydration and broadcasts | `server/src/users/ScoreService.js::resolveRank/getProfile/updateUser/recordOrbVictory/recordDeath`; `PlayerFactory.updatePlayerScores` | `apps/server-ts/src/domain/score/ScoreService.ts` (new), `apps/server-ts/src/runtime/player-runtime.ts` (exists) | open |
 | S1-05 Movement anti-cheat/validation pipeline | `server/src/validation/PlayerStateValidator.js::validatePlayerUpdate`; `PlayerFactory.handlePlayerUpdate` | `apps/server-ts/src/domain/security/PlayerUpdateValidator.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-06 World collision clamp + spawn-safe relocation | `server/src/PlayerFactory.js::ensureSpawnIsClear/enforceWorldMovement/resolvePlacementForPlayer` | `apps/server-ts/src/domain/spawn/SpawnService.ts` (new), `apps/server-ts/src/domain/world/CollisionService.ts` (new) | open |
-| S1-07 Hospital healing tick parity | `server/src/PlayerFactory.js::applyHospitalHealingForPlayer` | `apps/server-ts/src/domain/health/HealingService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | open |
-| S1-08 Medkit item-use authoritative handling | `server/src/PlayerFactory.js::item:use medkit handlers`; `server/src/items.js` | `apps/server-ts/src/domain/items/ItemUseService.ts` (new), `apps/server-ts/src/domain/inventory/InventoryService.ts` (new) | open |
+| S1-07 Hospital healing tick parity | `server/src/PlayerFactory.js::applyHospitalHealingForPlayer` | `apps/server-ts/src/domain/health/HealingService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | done |
+| S1-08 Medkit item-use authoritative handling | `server/src/PlayerFactory.js::item:use medkit handlers`; `server/src/items.js` | `apps/server-ts/src/domain/items/ItemUseService.ts` (new), `apps/server-ts/src/domain/inventory/InventoryService.ts` (new) | done |
 | S1-09 Building placement permissions, adjacency, costs | `server/src/BuildingFactory.js::handleNewBuilding/getCityCanBuild/searchTree`; `CityManager.recordBuildingCost` | `apps/server-ts/src/runtime/building-runtime.ts` (exists), `apps/server-ts/src/domain/buildings/BuildingRulesService.ts` (new) | done |
 | S1-10 Demolish deny reasons + authoritative feedback | `server/src/BuildingFactory.js::handleDemolish/emitDemolishDenied` | `apps/server-ts/src/runtime/building-runtime.ts` (exists), `apps/server-ts/src/domain/buildings/DemolishService.ts` (new) | done |
 | S1-11 Research lifecycle and dependency tree gating | `server/src/BuildingFactory.js::startResearch/completeResearch/applyResearchState/getRequiredResearchType` | `apps/server-ts/src/domain/research/ResearchService.ts` (new), `packages/protocol/src/events.ts` (exists) | done |
 | S1-12 House attachment/population model parity | `server/src/BuildingFactory.js::applyPopulationUpdate/attachment methods`; `server/src/Building.js` | `apps/server-ts/src/domain/population/PopulationService.ts` (new), `apps/server-ts/src/domain/buildings/BuildingState.ts` (new) | open |
 | S1-13 Economy income/spend cycle parity | `server/src/CityManager.js::cycle/addIncome/spendForResearch/spendForHospital/trySpendForFactory` | `apps/server-ts/src/domain/economy/CityEconomyService.ts` (new), `apps/server-ts/src/runtime/GameRuntime.ts` (exists) | done |
-| S1-14 Inventory caps and stock release semantics | `server/src/CityManager.js::recordInventoryPickup/recordInventoryConsumption/releasePlayerInventory` | `apps/server-ts/src/domain/inventory/InventoryService.ts` (new) | open |
+| S1-14 Inventory caps and stock release semantics | `server/src/CityManager.js::recordInventoryPickup/recordInventoryConsumption/releasePlayerInventory` | `apps/server-ts/src/domain/inventory/InventoryService.ts` (new) | done |
 | S1-15 Factory production cycle and item stock accounting | `server/src/FactoryBuilding.js::cycle`; `BuildingFactory.handleFactoryCollect/registerFactoryIcon/cycle` | `apps/server-ts/src/domain/factories/FactoryService.ts` (new) | done |
-| S1-16 Icon drop authoritative collect/pickup flows | `server/src/IconDropManager.js::handleDrop/handlePickup/decrementFactoryStock` | `apps/server-ts/src/domain/icons/IconDropService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | open |
+| S1-16 Icon drop authoritative collect/pickup flows | `server/src/IconDropManager.js::handleDrop/handlePickup/decrementFactoryStock` | `apps/server-ts/src/domain/icons/IconDropService.ts` (new), `apps/server-ts/src/runtime/dispatch.ts` (exists) | done |
 | S1-17 Hazard lifecycle (mine/bomb/DFG), area damage, cleanup | `server/src/hazards/HazardManager.js::updateMine/updateBomb/detonateBomb/damagePlayersInRadius/updateDFG` | `apps/server-ts/src/domain/hazards/HazardService.ts` (new) | done |
 | S1-18 Defense placement/damage/replenishment parity | `server/src/DefenseManager.js::handleSpawn/applyDefenseDamage/removeDefensesByType` | `apps/server-ts/src/domain/defense/DefenseService.ts` (new) | open |
 | S1-19 Orb drop validation + city wipe/reset | `server/src/orb/OrbManager.js::handleDrop/resolveTargetCity`; `CityManager.resetCity`; `PlayerFactory` eviction interactions | `apps/server-ts/src/domain/orb/OrbService.ts` (new) | done |
@@ -57,7 +57,7 @@ Legend:
 
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
-| S2-01 Full socket event handling surface | `client/src/SocketListener.js::listen/handleBulletShot/applyHealthUpdate/...` | `apps/client-ts/src/network/socket.ts` (exists), `apps/client-ts/src/app/network-events.ts` (exists), `apps/client-ts/src/network/event-router.ts` (new) | open |
+| S2-01 Full socket event handling surface | `client/src/SocketListener.js::listen/handleBulletShot/applyHealthUpdate/...` | `apps/client-ts/src/network/socket.ts` (exists), `apps/client-ts/src/app/network-events.ts` (exists), `apps/client-ts/src/network/event-router.ts` (new) | in_progress |
 | S2-02 Core movement + unstick + nearest-safe fallback | `client/src/play.js::movePlayer/attemptUnstick/findNearestSafeOffset` | `apps/client-ts/src/gameplay/player-movement.ts` (new), `packages/sim-core/src/collision-world.ts` (new) | open |
 | S2-03 Client collision helpers parity | `client/src/collision/collision-player.js`; `collision-building.js`; `collision-bullet.js`; `collision-helpers.js` | `apps/client-ts/src/gameplay/collision/*.ts` (new) | open |
 | S2-04 Building placement client rules + sync behavior | `client/src/factories/BuildingFactory.js::newBuilding/demolishBuilding/recomputeCityBuildPermissions` | `apps/client-ts/src/gameplay/buildings/BuildingClientService.ts` (new), `apps/client-ts/src/app/intents.ts` (exists) | open |
@@ -209,7 +209,7 @@ apps/client-ts/src/
 - `S1-01`: done (lobby assignment constraints)
 - `S1-02`: done (leave/release lifecycle)
 - `S3-02`: done (canonical emit + ingress alias adapter)
-- `S3-01`: in_progress (economy/research/factory/hazard/orb/chat/score schemas added)
+- `S3-01`: in_progress (economy/research/factory/hazard/orb/chat/score plus inventory/item/icon schemas added)
 - `S3-03`: in_progress (dispatch expanded for new authoritative subsystems)
 - `S3-04`: in_progress (client apply path expanded for deny + hazard subsystem events)
 - `S4-03`: done (event ingress queue)

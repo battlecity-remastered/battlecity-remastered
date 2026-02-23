@@ -52,6 +52,8 @@ export const EventType = Schema.Literal(
     "icon:drop",
     "icon:drop:result",
     "icon:pickup",
+    "icon.pickup.request",
+    "icon.pickup.confirmed",
     "icon:pickup:confirmed",
     "icon:pickup:rejected",
     "icon:pickup:result",
@@ -59,6 +61,7 @@ export const EventType = Schema.Literal(
     "identity:ack",
     "identity:update",
     "item:use",
+    "item.use.request",
     "item:use:rejected",
     "latency:ping",
     "latency:pong",
@@ -112,7 +115,8 @@ export const EventType = Schema.Literal(
     "building.demolish.request",
     "building.demolished",
     "lobby.assignment",
-    "chat.message"
+    "chat.message",
+    "inventory.update"
 );
 
 export const EventEnvelope = Schema.Struct({

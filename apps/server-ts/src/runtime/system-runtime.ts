@@ -4,6 +4,7 @@ import { tickCityEconomy } from "../domain/economy/CityEconomyService.js";
 import { tickResearch } from "../domain/research/ResearchService.js";
 import { tickFactories } from "../domain/factories/FactoryService.js";
 import { tickHazards } from "../domain/hazards/HazardService.js";
+import { tickHospitalHealing } from "../domain/health/HealingService.js";
 
 export const tickRuntimeSystems = (
     state: RuntimeState,
@@ -15,4 +16,5 @@ export const tickRuntimeSystems = (
     tickResearch(state, config, emitter, deltaMs);
     tickFactories(state, config, emitter, deltaMs);
     tickHazards(state, emitter, deltaMs);
+    tickHospitalHealing(state, config, emitter);
 };

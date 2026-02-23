@@ -72,7 +72,7 @@ const appendFactoryCollectIntent = (state: ClientState, nowMs: number, intents: 
     }
     state.local.lastFactoryCollectAt = nowMs;
     intents.push({
-        type: "factory.collect.request",
+        type: "icon.pickup.request",
         payload: {
             cityId: state.local.city,
             itemType: 0,
@@ -82,7 +82,7 @@ const appendFactoryCollectIntent = (state: ClientState, nowMs: number, intents: 
 };
 
 const appendHazardDeployIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
-    if (!state.controls.useItem || !hasCooldownElapsed(nowMs, state.local.lastHazardAt)) {
+    if (!state.controls.demolish || !hasCooldownElapsed(nowMs, state.local.lastHazardAt)) {
         return;
     }
     state.local.lastHazardAt = nowMs;
@@ -98,6 +98,19 @@ const appendHazardDeployIntent = (state: ClientState, nowMs: number, intents: In
             radius: 96,
             damage: 35,
             fuseMs: 1500
+        }
+    });
+};
+
+const appendItemUseIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.useItem || !hasCooldownElapsed(nowMs, state.local.lastItemUseAt)) {
+        return;
+    }
+    state.local.lastItemUseAt = nowMs;
+    intents.push({
+        type: "item.use.request",
+        payload: {
+            itemType: 0
         }
     });
 };
@@ -195,6 +208,7 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
     appendResearchIntent(state, nowMs, intents);
     appendFactoryCollectIntent(state, nowMs, intents);
     appendHazardDeployIntent(state, nowMs, intents);
+    appendItemUseIntent(state, nowMs, intents);
     appendOrbDropIntent(state, nowMs, intents);
     appendLobbyLeaveIntent(state, nowMs, intents);
     appendChatIntent(state, nowMs, intents);

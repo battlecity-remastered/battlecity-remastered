@@ -14,6 +14,9 @@ import { collectFactoryStock } from "../domain/factories/FactoryService.js";
 import { deployHazard } from "../domain/hazards/HazardService.js";
 import { dropOrb } from "../domain/orb/OrbService.js";
 import { addChatMessage, getChatHistory } from "../domain/chat/ChatService.js";
+import { addInventoryItem, emitInventoryState } from "../domain/inventory/InventoryService.js";
+import { useItem } from "../domain/items/ItemUseService.js";
+import { pickupIcon } from "../domain/icons/IconDropService.js";
 import { rejectSocket } from "./rejections.js";
 
 type DispatchContext = {
@@ -63,6 +66,7 @@ const handlers: HandlerMap = {
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
             context.emitter.emitTo(socketId, "chat.history", getChatHistory(context.state));
+            context.emitter.emitTo(socketId, "inventory.update", emitInventoryState(context.state, socketId));
             getOrCreateCity(context.state, assignment.city, context.config);
             emitCityFinance(context.state, assignment.city, context.config, context.emitter);
             emitResearchState(context.state, assignment.city, context.emitter);
@@ -198,6 +202,36 @@ const handlers: HandlerMap = {
             payload.amount ?? 1
         ), (stock) => {
             context.emitter.emit("factory.stock", stock);
+            context.emitter.emitTo(socketId, "inventory.update", addInventoryItem(
+                context.state,
+                socketId,
+                payload.itemType,
+                payload.amount ?? 1,
+                context.config
+            ));
+        });
+    },
+    "icon.pickup.request": (socketId, payload, context) => {
+        const city = context.state.socketCities.get(socketId);
+        if (city === undefined || city !== payload.cityId) {
+            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            return;
+        }
+        handleCommandResult(socketId, context, pickupIcon(
+            context.state,
+            socketId,
+            payload,
+            context.config
+        ), ({ stock, inventory, confirmed }) => {
+            context.emitter.emit("factory.stock", stock);
+            context.emitter.emitTo(socketId, "inventory.update", inventory);
+            context.emitter.emitTo(socketId, "icon.pickup.confirmed", confirmed);
+        });
+    },
+    "item.use.request": (socketId, payload, context) => {
+        handleCommandResult(socketId, context, useItem(context.state, socketId, payload), (result) => {
+            context.emitter.emit("player.health", result.health);
+            context.emitter.emitTo(socketId, "inventory.update", result.inventory);
         });
     },
     "hazard.deploy.request": (socketId, payload, context) => {
