@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S2 -> S5` parity slice delivery (mouse semantics, hit-area sync, right-click behavior, and regression tests).
+- `S5` checkpoint after additional `S2 -> S5` parity slice delivery (window/fullscreen resize lifecycle wiring and regression tests).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -41,6 +41,7 @@
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
 | S2-15 | in_progress | Keyboard aliases now include legacy-friendly bindings (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing request intents |
 | S2-16 | in_progress | Mouse input now maps left/right click controls, suppresses context menu, syncs interaction surface dimensions on resize, and tracks pointer position/inside state |
+| S2-28 | in_progress | Window/fullscreen service now handles resize-driven renderer synchronization and double-click fullscreen toggle lifecycle management |
 | S2-01 | in_progress | Client event ingress now routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) before application |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
@@ -56,11 +57,9 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/input/mouse-input.ts`
 - `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/test/mouse-input.test.ts`
+- `apps/client-ts/src/ui/window/WindowModeService.ts`
+- `apps/client-ts/test/window-mode-service.test.ts`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
 - `docs/typescript-gap-analysis.md`

@@ -237,8 +237,9 @@ The rewrite should only be considered complete when:
   - Additional S2/S3 client ingress slice: typed network router (`decodeServerEnvelope`) now centralizes alias normalization + schema decode before event application, with explicit malformed-envelope regression tests.
   - Additional S2 keyboard parity slice: client key aliases now include `S/Down`, `E`, `O`, `H`, and `Delete` while preserving prior request intents.
   - Additional S2 mouse parity slice: client now wires mouse left/right controls, context-menu suppression, and resize-time interaction hit-area synchronization via `registerMouseInputHandlers`.
+  - Additional S2 window parity slice: `WindowModeService` now applies renderer resize synchronization and double-click fullscreen toggling with explicit runtime teardown.
   - Additional S1/S4 adapter slice: orb notifier now resolves canonical runtime user identity and uses an Effect-based Discord webhook transport when configured.
-  - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, and mouse input semantics now have dedicated tests.
+  - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.
   - Full legacy build-tree, inventory icon, defense, fake-city, bot, and map-loader parity.

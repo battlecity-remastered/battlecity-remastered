@@ -84,7 +84,7 @@ Legend:
 | S2-25 Rogue tank gameplay parity | `client/src/rogue/RogueTankManager.js::*` | `apps/client-ts/src/gameplay/rogue/RogueTankService.ts` (new) | open |
 | S2-26 Defender bot client debug/pathing parity | `client/src/defenders/*`; `client/src/draw/draw-bot-debug.js` | `apps/client-ts/src/gameplay/defenders/*.ts` (new), `apps/client-ts/src/render/debug/BotDebugLayer.ts` (new) | open |
 | S2-27 Audio/music loop parity | `client/src/audio/AudioManager.js`; `MusicManager.js` | `apps/client-ts/src/audio/AudioManager.ts` (new), `apps/client-ts/src/audio/MusicManager.ts` (new) | open |
-| S2-28 Fullscreen/resize/ui interaction parity | `client/app.js::resizeToWindow/toggleFullscreen/updateInteractionHitArea` | `apps/client-ts/src/ui/window/WindowModeService.ts` (new), `apps/client-ts/src/render/scene.ts` (exists) | open |
+| S2-28 Fullscreen/resize/ui interaction parity | `client/app.js::resizeToWindow/toggleFullscreen/updateInteractionHitArea` | `apps/client-ts/src/ui/window/WindowModeService.ts` (new), `apps/client-ts/src/render/scene.ts` (exists) | in_progress |
 | S2-29 Force-draw optimization semantics | `client/app.js`; `draw-panel-interface.js` forceDraw pattern | `apps/client-ts/src/render/dirty-flags.ts` (new), `apps/client-ts/src/app/state.ts` (exists) | open |
 | S2-30 Asset parity (sprites, map.dat, audio) | `client/data/*`; `client/app.js` resource loader list | `apps/client-ts/src/assets/manifest.ts` (new), `apps/client-ts/public/*` (new) | open |
 
@@ -229,6 +229,7 @@ apps/client-ts/src/
 - `S3-03`: in_progress (dispatch chat path now includes explicit scoped routing semantics and helper extraction for strict maintainability compliance)
 - `S2-01`: in_progress (event ingress now routes through typed decode/canonicalization boundary before apply, retaining prior authoritative world event handling)
 - `S2-16`: in_progress (mouse input module now handles left/right click semantics, context-menu suppression, hit-area sync on resize, and pointer-state tracking)
+- `S2-28`: in_progress (window mode service now synchronizes renderer size on resize and supports fullscreen toggling with lifecycle cleanup)
 - `S2-08`: in_progress (HUD now displays local-city population derived from authoritative population updates)
-- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, and mouse input semantics)
+- `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, and window mode service behaviors)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

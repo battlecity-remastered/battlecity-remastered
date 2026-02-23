@@ -4,12 +4,14 @@ import { createSceneRuntime } from "./render/scene.js";
 import { startGameLoop } from "./app/loop.js";
 import { registerInputHandlers } from "./app/input.js";
 import { registerMouseInputHandlers } from "./input/mouse-input.js";
+import { registerWindowModeHandlers } from "./ui/window/WindowModeService.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
 const network = createSocketRuntime(state);
 const scene = await createSceneRuntime(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
+const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const loop = startGameLoop(state, network.send);
 
 scene.app.ticker.add(() => {
@@ -20,5 +22,6 @@ window.addEventListener("beforeunload", () => {
     loop.stop();
     unregisterInput();
     unregisterMouse();
+    unregisterWindowMode();
     network.stop();
 });
