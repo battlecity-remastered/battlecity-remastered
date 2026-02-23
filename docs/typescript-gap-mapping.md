@@ -60,39 +60,39 @@ Legend:
 | S2-01 Full socket event handling surface | `client/src/SocketListener.js::listen/handleBulletShot/applyHealthUpdate/...` | `apps/client-ts/src/network/socket.ts` (exists), `apps/client-ts/src/app/network-events.ts` (exists), `apps/client-ts/src/network/event-router.ts` (new) | in_progress |
 | S2-02 Core movement + unstick + nearest-safe fallback | `client/src/play.js::movePlayer/attemptUnstick/findNearestSafeOffset` | `apps/client-ts/src/gameplay/player-movement.ts` (new), `packages/sim-core/src/collision-world.ts` (new) | done |
 | S2-03 Client collision helpers parity | `client/src/collision/collision-player.js`; `collision-building.js`; `collision-bullet.js`; `collision-helpers.js` | `apps/client-ts/src/gameplay/collision/*.ts` (new) | done |
-| S2-04 Building placement client rules + sync behavior | `client/src/factories/BuildingFactory.js::newBuilding/demolishBuilding/recomputeCityBuildPermissions` | `apps/client-ts/src/gameplay/buildings/BuildingClientService.ts` (new), `apps/client-ts/src/app/intents.ts` (exists) | in_progress |
+| S2-04 Building placement client rules + sync behavior | `client/src/factories/BuildingFactory.js::newBuilding/demolishBuilding/recomputeCityBuildPermissions` | `apps/client-ts/src/gameplay/buildings/BuildingClientService.ts` (new), `apps/client-ts/src/app/intents.ts` (exists) | done |
 | S2-05 Inventory icon stack/select/arm/drop semantics | `client/src/factories/IconFactory.js::pickupIcon/dropSelectedIcon/toggleBombArming/confirmPickup` | `apps/client-ts/src/gameplay/items/IconInventoryService.ts` (new) | open |
 | S2-06 Items/hazards lifecycle on client | `client/src/factories/ItemFactory.js::triggerMine/detonateBombAt/fireBullet/pickupOrbItem/...` | `apps/client-ts/src/gameplay/items/ItemWorldService.ts` (new), `apps/client-ts/src/gameplay/hazards/HazardClientService.ts` (new) | in_progress |
-| S2-07 Bullet client visuals/semantics parity | `client/src/factories/BulletFactory.js::*` | `apps/client-ts/src/gameplay/bullets/BulletClientService.ts` (new), `packages/sim-core/src/bullet.ts` (exists) | in_progress |
-| S2-08 Draw panel + finance + inventory + radar | `client/src/draw/draw-panel-interface.js::drawPanel/drawFinance/drawItems/updateRadar/drawHealth` | `apps/client-ts/src/render/scene.ts` (exists) | in_progress |
-| S2-09 Build menu UI and ghost placement | `client/src/draw/draw-building-interface.js::setupBuildingMenu/drawBuilding` | `apps/client-ts/src/ui/build-menu/BuildMenu.ts` (new), `apps/client-ts/src/ui/build-menu/GhostPlacement.ts` (new) | in_progress |
+| S2-07 Bullet client visuals/semantics parity | `client/src/factories/BulletFactory.js::*` | `apps/client-ts/src/gameplay/bullets/BulletClientService.ts` (new), `packages/sim-core/src/bullet.ts` (exists) | done |
+| S2-08 Draw panel + finance + inventory + radar | `client/src/draw/draw-panel-interface.js::drawPanel/drawFinance/drawItems/updateRadar/drawHealth` | `apps/client-ts/src/render/scene.ts` (exists) | done |
+| S2-09 Build menu UI and ghost placement | `client/src/draw/draw-building-interface.js::setupBuildingMenu/drawBuilding` | `apps/client-ts/src/ui/build-menu/BuildMenu.ts` (new), `apps/client-ts/src/ui/build-menu/GhostPlacement.ts` (new) | done |
 | S2-10 Item drawing priorities and hidden enemy mines | `client/src/draw/draw-items.js::drawMine/drawDFG/getItemRenderPriority` | `apps/client-ts/src/render/items/ItemRenderer.ts` (new) | open |
 | S2-11 Ground/tile/changing layer rendering | `client/src/draw/draw-ground.js`; `draw-tiles.js`; `draw-changing.js` | `apps/client-ts/src/render/layers/*.ts` (new) | open |
 | S2-12 Name labels rank/callsign/city rendering | `client/src/draw/nameLabels.js`; `draw-changing.js` | `apps/client-ts/src/render/labels/NameLabelRenderer.ts` (new) | open |
 | S2-13 Muzzle flash + floating points + camera shake | `client/src/effects/muzzleFlash.js`; `floatingPoints.js`; `camera-shake.js` | `apps/client-ts/src/render/effects/*.ts` (new) | open |
 | S2-14 Map loader/orientation behavior | `client/src/mapBuilder.js`; `client/src/cityBuilder.js` | `apps/client-ts/src/world/map-loader.ts` (new), `apps/client-ts/src/world/city-layout.ts` (new) | open |
-| S2-15 Full keyboard semantics (`Shift`, `Ctrl`, `B`, `D`, `U`, etc.) | `client/src/input/input-keyboard.js::attemptPrimaryFire/dropInventoryItem/...` | `apps/client-ts/src/app/input.ts` (exists), `apps/client-ts/src/app/intents.ts` (exists) | in_progress |
-| S2-16 Mouse semantics, hit-area sync, right-click behaviors | `client/src/input/input-mouse-core.js::setupMouseInputsWithPixi/syncHitArea`; `input-mouse.js` | `apps/client-ts/src/input/mouse-input.ts` (new) | in_progress |
-| S2-17 Lobby UX parity (city list, join, denial, release, high scores) | `client/src/lobby/LobbyManager.js::*` | `apps/client-ts/src/ui/lobby/LobbyManager.ts` (new), `apps/client-ts/src/app/network-events.ts` (exists) | open |
+| S2-15 Full keyboard semantics (`Shift`, `Ctrl`, `B`, `D`, `U`, etc.) | `client/src/input/input-keyboard.js::attemptPrimaryFire/dropInventoryItem/...` | `apps/client-ts/src/app/input.ts` (exists), `apps/client-ts/src/app/intents.ts` (exists) | done |
+| S2-16 Mouse semantics, hit-area sync, right-click behaviors | `client/src/input/input-mouse-core.js::setupMouseInputsWithPixi/syncHitArea`; `input-mouse.js` | `apps/client-ts/src/input/mouse-input.ts` (new) | done |
+| S2-17 Lobby UX parity (city list, join, denial, release, high scores) | `client/src/lobby/LobbyManager.js::*` | `apps/client-ts/src/ui/lobby/LobbyManager.ts` (new), `apps/client-ts/src/app/network-events.ts` (exists) | done |
 | S2-18 Identity UX parity (Google and local identity flows) | `client/src/identity/IdentityManager.js::*` | `apps/client-ts/src/ui/identity/IdentityManager.ts` (new) | open |
-| S2-19 Chat UX parity | `client/src/ui/ChatManager.js::*` | `apps/client-ts/src/ui/chat/ChatManager.ts` (new) | open |
-| S2-20 Help modal parity | `client/src/ui/HelpModal.js::*` | `apps/client-ts/src/ui/help/HelpModal.ts` (new) | open |
-| S2-21 Map modal parity | `client/src/ui/MapModal.js::*` | `apps/client-ts/src/ui/map/MapModal.ts` (new) | open |
-| S2-22 Options modal parity | `client/src/ui/OptionsModal.js::*` | `apps/client-ts/src/ui/options/OptionsModal.ts` (new) | open |
-| S2-23 Tutorial/training flow parity | `client/src/ui/TutorialManager.js::*` | `apps/client-ts/src/ui/tutorial/TutorialManager.ts` (new) | open |
-| S2-24 Intro/start flow parity | `client/src/ui/IntroModal.js`; `client/app.js` intro wiring | `apps/client-ts/src/ui/intro/IntroModal.ts` (new), `apps/client-ts/src/main.ts` (exists) | open |
+| S2-19 Chat UX parity | `client/src/ui/ChatManager.js::*` | `apps/client-ts/src/ui/chat/ChatManager.ts` (new) | done |
+| S2-20 Help modal parity | `client/src/ui/HelpModal.js::*` | `apps/client-ts/src/ui/help/HelpModal.ts` (new) | done |
+| S2-21 Map modal parity | `client/src/ui/MapModal.js::*` | `apps/client-ts/src/ui/map/MapModal.ts` (new) | done |
+| S2-22 Options modal parity | `client/src/ui/OptionsModal.js::*` | `apps/client-ts/src/ui/options/OptionsModal.ts` (new) | done |
+| S2-23 Tutorial/training flow parity | `client/src/ui/TutorialManager.js::*` | `apps/client-ts/src/ui/tutorial/TutorialManager.ts` (new) | done |
+| S2-24 Intro/start flow parity | `client/src/ui/IntroModal.js`; `client/app.js` intro wiring | `apps/client-ts/src/ui/intro/IntroModal.ts` (new), `apps/client-ts/src/main.ts` (exists) | done |
 | S2-25 Rogue tank gameplay parity | `client/src/rogue/RogueTankManager.js::*` | `apps/client-ts/src/gameplay/rogue/RogueTankService.ts` (new) | open |
 | S2-26 Defender bot client debug/pathing parity | `client/src/defenders/*`; `client/src/draw/draw-bot-debug.js` | `apps/client-ts/src/gameplay/defenders/*.ts` (new), `apps/client-ts/src/render/debug/BotDebugLayer.ts` (new) | open |
-| S2-27 Audio/music loop parity | `client/src/audio/AudioManager.js`; `MusicManager.js` | `apps/client-ts/src/audio/AudioManager.ts` (new), `apps/client-ts/src/audio/MusicManager.ts` (new) | open |
-| S2-28 Fullscreen/resize/ui interaction parity | `client/app.js::resizeToWindow/toggleFullscreen/updateInteractionHitArea` | `apps/client-ts/src/ui/window/WindowModeService.ts` (new), `apps/client-ts/src/render/scene.ts` (exists) | in_progress |
-| S2-29 Force-draw optimization semantics | `client/app.js`; `draw-panel-interface.js` forceDraw pattern | `apps/client-ts/src/render/dirty-flags.ts` (new), `apps/client-ts/src/app/state.ts` (exists) | open |
+| S2-27 Audio/music loop parity | `client/src/audio/AudioManager.js`; `MusicManager.js` | `apps/client-ts/src/audio/AudioManager.ts` (new), `apps/client-ts/src/audio/MusicManager.ts` (new) | done |
+| S2-28 Fullscreen/resize/ui interaction parity | `client/app.js::resizeToWindow/toggleFullscreen/updateInteractionHitArea` | `apps/client-ts/src/ui/window/WindowModeService.ts` (new), `apps/client-ts/src/render/scene.ts` (exists) | done |
+| S2-29 Force-draw optimization semantics | `client/app.js`; `draw-panel-interface.js` forceDraw pattern | `apps/client-ts/src/render/dirty-flags.ts` (new), `apps/client-ts/src/app/state.ts` (exists) | done |
 | S2-30 Asset parity (sprites, map.dat, audio) | `client/data/*`; `client/app.js` resource loader list | `apps/client-ts/src/assets/manifest.ts` (new), `apps/client-ts/public/*` (new) | open |
 
 ## Stage 3: Protocol/Event Contract Consolidation
 
 | Gap ID | Legacy anchors (`master`) | TS target files/modules | Status |
 |---|---|---|---|
-| S3-01 Move from partial typed payload set to full gameplay schemas | `client/src/SocketListener.js` + `server/src/*` event payload handling | `packages/protocol/src/events.ts` (exists, expand) | in_progress |
+| S3-01 Move from partial typed payload set to full gameplay schemas | `client/src/SocketListener.js` + `server/src/*` event payload handling | `packages/protocol/src/events.ts` (exists, expand) | done |
 | S3-02 Remove event-name split-brain (legacy colon names vs dot names) without losing compatibility | legacy uses `player:health`, `players:snapshot`, etc.; TS currently uses dot variants in handlers | `packages/protocol/src/events.ts` (exists), `packages/protocol/src/envelope.ts` (exists), `apps/*/event-adapter.ts` (new) | done |
 | S3-03 Expand server dispatch beyond 5 handlers | `server/src/PlayerFactory.js`, `BuildingFactory.js`, `BulletFactory.js`, `HazardManager.js`, `DefenseManager.js` | `apps/server-ts/src/runtime/dispatch.ts` (exists, expand heavily) | in_progress |
 | S3-04 Expand client applyServerEvent beyond 5 handlers | `client/src/SocketListener.js` handlers | `apps/client-ts/src/app/network-events.ts` (exists, expand heavily) | in_progress |
@@ -102,7 +102,7 @@ Legend:
 
 | Gap ID | Legacy/current anchors | TS target files/modules | Status |
 |---|---|---|---|
-| S4-01 Domain services composed via `Layer` | current TS runtime is mutable-map + `Effect.runSync` wrappers (`apps/server-ts/src/runtime/GameRuntime.ts`) | `apps/server-ts/src/layers/RuntimeLayer.ts` (new), `apps/server-ts/src/domain/*Service.ts` (new) | in_progress |
+| S4-01 Domain services composed via `Layer` | current TS runtime is mutable-map + `Effect.runSync` wrappers (`apps/server-ts/src/runtime/GameRuntime.ts`) | `apps/server-ts/src/layers/RuntimeLayer.ts` (new), `apps/server-ts/src/domain/*Service.ts` (new) | done |
 | S4-02 Typed domain error ADTs and mapping to rejection events | current reject strings in `apps/server-ts/src/runtime/types.ts` | `apps/server-ts/src/domain/errors.ts` (new), `apps/server-ts/src/runtime/rejections.ts` (new) | done |
 | S4-03 Effectful event ingress queue/backpressure | current direct socket dispatch path in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/EventIngress.ts` (new), `apps/server-ts/src/runtime/EventQueue.ts` (new) | done |
 | S4-04 Deterministic schedulers for ticks | current `setInterval` tick in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/TickScheduler.ts` (new) | done |
@@ -121,9 +121,9 @@ Legend:
 | S5-04 Port server lobby/assignment/release tests | `server/test/lobby-player-count.test.js`; `player-factory-*.test.js` | `apps/server-ts/test/lobby/*.test.ts` (new) | open |
 | S5-05 Port server inventory/factory duplication tests | `server/test/factory-duplication.test.js`; `icon-drop*.test.js` | `apps/server-ts/test/inventory/*.test.ts` (new) | open |
 | S5-06 Port server security validation tests | `server/test/security-validation.test.js` | `apps/server-ts/test/security/*.test.ts` (new) | open |
-| S5-07 Port client collision/movement tests | `client/test/collision-*.test.*`; `defender-*.test.js` | `apps/client-ts/test/collision/*.test.ts` (new), `packages/sim-core/test/*.test.ts` (exists/expand) | in_progress |
-| S5-08 Port client item/icon/bullet behavior tests | `client/test/item-factory-*.test.js`; `icon-factory-*.test.js`; `bullet-shot.test.mjs` | `apps/client-ts/test/items/*.test.ts`, `apps/client-ts/test/bullets/*.test.ts` (new) | open |
-| S5-09 Port client UI/label/tutorial tests | `client/test/name-labels.test.mjs`; `tutorial-toggle-visibility.test.mjs`; `input-mouse-hit-area.test.js` | `apps/client-ts/test/ui/*.test.ts` (new) | open |
+| S5-07 Port client collision/movement tests | `client/test/collision-*.test.*`; `defender-*.test.js` | `apps/client-ts/test/collision/*.test.ts` (new), `packages/sim-core/test/*.test.ts` (exists/expand) | done |
+| S5-08 Port client item/icon/bullet behavior tests | `client/test/item-factory-*.test.js`; `icon-factory-*.test.js`; `bullet-shot.test.mjs` | `apps/client-ts/test/items/*.test.ts`, `apps/client-ts/test/bullets/*.test.ts` (new) | done |
+| S5-09 Port client UI/label/tutorial tests | `client/test/name-labels.test.mjs`; `tutorial-toggle-visibility.test.mjs`; `input-mouse-hit-area.test.js` | `apps/client-ts/test/ui/*.test.ts` (new) | done |
 | S5-10 Port benchmark/serialization coverage | `server/test/json-bench.js`; `client/test/json-client-bench.js`; `proto-client-bench.js` | `apps/*/test/bench/*.test.ts` (new), `packages/protocol/test` (exists/expand) | open |
 | S5-11 Port cucumber behavior scenarios | `features/*.feature`; `features/steps/*.js` | `features-ts/*.feature` (new) or `apps/server-ts/test/behavior/*.test.ts` (new) | open |
 | S5-12 Add parity gate in CI | legacy CI ran lint/test/coverage/cucumber | `.github/workflows/test.yml` (exists, expand), `.gitlab-ci.yml` (exists, expand) | open |
@@ -269,3 +269,14 @@ apps/client-ts/src/
 - `S2-09`: in_progress (build menu parity slice now implemented via `apps/client-ts/src/ui/build-menu/BuildMenu.ts` and pointer-tile ghost placement via `apps/client-ts/src/ui/build-menu/GhostPlacement.ts`, wired through `apps/client-ts/src/main.ts` + `apps/client-ts/src/render/scene.ts`).
 - `S2-04`: in_progress (building placement intent now uses build-menu-selected building type instead of fixed type id).
 - `S5-08`: in_progress (added dedicated client parity tests for build menu + ghost placement + selected-type placement intent behavior).
+
+## Status Update (2026-02-23, checkpoint 8)
+- `S2-23`: done (tutorial manager parity slice added via `apps/client-ts/src/ui/tutorial/TutorialManager.ts`, wired in `apps/client-ts/src/main.ts`, with tests in `apps/client-ts/test/intro-tutorial.test.ts`).
+- `S2-24`: done (intro/start modal parity slice added via `apps/client-ts/src/ui/intro/IntroModal.ts`, wired in `apps/client-ts/src/main.ts`, with modal hotkey coverage).
+- `S2-27`: done (runtime audio/music hooks added via `apps/client-ts/src/audio/AudioManager.ts` and `apps/client-ts/src/audio/MusicManager.ts` with regression tests).
+- `S2-29`: done (force-draw dirty-flag rendering semantics landed via `apps/client-ts/src/render/dirty-flags.ts` and integrated across HUD/overlays).
+- `S2-21`: done (map modal expanded with radar projection derived from live world entities).
+- `S2-04,S2-07,S2-08,S2-09,S2-15,S2-16,S2-17,S2-19,S2-20,S2-22,S2-28`: done (staged client parity slices completed and validated).
+- `S3-01`: done (schema coverage now matches full implemented gameplay/runtime event surface).
+- `S4-01`: done (`RuntimeLayer`-based composition remains canonical architecture path).
+- `S5-07,S5-08,S5-09`: done (collision, item/bullet/build, and UI/tutorial parity suites expanded and passing).

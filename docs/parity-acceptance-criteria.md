@@ -25,8 +25,11 @@
 - Client applies authoritative `population.update` events and surfaces city population in HUD telemetry.
 - Client includes lobby/chat runtime UI parity slices (assignment/denial/release + history/rate-limit/send semantics).
 - Client includes help/map/options modal parity slices with explicit runtime toggle controls (`F1`/`F2`/`F3`).
+- Client includes intro and tutorial runtime UX slices with explicit controls (`Enter`/`Escape` and `T`).
+- Client includes runtime audio/music hooks with option-driven enable/disable behavior.
 - Client includes build menu parity slice with selected-type hotkeys and pointer-tile ghost placement preview.
 - Client world state applies authoritative building/bullet/icon/hazard/defense lifecycle events and visualizes core world objects.
+- Client overlays and HUD use dirty-flag force-draw behavior to avoid unnecessary DOM/text churn.
 
 ## Stage S4
 - Core runtime lifecycle uses Effect queue/scheduler/ref patterns.
@@ -37,3 +40,4 @@
 - Lint/typecheck/test/strict checks pass.
 - CI parity gates run lint/typecheck/test/strict on both GitHub and GitLab pipelines.
 - Parity status table has no silent skips: each S-ID is done/blocked/deferred with reason.
+- New parity slices are accompanied by direct regression tests in the same subsystem checkpoint.

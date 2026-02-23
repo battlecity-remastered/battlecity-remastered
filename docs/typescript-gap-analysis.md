@@ -258,6 +258,19 @@ The rewrite should only be considered complete when:
   - Full client UI/UX module parity (lobby/chat modals/tutorial/options/radar/audio).
 
 ## Implementation Status Update (2026-02-23, checkpoint 3)
+
+## Implementation Status Update (2026-02-23, checkpoint 8)
+- Completed now:
+  - S2 tutorial and intro UX slices (`TutorialManager`, `IntroModal`) are runtime-wired and regression-covered.
+  - S2 runtime audio/music hooks landed (`AudioManager`, `MusicManager`) with option-driven toggles and tests.
+  - S2 force-draw semantics landed via dirty-flag tracking (`render/dirty-flags.ts`) across HUD and overlay managers.
+  - S2 map modal includes lightweight radar projection from live world entities.
+  - S5 client parity coverage expanded with dedicated tests for intro/tutorial/audio/dirty-flags and updated modal/options/map assertions.
+  - Strict validation gates remain green after integration (`lint`, `typecheck`, `test`, `rewrite:check:strict`).
+- Still open/deferred:
+  - Full sprite/asset/audio-manifest parity and high-fidelity visual FX parity.
+  - Full identity UX parity and client debug overlays for defender/rogue visualization.
+  - Benchmark/cucumber behavior-matrix porting in S5.
 - S3 contract hardening:
   - Server dispatch coverage is now explicit and regression-enforced via exported handler inventory (`HANDLED_RUNTIME_EVENT_TYPES`) and `apps/server-ts/test/dispatch-coverage.test.ts`.
   - Client apply coverage is now explicit and regression-enforced via exported handler inventory (`APPLIED_SERVER_EVENT_TYPES`) and `apps/client-ts/test/network-handler-coverage.test.ts`.

@@ -1,5 +1,9 @@
 # Event Parity Matrix
 
+## Status
+- Last updated: 2026-02-23
+- Matrix remains current for the implemented gameplay/runtime contract surface.
+
 ## Policy
 - Canonical runtime event names are dot-delimited (`.`).
 - Legacy colon-delimited (`:`) aliases are accepted on ingress only.

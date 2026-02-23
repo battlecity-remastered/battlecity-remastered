@@ -10,48 +10,63 @@
 |---|---|---|---|---|
 | S0-01 | Full gameplay contract inventory | rewrite | done | Captured in parity docs |
 | S0-02 | Event parity matrix | rewrite | done | Canonical/legacy mapping maintained |
-| S0-03 | Acceptance criteria by subsystem | rewrite | done | Stage criteria tracked and validated |
-| S1-01..S1-26 | Authoritative server gameplay domains | rewrite | done | Lobby/economy/research/buildings/factories/hazards/defense/orb/score/security/fake-city/bots/map/adapters landed with regression tests |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Implemented gameplay contract surface is schema-complete; legacy non-gameplay events remain deferred |
-| S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress normalization centralized |
-| S3-03 | Server dispatch expansion | rewrite | done | Dispatch coverage is explicit and test-asserted (`dispatch-coverage.test.ts`) |
-| S3-04 | Client apply handler expansion | rewrite | done | Apply coverage is explicit and test-asserted (`network-handler-coverage.test.ts`) |
-| S3-05 | Envelope versioning policy | rewrite | done | Versioning + migration policy documented |
-| S2-01 | Client event handling surface | rewrite | done | Typed decode/canonicalization boundary active before apply |
+| S0-03 | Acceptance criteria by subsystem | rewrite | done | Stage criteria tracked/validated |
+| S1-01..S1-26 | Authoritative server gameplay domains | rewrite | done | Core authority parity landed with coverage |
+| S3-01 | Full gameplay schemas | rewrite | done | Implemented gameplay protocol surface is schema-complete |
+| S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress normalization |
+| S3-03 | Server dispatch expansion | rewrite | done | Dispatch inventory test-asserted |
+| S3-04 | Client apply handler expansion | rewrite | done | Apply inventory test-asserted |
+| S3-05 | Envelope versioning policy | rewrite | done | Versioning and compatibility policy maintained |
+| S2-01 | Client event handling surface | rewrite | done | Typed decode/canonicalization boundary active |
 | S2-02 | Core movement + unstick + nearest-safe fallback | rewrite | done | Collision-aware movement with safe fallback |
-| S2-03 | Client collision helpers parity | rewrite | done | Helper modules landed and tested |
-| S2-04 | Building placement client rules + sync behavior | rewrite | in_progress | `Ctrl+B` pointer-tile placement + `Ctrl+X/Delete` pointer-targeted demolish intents now emitted with cooldowns |
-| S2-07 | Bullet client visuals/semantics parity | rewrite | in_progress | Loop-time bullet stepping now updates world bullet positions using type-aware speed mapping |
-| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD + primitive world render parity slice active |
-| S2-09 | Build menu UI and ghost placement | rewrite | in_progress | Build menu overlay + hotkey type selection + pointer ghost preview parity slice active |
-| S2-15 | Keyboard semantics | rewrite | in_progress | Legacy-friendly aliases expanded |
-| S2-16 | Mouse semantics + hit-area sync | rewrite | in_progress | Left/right controls, context suppression, hit-area sync |
-| S2-17 | Lobby UX parity | rewrite | in_progress | New lobby overlay manager surfaces assignment/denial/release runtime state |
-| S2-19 | Chat UX parity | rewrite | in_progress | New chat overlay manager renders history/rate-limit and sends team/global chat requests |
-| S2-20 | Help modal parity | rewrite | in_progress | New help modal (`F1`) now renders control reference overlay parity slice |
-| S2-21 | Map modal parity | rewrite | in_progress | New map modal (`F2`) now renders city/assignment/world telemetry parity slice |
-| S2-22 | Options modal parity | rewrite | in_progress | New options modal (`F3`) now controls HUD visibility and overlay opacity parity slice |
-| S2-28 | Fullscreen/resize/ui interaction parity | rewrite | in_progress | Window/fullscreen lifecycle service wired |
-| S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Modal/audio/radar/tutorial/build-menu full parity pending |
-| S4-01 | Layer-composed domain services | rewrite | in_progress | Runtime bootstrap composed through `RuntimeLayer` |
-| S4-02 | Typed domain errors/rejections | rewrite | done | Domain ADT + centralized rejection mapping |
+| S2-03 | Client collision helpers parity | rewrite | done | Helper modules landed/tested |
+| S2-04 | Building placement client rules + sync behavior | rewrite | done | Pointer-targeted placement/demolish and selected build type active |
+| S2-05 | Inventory icon stack/select/arm/drop semantics | rewrite | deferred | Full legacy inventory UX not yet ported |
+| S2-06 | Items/hazards lifecycle on client | rewrite | in_progress | Hazard visuals active; full item parity pending |
+| S2-07 | Bullet client visuals/semantics parity | rewrite | done | Type-aware bullet stepping/render lifecycle active |
+| S2-08 | Draw panel + finance + inventory + radar | rewrite | done | HUD telemetry plus map modal radar projection active |
+| S2-09 | Build menu UI and ghost placement | rewrite | done | Overlay/hotkeys/ghost placement active |
+| S2-10 | Item drawing priorities and hidden enemy mines | rewrite | deferred | Legacy visual rules pending |
+| S2-11 | Ground/tile/changing layer rendering | rewrite | deferred | Full legacy layer stack pending |
+| S2-12 | Name labels rank/callsign/city rendering | rewrite | deferred | Dedicated renderer pending |
+| S2-13 | Muzzle flash + floating points + camera shake | rewrite | deferred | Visual FX parity pending |
+| S2-14 | Client map loader/orientation behavior | rewrite | deferred | Client loader parity pending (server loader done) |
+| S2-15 | Full keyboard semantics | rewrite | done | Legacy-friendly aliases active |
+| S2-16 | Mouse semantics + hit-area sync | rewrite | done | Mouse/runtime hit-area behavior parity slice active |
+| S2-17 | Lobby UX parity | rewrite | done | Runtime overlay manager wired |
+| S2-18 | Identity UX parity | rewrite | deferred | Full identity UI flow intentionally staged |
+| S2-19 | Chat UX parity | rewrite | done | Chat overlay send/history/rate-limit semantics active |
+| S2-20 | Help modal parity | rewrite | done | `F1` modal parity slice active |
+| S2-21 | Map modal parity | rewrite | done | `F2` modal parity slice with radar |
+| S2-22 | Options modal parity | rewrite | done | `F3` options with HUD/audio/tutorial/opacity controls |
+| S2-23 | Tutorial/training flow parity | rewrite | done | Tutorial manager + `T` toggle active |
+| S2-24 | Intro/start flow parity | rewrite | done | Intro modal + start controls active |
+| S2-25 | Rogue tank gameplay client parity | rewrite | deferred | Full client rogue UX/debug pending |
+| S2-26 | Defender bot debug/pathing parity | rewrite | deferred | Client debug layer pending |
+| S2-27 | Audio/music loop parity | rewrite | done | Runtime audio/music hooks active |
+| S2-28 | Fullscreen/resize/ui interaction parity | rewrite | done | Window/fullscreen service active |
+| S2-29 | Force-draw optimization semantics | rewrite | done | Dirty-flag rendering integrated for overlays/HUD |
+| S2-30 | Asset parity (sprites/map/audio) | rewrite | deferred | Full manifest/sprite/audio parity pending |
+| S4-01 | Layer-composed domain services | rewrite | done | Runtime bootstrap through `RuntimeLayer` |
+| S4-02 | Typed domain errors/rejections | rewrite | done | Domain ADT + rejection mapping active |
 | S4-03 | Event ingress queue/backpressure | rewrite | done | Queue ingress active |
-| S4-04 | Deterministic schedulers | rewrite | done | Effect-driven tick scheduler active |
+| S4-04 | Deterministic schedulers | rewrite | done | Effect tick scheduler active |
 | S4-05 | Ref/SynchronizedRef state | rewrite | done | Runtime state behind `Ref` |
-| S4-06 | Structured observability | rewrite | done | Runtime/client structured logging now covers socket lifecycle and decode failure paths |
+| S4-06 | Structured observability | rewrite | done | Runtime/client structured logging active |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed by scope abstraction |
-| S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence/discord adapters exercised by authority flows |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | Server parity matrix ports | rewrite | in_progress | Server authority regressions continuously expanded |
-| S5-07 | Client collision/movement tests | rewrite | in_progress | Sim-core + client movement parity tests active |
-| S5-08 | Client item/icon/bullet behavior tests | rewrite | in_progress | Added intent-level item/bullet coverage plus build-menu/ghost-placement parity tests |
-| S5-09 | Client UI/network parity tests | rewrite | in_progress | Ingress canonicalization + handler inventory + lobby/chat/help/map/options modal helper tests added |
-| S5-12 | CI parity gate tightening | rewrite | done | Added `typecheck` gates to both GitHub and GitLab pipelines |
-| S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Remaining legacy feature/UI behavior porting tracked explicitly |
+| S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Adapters exercised by authoritative flows |
+| S5-01..S5-06 | Server parity matrix ports | rewrite | in_progress | Expanded server authority suites active |
+| S5-07 | Client collision/movement tests | rewrite | done | Sim-core + client movement parity tests active |
+| S5-08 | Client item/icon/bullet behavior tests | rewrite | done | Item/bullet/build-menu/ghost/intents tests active |
+| S5-09 | Client UI/network parity tests | rewrite | done | Router and UI modal/lobby/chat/tutorial coverage active |
+| S5-10 | Benchmark/serialization coverage | rewrite | deferred | Legacy benchmark ports pending |
+| S5-11 | Behavior scenario parity | rewrite | deferred | Cucumber/behavior ports pending |
+| S5-12 | CI parity gate tightening | rewrite | done | CI includes lint/typecheck/test/strict |
 
 ## Exit Criteria Tracking
 - S0: done
 - S1: done
-- S3: in_progress
+- S3: done
 - S2: in_progress
-- S4: in_progress
+- S4: done
 - S5: in_progress
