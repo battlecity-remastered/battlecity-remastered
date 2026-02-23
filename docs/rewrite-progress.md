@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S1` subsystem chunk (spawn-safe relocation + world collision clamp), layered after the inventory/health authority slice.
+- `S4` subsystem chunk (Effect-oriented observability and integration adapter scaffolding), layered after S1 authority slices.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -42,12 +42,18 @@
 | S4-04 | done | Effect tick scheduler remains active |
 | S4-05 | done | Ref-based runtime state remains active |
 | S4-07 | done | Runtime scope lifecycle remains active |
-| S4-06,S4-08 | deferred | Full observability + external adapters pending |
+| S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
+| S4-08 | in_progress | Effect-based persistence/notification adapters scaffolded (`UserStoreAdapter`, `DiscordNotifier`) |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server runtime parity tests expanded in `game-runtime.test.ts` |
 | S5-09 | in_progress | Client network/event state coverage expanded |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
+- `apps/server-ts/src/observability/RuntimeLogger.ts`
+- `apps/client-ts/src/observability/ClientLogger.ts`
+- `apps/server-ts/src/adapters/persistence/UserStoreAdapter.ts`
+- `apps/server-ts/src/adapters/notifications/DiscordNotifier.ts`
+- `apps/server-ts/src/main.ts`
 - `apps/server-ts/src/domain/spawn/SpawnService.ts`
 - `apps/server-ts/src/domain/world/CollisionService.ts`
 - `apps/server-ts/src/runtime/player-runtime.ts`

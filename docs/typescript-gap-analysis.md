@@ -206,6 +206,7 @@ The rewrite should only be considered complete when:
   - S3 compatibility strategy implemented: canonical dot emit, colon alias ingress normalization, and expanded event schemas/dispatch/apply for new subsystem events.
   - S2 partial client parity slices: extended keyboard semantics, expanded event apply store (including hazard + inventory updates), finance/research/factory/hazard/chat + medkit HUD data exposure.
   - S4 runtime infrastructure slice: Effect queue ingress, Effect tick scheduler, runtime scope lifecycle, runtime Layer bootstrap, typed rejection ADT mapping.
+  - S4 architecture hardening slice: Effect-based runtime/client logging primitives and adapter scaffolding for persistence/notifications.
   - S5 parity slice coverage expanded in server/client/protocol tests; strict quality gates passing.
 - Still open/deferred:
   - Identity/persistence/rank hydration integrations.

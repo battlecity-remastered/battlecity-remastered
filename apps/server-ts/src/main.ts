@@ -3,6 +3,7 @@ import http from "node:http";
 import { Server } from "socket.io";
 import { Effect } from "effect";
 import { buildRuntimeServices } from "./layers/RuntimeLayer.js";
+import { logRuntime } from "./observability/RuntimeLogger.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -30,16 +31,19 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 io.on("connection", (socket) => {
+    Effect.runSync(logRuntime("info", "socket.connected", { socketId: socket.id }));
     socket.on("event", (raw: unknown) => {
         runtimeScope.onSocketEvent(socket.id, raw);
     });
 
     socket.on("disconnect", () => {
+        Effect.runSync(logRuntime("info", "socket.disconnected", { socketId: socket.id }));
         runtimeScope.onSocketDisconnect(runtime, socket.id);
     });
 });
 
 const shutdown = () => {
+    Effect.runSync(logRuntime("info", "runtime.shutdown.begin"));
     runtimeScope.close().catch((error) => {
         console.error("[server-ts] shutdown error", error);
     });
@@ -58,7 +62,7 @@ const startServer = Effect.promise(() => {
         server.once("error", onError);
         server.listen(port, () => {
             server.off("error", onError);
-            console.log(`[server-ts] listening on :${port}`);
+            Effect.runSync(logRuntime("info", "runtime.listen", { port }));
             resolve();
         });
     });

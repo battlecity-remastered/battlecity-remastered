@@ -51,9 +51,9 @@
 | S4-03 | Event ingress queue/backpressure | rewrite | done | Queue-based ingress added to server runtime |
 | S4-04 | Deterministic schedulers | rewrite | done | Effect-based tick scheduler added |
 | S4-05 | Ref/SynchronizedRef state | rewrite | done | Runtime state stored behind `Ref` |
-| S4-06 | Structured observability | rewrite | deferred | Limited logging only |
+| S4-06 | Structured observability | rewrite | in_progress | Effect-based runtime/client log modules added and wired in server bootstrap |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
-| S4-08 | Effect adapters (auth/discord/persistence) | rewrite | deferred | Not yet ported |
+| S4-08 | Effect adapters (auth/discord/persistence) | rewrite | in_progress | Adapter scaffolding added for persistence and Discord notifications |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for research/factory/hazard/orb/security/chat |
 | S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network-event parity tests |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
