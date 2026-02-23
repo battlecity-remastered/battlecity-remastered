@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { Effect } from "effect";
 import { GameRuntime } from "./runtime/GameRuntime.js";
 import { DEFAULT_RUNTIME_CONFIG } from "./runtime/types.js";
+import { RuntimeScope } from "./runtime/RuntimeScope.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -25,6 +26,7 @@ const runtime = new GameRuntime({
         io.to(socketId).emit("event:rejected", { reason });
     }
 });
+const runtimeScope = RuntimeScope.open(runtime, DEFAULT_RUNTIME_CONFIG);
 
 app.get("/health", (_req: Request, res: Response) => {
     res.json({ ok: true, service: "server-ts" });
@@ -32,17 +34,22 @@ app.get("/health", (_req: Request, res: Response) => {
 
 io.on("connection", (socket) => {
     socket.on("event", (raw: unknown) => {
-        runtime.handleRawEvent(socket.id, raw);
+        runtimeScope.onSocketEvent(socket.id, raw);
     });
 
     socket.on("disconnect", () => {
-        runtime.handleDisconnect(socket.id);
+        runtimeScope.onSocketDisconnect(runtime, socket.id);
     });
 });
 
-setInterval(() => {
-    runtime.tickBullets();
-}, DEFAULT_RUNTIME_CONFIG.bulletTickMs);
+const shutdown = () => {
+    runtimeScope.close().catch((error) => {
+        console.error("[server-ts] shutdown error", error);
+    });
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 const startServer = Effect.promise(() => {
     return new Promise<void>((resolve, reject) => {

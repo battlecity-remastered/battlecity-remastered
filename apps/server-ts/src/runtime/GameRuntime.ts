@@ -14,9 +14,12 @@ import { emitPlayersSnapshot } from "./snapshot.js";
 import { removePlayer } from "./player-runtime.js";
 import { tickBullets } from "./bullet-runtime.js";
 import { dispatchRuntimeEvent } from "./dispatch.js";
+import { buildLobbySnapshot, leaveLobby } from "../domain/lobby/LobbyService.js";
+import { normalizeInboundEnvelopeType } from "./event-adapter.js";
+import { createRuntimeStateRef, readRuntimeState, type RuntimeStateRef } from "./state/RuntimeStateRef.js";
 
 export class GameRuntime {
-    private readonly state: RuntimeState;
+    private readonly stateRef: RuntimeStateRef;
     private readonly config: RuntimeConfig;
     private readonly broadcaster: Broadcaster;
     private readonly emitter: RuntimeEmitter;
@@ -28,8 +31,8 @@ export class GameRuntime {
     ) {
         this.broadcaster = broadcaster;
         this.config = { ...DEFAULT_RUNTIME_CONFIG, ...config };
-        this.state = initialState;
-        this.emitter = createRuntimeEmitter(this.state, this.broadcaster);
+        this.stateRef = createRuntimeStateRef(initialState);
+        this.emitter = createRuntimeEmitter(readRuntimeState(this.stateRef), this.broadcaster);
     }
 
     public handleRawEvent(socketId: string, raw: unknown): void {
@@ -38,7 +41,7 @@ export class GameRuntime {
 
     public handleRawEventEffect(socketId: string, raw: unknown): Effect.Effect<void> {
         return Effect.suspend(() => {
-            const decoded = decodeKnownEnvelope(raw);
+            const decoded = decodeKnownEnvelope(normalizeInboundEnvelopeType(raw));
             if (decoded._tag !== "Right") {
                 return Effect.sync(() => {
                     this.broadcaster.reject(socketId, "invalid_envelope");
@@ -57,19 +60,23 @@ export class GameRuntime {
 
     public handleDisconnectEffect(socketId: string): Effect.Effect<void> {
         return Effect.sync(() => {
-            this.state.socketCities.delete(socketId);
-            this.state.socketRoles.delete(socketId);
-            if (this.state.players.has(socketId)) {
+            const state = readRuntimeState(this.stateRef);
+            const released = leaveLobby(state, socketId);
+            if (state.players.has(socketId)) {
                 this.emitter.emit("player.removed", { id: socketId });
             }
-            const removedBulletIds = removePlayer(this.state, socketId);
+            if (released) {
+                this.emitter.emit("lobby.released", released);
+                this.emitter.emit("lobby.snapshot", buildLobbySnapshot(state, this.config));
+            }
+            const removedBulletIds = removePlayer(state, socketId);
             for (const bulletId of removedBulletIds) {
                 this.emitter.emit("bullet.resolved", {
                     id: bulletId,
                     reason: "out_of_bounds"
                 });
             }
-            emitPlayersSnapshot(this.state, this.emitter);
+            emitPlayersSnapshot(state, this.emitter);
         });
     }
 
@@ -79,17 +86,18 @@ export class GameRuntime {
 
     public tickBulletsEffect(): Effect.Effect<void> {
         return Effect.sync(() => {
-            tickBullets(this.state, this.config, this.emitter);
+            tickBullets(readRuntimeState(this.stateRef), this.config, this.emitter);
         });
     }
 
     public getReadonlyState(): Readonly<RuntimeState> {
-        return this.state;
+        return readRuntimeState(this.stateRef);
     }
 
     private handleEvent(socketId: string, event: KnownTypedEventEnvelope): void {
+        const state = readRuntimeState(this.stateRef);
         dispatchRuntimeEvent(socketId, event, {
-            state: this.state,
+            state,
             config: this.config,
             emitter: this.emitter,
             broadcaster: this.broadcaster,
@@ -98,7 +106,8 @@ export class GameRuntime {
     }
 
     private nextSeq(): number {
-        this.state.seq += 1;
-        return this.state.seq;
+        const state = readRuntimeState(this.stateRef);
+        state.seq += 1;
+        return state.seq;
     }
 }
