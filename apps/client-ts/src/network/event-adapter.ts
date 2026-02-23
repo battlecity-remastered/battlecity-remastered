@@ -1,18 +1,4 @@
-const legacyToCanonicalType: Record<string, string> = {
-    "lobby:assignment": "lobby.assignment",
-    "lobby:denied": "lobby.denied",
-    "lobby:released": "lobby.released",
-    "lobby:snapshot": "lobby.snapshot",
-    "player:health": "player.health",
-    "player:dead": "player.dead",
-    "player:removed": "player.removed",
-    "players:snapshot": "players.snapshot",
-    "chat:message": "chat.message"
-};
-
-const canonicalizeEventType = (type: string): string => {
-    return legacyToCanonicalType[type] ?? type;
-};
+import { canonicalizeEventType } from "@battlecity/protocol";
 
 export const normalizeInboundEnvelopeType = (raw: unknown): unknown => {
     if (typeof raw !== "object" || raw === null) {

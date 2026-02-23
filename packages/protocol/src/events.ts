@@ -124,11 +124,98 @@ export const BuildingDemolishRequest = Schema.Struct({
 });
 
 export const ChatMessage = Schema.Struct({
-    id: Schema.optional(Schema.String),
-    from: Schema.optional(Schema.String),
-    city: Schema.optional(Schema.Number),
-    text: Schema.optional(Schema.String),
-    ts: Schema.optional(Schema.Number)
+    id: Schema.String,
+    from: Schema.String,
+    city: Schema.Number,
+    text: Schema.String,
+    ts: Schema.Number,
+    scope: Schema.Literal("team", "global")
+});
+
+export const ChatMessageRequest = Schema.Struct({
+    text: Schema.String,
+    scope: Schema.optional(Schema.Literal("team", "global"))
+});
+
+export const ChatHistory = Schema.Array(ChatMessage);
+
+export const ChatRateLimit = Schema.Struct({
+    scope: Schema.Literal("team", "global"),
+    retryAt: Schema.Number
+});
+
+export const CityFinance = Schema.Struct({
+    cityId: Schema.Number,
+    cash: Schema.Number,
+    income: Schema.Number,
+    score: Schema.Number,
+    researchLevel: Schema.Number
+});
+
+export const ResearchStartRequest = Schema.Struct({
+    cityId: Schema.Number,
+    researchType: Schema.Number
+});
+
+export const ResearchUpdate = Schema.Struct({
+    cityId: Schema.Number,
+    active: Schema.optional(Schema.Struct({
+        researchType: Schema.Number,
+        remainingMs: Schema.Number
+    })),
+    completed: Schema.Array(Schema.Number)
+});
+
+export const FactoryCollectRequest = Schema.Struct({
+    cityId: Schema.Number,
+    itemType: Schema.Number,
+    amount: Schema.optional(Schema.Number)
+});
+
+export const FactoryStock = Schema.Struct({
+    cityId: Schema.Number,
+    itemType: Schema.Number,
+    stock: Schema.Number
+});
+
+export const HazardDeployRequest = Schema.Struct({
+    cityId: Schema.Number,
+    type: Schema.Number,
+    position: Vec2,
+    radius: Schema.optional(Schema.Number),
+    damage: Schema.optional(Schema.Number),
+    fuseMs: Schema.optional(Schema.Number)
+});
+
+export const HazardSpawn = Schema.Struct({
+    id: Schema.String,
+    cityId: Schema.Number,
+    type: Schema.Number,
+    position: Vec2,
+    radius: Schema.Number
+});
+
+export const HazardRemove = Schema.Struct({
+    id: Schema.String,
+    reason: Schema.Literal("detonated", "expired", "cleared")
+});
+
+export const OrbDropRequest = Schema.Struct({
+    sourceCityId: Schema.Number,
+    targetCityId: Schema.Number
+});
+
+export const CityOrbed = Schema.Struct({
+    sourceCityId: Schema.Number,
+    targetCityId: Schema.Number,
+    by: Schema.String,
+    awardedScore: Schema.Number
+});
+
+export const ScorePromotion = Schema.Struct({
+    cityId: Schema.Number,
+    score: Schema.Number,
+    rank: Schema.String
 });
 
 export const EventPayloadSchemas = {
@@ -150,7 +237,21 @@ export const EventPayloadSchemas = {
     "building.demolish.request": BuildingDemolishRequest,
     "building.demolished": BuildingDemolished,
     "lobby.assignment": LobbyAssignment,
-    "chat.message": ChatMessage
+    "chat.message": ChatMessage,
+    "chat.message.request": ChatMessageRequest,
+    "chat.history": ChatHistory,
+    "chat.rate_limit": ChatRateLimit,
+    "city.finance": CityFinance,
+    "research.start.request": ResearchStartRequest,
+    "research.update": ResearchUpdate,
+    "factory.collect.request": FactoryCollectRequest,
+    "factory.stock": FactoryStock,
+    "hazard.deploy.request": HazardDeployRequest,
+    "hazard.spawn": HazardSpawn,
+    "hazard.remove": HazardRemove,
+    "orb.drop.request": OrbDropRequest,
+    "city.orbed": CityOrbed,
+    "score.promotion": ScorePromotion
 } as const;
 
 export type KnownEventPayloadByType = {

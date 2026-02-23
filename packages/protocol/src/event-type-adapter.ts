@@ -12,7 +12,17 @@ const legacyToCanonicalType = {
     "player:dead": "player.dead",
     "player:removed": "player.removed",
     "players:snapshot": "players.snapshot",
-    "chat:message": "chat.message"
+    "chat:message": "chat.message",
+    "chat:history": "chat.history",
+    "chat:rate_limit": "chat.rate_limit",
+    "city:finance": "city.finance",
+    "research:update": "research.update",
+    "factory:collect": "factory.collect.request",
+    "hazard:spawn": "hazard.spawn",
+    "hazard:remove": "hazard.remove",
+    "orb:drop": "orb.drop.request",
+    "city:orbed": "city.orbed",
+    "score:promotion": "score.promotion"
 } as const;
 
 export type LegacyEventType = keyof typeof legacyToCanonicalType;
