@@ -40,6 +40,7 @@
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | done | Persistence/discord adapters exercised by authority flows |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | Server parity matrix ports | rewrite | in_progress | Server authority regressions continuously expanded |
 | S5-07 | Client collision/movement tests | rewrite | in_progress | Sim-core + client movement parity tests active |
+| S5-08 | Client item/icon/bullet behavior tests | rewrite | in_progress | Added dedicated intent-level item/bullet behavior coverage (`item-bullet-intents.test.ts`) |
 | S5-09 | Client UI/network parity tests | rewrite | in_progress | Ingress canonicalization + handler inventory + lobby/chat/help/map/options modal helper tests added |
 | S5-12 | CI parity gate tightening | rewrite | done | Added `typecheck` gates to both GitHub and GitLab pipelines |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Remaining legacy feature/UI behavior porting tracked explicitly |

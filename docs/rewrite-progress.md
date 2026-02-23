@@ -63,6 +63,7 @@
 | S4-08 | done | Effect-based persistence/notification adapters exercised by live flows |
 | S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests remain expanded across gameplay authority domains |
 | S5-07 | in_progress | Collision/movement parity tests active in sim-core + client suites |
+| S5-08 | in_progress | Added dedicated client item/bullet intent behavior assertions (`item-bullet-intents.test.ts`) covering fire/pickup/use/hazard intent emission |
 | S5-09 | in_progress | Client parity tests expanded with ingress canonicalization, handler inventory coverage, and modal hotkey/options helper assertions |
 | S5-12 | done | CI parity gates now include explicit `typecheck` in both GitHub and GitLab pipelines |
 | Other S5 IDs | deferred | Broader legacy behavior-matrix ports remain tracked and explicit |
@@ -80,6 +81,7 @@
 - `apps/client-ts/test/help-map-modal.test.ts`
 - `apps/client-ts/test/modal-hotkeys.test.ts`
 - `apps/client-ts/test/options-modal.test.ts`
+- `apps/client-ts/test/item-bullet-intents.test.ts`
 - `docs/rewrite-progress.md`
 - `docs/parity-checklist.md`
 - `docs/typescript-gap-analysis.md`

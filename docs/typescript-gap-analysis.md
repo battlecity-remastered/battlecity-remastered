@@ -278,3 +278,8 @@ The rewrite should only be considered complete when:
 - S5 client test parity expansion:
   - Added modal/hotkey/options helper tests in `apps/client-ts/test/help-map-modal.test.ts`, `apps/client-ts/test/modal-hotkeys.test.ts`, and `apps/client-ts/test/options-modal.test.ts`.
 - Validation gates for this checkpoint pass: `lint`, `typecheck`, `test`, `rewrite:check:strict`.
+
+## Implementation Status Update (2026-02-23, checkpoint 5)
+- S5 client behavior matrix expansion:
+  - Added `apps/client-ts/test/item-bullet-intents.test.ts` to assert intent emission parity for `bullet.fire.request`, `icon.pickup.request`, `item.use.request`, and `hazard.deploy.request` control paths.
+- Validation remains green after this test expansion: `test` and `rewrite:check:strict` pass.

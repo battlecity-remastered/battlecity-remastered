@@ -256,3 +256,6 @@ apps/client-ts/src/
 - `S2-22`: in_progress (options modal parity slice implemented with HUD/overlay controls in `apps/client-ts/src/ui/options/OptionsModal.ts` + `apps/client-ts/src/ui/modals/ModalHotkeys.ts`).
 - `S2-08`: in_progress (HUD visibility now option-driven through client state and scene render path).
 - `S5-09`: in_progress (client UI parity tests now include modal/hotkey/options helper coverage).
+
+## Status Update (2026-02-23, checkpoint 5)
+- `S5-08`: in_progress (client item/bullet intent behavior assertions added in `apps/client-ts/test/item-bullet-intents.test.ts` for fire/pickup/use/hazard intent emission paths).
