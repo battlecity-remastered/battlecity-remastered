@@ -16,6 +16,8 @@ import { createIntroModal } from "./ui/intro/IntroModal.js";
 import { createTutorialManager } from "./ui/tutorial/TutorialManager.js";
 import { createAudioManager } from "./audio/AudioManager.js";
 import { createMusicManager } from "./audio/MusicManager.js";
+import { createIdentityManager, registerIdentityHotkeys } from "./ui/identity/IdentityManager.js";
+import { registerInventoryHotkeys } from "./gameplay/items/IconInventoryService.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -31,11 +33,22 @@ const introModal = createIntroModal(state);
 const tutorialUi = createTutorialManager(state);
 const audio = createAudioManager(state);
 const music = createMusicManager(state);
+const identityUi = createIdentityManager(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
 const unregisterBuildMenuHotkeys = registerBuildMenuHotkeys(state);
+const unregisterIdentityHotkeys = registerIdentityHotkeys(state);
+const unregisterInventoryHotkeys = registerInventoryHotkeys(state, network.send);
 const loop = startGameLoop(state, network.send);
+
+const onDebugToggle = (event: KeyboardEvent): void => {
+    if (event.key === "F7") {
+        state.ui.showBotDebug = !state.ui.showBotDebug;
+        event.preventDefault();
+    }
+};
+window.addEventListener("keydown", onDebugToggle);
 
 scene.app.ticker.add(() => {
     scene.render();
@@ -47,6 +60,7 @@ scene.app.ticker.add(() => {
     buildMenu.render();
     introModal.render();
     tutorialUi.render();
+    identityUi.render();
     audio.tick();
     music.tick();
 });
@@ -58,6 +72,9 @@ window.addEventListener("beforeunload", () => {
     unregisterWindowMode();
     unregisterModalHotkeys();
     unregisterBuildMenuHotkeys();
+    unregisterIdentityHotkeys();
+    unregisterInventoryHotkeys();
+    window.removeEventListener("keydown", onDebugToggle);
     lobbyUi.dispose();
     chatUi.dispose();
     helpModal.dispose();
@@ -66,6 +83,7 @@ window.addEventListener("beforeunload", () => {
     buildMenu.dispose();
     introModal.dispose();
     tutorialUi.dispose();
+    identityUi.dispose();
     audio.dispose();
     music.dispose();
     network.stop();

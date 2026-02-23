@@ -21,11 +21,31 @@ test("collect/use/hazard controls emit item lifecycle intents", () => {
     state.controls.collectFactory = true;
     state.controls.useItem = true;
     state.controls.demolish = true;
+    state.ui.selectedInventoryItemType = 4;
 
     const types = collectTypes(state);
     assert.ok(types.includes("icon.pickup.request"));
     assert.ok(types.includes("item.use.request"));
     assert.ok(types.includes("hazard.deploy.request"));
+});
+
+test("shift+use emits icon:drop for selected inventory item", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.controls.useItem = true;
+    state.controls.shift = true;
+    state.ui.selectedInventoryItemType = 3;
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    const dropIntent = plan.intents.find((intent) => intent.type === "icon:drop");
+    assert.ok(dropIntent);
+    assert.deepEqual(dropIntent.payload, {
+        itemType: 3,
+        cityId: 2,
+        x: 128,
+        y: 128
+    });
 });
 
 test("ctrl+b emits building.place.request using pointer tile instead of orb drop", () => {

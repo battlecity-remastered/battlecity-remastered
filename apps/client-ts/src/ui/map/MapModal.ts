@@ -1,5 +1,7 @@
 import type { ClientState } from "../../app/state.js";
 import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
+import { buildCityLayoutSnapshot } from "../../world/city-layout.js";
+import { assetManifest } from "../../assets/manifest.js";
 
 const RADAR_WIDTH = 16;
 const RADAR_HEIGHT = 12;
@@ -35,9 +37,11 @@ const buildRadarRows = (state: ClientState): string[] => {
 };
 
 export const buildMapLines = (state: ClientState): string[] => {
+    const layout = buildCityLayoutSnapshot(state);
     const lines = [
         `Map - City ${state.local.city}`,
         `Player: ${state.local.id ?? "pending"}`,
+        `Map data: ${assetManifest.mapData}`,
         `Buildings: ${state.buildings.size}`,
         `Defenses: ${state.defenses.size}`,
         `Hazards: ${state.hazards.size}`,
@@ -50,6 +54,10 @@ export const buildMapLines = (state: ClientState): string[] => {
     }
     if (state.lobby.assignments.length === 0) {
         lines.push("none");
+    }
+    lines.push("City Layout:");
+    for (const entry of layout.slice(0, 8)) {
+        lines.push(`C${entry.cityId}: b${entry.buildingCount} d${entry.defenseCount} h${entry.hazardCount}`);
     }
     return lines;
 };

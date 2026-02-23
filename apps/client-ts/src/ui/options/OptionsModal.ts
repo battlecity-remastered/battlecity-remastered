@@ -18,6 +18,14 @@ export const applyOptionsAction = (
         state.ui.showTutorial = !state.ui.showTutorial;
         return true;
     }
+    if (normalized === "i") {
+        state.ui.showIdentityPanel = !state.ui.showIdentityPanel;
+        return true;
+    }
+    if (normalized === "p") {
+        state.ui.showBotDebug = !state.ui.showBotDebug;
+        return true;
+    }
     if (normalized === "[" || normalized === "{" ) {
         state.ui.overlaysOpacity = Math.max(0.25, Number((state.ui.overlaysOpacity - 0.1).toFixed(2)));
         return true;
@@ -35,6 +43,8 @@ export const buildOptionsLines = (state: ClientState): string[] => {
         `HUD: ${state.ui.showHud ? "on" : "off"} (press H)`,
         `Audio: ${state.ui.audioEnabled ? "on" : "off"} (press M)`,
         `Tutorial: ${state.ui.showTutorial ? "on" : "off"} (press T)`,
+        `Identity panel: ${state.ui.showIdentityPanel ? "on" : "off"} (press I/F6)`,
+        `Bot debug: ${state.ui.showBotDebug ? "on" : "off"} (press P/F7)`,
         `Overlay opacity: ${state.ui.overlaysOpacity.toFixed(2)} (press [ or ])`,
         "Close: F3"
     ];

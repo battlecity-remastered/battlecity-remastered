@@ -5,6 +5,7 @@ import type {
 import type { ClientState } from "./state.js";
 import { updateFromSnapshot } from "./state.js";
 import { resolveBulletSpeed } from "../gameplay/bullets/BulletClientService.js";
+import { onInventoryUpdate } from "../gameplay/items/IconInventoryService.js";
 
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
@@ -174,6 +175,7 @@ const handlers: {
         for (const item of payload.items) {
             state.inventory.set(item.itemType, item.count);
         }
+        onInventoryUpdate(state);
     },
     "icon.pickup.confirmed": (state, payload) => {
         if (payload.playerId !== state.local.id) {
@@ -212,6 +214,7 @@ const handlers: {
         state.scoreProfile.userId = payload.userId;
         state.scoreProfile.score = payload.score;
         state.scoreProfile.rank = payload.rank;
+        state.identity.userId = payload.userId;
     },
     "defense.spawn": (state, payload) => {
         state.defenses.set(payload.id, {

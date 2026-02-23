@@ -99,6 +99,11 @@ export type ClientState = {
         score: number;
         rank: string | null;
     };
+    identity: {
+        userId: string | null;
+        callsign: string;
+        provider: "local" | "google";
+    };
     chat: {
         history: Array<{
             id: string;
@@ -158,32 +163,54 @@ export type ClientState = {
         showIntroModal: boolean;
         showTutorial: boolean;
         selectedBuildType: number;
+        selectedInventoryItemType: number | null;
+        bombArmed: boolean;
         overlaysOpacity: number;
         audioEnabled: boolean;
+        showIdentityPanel: boolean;
+        showBotDebug: boolean;
     };
 };
 
+const createLocalDefaults = (): LocalState => ({
+    id: null,
+    city: 0,
+    direction: 0,
+    x: 128,
+    y: 128,
+    speed: 300,
+    health: 100,
+    maxHealth: 100,
+    lastShotAt: 0,
+    lastResearchAt: 0,
+    lastFactoryCollectAt: 0,
+    lastHazardAt: 0,
+    lastItemUseAt: 0,
+    lastOrbAt: 0,
+    lastBuildAt: 0,
+    lastDemolishAt: 0,
+    lastLobbyLeaveAt: 0
+});
+
+const createUiDefaults = (): ClientState["ui"] => ({
+    showHud: true,
+    showHelpModal: false,
+    showMapModal: false,
+    showOptionsModal: false,
+    showBuildMenu: true,
+    showIntroModal: true,
+    showTutorial: false,
+    selectedBuildType: 109,
+    selectedInventoryItemType: null,
+    bombArmed: false,
+    overlaysOpacity: 0.66,
+    audioEnabled: true,
+    showIdentityPanel: false,
+    showBotDebug: false
+});
 export const createClientState = (): ClientState => {
     return {
-        local: {
-            id: null,
-            city: 0,
-            direction: 0,
-            x: 128,
-            y: 128,
-            speed: 300,
-            health: 100,
-            maxHealth: 100,
-            lastShotAt: 0,
-            lastResearchAt: 0,
-            lastFactoryCollectAt: 0,
-            lastHazardAt: 0,
-            lastItemUseAt: 0,
-            lastOrbAt: 0,
-            lastBuildAt: 0,
-            lastDemolishAt: 0,
-            lastLobbyLeaveAt: 0,
-        },
+        local: createLocalDefaults(),
         remotePlayers: new Map(),
         lobby: {
             deniedReason: null,
@@ -202,6 +229,11 @@ export const createClientState = (): ClientState => {
             userId: null,
             score: 0,
             rank: null
+        },
+        identity: {
+            userId: null,
+            callsign: "Pilot",
+            provider: "local"
         },
         chat: {
             history: [],
@@ -237,18 +269,7 @@ export const createClientState = (): ClientState => {
             surfaceWidth: 0,
             surfaceHeight: 0
         },
-        ui: {
-            showHud: true,
-            showHelpModal: false,
-            showMapModal: false,
-            showOptionsModal: false,
-            showBuildMenu: true,
-            showIntroModal: true,
-            showTutorial: false,
-            selectedBuildType: 109,
-            overlaysOpacity: 0.66,
-            audioEnabled: true
-        }
+        ui: createUiDefaults()
     };
 };
 

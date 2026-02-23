@@ -11,6 +11,10 @@ test("applyOptionsAction toggles HUD and clamps opacity range", () => {
     assert.equal(state.ui.audioEnabled, false);
     assert.equal(applyOptionsAction(state, "t"), true);
     assert.equal(state.ui.showTutorial, true);
+    assert.equal(applyOptionsAction(state, "i"), true);
+    assert.equal(state.ui.showIdentityPanel, true);
+    assert.equal(applyOptionsAction(state, "p"), true);
+    assert.equal(state.ui.showBotDebug, true);
 
     state.ui.overlaysOpacity = 0.25;
     assert.equal(applyOptionsAction(state, "["), true);
@@ -26,10 +30,14 @@ test("buildOptionsLines reflects current options state", () => {
     state.ui.showHud = false;
     state.ui.audioEnabled = false;
     state.ui.showTutorial = true;
+    state.ui.showIdentityPanel = true;
+    state.ui.showBotDebug = true;
     state.ui.overlaysOpacity = 0.7;
     const lines = buildOptionsLines(state);
     assert.equal(lines[1], "HUD: off (press H)");
     assert.equal(lines[2], "Audio: off (press M)");
     assert.equal(lines[3], "Tutorial: on (press T)");
-    assert.equal(lines[4], "Overlay opacity: 0.70 (press [ or ])");
+    assert.equal(lines[4], "Identity panel: on (press I/F6)");
+    assert.equal(lines[5], "Bot debug: on (press P/F7)");
+    assert.equal(lines[6], "Overlay opacity: 0.70 (press [ or ])");
 });

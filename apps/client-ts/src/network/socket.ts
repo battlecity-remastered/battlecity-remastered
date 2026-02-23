@@ -59,7 +59,11 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         Effect.runSync(logClient("socket.connected", {
             socketId: socket.id
         }));
-        send("lobby.join.request", { desiredCity: state.local.city });
+        send("lobby.join.request", {
+            desiredCity: state.local.city,
+            userId: state.identity.userId ?? undefined,
+            callsign: state.identity.callsign
+        });
     });
     socket.on("disconnect", (reason) => {
         Effect.runSync(logClient("socket.disconnected", {

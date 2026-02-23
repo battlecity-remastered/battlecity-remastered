@@ -1,4 +1,7 @@
 import type { ClientState } from "../app/state.js";
+import { buildInventoryHudLines } from "../gameplay/items/IconInventoryService.js";
+import { summarizeRogueTanks } from "../gameplay/rogue/RogueTankService.js";
+import { summarizeDefenderState } from "../gameplay/defenders/DefenderDebugService.js";
 
 const readFinance = (state: ClientState): { cash: string; income: string } => {
     const finance = state.cityFinance.get(state.local.city);
@@ -84,11 +87,16 @@ const buildHudEventLines = (state: ClientState): string[] => {
 export const buildHudLines = (state: ClientState): string[] => {
     const finance = readFinance(state);
     const researchLine = readResearch(state);
+    const rogue = summarizeRogueTanks(state);
+    const defenders = summarizeDefenderState(state);
     return [
         ...buildHudIdentityLines(state),
         ...buildHudWorldLines(state, finance, researchLine),
+        ...buildInventoryHudLines(state),
+        `hostiles: ${rogue.hostilePlayers} (nearest ${rogue.nearestDistance === null ? "-" : Math.round(rogue.nearestDistance)})`,
+        `defenses damaged: ${defenders.damagedDefenses}/${defenders.defenseCount}`,
         ...buildHudEventLines(state),
         `pointer: ${Math.round(state.pointer.x)},${Math.round(state.pointer.y)} (${state.pointer.inside ? "in" : "out"})`,
-        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
+        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U use item, Shift+U drop, V arm bomb, X hazard, B orb, Shift+B defense"
     ];
 };
