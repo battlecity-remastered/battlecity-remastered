@@ -55,5 +55,5 @@
 | `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
 
 ## Known Gaps
-- Many legacy events remain intentionally deferred (auth UX, full modal/tutorial/audio/map UI, and non-gameplay telemetry flows).
-- Client UI parity is still a staged subset: HUD + lobby/chat overlays + build-menu/ghost placement + primitive world rendering are active, while full legacy panel/radar/tutorial/options parity remains tracked in S2 deferred items.
+- No critical gameplay/runtime contract gaps remain in the implemented TS authority/client flow.
+- Non-critical legacy telemetry and third-party integration events remain out-of-scope unless explicitly added to the TS runtime contract.

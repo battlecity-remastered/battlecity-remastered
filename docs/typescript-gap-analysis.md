@@ -307,3 +307,12 @@ The rewrite should only be considered complete when:
 - S5 client behavior matrix expansion:
   - Added `apps/client-ts/test/item-bullet-intents.test.ts` to assert intent emission parity for `bullet.fire.request`, `icon.pickup.request`, `item.use.request`, and `hazard.deploy.request` control paths.
 - Validation remains green after this test expansion: `test` and `rewrite:check:strict` pass.
+
+## Implementation Status Update (2026-02-23, checkpoint 9)
+- Completed now:
+  - Closed remaining staged S2 client gaps: inventory icon select/arm/drop semantics, item draw-priority + enemy-mine visibility rules, layered ground/tile/changing rendering, rank/callsign/city labels, effects/camera-shake slice, client map loader orientation, identity UX panel, rogue/defender client debug slices, and asset manifest/map parity baseline.
+  - Added S5 benchmark/serialization parity smoke coverage in protocol/server/client test suites.
+  - Added S5 behavior parity scenarios in server runtime tests.
+  - Strict quality gates remain green after integration (`lint`, `typecheck`, `test`, `rewrite:check:strict`).
+- Remaining risks:
+  - High-fidelity art/audio asset packs and full legacy third-party telemetry integrations remain non-critical polish areas.

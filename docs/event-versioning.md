@@ -2,7 +2,7 @@
 
 ## Status
 - Last updated: 2026-02-23
-- Stage checkpoint: `S3` compatibility complete for all implemented gameplay/runtime events.
+- Stage checkpoint: `S5` parity delivery; compatibility remains complete for all implemented gameplay/runtime events.
 
 ## Canonical Contract
 - Envelope field `type` uses dot-delimited canonical names.
