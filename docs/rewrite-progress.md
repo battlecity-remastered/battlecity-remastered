@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S1` subsystem chunk (inventory + medkit + hospital healing authority), with coordinated `S3` contract and `S2` client state updates.
+- `S1` subsystem chunk (spawn-safe relocation + world collision clamp), layered after the inventory/health authority slice.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -12,6 +12,7 @@
 | S1-01 | done | Lobby mayor/recruit assignment and overflow denial |
 | S1-02 | done | Lobby leave/release lifecycle + disconnect handling |
 | S1-05 | done | Player update anti-cheat distance validator (`PlayerUpdateValidator`) |
+| S1-06 | done | Spawn-safe relocation and map clamp via `SpawnService` + `CollisionService` |
 | S1-07 | done | Hospital healing tick parity slice via `HealingService` and `player.health` source tagging |
 | S1-08 | done | Medkit authoritative item-use flow (`item.use.request`) consuming inventory and healing |
 | S1-11 | done | Authoritative research start/tick/update flow |
@@ -25,7 +26,7 @@
 | S1-21 | done | Chat message/history/rate-limit handling |
 | S1-09 | done | Mayor-only build authority + city spend + collision/chain/research gates |
 | S1-10 | done | Demolish reject reasons now emitted to requester via `demolish.denied` |
-| S1-03,S1-04,S1-06,S1-12,S1-18,S1-22,S1-23,S1-24,S1-25,S1-26 | deferred | Not yet parity-complete vs legacy systems |
+| S1-03,S1-04,S1-12,S1-18,S1-22,S1-23,S1-24,S1-25,S1-26 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract expanded with inventory/item/icon authority events (`inventory.update`, `item.use.request`, `icon.pickup.*`) |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter |
 | S3-03 | in_progress | Dispatch expanded for new authoritative subsystems |
@@ -47,6 +48,10 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
+- `apps/server-ts/src/domain/spawn/SpawnService.ts`
+- `apps/server-ts/src/domain/world/CollisionService.ts`
+- `apps/server-ts/src/runtime/player-runtime.ts`
+- `apps/server-ts/test/game-runtime.test.ts`
 - `apps/server-ts/src/domain/health/HealingService.ts`
 - `apps/server-ts/src/domain/icons/IconDropService.ts`
 - `apps/server-ts/src/domain/inventory/InventoryService.ts`

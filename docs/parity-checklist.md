@@ -16,7 +16,7 @@
 | S1-03 | Identity/profile binding | rewrite | deferred | Full auth/persistence integration pending |
 | S1-04 | Rank/points profile hydration | rewrite | deferred | Score persistence/promotion parity pending |
 | S1-05 | Movement anti-cheat validation | rewrite | done | Distance-based validator and rejection mapping added |
-| S1-06 | Spawn-safe relocation | rewrite | deferred | Terrain/building safe relocation pending |
+| S1-06 | Spawn-safe relocation | rewrite | done | Player updates are clamped to world and relocated from building footprint collisions |
 | S1-07 | Hospital healing tick | rewrite | done | `HealingService` heals in-city players when hospital building is present |
 | S1-08 | Medkit authoritative use | rewrite | done | `item.use.request` consumes inventory and emits authoritative health updates |
 | S1-09 | Building rules/cost/adjacency | rewrite | done | Mayor gate + city budget spend + research/collision/chain checks implemented |

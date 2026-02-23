@@ -5,6 +5,7 @@ import {
 } from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeConfig, RuntimePlayer, RuntimeState } from "./types.js";
+import { resolveSpawnPosition } from "../domain/spawn/SpawnService.js";
 
 const makeDefaultPlayer = (
     socketId: string,
@@ -40,7 +41,7 @@ export const upsertPlayerFromUpdate = (
         direction: normalizeHeading32(payload.direction)
     };
 
-    const next = payload.isMoving
+    const moved = payload.isMoving
         ? {
             ...advancePlayer(withDirection, config.serverStepMs, config.mapMax, config.mapMax),
             city,
@@ -48,6 +49,13 @@ export const upsertPlayerFromUpdate = (
             maxHealth: current.maxHealth
         }
         : withDirection;
+
+    const spawnSafe = resolveSpawnPosition(state, city, moved.x, moved.y, config);
+    const next = {
+        ...moved,
+        x: spawnSafe.x,
+        y: spawnSafe.y
+    };
 
     state.players.set(socketId, next);
 };

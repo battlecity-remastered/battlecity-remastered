@@ -427,6 +427,30 @@ test("player.update rejects suspicious teleport distance", () => {
     assert.ok(rejected.some((entry) => entry.reason === "ValidationFailed"));
 });
 
+test("player spawn is relocated to nearest safe offset when colliding with building footprint", () => {
+    const { runtime } = makeHarness();
+
+    runtime.handleRawEvent("mayor", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
+    runtime.handleRawEvent("mayor", makeEnvelope("building.place.request", 2, {
+        ownerId: "mayor",
+        cityId: 0,
+        type: 300,
+        tileX: 10,
+        tileY: 10
+    }));
+    runtime.handleRawEvent("mayor", makeEnvelope("player.update", 3, {
+        id: "mayor",
+        city: 0,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 320, y: 320 }
+    }));
+
+    const player = runtime.getReadonlyState().players.get("mayor");
+    assert.ok(player);
+    assert.notEqual(player.x, 320);
+});
+
 test("research start spends city cash and emits update/finance", () => {
     const { runtime, broadcast } = makeHarness();
 
