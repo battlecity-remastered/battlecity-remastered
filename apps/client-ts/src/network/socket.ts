@@ -37,20 +37,35 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         const program = decodeServerEnvelope(raw).pipe(
             Effect.flatMap((decoded) => {
                 if (!decoded) {
-                    return logClient("socket.event.ignored");
+                    return logClient("socket.event.ignored", {
+                        rawType: typeof raw === "object" && raw && "type" in (raw as Record<string, unknown>)
+                            ? (raw as { type?: unknown }).type
+                            : null
+                    });
                 }
                 return Effect.sync(() => {
                     applyServerEvent(state, decoded);
                 });
             }),
-            Effect.catchAll(() => logClient("socket.event.decode_error"))
+            Effect.catchAll((error) => logClient("socket.event.decode_error", {
+                error: String(error)
+            }))
         );
 
         Effect.runSync(program);
     };
 
     socket.on("connect", () => {
+        Effect.runSync(logClient("socket.connected", {
+            socketId: socket.id
+        }));
         send("lobby.join.request", { desiredCity: state.local.city });
+    });
+    socket.on("disconnect", (reason) => {
+        Effect.runSync(logClient("socket.disconnected", {
+            socketId: socket.id,
+            reason
+        }));
     });
     socket.on("event", onServerEvent);
 
