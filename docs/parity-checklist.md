@@ -15,48 +15,53 @@
 | S1-02 | Lobby lifecycle leave/release | rewrite | done | Leave flow + disconnect release events added |
 | S1-03 | Identity/profile binding | rewrite | deferred | Full auth/persistence integration pending |
 | S1-04 | Rank/points profile hydration | rewrite | deferred | Score persistence/promotion parity pending |
-| S1-05 | Movement anti-cheat validation | rewrite | deferred | Advanced validator pipeline pending |
+| S1-05 | Movement anti-cheat validation | rewrite | done | Distance-based validator and rejection mapping added |
 | S1-06 | Spawn-safe relocation | rewrite | deferred | Terrain/building safe relocation pending |
 | S1-07 | Hospital healing tick | rewrite | deferred | Not yet ported |
 | S1-08 | Medkit authoritative use | rewrite | deferred | Not yet ported |
 | S1-09 | Building rules/cost/adjacency | rewrite | deferred | Advanced rules/research gates pending |
 | S1-10 | Demolish deny semantics | rewrite | deferred | Expanded deny reason parity pending |
-| S1-11 | Research lifecycle/tree | rewrite | deferred | Not yet ported |
+| S1-11 | Research lifecycle/tree | rewrite | done | Research start/tick/completion with authoritative updates |
 | S1-12 | Population/house model | rewrite | deferred | Not yet ported |
-| S1-13 | Economy tick parity | rewrite | deferred | Not yet ported |
+| S1-13 | Economy tick parity | rewrite | done | City economy tick and finance broadcasts implemented |
 | S1-14 | Inventory caps/release | rewrite | deferred | Not yet ported |
-| S1-15 | Factory production/stock | rewrite | deferred | Not yet ported |
+| S1-15 | Factory production/stock | rewrite | done | Tick-based stock production and collect flow implemented |
 | S1-16 | Icon drop/pickup authority | rewrite | deferred | Not yet ported |
-| S1-17 | Hazard lifecycle parity | rewrite | deferred | Not yet ported |
+| S1-17 | Hazard lifecycle parity | rewrite | done | Hazard deploy/tick/detonate/remove flow implemented |
 | S1-18 | Defense lifecycle parity | rewrite | deferred | Not yet ported |
-| S1-19 | Orb + city reset parity | rewrite | deferred | Not yet ported |
-| S1-20 | Score/promotion events | rewrite | deferred | Not yet ported |
-| S1-21 | Chat history/rate limit | rewrite | deferred | Core message schema only |
+| S1-19 | Orb + city reset parity | rewrite | done | Orb drop validates, resets target city state, emits city.orbed |
+| S1-20 | Score/promotion events | rewrite | done | Score promotion event emitted from orb flow |
+| S1-21 | Chat history/rate limit | rewrite | done | Chat message, history, and rate-limit handling added |
 | S1-22 | Fake city lifecycle | rewrite | deferred | Not yet ported |
 | S1-23 | Defender/rogue bots | rewrite | deferred | Not yet ported |
 | S1-24 | Map/layout loaders | rewrite | deferred | Not yet ported |
 | S1-25 | Bullet terrain/structure parity | rewrite | deferred | Current bullet collision is minimal |
 | S1-26 | Discord notifications | rewrite | deferred | Integration adapter not implemented yet |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Added canonical + compatibility scaffolding |
+| S3-01 | Full gameplay schemas | rewrite | in_progress | Added economy/research/factory/hazard/orb/chat/score schemas |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode |
-| S3-03 | Server dispatch expansion | rewrite | in_progress | Added lobby leave handling |
-| S3-04 | Client apply handler expansion | rewrite | in_progress | Added lobby snapshot + denied/released handling |
+| S3-03 | Server dispatch expansion | rewrite | in_progress | Added research/factory/hazard/orb/chat handlers plus finance sync |
+| S3-04 | Client apply handler expansion | rewrite | in_progress | Added finance/research/factory/chat/orb/promotion handlers |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
-| S2-* | Client gameplay/UI parity set | rewrite | deferred | Restorations pending |
-| S4-01 | Layer-composed domain services | rewrite | in_progress | Lobby service extracted; broader layering pending |
-| S4-02 | Typed domain errors/rejections | rewrite | in_progress | Runtime rejection ADT introduced |
+| S2-01 | Client event handling surface | rewrite | in_progress | New subsystem events now decoded/applied |
+| S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD now renders finance/research/factory/chat counters |
+| S2-15 | Keyboard semantics | rewrite | in_progress | Extended keybind state and new gameplay intents |
+| S2-* (remaining) | Client gameplay/UI parity set | rewrite | deferred | Full parity restoral pending |
+| S4-01 | Layer-composed domain services | rewrite | in_progress | Server bootstrap now composes runtime through `RuntimeLayer` |
+| S4-02 | Typed domain errors/rejections | rewrite | done | Domain error ADT + centralized rejection mapping added |
 | S4-03 | Event ingress queue/backpressure | rewrite | done | Queue-based ingress added to server runtime |
 | S4-04 | Deterministic schedulers | rewrite | done | Effect-based tick scheduler added |
 | S4-05 | Ref/SynchronizedRef state | rewrite | done | Runtime state stored behind `Ref` |
 | S4-06 | Structured observability | rewrite | deferred | Limited logging only |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | deferred | Not yet ported |
-| S5-01..S5-12 | Test matrix + CI parity gates | rewrite | in_progress | Added protocol/server tests + strict gate docs |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for research/factory/hazard/orb/security/chat |
+| S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network-event parity tests |
+| S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 
 ## Exit Criteria Tracking
 - S0: done
 - S1: in_progress
 - S3: in_progress
-- S2: deferred
+- S2: in_progress
 - S4: in_progress
 - S5: in_progress

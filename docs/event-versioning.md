@@ -9,6 +9,7 @@
 - Legacy colon names are accepted on ingress through alias normalization.
 - Alias normalization runs before payload schema decode.
 - After decode, runtime sees canonical type only.
+- Client and server adapters now both call protocol-level `canonicalizeEventType` so alias tables are single-source.
 
 ## Migration Strategy
 1. Keep ingress alias table for legacy clients.
