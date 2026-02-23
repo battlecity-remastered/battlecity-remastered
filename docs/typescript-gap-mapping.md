@@ -108,7 +108,7 @@ Legend:
 | S4-04 Deterministic schedulers for ticks | current `setInterval` tick in `apps/server-ts/src/main.ts` | `apps/server-ts/src/runtime/TickScheduler.ts` (new) | done |
 | S4-05 Replace mutable singleton maps with `Ref`/`SynchronizedRef` state capsules | current `createRuntimeState` map mutation | `apps/server-ts/src/runtime/state/RuntimeStateRef.ts` (new), `apps/client-ts/src/app/ClientStateRef.ts` (new) | done |
 | S4-06 Structured logging/metrics/tracing through Effects | current ad hoc console/debug patterns | `apps/server-ts/src/observability/*.ts` (new), `apps/client-ts/src/observability/*.ts` (new) | done |
-| S4-07 Resource lifecycle management for sockets and scene runtime | current imperative start/stop in `apps/client-ts/src/main.ts` and server main | `apps/client-ts/src/runtime/RuntimeScope.ts` (new), `apps/server-ts/src/runtime/RuntimeScope.ts` (new) | done |
+| S4-07 Resource lifecycle management for sockets and scene runtime | current imperative start/stop in `apps/client-ts/src/main.ts` and server main | `apps/client-ts/src/main.ts` (exists, lifecycle teardown wiring), `apps/server-ts/src/runtime/RuntimeScope.ts` (new) | done |
 | S4-08 Effect-based integration adapters (persistence/discord/auth) | legacy adapters in `server/src/users/*`, `server/src/utils/DiscordNotifier.js` | `apps/server-ts/src/adapters/*` (new) | done |
 
 ## Stage 5: Test Parity Mapping
