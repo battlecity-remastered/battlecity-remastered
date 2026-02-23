@@ -36,9 +36,9 @@ test("join + movement emits assignment and snapshots", () => {
     }));
 
     assert.equal(rejected.length, 0);
-    assert.equal(direct.length, 1);
-    assert.equal(direct[0]?.event.type, "lobby.assignment");
-    assert.equal(direct[0]?.event.payload.city, 2);
+    const assignment = direct.find((entry) => entry.event.type === "lobby.assignment");
+    assert.ok(assignment);
+    assert.equal((assignment.event.payload as { city: number }).city, 2);
 
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
@@ -63,7 +63,7 @@ test("invalid event payload is rejected", () => {
     });
 
     assert.equal(rejected.length, 1);
-    assert.equal(rejected[0]?.reason, "invalid_envelope");
+    assert.equal(rejected[0]?.reason, "InvalidEnvelope");
 });
 
 test("bullet tick resolves hits and emits health + death", () => {
@@ -144,7 +144,7 @@ test("building placement enforces assigned city", () => {
     const placed = broadcast.filter((event) => event.type === "building.placed");
     assert.equal(placed.length, 0);
     assert.equal(rejected.length, 1);
-    assert.equal(rejected[0]?.reason, "city_mismatch");
+    assert.equal(rejected[0]?.reason, "ValidationFailed");
 });
 
 test("building demolish checks ownerId when provided", () => {
@@ -172,7 +172,7 @@ test("building demolish checks ownerId when provided", () => {
     const demolished = broadcast.filter((event) => event.type === "building.demolished");
     assert.equal(demolished.length, 0);
     assert.equal(rejected.length, 1);
-    assert.equal(rejected[0]?.reason, "owner_mismatch");
+    assert.equal(rejected[0]?.reason, "ValidationFailed");
 });
 
 test("bullet fire before join is rejected", () => {
@@ -186,7 +186,7 @@ test("bullet fire before join is rejected", () => {
     }));
 
     assert.equal(rejected.length, 1);
-    assert.equal(rejected[0]?.reason, "player_not_joined");
+    assert.equal(rejected[0]?.reason, "ResourceNotFound");
 });
 
 test("demolish rejects missing building id", () => {
@@ -200,7 +200,7 @@ test("demolish rejects missing building id", () => {
     }));
 
     assert.equal(rejected.length, 1);
-    assert.equal(rejected[0]?.reason, "building_not_found");
+    assert.equal(rejected[0]?.reason, "ResourceNotFound");
 });
 
 test("disconnect emits player.removed and clears player from snapshot", () => {
@@ -288,4 +288,129 @@ test("legacy colon event names are accepted on ingress", () => {
 
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length > 0);
+});
+
+test("player.update rejects suspicious teleport distance", () => {
+    const { runtime, rejected } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 0,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 3, {
+        id: "p1",
+        city: 0,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 1000, y: 1000 }
+    }));
+
+    assert.ok(rejected.some((entry) => entry.reason === "ValidationFailed"));
+});
+
+test("research start spends city cash and emits update/finance", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("research.start.request", 2, {
+        cityId: 1,
+        researchType: 2
+    }));
+
+    const research = broadcast.find((event) => event.type === "research.update");
+    assert.ok(research);
+    const finance = broadcast.filter((event) => event.type === "city.finance").at(-1);
+    assert.ok(finance);
+    assert.ok((finance.payload as { cash: number }).cash < 200);
+});
+
+test("factory stock is produced on tick and can be collected", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    for (let i = 0; i < 15; i += 1) {
+        runtime.tickBullets();
+    }
+
+    runtime.handleRawEvent("p1", makeEnvelope("factory.collect.request", 2, {
+        cityId: 1,
+        itemType: 0,
+        amount: 1
+    }));
+
+    const stockEvents = broadcast.filter((event) => event.type === "factory.stock");
+    assert.ok(stockEvents.length > 0);
+    const collected = stockEvents.at(-1);
+    assert.ok(collected);
+    assert.ok((collected.payload as { stock: number }).stock >= 0);
+});
+
+test("hazard deploy detonates and damages nearby players", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 3, {
+        id: "target",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 220, y: 220 }
+    }));
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 4, {
+        cityId: 1,
+        type: 1,
+        position: { x: 220, y: 220 },
+        radius: 120,
+        damage: 20,
+        fuseMs: 100
+    }));
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const removed = broadcast.filter((event) => event.type === "hazard.remove");
+    assert.ok(removed.length >= 1);
+    const health = broadcast.filter((event) => event.type === "player.health");
+    assert.ok(health.length >= 1);
+});
+
+test("orb drop emits city.orbed and score.promotion", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("orb.drop.request", 2, {
+        sourceCityId: 1,
+        targetCityId: 2
+    }));
+
+    const orbed = broadcast.find((event) => event.type === "city.orbed");
+    assert.ok(orbed);
+    const promotion = broadcast.find((event) => event.type === "score.promotion");
+    assert.ok(promotion);
+});
+
+test("chat message emits history and rate limit for spam", () => {
+    const { runtime, broadcast, direct } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
+    runtime.handleRawEvent("p1", makeEnvelope("chat.message.request", 2, {
+        text: "hello",
+        scope: "team"
+    }));
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.handleRawEvent("p1", makeEnvelope("chat.message.request", 3 + i, {
+            text: `msg-${i}`,
+            scope: "global"
+        }));
+    }
+
+    assert.ok(broadcast.some((event) => event.type === "chat.message"));
+    assert.ok(direct.some((entry) => entry.event.type === "chat.history"));
+    assert.ok(direct.some((entry) => entry.event.type === "chat.rate_limit"));
 });

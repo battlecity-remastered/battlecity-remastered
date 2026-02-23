@@ -11,12 +11,57 @@ export type RuntimeBuilding = CombatBuildingState & {
     type: number;
 };
 
+export type RuntimeCity = {
+    cityId: number;
+    cash: number;
+    income: number;
+    score: number;
+    researchLevel: number;
+    orbCount: number;
+};
+
+export type RuntimeResearchState = {
+    active?: {
+        researchType: number;
+        remainingMs: number;
+    };
+    completed: number[];
+};
+
+export type RuntimeHazard = {
+    id: string;
+    cityId: number;
+    type: number;
+    x: number;
+    y: number;
+    radius: number;
+    damage: number;
+    remainingMs: number;
+};
+
+export type RuntimeChatMessage = {
+    id: string;
+    from: string;
+    city: number;
+    text: string;
+    ts: number;
+    scope: "team" | "global";
+};
+
 export type RuntimeState = {
     players: Map<string, RuntimePlayer>;
     bullets: Map<string, BulletState>;
     buildings: Map<string, RuntimeBuilding>;
+    cities: Map<number, RuntimeCity>;
+    research: Map<number, RuntimeResearchState>;
+    factoryStock: Map<number, Map<number, number>>;
+    hazards: Map<string, RuntimeHazard>;
     socketCities: Map<string, number>;
     socketRoles: Map<string, "mayor" | "recruit">;
+    chatHistory: RuntimeChatMessage[];
+    chatRateLimit: Map<string, { team: number[]; global: number[] }>;
+    economyTickAccumulatorMs: number;
+    factoryTickAccumulatorMs: number;
     seq: number;
 };
 
@@ -30,6 +75,18 @@ export type RuntimeConfig = {
     defaultBuildingHealth: number;
     playerSpeed: number;
     bulletSpeed: number;
+    maxPlayerUpdateDistancePerTick: number;
+    cityStartingCash: number;
+    cityBaseIncome: number;
+    researchCost: number;
+    researchDurationMs: number;
+    factoryProductionTickMs: number;
+    factoryStockCap: number;
+    hazardDefaultFuseMs: number;
+    hazardDefaultRadius: number;
+    hazardDefaultDamage: number;
+    orbScoreAward: number;
+    chatHistoryLimit: number;
 };
 
 export type RuntimeRejectReason =
@@ -38,7 +95,15 @@ export type RuntimeRejectReason =
     | "city_mismatch"
     | "building_not_found"
     | "owner_mismatch"
-    | "lobby_full";
+    | "lobby_full"
+    | "invalid_player_update"
+    | "insufficient_funds"
+    | "research_active"
+    | "research_unavailable"
+    | "factory_empty"
+    | "hazard_invalid"
+    | "orb_invalid"
+    | "chat_rate_limited";
 
 export type CommandResult<T> =
     | { ok: true; value: T }
@@ -61,7 +126,19 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     bulletTickMs: 100,
     defaultBuildingHealth: 120,
     playerSpeed: 300,
-    bulletSpeed: 900
+    bulletSpeed: 900,
+    maxPlayerUpdateDistancePerTick: 80,
+    cityStartingCash: 200,
+    cityBaseIncome: 15,
+    researchCost: 100,
+    researchDurationMs: 3000,
+    factoryProductionTickMs: 1000,
+    factoryStockCap: 8,
+    hazardDefaultFuseMs: 2000,
+    hazardDefaultRadius: 96,
+    hazardDefaultDamage: 35,
+    orbScoreAward: 250,
+    chatHistoryLimit: 50
 };
 
 export const createRuntimeState = (): RuntimeState => {
@@ -69,8 +146,16 @@ export const createRuntimeState = (): RuntimeState => {
         players: new Map(),
         bullets: new Map(),
         buildings: new Map(),
+        cities: new Map(),
+        research: new Map(),
+        factoryStock: new Map(),
+        hazards: new Map(),
         socketCities: new Map(),
         socketRoles: new Map(),
+        chatHistory: [],
+        chatRateLimit: new Map(),
+        economyTickAccumulatorMs: 0,
+        factoryTickAccumulatorMs: 0,
         seq: 0
     };
 };

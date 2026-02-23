@@ -7,6 +7,14 @@ import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { createBulletFromRequest } from "./bullet-runtime.js";
 import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
 import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
+import { validatePlayerUpdate } from "../domain/security/PlayerUpdateValidator.js";
+import { emitCityFinance, getOrCreateCity } from "../domain/economy/CityEconomyService.js";
+import { emitResearchState, startResearch } from "../domain/research/ResearchService.js";
+import { collectFactoryStock } from "../domain/factories/FactoryService.js";
+import { deployHazard } from "../domain/hazards/HazardService.js";
+import { dropOrb } from "../domain/orb/OrbService.js";
+import { addChatMessage, getChatHistory } from "../domain/chat/ChatService.js";
+import { rejectSocket } from "./rejections.js";
 
 type DispatchContext = {
     state: RuntimeState;
@@ -38,7 +46,7 @@ const handleCommandResult = <T>(
                 reason: result.reason
             });
         }
-        context.broadcaster.reject(socketId, result.reason);
+        rejectSocket(context.broadcaster, socketId, result.reason);
         return;
     }
     onOk(result.value);
@@ -54,6 +62,10 @@ const handlers: HandlerMap = {
         ), (assignment) => {
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
+            context.emitter.emitTo(socketId, "chat.history", getChatHistory(context.state));
+            getOrCreateCity(context.state, assignment.city, context.config);
+            emitCityFinance(context.state, assignment.city, context.config, context.emitter);
+            emitResearchState(context.state, assignment.city, context.emitter);
             emitPlayersSnapshot(context.state, context.emitter);
         });
     },
@@ -65,6 +77,15 @@ const handlers: HandlerMap = {
         }
     },
     "player.update": (socketId, payload, context) => {
+        const validation = validatePlayerUpdate(
+            context.state.players.get(socketId),
+            payload,
+            context.config
+        );
+        if (!validation.ok) {
+            rejectSocket(context.broadcaster, socketId, validation.reason);
+            return;
+        }
         upsertPlayerFromUpdate(context.state, socketId, payload, context.config);
         emitPlayersSnapshot(context.state, context.emitter);
     },
@@ -122,6 +143,82 @@ const handlers: HandlerMap = {
                 });
             }
         );
+    },
+    "chat.message.request": (socketId, payload, context) => {
+        const result = addChatMessage(context.state, socketId, payload, context.config);
+        if (!result.ok) {
+            if (result.reason === "chat_rate_limited") {
+                context.emitter.emitTo(socketId, "chat.rate_limit", {
+                    scope: payload.scope ?? "team",
+                    retryAt: Date.now() + 1000
+                });
+            }
+            rejectSocket(context.broadcaster, socketId, result.reason);
+            return;
+        }
+        if (result.value.message) {
+            context.emitter.emit("chat.message", result.value.message);
+        }
+    },
+    "research.start.request": (socketId, payload, context) => {
+        const city = context.state.socketCities.get(socketId);
+        if (city === undefined || city !== payload.cityId) {
+            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            return;
+        }
+        handleCommandResult(socketId, context, startResearch(
+            context.state,
+            payload.cityId,
+            payload.researchType,
+            context.config
+        ), (research) => {
+            context.emitter.emit("research.update", research);
+            emitCityFinance(context.state, payload.cityId, context.config, context.emitter);
+        });
+    },
+    "factory.collect.request": (socketId, payload, context) => {
+        const city = context.state.socketCities.get(socketId);
+        if (city === undefined || city !== payload.cityId) {
+            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            return;
+        }
+        handleCommandResult(socketId, context, collectFactoryStock(
+            context.state,
+            payload.cityId,
+            payload.itemType,
+            payload.amount ?? 1
+        ), (stock) => {
+            context.emitter.emit("factory.stock", stock);
+        });
+    },
+    "hazard.deploy.request": (socketId, payload, context) => {
+        const city = context.state.socketCities.get(socketId);
+        if (city === undefined) {
+            rejectSocket(context.broadcaster, socketId, "player_not_joined");
+            return;
+        }
+        handleCommandResult(socketId, context, deployHazard(
+            context.state,
+            city,
+            payload,
+            context.nextSeq,
+            context.config
+        ), (hazard) => {
+            context.emitter.emit("hazard.spawn", hazard);
+        });
+    },
+    "orb.drop.request": (socketId, payload, context) => {
+        handleCommandResult(socketId, context, dropOrb(
+            context.state,
+            socketId,
+            payload,
+            context.config
+        ), ({ cityOrbed, scorePromotion }) => {
+            context.emitter.emit("city.orbed", cityOrbed);
+            context.emitter.emit("score.promotion", scorePromotion);
+            emitCityFinance(context.state, payload.sourceCityId, context.config, context.emitter);
+            emitCityFinance(context.state, payload.targetCityId, context.config, context.emitter);
+        });
     }
 };
 

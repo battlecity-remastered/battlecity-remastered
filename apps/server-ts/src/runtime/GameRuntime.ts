@@ -17,6 +17,8 @@ import { dispatchRuntimeEvent } from "./dispatch.js";
 import { buildLobbySnapshot, leaveLobby } from "../domain/lobby/LobbyService.js";
 import { normalizeInboundEnvelopeType } from "./event-adapter.js";
 import { createRuntimeStateRef, readRuntimeState, type RuntimeStateRef } from "./state/RuntimeStateRef.js";
+import { tickRuntimeSystems } from "./system-runtime.js";
+import { rejectSocket } from "./rejections.js";
 
 export class GameRuntime {
     private readonly stateRef: RuntimeStateRef;
@@ -44,7 +46,7 @@ export class GameRuntime {
             const decoded = decodeKnownEnvelope(normalizeInboundEnvelopeType(raw));
             if (decoded._tag !== "Right") {
                 return Effect.sync(() => {
-                    this.broadcaster.reject(socketId, "invalid_envelope");
+                    rejectSocket(this.broadcaster, socketId, "invalid_envelope");
                 });
             }
 
@@ -62,6 +64,7 @@ export class GameRuntime {
         return Effect.sync(() => {
             const state = readRuntimeState(this.stateRef);
             const released = leaveLobby(state, socketId);
+            state.chatRateLimit.delete(socketId);
             if (state.players.has(socketId)) {
                 this.emitter.emit("player.removed", { id: socketId });
             }
@@ -86,7 +89,9 @@ export class GameRuntime {
 
     public tickBulletsEffect(): Effect.Effect<void> {
         return Effect.sync(() => {
-            tickBullets(readRuntimeState(this.stateRef), this.config, this.emitter);
+            const state = readRuntimeState(this.stateRef);
+            tickBullets(state, this.config, this.emitter);
+            tickRuntimeSystems(state, this.config, this.emitter, this.config.bulletTickMs);
         });
     }
 
