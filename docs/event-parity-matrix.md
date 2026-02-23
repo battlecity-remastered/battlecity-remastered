@@ -24,6 +24,7 @@
 | `lobby:join:request` | `lobby.join.request` | client -> server | yes | dispatch | send-ready | done |
 | `build:denied` | `build.denied` | server -> client | yes | emit | apply | done |
 | `demolish:denied` | `demolish.denied` | server -> client | yes | emit | apply | done |
+| `event:rejected` | `event.rejected` | server -> client | yes | emit (canonical `event.rejected`, legacy side-channel retained) | apply | done |
 | `chat:history` | `chat.history` | server -> client | yes | emit | apply | done |
 | `chat:rate_limit` | `chat.rate_limit` | server -> client | yes | emit | apply | done |
 | `city:finance` | `city.finance` | server -> client | yes | emit | apply | done |

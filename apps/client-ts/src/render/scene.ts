@@ -151,39 +151,56 @@ const readCityPopulation = (state: ClientState): number => {
     return total;
 };
 
-const buildHudLines = (state: ClientState): string[] => {
-    const localId = state.local.id ?? "(joining...)";
-    const finance = readFinance(state);
-    const researchLine = readResearch(state);
-    const factoryItem0 = readFactoryStock(state);
-    const population = readCityPopulation(state);
-    const medkits = state.inventory.get(0) ?? 0;
-    const rank = state.scoreProfile.rank ?? "-";
+const buildHudIdentityLines = (state: ClientState): string[] => {
+    return [
+        `id: ${state.local.id ?? "(joining...)"}`,
+        `user: ${state.scoreProfile.userId ?? "-"}`,
+        `city: ${state.local.city}`,
+        `rank: ${state.scoreProfile.rank ?? "-"} (${state.scoreProfile.score})`,
+        `health: ${state.local.health}/${state.local.maxHealth}`,
+        `remote: ${state.remotePlayers.size}`
+    ];
+};
+
+const buildHudWorldLines = (
+    state: ClientState,
+    finance: { cash: string; income: string },
+    researchLine: string
+): string[] => {
+    return [
+        `cash: ${finance.cash}`,
+        `income: ${finance.income}`,
+        `research: ${researchLine}`,
+        `population: ${readCityPopulation(state)}`,
+        `factory item0: ${readFactoryStock(state)}`,
+        `medkits: ${state.inventory.get(0) ?? 0}`,
+        `hazards: ${state.hazards.size}`,
+        `bullets: ${state.bullets.size}`,
+        `defenses: ${state.defenses.size}`,
+        `chat: ${state.chat.history.length}`
+    ];
+};
+
+const buildHudEventLines = (state: ClientState): string[] => {
     const lastIconPickup = state.events.lastIconPickupConfirmed;
     const lastPickupLine = lastIconPickup
         ? `${lastIconPickup.itemType} x${lastIconPickup.amount}`
         : "-";
-
     return [
-        `id: ${localId}`,
-        `user: ${state.scoreProfile.userId ?? "-"}`,
-        `city: ${state.local.city}`,
-        `rank: ${rank} (${state.scoreProfile.score})`,
-        `health: ${state.local.health}/${state.local.maxHealth}`,
-        `remote: ${state.remotePlayers.size}`,
-        `cash: ${finance.cash}`,
-        `income: ${finance.income}`,
-        `research: ${researchLine}`,
-        `population: ${population}`,
-        `factory item0: ${factoryItem0}`,
-        `medkits: ${medkits}`,
-        `hazards: ${state.hazards.size}`,
-        `bullets: ${state.bullets.size}`,
-        `defenses: ${state.defenses.size}`,
-        `chat: ${state.chat.history.length}`,
         `last pickup: ${lastPickupLine}`,
+        `rejections: ${state.events.rejectionCount} (${state.events.lastRejectedReason ?? "-"})`,
         `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
-        `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`,
+        `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`
+    ];
+};
+
+const buildHudLines = (state: ClientState): string[] => {
+    const finance = readFinance(state);
+    const researchLine = readResearch(state);
+    return [
+        ...buildHudIdentityLines(state),
+        ...buildHudWorldLines(state, finance, researchLine),
+        ...buildHudEventLines(state),
         `pointer: ${Math.round(state.pointer.x)},${Math.round(state.pointer.y)} (${state.pointer.inside ? "in" : "out"})`,
         "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U medkit, X hazard, B orb, Shift+B defense"
     ];

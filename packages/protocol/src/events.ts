@@ -130,6 +130,9 @@ export const DemolishDenied = Schema.Struct({
     id: Schema.String,
     reason: Schema.String
 });
+export const EventRejected = Schema.Struct({
+    reason: Schema.String
+});
 export const ChatMessage = Schema.Struct({
     id: Schema.String,
     from: Schema.String,
@@ -282,6 +285,7 @@ export const EventPayloadSchemas = {
     "building.placed": BuildingPlaced,
     "building.demolish.request": BuildingDemolishRequest,
     "demolish.denied": DemolishDenied,
+    "event.rejected": EventRejected,
     "building.demolished": BuildingDemolished,
     "population.update": PopulationUpdate,
     "lobby.assignment": LobbyAssignment,
@@ -310,7 +314,5 @@ export const EventPayloadSchemas = {
     "defense.update": DefenseUpdate,
     "defense.remove": DefenseRemove
 } as const;
-export type KnownEventPayloadByType = {
-    [K in keyof typeof EventPayloadSchemas]: Schema.Schema.Type<(typeof EventPayloadSchemas)[K]>;
-};
+export type KnownEventPayloadByType = { [K in keyof typeof EventPayloadSchemas]: Schema.Schema.Type<(typeof EventPayloadSchemas)[K]> };
 export type EventPayloadByType = KnownEventPayloadByType & Record<string, unknown>;

@@ -40,6 +40,7 @@ export const EventType = Schema.Literal(
     "enter_game",
     "event",
     "event:rejected",
+    "event.rejected",
     "factory:collect",
     "factory:purge",
     "factory.collect.request",

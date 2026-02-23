@@ -37,12 +37,12 @@
 | S1-24 | Map/layout loaders | rewrite | done | Legacy `map.dat` decode + city layout parsing ported to TS (`MapService`, `CityLayoutService`) with canonical data assets in `apps/server-ts/data/*` |
 | S1-25 | Bullet terrain/structure/hazard parity | rewrite | done | Authoritative bullet collisions now consume map-loader-fed blocking tiles plus existing structure/hazard checks (`hit_terrain`) |
 | S1-26 | Discord notifications | rewrite | done | Orb victory notifier now uses canonical runtime user identity and Effect webhook adapter transport when configured |
-| S3-01 | Full gameplay schemas | rewrite | in_progress | Added `player.bot_damage` schema + `player:bot_damage` alias handling in addition to prior `population.update`/defense/bullet expansions |
+| S3-01 | Full gameplay schemas | rewrite | in_progress | Added `event.rejected` schema + `event:rejected` alias handling in addition to prior `player.bot_damage`/`population.update`/defense/bullet expansions |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode including `defense:*` aliases and `inventory:update` -> `inventory.update` |
 | S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile + defense authority + orb cleanup emission, plus scoped chat dispatch routing (`team` vs `global`) |
-| S3-04 | Client apply handler expansion | rewrite | in_progress | Added typed ingress router (`decodeServerEnvelope`) ahead of apply path plus prior profile/defense/building/bullet/icon/population handling |
+| S3-04 | Client apply handler expansion | rewrite | in_progress | Added typed ingress router (`decodeServerEnvelope`) ahead of apply path plus prior profile/defense/building/bullet/icon/population/rejection handling |
 | S3-05 | Envelope versioning policy | rewrite | done | Documented in `docs/event-versioning.md` |
-| S2-01 | Client event handling surface | rewrite | in_progress | Event ingestion now decodes/canonicalizes through explicit router boundary before apply, including legacy alias coverage |
+| S2-01 | Client event handling surface | rewrite | in_progress | Event ingestion now decodes/canonicalizes through explicit router boundary before apply, including legacy alias coverage and canonical rejection telemetry |
 | S2-02 | Core movement + unstick + nearest-safe fallback | rewrite | done | Added collision-aware movement (`moveLocalPlayer`) with nearest-safe unstick fallback using `CollisionWorld` primitives |
 | S2-03 | Client collision helpers parity | rewrite | done | Added gameplay collision helpers (`collision-helpers.ts`, `collision-player.ts`) and loop integration |
 | S2-08 | Panel/finance/research HUD | rewrite | in_progress | HUD parity slice retained; scene now renders authoritative building/defense/hazard/bullet world objects and city population telemetry |

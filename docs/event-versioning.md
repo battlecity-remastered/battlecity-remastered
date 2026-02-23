@@ -35,6 +35,7 @@
 - Ingress: `demolish_building` -> canonical `building.demolished`.
 - Ingress: `population:update` -> canonical `population.update`.
 - Ingress: `player:bot_damage` -> canonical `player.bot_damage`.
+- Ingress: `event:rejected` -> canonical `event.rejected`.
 - Egress payload: `bullet.resolved` supports reason `hit_hazard` with `hitHazardId` and `hit_terrain` for blocking tile collisions.
 - Egress payload: `hazard.remove` supports reason `city_orbed` for orb-driven city cleanup.
 - Egress: always `players.snapshot`.

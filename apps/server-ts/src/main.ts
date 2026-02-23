@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from "express";
 import http from "node:http";
 import { Server } from "socket.io";
+import { makeEnvelope } from "@battlecity/protocol";
 import { Effect } from "effect";
 import { buildRuntimeServices } from "./layers/RuntimeLayer.js";
 import { logRuntime } from "./observability/RuntimeLogger.js";
@@ -22,6 +23,7 @@ const { runtime, runtimeScope } = buildRuntimeServices({
         io.to(socketId).emit("event", event);
     },
     reject: (socketId, reason) => {
+        io.to(socketId).emit("event", makeEnvelope("event.rejected", 0, { reason }));
         io.to(socketId).emit("event:rejected", { reason });
     }
 });

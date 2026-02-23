@@ -34,6 +34,21 @@ test("decodeServerEnvelope canonicalizes legacy alias event types", () => {
     assert.equal(decoded?.type, "population.update");
 });
 
+test("decodeServerEnvelope canonicalizes legacy rejection alias", () => {
+    const decoded = Effect.runSync(decodeServerEnvelope({
+        type: "event:rejected",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            reason: "ValidationFailed"
+        }
+    }));
+
+    assert.ok(decoded);
+    assert.equal(decoded?.type, "event.rejected");
+});
+
 test("decodeServerEnvelope returns null for malformed payloads", () => {
     const decoded = Effect.runSync(decodeServerEnvelope({
         type: "lobby.join.request",

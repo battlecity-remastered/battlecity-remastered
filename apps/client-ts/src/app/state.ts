@@ -115,6 +115,8 @@ export type ClientState = {
             score: number;
             rank: string;
         }>;
+        rejectionCount: number;
+        lastRejectedReason: string | null;
         lastBuildDeniedReason: string | null;
         lastDemolishDeniedReason: string | null;
         lastIconPickupConfirmed: {
@@ -193,6 +195,8 @@ export const createClientState = (): ClientState => {
         events: {
             lastOrbedCityId: null,
             promotions: [],
+            rejectionCount: 0,
+            lastRejectedReason: null,
             lastBuildDeniedReason: null,
             lastDemolishDeniedReason: null,
             lastIconPickupConfirmed: null

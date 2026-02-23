@@ -147,6 +147,9 @@ test("economy/research/factory/chat/orb events update client stores", () => {
         id: "building_1",
         reason: "not_mayor"
     }));
+    applyServerEvent(state, makeKnownEnvelope("event.rejected", 13, {
+        reason: "ValidationFailed"
+    }));
 
     assert.equal(state.cityFinance.get(2)?.cash, 300);
     assert.equal(state.research.get(2)?.completed.length, 2);
@@ -159,6 +162,8 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.events.promotions[0]?.rank, "captain");
     assert.equal(state.defenses.size, 0);
     assert.equal(state.buildings.size, 0);
+    assert.equal(state.events.rejectionCount, 1);
+    assert.equal(state.events.lastRejectedReason, "ValidationFailed");
     assert.equal(state.events.lastBuildDeniedReason, "research_required");
     assert.equal(state.events.lastDemolishDeniedReason, "not_mayor");
 });

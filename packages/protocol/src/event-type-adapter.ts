@@ -38,6 +38,7 @@ const legacyToCanonicalType = {
     "defense:remove": "defense.remove",
     "build:denied": "build.denied",
     "demolish:denied": "demolish.denied",
+    "event:rejected": "event.rejected",
     new_building: "building.placed",
     demolish_building: "building.demolished"
 } as const;

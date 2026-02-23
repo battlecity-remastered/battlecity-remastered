@@ -95,6 +95,7 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");
     assert.equal(canonicalizeEventType("population:update"), "population.update");
     assert.equal(canonicalizeEventType("player:bot_damage"), "player.bot_damage");
+    assert.equal(canonicalizeEventType("event:rejected"), "event.rejected");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
 
@@ -248,5 +249,22 @@ test("decodeKnownEnvelope validates player bot-damage alias payload", () => {
     assert.equal(decoded._tag, "Right");
     if (decoded._tag === "Right") {
         assert.equal(decoded.right.type, "player.bot_damage");
+    }
+});
+
+test("decodeKnownEnvelope validates event rejection alias payload", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "event:rejected",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            reason: "ValidationFailed"
+        }
+    });
+
+    assert.equal(decoded._tag, "Right");
+    if (decoded._tag === "Right") {
+        assert.equal(decoded.right.type, "event.rejected");
     }
 });

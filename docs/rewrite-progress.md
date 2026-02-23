@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S2` checkpoint after landing client collision-aware movement parity slice (`S2-02`/`S2-03`) and movement/collision tests (`S5-07`).
+- `S3` checkpoint after landing canonical rejection event compatibility (`event.rejected` + `event:rejected`) across protocol/server/client.
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -35,10 +35,10 @@
 | S1-12 | done | House attachment + population tick/remove authority implemented via `PopulationService` with canonical `population.update` emissions |
 | S1-22 | done | Fake-city lifecycle/cooldown authority landed via `FakeCityService` and runtime system-tick integration |
 | S1-23 | done | Defender/rogue bot server authority landed via `DefenderBotService` + `RogueBotService` with runtime movement/fire/cleanup |
-| S3-01 | in_progress | Contract compatibility now also includes canonical `player.bot_damage` with ingress alias normalization for `player:bot_damage` |
-| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`, `inventory:update`, and bullet aliases) |
+| S3-01 | in_progress | Contract compatibility now includes canonical `event.rejected` + `player.bot_damage` with ingress alias normalization for `event:rejected` and `player:bot_damage` |
+| S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:*`, `inventory:update`, `event:rejected`, and bullet aliases) |
 | S3-03 | in_progress | Dispatch expanded for identity/profile, defense deploy authority, orb cleanup emission, and scoped chat routing (`team` vs `global`) |
-| S3-04 | in_progress | Client apply path remains expanded for profile/defense/building lifecycle plus bullet/icon/population state, with new typed ingress decode router boundary (`network/event-router.ts`) |
+| S3-04 | in_progress | Client apply path remains expanded for profile/defense/building lifecycle plus bullet/icon/population/rejection state, with typed ingress decode router boundary (`network/event-router.ts`) |
 | S3-05 | done | Versioning strategy kept current |
 | S2-08 | in_progress | HUD now reflects score profile, city population, bullet counts, and last icon pickup alongside finance/research/factory/hazard/chat + deny counters; world rendering includes authoritative building/defense/hazard/bullet objects |
 | S2-02 | done | Client movement now uses collision-aware stepping + nearest-safe unstick fallback through `moveLocalPlayer` and `CollisionWorld` primitives |
@@ -46,7 +46,7 @@
 | S2-15 | in_progress | Keyboard aliases now include legacy-friendly bindings (`S/Down`, `E`, `O`, `H`, `Delete`) while preserving existing request intents |
 | S2-16 | in_progress | Mouse input now maps left/right click controls, suppresses context menu, syncs interaction surface dimensions on resize, and tracks pointer position/inside state |
 | S2-28 | in_progress | Window/fullscreen service now handles resize-driven renderer synchronization and double-click fullscreen toggle lifecycle management |
-| S2-01 | in_progress | Client event ingress now routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) before application |
+| S2-01 | in_progress | Client event ingress now routes through explicit typed decode/canonicalization boundary (`decodeServerEnvelope`) before application, including canonical rejection telemetry |
 | Other S2 IDs | deferred | Full UI/UX parity pending |
 | S4-01 | in_progress | Runtime layer composition introduced in server bootstrap |
 | S4-02 | done | Typed domain errors + rejection mapping (`errors.ts`, `rejections.ts`) |
@@ -62,16 +62,21 @@
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/app/loop.ts`
-- `apps/client-ts/src/gameplay/player-movement.ts`
-- `apps/client-ts/src/gameplay/collision/collision-helpers.ts`
-- `apps/client-ts/src/gameplay/collision/collision-player.ts`
-- `apps/client-ts/test/player-movement.test.ts`
-- `packages/sim-core/src/collision-world.ts`
-- `packages/sim-core/src/index.ts`
-- `packages/sim-core/test/collision-world.test.ts`
+- `apps/server-ts/src/main.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/app/network-events.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/test/network-events.test.ts`
+- `apps/client-ts/test/event-router.test.ts`
+- `packages/protocol/src/events.ts`
+- `packages/protocol/src/event-type-adapter.ts`
+- `packages/protocol/src/envelope.ts`
+- `packages/protocol/test/envelope.test.ts`
+- `docs/event-parity-matrix.md`
+- `docs/event-versioning.md`
 - `docs/parity-checklist.md`
 - `docs/rewrite-progress.md`
+- `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 
 ## Validation Results

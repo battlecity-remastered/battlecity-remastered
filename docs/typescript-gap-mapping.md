@@ -238,5 +238,5 @@ apps/client-ts/src/
 - `S5-01,S5-09`: in_progress (tests now also cover notifier webhook adapter, client ingress router decode/canonicalization behavior, mouse input semantics, window mode service behaviors, and map/city loader parity coverage)
 - `S1-22`: done (fake-city activation/cooldown lifecycle ported and wired into system ticks/orb cooldown path through `FakeCityService`)
 - `S1-23`: done (defender + rogue bot authority ported with server-side spawn/move/fire/cleanup behavior through `DefenderBotService` + `RogueBotService`)
-- `S3-01`: in_progress (`player.bot_damage` schema and `player:bot_damage` alias canonicalization added alongside prior protocol expansions)
+- `S3-01`: in_progress (`event.rejected` schema + `event:rejected` alias canonicalization added alongside `player.bot_damage` and prior protocol expansions)
 - Other S1/S2/S3/S4/S5 IDs: deferred or in_progress per `docs/rewrite-progress.md`

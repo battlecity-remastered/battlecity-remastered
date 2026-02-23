@@ -235,6 +235,10 @@ const handlers: {
     },
     "demolish.denied": (state, payload) => {
         state.events.lastDemolishDeniedReason = payload.reason;
+    },
+    "event.rejected": (state, payload) => {
+        state.events.rejectionCount += 1;
+        state.events.lastRejectedReason = payload.reason;
     }
 };
 

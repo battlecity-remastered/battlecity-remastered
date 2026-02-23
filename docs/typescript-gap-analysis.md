@@ -242,6 +242,7 @@ The rewrite should only be considered complete when:
   - Additional S5 parity slice: notifier adapter behavior, router decode/canonicalization paths, mouse input semantics, and window mode behaviors now have dedicated tests.
   - Additional S2 parity slice: client movement now uses collision-aware stepping with nearest-safe unstick fallback (`moveLocalPlayer` + gameplay collision helpers + `CollisionWorld` primitives).
   - Additional S5 parity slice: sim-core and client movement/collision tests now cover blocking-tile collisions and unstick fallback behavior.
+  - Additional S3/S2 parity slice: canonical `event.rejected` contract now ships end-to-end (protocol schema + legacy alias normalization + server emit + client apply telemetry).
   - Additional S1 authority slice: legacy map and city layout loaders are now ported into TS (`MapService`, `CityLayoutService`) with canonical `map.dat` and city spawn/layout assets in `apps/server-ts/data/*`.
   - Additional S1/S5 combat slice: terrain collision parity is now map-loader-fed end-to-end, and dedicated tests validate map decode orientation, blocking-tile extraction, city layout parsing, and runtime hydration.
   - Additional S1 authority slice: fake-city lifecycle parity now runs in authoritative runtime ticks (`FakeCityService`) with orb-triggered cooldown orchestration.
