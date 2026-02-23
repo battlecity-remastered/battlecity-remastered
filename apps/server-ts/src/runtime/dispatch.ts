@@ -2,10 +2,11 @@ import type { KnownEventPayloadByType, KnownTypedEventEnvelope } from "@battleci
 import { emitPlayersSnapshot } from "./snapshot.js";
 import type { RuntimeEmitter } from "./emitter.js";
 import type { Broadcaster } from "./emitter.js";
-import type { RuntimeConfig, RuntimeState } from "./types.js";
+import type { CommandResult, RuntimeConfig, RuntimeState } from "./types.js";
 import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { createBulletFromRequest } from "./bullet-runtime.js";
 import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
+import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
 
 type DispatchContext = {
     state: RuntimeState;
@@ -25,17 +26,18 @@ type HandlerMap = {
     [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K>;
 };
 
-type RuntimeCommandResult<T> =
-    | { ok: true; value: T }
-    | { ok: false; reason: string };
-
 const handleCommandResult = <T>(
     socketId: string,
     context: DispatchContext,
-    result: RuntimeCommandResult<T>,
+    result: CommandResult<T>,
     onOk: (value: T) => void
 ): void => {
     if (!result.ok) {
+        if (result.reason === "lobby_full") {
+            context.emitter.emitTo(socketId, "lobby.denied", {
+                reason: result.reason
+            });
+        }
         context.broadcaster.reject(socketId, result.reason);
         return;
     }
@@ -44,19 +46,23 @@ const handleCommandResult = <T>(
 
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
-        const city = typeof payload.desiredCity === "number"
-            ? Math.max(0, Math.floor(payload.desiredCity))
-            : context.config.defaultCity;
-        const role = "recruit" as const;
-
-        context.state.socketCities.set(socketId, city);
-        context.state.socketRoles.set(socketId, role);
-        context.emitter.emitTo(socketId, "lobby.assignment", {
-            id: socketId,
-            city,
-            role
+        handleCommandResult(socketId, context, joinLobby(
+            context.state,
+            socketId,
+            payload.desiredCity,
+            context.config
+        ), (assignment) => {
+            context.emitter.emitTo(socketId, "lobby.assignment", assignment);
+            context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
+            emitPlayersSnapshot(context.state, context.emitter);
         });
-        emitPlayersSnapshot(context.state, context.emitter);
+    },
+    "lobby.leave.request": (socketId, _payload, context) => {
+        const released = leaveLobby(context.state, socketId);
+        if (released) {
+            context.emitter.emit("lobby.released", released);
+            context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
+        }
     },
     "player.update": (socketId, payload, context) => {
         upsertPlayerFromUpdate(context.state, socketId, payload, context.config);

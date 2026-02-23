@@ -22,6 +22,8 @@ export type RuntimeState = {
 
 export type RuntimeConfig = {
     defaultCity: number;
+    cityCount: number;
+    maxRecruitsPerCity: number;
     mapMax: number;
     serverStepMs: number;
     bulletTickMs: number;
@@ -35,7 +37,8 @@ export type RuntimeRejectReason =
     | "player_not_joined"
     | "city_mismatch"
     | "building_not_found"
-    | "owner_mismatch";
+    | "owner_mismatch"
+    | "lobby_full";
 
 export type CommandResult<T> =
     | { ok: true; value: T }
@@ -51,6 +54,8 @@ export const rejectResult = (reason: RuntimeRejectReason): CommandResult<never> 
 
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
+    cityCount: 8,
+    maxRecruitsPerCity: 7,
     mapMax: 24576,
     serverStepMs: 33,
     bulletTickMs: 100,

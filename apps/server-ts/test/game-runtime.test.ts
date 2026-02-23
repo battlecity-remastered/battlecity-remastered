@@ -227,3 +227,65 @@ test("disconnect emits player.removed and clears player from snapshot", () => {
     const players = latestSnapshot.payload as Array<{ id: string }>;
     assert.equal(players.some((player) => player.id === "s1"), false);
 });
+
+test("first player in city gets mayor role and second gets recruit", () => {
+    const { runtime, direct } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p2", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+
+    const assignments = direct
+        .filter((entry) => entry.event.type === "lobby.assignment")
+        .map((entry) => entry.event.payload as { id: string; role: "mayor" | "recruit" });
+
+    assert.equal(assignments.length, 2);
+    assert.equal(assignments[0]?.id, "p1");
+    assert.equal(assignments[0]?.role, "mayor");
+    assert.equal(assignments[1]?.id, "p2");
+    assert.equal(assignments[1]?.role, "recruit");
+});
+
+test("lobby leave emits released and updates snapshot", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.leave.request", 2, {}));
+
+    const released = broadcast.filter((event) => event.type === "lobby.released");
+    assert.equal(released.length, 1);
+    assert.equal((released[0]?.payload as { id: string }).id, "p1");
+
+    const snapshots = broadcast.filter((event) => event.type === "lobby.snapshot");
+    assert.ok(snapshots.length >= 1);
+    const latest = snapshots.at(-1);
+    assert.ok(latest);
+    const city1 = (latest.payload as Array<{ city: number; recruitCount: number; mayorId?: string }>).find((entry) => {
+        return entry.city === 1;
+    });
+    assert.ok(city1);
+    assert.equal(city1?.mayorId, undefined);
+    assert.equal(city1?.recruitCount, 0);
+});
+
+test("legacy colon event names are accepted on ingress", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
+
+    runtime.handleRawEvent("p1", {
+        type: "player:update",
+        version: "1",
+        seq: 2,
+        ts: Date.now(),
+        payload: {
+            id: "p1",
+            city: 0,
+            direction: 0,
+            isMoving: false,
+            offset: { x: 140, y: 140 }
+        }
+    });
+
+    const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
+    assert.ok(snapshots.length > 0);
+});

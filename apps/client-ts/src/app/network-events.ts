@@ -36,6 +36,30 @@ const handlers: {
     "lobby.assignment": (state, payload) => {
         state.local.id = payload.id;
         state.local.city = payload.city;
+        state.lobby.deniedReason = null;
+    },
+    "lobby.denied": (state, payload) => {
+        state.lobby.deniedReason = payload.reason;
+    },
+    "lobby.snapshot": (state, payload) => {
+        state.lobby.assignments = payload.map((entry) => {
+            const assignment = {
+                city: entry.city,
+                recruitCount: entry.recruitCount
+            };
+            if (typeof entry.mayorId === "string") {
+                return {
+                    ...assignment,
+                    mayorId: entry.mayorId
+                };
+            }
+            return {
+                ...assignment
+            };
+        });
+    },
+    "lobby.released": (state, payload) => {
+        state.lobby.lastReleasedPlayerId = payload.id;
     },
     "players.snapshot": (state, payload) => {
         updateFromSnapshot(state, payload);

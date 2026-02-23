@@ -10,11 +10,30 @@ export const LobbyJoinRequest = Schema.Struct({
     callsign: Schema.optional(Schema.String)
 });
 
+export const LobbyLeaveRequest = Schema.Struct({});
+
 export const LobbyAssignment = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
     role: Schema.Literal("mayor", "recruit")
 });
+
+export const LobbyDenied = Schema.Struct({
+    reason: Schema.String
+});
+
+export const LobbyReleased = Schema.Struct({
+    id: Schema.String,
+    city: Schema.Number
+});
+
+export const LobbySnapshotEntry = Schema.Struct({
+    city: Schema.Number,
+    mayorId: Schema.optional(Schema.String),
+    recruitCount: Schema.Number
+});
+
+export const LobbySnapshot = Schema.Array(LobbySnapshotEntry);
 
 export const PlayerUpdate = Schema.Struct({
     id: Schema.String,
@@ -114,6 +133,10 @@ export const ChatMessage = Schema.Struct({
 
 export const EventPayloadSchemas = {
     "lobby.join.request": LobbyJoinRequest,
+    "lobby.leave.request": LobbyLeaveRequest,
+    "lobby.denied": LobbyDenied,
+    "lobby.released": LobbyReleased,
+    "lobby.snapshot": LobbySnapshot,
     "player.update": PlayerUpdate,
     "player.health": PlayerHealthUpdate,
     "player.dead": PlayerDead,

@@ -24,6 +24,15 @@ export type RemotePlayer = {
 export type ClientState = {
     local: LocalState;
     remotePlayers: Map<string, RemotePlayer>;
+    lobby: {
+        deniedReason: string | null;
+        assignments: Array<{
+            city: number;
+            mayorId?: string;
+            recruitCount: number;
+        }>;
+        lastReleasedPlayerId: string | null;
+    };
     controls: {
         moveForward: boolean;
         turnLeft: boolean;
@@ -47,6 +56,11 @@ export const createClientState = (): ClientState => {
             placedInitialBuilding: false
         },
         remotePlayers: new Map(),
+        lobby: {
+            deniedReason: null,
+            assignments: [],
+            lastReleasedPlayerId: null
+        },
         controls: {
             moveForward: false,
             turnLeft: false,
