@@ -1,11 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { makeEnvelope, type EventEnvelope } from "@battlecity/protocol";
+import { Effect } from "effect";
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
 import { createRuntimeState, type RuntimeConfig } from "../src/runtime/types.js";
 
-const makeHarness = (config: Partial<RuntimeConfig> = {}) => {
+const makeHarness = (
+    config: Partial<RuntimeConfig> = {},
+    runtimeServices: {
+        notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
+    } = {}
+) => {
     const broadcast: EventEnvelope[] = [];
     const direct: Array<{ socketId: string; event: EventEnvelope }> = [];
     const rejected: Array<{ socketId: string; reason: string }> = [];
@@ -21,7 +27,8 @@ const makeHarness = (config: Partial<RuntimeConfig> = {}) => {
             rejected.push({ socketId, reason });
         }
     }, config, createRuntimeState(), {
-        userStore: new UserStoreAdapter()
+        userStore: new UserStoreAdapter(),
+        ...runtimeServices
     });
 
     return { runtime, broadcast, direct, rejected };
@@ -868,4 +875,28 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         .map((entry) => entry.event.payload as { score: number });
     assert.ok(profileUpdates.length >= 2);
     assert.equal(profileUpdates.at(-1)?.score, 250);
+});
+
+test("orb drop invokes notifier adapter with authoritative payload", () => {
+    const notifications: Array<{ playerId: string; sourceCityId: number; targetCityId: number }> = [];
+    const { runtime } = makeHarness({}, {
+        notifyOrbVictory: (playerId, sourceCityId, targetCityId) => {
+            notifications.push({ playerId, sourceCityId, targetCityId });
+            return Effect.void;
+        }
+    });
+
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, {
+        desiredCity: 1,
+        userId: "u-attacker"
+    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, {
+        sourceCityId: 1,
+        targetCityId: 2
+    }));
+
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0]?.playerId, "attacker");
+    assert.equal(notifications[0]?.sourceCityId, 1);
+    assert.equal(notifications[0]?.targetCityId, 2);
 });

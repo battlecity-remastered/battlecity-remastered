@@ -36,7 +36,7 @@
 | S1-23 | Defender/rogue bots | rewrite | deferred | Not yet ported |
 | S1-24 | Map/layout loaders | rewrite | deferred | Not yet ported |
 | S1-25 | Bullet terrain/structure/hazard parity | rewrite | in_progress | Authoritative bullet collisions now handle buildings, defenses, and hazards; terrain tile blocking deferred pending map loader parity |
-| S1-26 | Discord notifications | rewrite | in_progress | Orb victory notifier now invoked from authoritative orb drop flow |
+| S1-26 | Discord notifications | rewrite | in_progress | Orb victory notifier invoked from authoritative orb drop flow and covered by runtime adapter-invocation test |
 | S3-01 | Full gameplay schemas | rewrite | in_progress | Added `score.profile`, `defense.*`, and `bullet.resolved` hazard-hit payload coverage in addition to prior subsystem coverage |
 | S3-02 | `:` vs `.` compatibility | rewrite | done | Canonical emit + alias ingress decode including `defense:deploy` -> `defense.deploy.request` and `defense:update` -> `defense.update` |
 | S3-03 | Server dispatch expansion | rewrite | in_progress | Added identity/profile hydration and defense deploy authority dispatch paths |
@@ -54,7 +54,7 @@
 | S4-06 | Structured observability | rewrite | in_progress | Effect-based runtime/client log modules added and wired in server bootstrap |
 | S4-07 | Lifecycle scopes | rewrite | done | Runtime resources managed in `RuntimeScope` |
 | S4-08 | Effect adapters (auth/discord/persistence) | rewrite | in_progress | Persistence + Discord adapters now exercised by join/orb authority flows |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for identity/profile, defense authority (footprint/hazard occupancy), and bullet-hazard collision authority slices |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | Test matrix + server parity slices | rewrite | in_progress | Expanded runtime tests for identity/profile, defense authority (footprint/hazard occupancy), bullet-hazard collision authority, and orb notifier invocation |
 | S5-09 | Client UI/network parity tests | rewrite | in_progress | Expanded client network-event tests for profile + defense event application |
 | S5-* (remaining) | Test matrix + CI parity gates | rewrite | deferred | Broader legacy suite port still pending |
 

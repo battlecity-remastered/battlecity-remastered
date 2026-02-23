@@ -1,7 +1,7 @@
 # Rewrite Progress
 
 ## Current Stage
-- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (defense placement occupancy parity + `defense:*` legacy alias compatibility + test coverage).
+- `S5` checkpoint after additional `S1 -> S3 -> S5` parity slice delivery (defense placement occupancy parity + `defense:*` legacy alias compatibility + notifier invocation test coverage).
 
 ## S-ID Status Ledger
 | S-ID | Status | Notes |
@@ -30,7 +30,7 @@
 | S1-04 | done | Score profile hydration + orb-award updates emitted via `score.profile` |
 | S1-18 | in_progress | Defense deploy now enforces legacy-like occupancy rules (3x3 building footprint, hospital/factory exceptions, hazard tile blocking) plus damage/update + city-orbed cleanup |
 | S1-25 | in_progress | Bullet collision now resolves against buildings/defenses/hazards; terrain tile collision still deferred pending map loader parity |
-| S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow |
+| S1-26 | in_progress | Orb victory notifier adapter now wired from authoritative orb flow and validated by runtime test harness |
 | S1-12,S1-22,S1-23,S1-24 | deferred | Not yet parity-complete vs legacy systems |
 | S3-01 | in_progress | Contract expanded with `score.profile`, `defense.*`, and `bullet.resolved` hazard-hit payload coverage |
 | S3-02 | done | `:` ingress alias compatibility centralized via protocol adapter (including `defense:deploy`/`defense:update`) |
@@ -49,20 +49,14 @@
 | S4-07 | done | Runtime scope lifecycle remains active |
 | S4-06 | in_progress | Structured runtime/client log primitives added (`RuntimeLogger`, `ClientLogger`) |
 | S4-08 | in_progress | Effect-based persistence/notification adapters now exercised by live orb/profile flows (`UserStoreAdapter`, `DiscordNotifier`) |
-| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority + bullet-hazard authority coverage in `game-runtime.test.ts` |
+| S5-01,S5-02,S5-03,S5-04,S5-06 | in_progress | Server parity tests expanded with identity/profile + defense authority + bullet-hazard authority + orb notifier invocation coverage in `game-runtime.test.ts` |
 | S5-09 | in_progress | Client network/event state coverage expanded for `score.profile` + `defense.*` |
 | Other S5 IDs | deferred | Legacy parity matrix port incomplete |
 
 ## Exact Files Changed In This Delivery
-- `apps/server-ts/src/domain/defense/DefenseService.ts`
 - `apps/server-ts/test/game-runtime.test.ts`
-- `packages/protocol/src/event-type-adapter.ts`
-- `packages/protocol/src/envelope.ts`
-- `packages/protocol/test/envelope.test.ts`
-- `docs/parity-checklist.md`
-- `docs/event-parity-matrix.md`
-- `docs/event-versioning.md`
 - `docs/rewrite-progress.md`
+- `docs/parity-checklist.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 

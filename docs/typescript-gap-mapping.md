@@ -222,7 +222,7 @@ apps/client-ts/src/
 - `S1-03`: done (identity binding on join)
 - `S1-04`: done (score profile hydration + orb score profile updates)
 - `S1-18`: in_progress (defense deploy + damage/update + city-orbed cleanup + footprint/hazard occupancy parity slice)
-- `S1-26`: in_progress (orb notifier invocation wired)
+- `S1-26`: in_progress (orb notifier invocation wired + runtime adapter invocation test coverage added)
 - `S3-01`: in_progress (`score.profile`, `defense.*`, and `bullet.resolved` hazard-hit schema coverage + alias support)
 - `S3-02`: done (alias map expanded with `defense:deploy` and `defense:update`)
 - `S1-25`: in_progress (authoritative bullet collision against buildings/defenses/hazards landed; terrain tile blocking still deferred pending map loader parity)
