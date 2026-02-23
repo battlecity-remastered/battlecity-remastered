@@ -26,15 +26,7 @@ import { deployDefense } from "../domain/defense/DefenseService.js";
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
 
-type DispatchContext = {
-    state: RuntimeState;
-    config: RuntimeConfig;
-    emitter: RuntimeEmitter;
-    broadcaster: Broadcaster;
-    nextSeq: () => number;
-    userStore?: UserStoreAdapter;
-    notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
-};
+type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
 
@@ -306,6 +298,10 @@ const handlers: HandlerMap = {
         });
     }
 };
+
+export const HANDLED_RUNTIME_EVENT_TYPES = Object.freeze(Object.keys(handlers) as Array<keyof KnownEventPayloadByType>);
+export const hasRuntimeEventHandler = (type: keyof KnownEventPayloadByType): boolean => type in handlers;
+
 const dispatchByType = <TType extends keyof KnownEventPayloadByType>(socketId: string, type: TType, payload: KnownEventPayloadByType[TType], context: DispatchContext): void => {
     const handler = handlers[type] as RuntimeHandler<TType> | undefined;
     if (!handler) {

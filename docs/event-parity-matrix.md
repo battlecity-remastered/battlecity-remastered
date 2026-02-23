@@ -4,6 +4,7 @@
 - Canonical runtime event names are dot-delimited (`.`).
 - Legacy colon-delimited (`:`) aliases are accepted on ingress only.
 - Egress always emits canonical dot names.
+- Dispatch/apply coverage is now test-asserted in-code (`dispatch-coverage.test.ts`, `network-handler-coverage.test.ts`).
 
 ## Matrix
 | Legacy event | Canonical event | Direction | Protocol schema | Server handling | Client handling | Status |
@@ -50,7 +51,5 @@
 | `defense:remove` | `defense.remove` | server -> client | yes | emit | apply | done |
 
 ## Known Gaps
-- Many legacy events remain unimplemented (full auth flows, map/tutorial/audio flows).
-- Client ingress now canonicalizes aliases through `decodeServerEnvelope`, but broad UI module parity is still incomplete.
-- Hazard events are now state-applied and include orb city cleanup reasons; dedicated hazard art/animation parity remains partial.
-- Inventory/item/icon/defense/building/population events are authoritative and state-applied, but UI parity is still HUD/world-primitive level, not full legacy panel/icon UX.
+- Many legacy events remain intentionally deferred (auth UX, full modal/tutorial/audio/map UI, and non-gameplay telemetry flows).
+- Client UI parity is still a staged subset: HUD + lobby/chat overlays + primitive world rendering are active, while full legacy panel/radar/tutorial/options parity remains tracked in S2 deferred items.
