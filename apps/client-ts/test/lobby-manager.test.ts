@@ -19,10 +19,11 @@ test("buildLobbyLines reflects assignment/deny/release state", () => {
 
     const lines = buildLobbyLines(state);
     assert.equal(lines[0], "City 2 lobby  p1");
-    assert.ok(lines[1].includes("View: assignments"));
-    assert.equal(lines[2], "Denied: lobby_full");
-    assert.equal(lines[3], "Released: p4");
-    assert.equal(lines[4], "C2: mayor p1 recruits 2");
+    assert.equal(lines[1], "Tabs: [Assignments*] [Scores]");
+    assert.ok(lines[2].includes("View: assignments"));
+    assert.equal(lines[3], "Denied: lobby_full");
+    assert.equal(lines[4], "Released: p4");
+    assert.equal(lines[5], "C2: mayor p1 recruits 2");
 });
 
 test("applyLobbyAction cycles view and city filter", () => {
@@ -35,6 +36,7 @@ test("applyLobbyAction cycles view and city filter", () => {
 
     assert.equal(applyLobbyAction(state, "Tab"), true);
     assert.equal(state.ui.lobbyView, "scores");
+    assert.equal(buildLobbyLines(state)[1], "Tabs: [Assignments] [Scores*]");
     assert.equal(applyLobbyAction(state, "PageDown"), true);
     assert.equal(state.ui.lobbyCityFilter, 1);
     assert.equal(applyLobbyAction(state, "PageDown"), true);

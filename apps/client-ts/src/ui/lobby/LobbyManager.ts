@@ -43,6 +43,9 @@ export const applyLobbyAction = (state: ClientState, key: string): boolean => {
 
 export const buildLobbyLines = (state: ClientState): string[] => {
     const header = `City ${state.local.city} lobby  ${state.local.id ?? "pending"}`;
+    const tabs = state.ui.lobbyView === "assignments"
+        ? "Tabs: [Assignments*] [Scores]"
+        : "Tabs: [Assignments] [Scores*]";
     const mode = `View: ${state.ui.lobbyView}  Filter: ${resolveFilterLabel(state)} (Tab/PgUp/PgDn/Home)`;
     const denied = state.lobby.deniedReason ? `Denied: ${state.lobby.deniedReason}` : "Denied: -";
     const released = state.lobby.lastReleasedPlayerId
@@ -65,7 +68,7 @@ export const buildLobbyLines = (state: ClientState): string[] => {
         if (ranked.length === 0) {
             ranked.push("No city finance snapshots");
         }
-        return [header, mode, denied, released, ...ranked];
+        return [header, tabs, mode, denied, released, ...ranked];
     }
 
     const assignments = state.lobby.assignments
@@ -78,7 +81,7 @@ export const buildLobbyLines = (state: ClientState): string[] => {
     if (assignments.length === 0) {
         assignments.push("No active assignments");
     }
-    return [header, mode, denied, released, ...assignments];
+    return [header, tabs, mode, denied, released, ...assignments];
 };
 
 type LobbyManager = {
@@ -105,6 +108,8 @@ export const createLobbyManager = (
     panel.style.padding = "10px 12px";
     panel.style.margin = "0";
     panel.style.background = "rgba(18, 29, 26, 0.74)";
+    panel.style.backgroundImage = "url('/assets/imgInterfaceBottom.png')";
+    panel.style.backgroundSize = "cover";
     panel.style.border = "1px solid rgba(140, 189, 166, 0.82)";
     panel.style.color = "#d0ecd4";
     panel.style.font = "12px/1.4 monospace";

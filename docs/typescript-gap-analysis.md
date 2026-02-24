@@ -213,6 +213,8 @@ The rewrite should only be considered complete when:
 - Client visual parity slices continued beyond the final checkpoint:
   - textured side-panel button chrome landed from legacy assets.
   - lobby overlay now supports assignment/score views with city filtering controls.
+  - lobby overlay now renders explicit tab-state labels for assignment vs score view parity.
   - options modal now includes operational city-import execution from legacy `.city` files.
+  - lobby/options overlays now use legacy interface texture backdrops for improved visual parity.
   - notification/toast overlay is event-driven for promotion/denial/orb flows.
 - These are additive parity improvements on top of the already-closed S-ID matrix.
