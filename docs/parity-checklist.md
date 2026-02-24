@@ -12,7 +12,7 @@ Last updated: 2026-02-24
 - [x] Phase 6 - Population/research/smoke/digits parity
 - [x] Phase 7 - Items/defense/bullets parity
 - [x] Phase 8 - Panel + radar + home arrow parity
-- [ ] Phase 9 - Map modal parity
+- [x] Phase 9 - Map modal parity
 - [ ] Phase 10 - City spawn/layout parity
 - [ ] Phase 11 - End-to-end parity validation
 
@@ -82,12 +82,12 @@ Last updated: 2026-02-24
 - [x] Uses texture slices from radar/minimap color textures.
 
 ## I) Map modal
-- [ ] Canvas-based full map render.
-- [ ] Tile coloring by terrain value parity.
-- [ ] Structure markers centered on footprints.
-- [ ] City markers and labels present.
-- [ ] Player center marker parity.
-- [ ] Escape/overlay/fullscreen close behavior parity.
+- [x] Canvas-based full map render.
+- [x] Tile coloring by terrain value parity.
+- [x] Structure markers centered on footprints.
+- [x] City markers and labels present.
+- [x] Player center marker parity.
+- [x] Escape/overlay/fullscreen close behavior parity.
 
 ## J) Spawn/layout
 - [ ] Client spawn data covers full city range (`0..63`).
