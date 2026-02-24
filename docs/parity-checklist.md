@@ -60,3 +60,11 @@
 - S2: done
 - S4: done
 - S5: done
+
+## 2026-02-24 Addendum (Live Visual Regression Fixes)
+- `S2-02`: client tick cadence restored to `33ms` for movement parity feel.
+- `S2-08`: panel width contract corrected to legacy `200px`.
+- `S2-09`: default build type + hotkeys remapped to legacy-valid housing/research entry points.
+- `S2-11`: ground tile scale corrected to legacy 128px cadence; command-center map-square rendering restored.
+- `S2-14`: command-center footprint (`3x3`) added to client blocking tile set.
+- `S2-16`: panel hotspot coordinates re-verified after viewport-width correction.

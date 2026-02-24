@@ -223,3 +223,9 @@ apps/client-ts/src/
   - `S2-09`: build/demolish/ghost placement now use camera-correct world-space pointer tile conversion.
   - `S2-11`: ground/tile rendering now runs with centered world pivot and legacy terrain value/autotile semantics.
   - `S2-08`: panel button hitboxes/ordering aligned with legacy interface geometry and radar size.
+  - `S2-02`: client simulation tick cadence aligned to legacy-feel update rate (`33ms`).
+  - `S2-08`: world viewport side-panel reservation normalized to legacy `200px`.
+  - `S2-09`: default build type corrected to legacy housing (`300`) with research-chain hotkey mapping.
+  - `S2-11`: ground texture cadence corrected to legacy `128px` tile scale.
+  - `S2-11`/`S2-14`: command-center map anchors (`value=3`) now render in tile layer and expand to `3x3` client blocking footprint.
+  - `S2-16`: panel hotspot tests and runtime mapping revalidated after panel-width normalization.

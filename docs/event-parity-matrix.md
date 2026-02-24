@@ -1,8 +1,9 @@
 # Event Parity Matrix
 
 ## Status
-- Last updated: 2026-02-23
+- Last updated: 2026-02-24
 - Matrix remains current for the implemented gameplay/runtime contract surface.
+- 2026-02-24 visual parity remediation changed no wire contract; handler coverage remains valid.
 
 ## Policy
 - Canonical runtime event names are dot-delimited (`.`).

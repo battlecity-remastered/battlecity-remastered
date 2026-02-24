@@ -224,4 +224,9 @@ The rewrite should only be considered complete when:
   - pointer-to-world tile conversion now drives build/demolish/ghost actions (instead of raw screen-space tiles).
   - terrain draw/movement parity corrected to legacy tile semantics (`lava=1`, `rock=2`) with autotile frame offsets.
   - movement collision now incorporates decoded map blocking tiles in addition to dynamic buildings/defenses.
+  - lobby assignment now resolves and applies legacy city-spawn coordinates before local movement/update emission.
+  - build menu defaults now open on `300` housing and numeric hotkeys target legacy-valid research chain entry points.
+  - side-panel width contract is restored to legacy `200px`, aligning panel hotspot interaction and pointer-to-world conversion.
+  - ground layer now uses legacy 128px texture cadence, removing compressed/noisy terrain repetition.
+  - command-center anchor tiles (`map value 3`) now render using building texture and enforce a `3x3` blocking footprint on client.
 - These are additive parity improvements on top of the already-closed S-ID matrix.

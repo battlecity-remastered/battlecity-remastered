@@ -71,3 +71,51 @@
 - `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24, camera/terrain/input/build parity slice)
 - `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, `85/85`)
 - `npm run rewrite:check:strict`: **fail** (2026-02-24) at `rewrite:complexity:strict`; blocker is pre-existing strict complexity threshold breaches in existing files (`apps/client-ts/src/render/scene.ts` complexity 26, `apps/client-ts/src/ui/options/OptionsModal.ts` complexity 24, `apps/client-ts/src/render/effects/EffectsRenderer.ts` complexity 20).
+
+## Checkpoint: 2026-02-24 (Visual/Movement/Build Parity Bugfix)
+
+### Stage Focus
+- `S2` parity hardening against live regressions reported from side-by-side legacy comparison:
+  - wrong default build type and build-menu hotkeys,
+  - missing city-spawn camera alignment on lobby assignment,
+  - non-legacy panel width/viewport math drift,
+  - command-center terrain draw and blocking parity drift,
+  - ground tiling scale drift from legacy.
+
+### S-ID Status Updates
+| S-ID | Status | Notes |
+|---|---|---|
+| S2-02 | done | Movement feel improved by restoring 33ms client tick cadence and assignment-spawn alignment |
+| S2-08 | done | Side panel viewport contract re-aligned to legacy 200px width |
+| S2-09 | done | Build defaults/hotkeys now select legacy-valid housing/research chain entry points |
+| S2-11 | done | Ground and tile rendering corrected for legacy texture scale + command-center map-square rendering |
+| S2-14 | done | Map blocking tiles now include command-center footprint semantics |
+| S2-16 | done | Panel hotspot hit-testing re-verified against adjusted panel-width geometry |
+
+### Exact Files Changed (this checkpoint)
+- `apps/client-ts/src/app/loop.ts`
+- `apps/client-ts/src/app/network-events.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/gameplay/world-viewport.ts`
+- `apps/client-ts/src/render/layers/GroundLayer.ts`
+- `apps/client-ts/src/render/layers/TileLayer.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/src/ui/build-menu/BuildMenu.ts`
+- `apps/client-ts/src/world/map-loader.ts`
+- `apps/client-ts/src/world/city-spawn.ts`
+- `apps/client-ts/test/build-menu.test.ts`
+- `apps/client-ts/test/city-spawn.test.ts`
+- `apps/client-ts/test/item-bullet-intents.test.ts`
+- `apps/client-ts/test/map-loader.test.ts`
+- `apps/client-ts/test/mouse-input.test.ts`
+- `apps/client-ts/test/network-events.test.ts`
+- `apps/client-ts/test/world-viewport.test.ts`
+
+### Validation (this checkpoint)
+- `npm run lint`: pass
+- `npm run typecheck`: pass
+- `npm run test`: pass (`166/166`)
+- `npm run rewrite:check:strict`: **fail** at `rewrite:complexity:strict` due pre-existing complexity ceilings in:
+  - `apps/client-ts/src/render/scene.ts` (26)
+  - `apps/client-ts/src/ui/options/OptionsModal.ts` (24)
+  - `apps/client-ts/src/render/effects/EffectsRenderer.ts` (20)

@@ -1,8 +1,9 @@
 # Event Versioning and Compatibility
 
 ## Status
-- Last updated: 2026-02-23
+- Last updated: 2026-02-24
 - Stage checkpoint: `S5` parity delivery; compatibility remains complete for all implemented gameplay/runtime events.
+- 2026-02-24 remediation note: no protocol version/event-name changes were required for visual parity fixes.
 
 ## Canonical Contract
 - Envelope field `type` uses dot-delimited canonical names.

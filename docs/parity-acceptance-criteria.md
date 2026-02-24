@@ -16,8 +16,10 @@
 
 ## Stage S2
 - Client state updates for implemented server events are complete and tested.
+- Lobby assignment must restore city spawn-aligned local camera position before movement/build intents are emitted.
 - Inventory icon select/arm/drop semantics are wired through runtime controls.
 - Layered world rendering parity slices are active: ground/tile/changing/object/effects/debug/labels.
+- Terrain/map parity includes command-center map-square rendering and blocking-footprint behavior.
 - Identity/map/build/tutorial/options/help/chat/lobby/intro/audio window UX slices are runtime wired and tested.
 - Asset manifest and client map parity loader are active in the render/runtime path.
 

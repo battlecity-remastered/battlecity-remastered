@@ -273,6 +273,12 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Corrected terrain parity mapping (`lava=1`, `rock=2`) and added autotile frame selection from adjacency.
   - Expanded local movement collision to include nearby terrain blocking tiles from decoded `map.dat`.
   - Updated panel interaction regions to legacy y/x geometry and matching action order (`staff/map/info/points/options/help/build/exit`).
+  - Corrected local assignment flow to apply legacy city-spawn coordinates on `lobby.assignment`, preventing non-city spawn drift.
+  - Corrected default build path to legacy-usable `300` housing and remapped build-menu hotkeys to valid early research chain entries.
+  - Restored legacy panel reservation width to `200px` so world viewport, panel draw, and hotspot hit-testing align.
+  - Corrected ground tiling cadence from `48px` to legacy `128px` to remove compressed/noisy background appearance.
+  - Restored command-center terrain parity by rendering `map value 3` anchors with building texture and blocking `3x3` footprint.
+  - Added parity tests for assignment spawn alignment, command-center blocking footprint expansion, and updated panel/world coordinate math.
 
 ---
 
