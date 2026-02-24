@@ -1,3 +1,2 @@
-Placeholder asset root for TS client parity slices.
-Map data is copied from server authoritative source.
-Sprite/audio files are expected at listed paths when full art/audio bundle is added.
+Legacy runtime asset pack restored from `master:client/data`.
+This directory now hosts map, sprite, UI, and audio resources for TS visual parity work.
