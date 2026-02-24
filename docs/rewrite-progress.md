@@ -34,7 +34,7 @@ No plan can mathematically guarantee 100% correctness in complex UI systems. Thi
 | 5 | Building base + overlays parity | done | building visual matrix parity |
 | 6 | Population/research/smoke/digits parity | done | changing-layer parity tests |
 | 7 | Items/defense/bullets parity | done | frame/offset parity tests |
-| 8 | Panel + radar + home arrow parity | pending | panel coordinate tests + manual verify |
+| 8 | Panel + radar + home arrow parity | done | panel coordinate tests + manual verify |
 | 9 | Map modal parity | pending | canvas modal parity + tests |
 | 10 | City spawn/layout parity | pending | 0..63 city spawn parity + import tests |
 | 11 | End-to-end parity validation | pending | strict gate + visual audit pass |

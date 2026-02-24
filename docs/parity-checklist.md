@@ -11,7 +11,7 @@ Last updated: 2026-02-24
 - [x] Phase 5 - Building base + overlays parity
 - [x] Phase 6 - Population/research/smoke/digits parity
 - [x] Phase 7 - Items/defense/bullets parity
-- [ ] Phase 8 - Panel + radar + home arrow parity
+- [x] Phase 8 - Panel + radar + home arrow parity
 - [ ] Phase 9 - Map modal parity
 - [ ] Phase 10 - City spawn/layout parity
 - [ ] Phase 11 - End-to-end parity validation
@@ -25,8 +25,8 @@ Last updated: 2026-02-24
 - [x] `LegacyTextureRegistry` loads all required parity textures.
 - [x] `imgMiniMapColors` available for radar dead marker.
 - [x] `imgTurretHead` available for defense heads.
-- [ ] `imgInventorySelection` used by panel inventory UI.
-- [ ] `imgMoneyBox` used in panel finance block.
+- [x] `imgInventorySelection` used by panel inventory UI.
+- [x] `imgMoneyBox` used in panel finance block.
 - [ ] `imgBlackNumbers` used for factory item digits.
 - [ ] `imgLExplosion` available and used for large explosions.
 
@@ -66,20 +66,20 @@ Last updated: 2026-02-24
 - [ ] No center-anchor drift.
 
 ## G) Panel
-- [ ] Top panel at `(maxMapX,0)`.
-- [ ] Bottom panel fixed at `(maxMapX,430)`.
-- [ ] Finance icons/text coordinates parity.
-- [ ] Health bar sprite/mask coordinates parity.
-- [ ] Panel message base coordinate parity.
-- [ ] Inventory grid slot coordinates parity.
-- [ ] Selection highlight and quantity text parity.
-- [ ] Home arrow coordinates + frame selection parity.
+- [x] Top panel at `(maxMapX,0)`.
+- [x] Bottom panel fixed at `(maxMapX,430)`.
+- [x] Finance icons/text coordinates parity.
+- [x] Health bar sprite/mask coordinates parity.
+- [x] Panel message base coordinate parity.
+- [x] Inventory grid slot coordinates parity.
+- [x] Selection highlight and quantity text parity.
+- [x] Home arrow coordinates + frame selection parity.
 
 ## H) Radar
-- [ ] Uses legacy relative projection formula (not world normalization).
-- [ ] Uses legacy range clamp `2400`.
-- [ ] Uses radar bounds clipping (`138x138` at offset `(28,8)`).
-- [ ] Uses texture slices from radar/minimap color textures.
+- [x] Uses legacy relative projection formula (not world normalization).
+- [x] Uses legacy range clamp `2400`.
+- [x] Uses radar bounds clipping (`138x138` at offset `(28,8)`).
+- [x] Uses texture slices from radar/minimap color textures.
 
 ## I) Map modal
 - [ ] Canvas-based full map render.
