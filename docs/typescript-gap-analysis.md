@@ -208,3 +208,11 @@ The rewrite should only be considered complete when:
 ## Remaining Risks (Non-critical)
 - High-fidelity visual/audio asset-pack parity remains a polish track beyond functional parity closure.
 - Optional legacy third-party telemetry/integration events remain out-of-scope for current authoritative gameplay parity.
+
+## Post-Checkpoint Update (2026-02-24)
+- Client visual parity slices continued beyond the final checkpoint:
+  - textured side-panel button chrome landed from legacy assets.
+  - lobby overlay now supports assignment/score views with city filtering controls.
+  - options modal now includes operational city-import execution from legacy `.city` files.
+  - notification/toast overlay is event-driven for promotion/denial/orb flows.
+- These are additive parity improvements on top of the already-closed S-ID matrix.

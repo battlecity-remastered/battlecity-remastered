@@ -44,6 +44,8 @@
 - `apps/client-ts/src/render/LegacyTextureRegistry.ts`
 - `apps/client-ts/src/render/scene.ts`
 - `docs/main-branch-parity-gap-audit.md`
+- `docs/typescript-gap-analysis.md`
+- `docs/typescript-gap-mapping.md`
 - `docs/rewrite-progress.md`
 
 ## Validation Results

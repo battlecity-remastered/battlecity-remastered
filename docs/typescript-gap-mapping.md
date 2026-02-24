@@ -211,3 +211,10 @@ apps/client-ts/src/
 - Effect architecture hardening items are complete (`Layer`, typed errors, queue ingress, scheduler, `Ref` state capsules, scoped lifecycle, observability, adapters).
 - Current per-S-ID truth source: `docs/rewrite-progress.md` and `docs/parity-checklist.md`.
 - Validation reconfirmed on current HEAD at validation time.
+
+## Post-Checkpoint Addendum (2026-02-24)
+- Additional S2 polish landed while keeping mapping statuses `done`:
+  - `S2-08`: panel/radar rendering advanced with texture-backed buttons/glyphs and active-state affordances.
+  - `S2-17`: lobby UX extended with score-tab and city-filter navigation.
+  - `S2-22`: options modal advanced controls now include concrete city-import execution flow.
+  - `S2-24`: notification affordance flow expanded with event-driven toast panel integration.
