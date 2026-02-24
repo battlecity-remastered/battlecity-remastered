@@ -26,7 +26,7 @@ No plan can mathematically guarantee 100% correctness in complex UI systems. Thi
 ## Phase status
 | Phase | Scope | Status | Exit gate |
 |---|---|---|---|
-| 0 | Baseline + harness | pending | baseline artifacts committed |
+| 0 | Baseline + harness | done | baseline artifacts committed |
 | 1 | Shared constants + item IDs | pending | all constants centralized, tests green |
 | 2 | Asset loading parity | pending | all required textures loaded + tested |
 | 3 | Map decode + blocking parity | pending | client/server map tests aligned |

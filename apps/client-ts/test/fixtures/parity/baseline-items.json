@@ -1,0 +1,30 @@
+{
+  "itemIds": {
+    "cloak": 0,
+    "rocket": 1,
+    "medkit": 2,
+    "bomb": 3,
+    "mine": 4,
+    "orb": 5,
+    "flare": 6,
+    "dfg": 7,
+    "wall": 8,
+    "turret": 9,
+    "sleeper": 10,
+    "plasma": 11,
+    "laser": 12
+  },
+  "worldItems": {
+    "mine": { "frame": ["type*32", 0, 32, 32], "offset": { "x": 8, "y": 8 } },
+    "bombArmed": { "frame": [144, 91, 48, 48] },
+    "orb": { "frame": ["type*48", "42+frame*48", 48, 48], "offset": { "x": 4, "y": 0 } }
+  },
+  "bullets": {
+    "frame": ["animation*8", "type*8", 8, 8],
+    "animationModulo": 4
+  },
+  "turret": {
+    "base": { "frame": ["damageColumn*48", "typeIndex*48", 48, 48] },
+    "head": { "frame": ["orientation*48", "(type-9)*48", 48, 48] }
+  }
+}

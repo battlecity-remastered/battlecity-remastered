@@ -2,6 +2,20 @@
 
 Last updated: 2026-02-24
 
+## Phase Progress
+- [x] Phase 0 - Baseline + harness
+- [ ] Phase 1 - Shared constants + item IDs
+- [ ] Phase 2 - Asset loading parity
+- [ ] Phase 3 - Map decode + blocking parity
+- [ ] Phase 4 - Ground + terrain tile parity
+- [ ] Phase 5 - Building base + overlays parity
+- [ ] Phase 6 - Population/research/smoke/digits parity
+- [ ] Phase 7 - Items/defense/bullets parity
+- [ ] Phase 8 - Panel + radar + home arrow parity
+- [ ] Phase 9 - Map modal parity
+- [ ] Phase 10 - City spawn/layout parity
+- [ ] Phase 11 - End-to-end parity validation
+
 ## A) Shared constants + IDs
 - [ ] All item IDs match legacy (`cloak=0 ... laser=12`).
 - [ ] No local duplicate item ID constants in render/input/intents.

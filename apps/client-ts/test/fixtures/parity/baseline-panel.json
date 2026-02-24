@@ -1,0 +1,18 @@
+{
+  "surface": { "width": 1024, "height": 768 },
+  "world": { "width": 824, "height": 768, "panelWidth": 200 },
+  "panel": {
+    "top": { "x": 824, "y": 0 },
+    "bottom": { "x": 824, "y": 430 },
+    "finance": {
+      "moneyBox": { "x": 826, "y": 224 },
+      "incomeIcon": { "x": 832, "y": 225 },
+      "cashText": { "x": 848, "y": 226 }
+    },
+    "health": {
+      "sprite": { "x": 999, "y": 247, "width": 38, "height": 87 },
+      "anchor": { "x": 1, "y": 1 }
+    },
+    "messages": { "x": 836, "y": 465, "lineSpacing": 15 }
+  }
+}

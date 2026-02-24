@@ -1,0 +1,11 @@
+{
+  "range": 2400,
+  "ratio": 24,
+  "centerOffset": { "x": 100, "y": 80 },
+  "offsetAdjust": { "x": 70, "y": 69 },
+  "bounds": {
+    "relative": { "x": 28, "y": 8, "width": 138, "height": 138 },
+    "absoluteAt1024x768": { "left": 852, "right": 990, "top": 8, "bottom": 146 }
+  },
+  "deadMarker": { "texture": "imgMiniMapColors", "column": 15, "frameSize": 2 }
+}
