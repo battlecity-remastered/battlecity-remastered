@@ -231,7 +231,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background added; full legacy visual fidelity pending)`
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, and finance-ranked scoreboard lines; full visual tab chrome still pending)`
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, and city-import slot/mode controls; concrete import execution flow still pending)`
-11. `UI-04` Port notifications/orb hint/menu affordance system.
+11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events; full legacy styling and orb-hint flow still pending)`
 12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs.
 13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity.
 14. `QA-01` Add screenshot-based visual regression tests for parity checkpoints.
@@ -256,6 +256,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added build usability parity improvements: build menu now shows mayor/recruit authority, last deny reason, and allows left-click placement while build menu is open.
   - Added lobby parity controls for assignment/score tabs and city filters, plus high-score style city finance ranking lines.
   - Expanded options parity controls for identity provider toggle, performance preset cycling, and city-import slot/mode metadata controls.
+  - Added notification parity baseline with event-driven toast queue for promotions, denials, and city-orbed events.
 
 ---
 

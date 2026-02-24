@@ -18,6 +18,7 @@ import { createAudioManager } from "./audio/AudioManager.js";
 import { createMusicManager } from "./audio/MusicManager.js";
 import { createIdentityManager, registerIdentityHotkeys } from "./ui/identity/IdentityManager.js";
 import { registerInventoryHotkeys } from "./gameplay/items/IconInventoryService.js";
+import { createNotificationManager } from "./ui/notifications/NotificationManager.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -34,6 +35,7 @@ const tutorialUi = createTutorialManager(state);
 const audio = createAudioManager(state);
 const music = createMusicManager(state);
 const identityUi = createIdentityManager(state);
+const notificationUi = createNotificationManager(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
@@ -61,6 +63,7 @@ scene.app.ticker.add(() => {
     introModal.render();
     tutorialUi.render();
     identityUi.render();
+    notificationUi.render();
     audio.tick();
     music.tick();
 });
@@ -84,6 +87,7 @@ window.addEventListener("beforeunload", () => {
     introModal.dispose();
     tutorialUi.dispose();
     identityUi.dispose();
+    notificationUi.dispose();
     audio.dispose();
     music.dispose();
     network.stop();
