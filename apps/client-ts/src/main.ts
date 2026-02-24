@@ -19,6 +19,7 @@ import { createMusicManager } from "./audio/MusicManager.js";
 import { createIdentityManager, registerIdentityHotkeys } from "./ui/identity/IdentityManager.js";
 import { registerInventoryHotkeys } from "./gameplay/items/IconInventoryService.js";
 import { createNotificationManager } from "./ui/notifications/NotificationManager.js";
+import { createOrbHintBanner } from "./ui/orb/OrbHintBanner.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -36,6 +37,7 @@ const audio = createAudioManager(state);
 const music = createMusicManager(state);
 const identityUi = createIdentityManager(state);
 const notificationUi = createNotificationManager(state);
+const orbHintUi = createOrbHintBanner(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
@@ -64,6 +66,7 @@ scene.app.ticker.add(() => {
     tutorialUi.render();
     identityUi.render();
     notificationUi.render();
+    orbHintUi.render();
     audio.tick();
     music.tick();
 });
@@ -88,6 +91,7 @@ window.addEventListener("beforeunload", () => {
     tutorialUi.dispose();
     identityUi.dispose();
     notificationUi.dispose();
+    orbHintUi.dispose();
     audio.dispose();
     music.dispose();
     network.stop();

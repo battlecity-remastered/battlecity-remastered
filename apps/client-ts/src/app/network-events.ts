@@ -273,7 +273,17 @@ const handlers: {
     },
     "city.orbed": (state, payload) => {
         state.events.lastOrbedCityId = payload.targetCityId;
+        state.events.lastOrbEvent = {
+            sourceCityId: payload.sourceCityId,
+            targetCityId: payload.targetCityId,
+            by: payload.by,
+            awardedScore: payload.awardedScore,
+            at: Date.now()
+        };
         pushExplosion(state, state.local.x, state.local.y, "large");
+        if (payload.by === state.local.id) {
+            pushFloatingPoints(state, state.local.x, state.local.y, payload.awardedScore);
+        }
     },
     "score.promotion": (state, payload) => {
         state.events.promotions.push(payload);

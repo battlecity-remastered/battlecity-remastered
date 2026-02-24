@@ -117,6 +117,13 @@ export type ClientState = {
     };
     events: {
         lastOrbedCityId: number | null;
+        lastOrbEvent: {
+            sourceCityId: number;
+            targetCityId: number;
+            by: string;
+            awardedScore: number;
+            at: number;
+        } | null;
         promotions: Array<{
             cityId: number;
             score: number;
@@ -273,6 +280,7 @@ export const createClientState = (): ClientState => {
         },
         events: {
             lastOrbedCityId: null,
+            lastOrbEvent: null,
             promotions: [],
             rejectionCount: 0,
             lastRejectedReason: null,

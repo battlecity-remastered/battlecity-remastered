@@ -37,6 +37,7 @@ test("lobby lifecycle events update lobby state", () => {
 
 test("economy/research/factory/chat/orb events update client stores", () => {
     const state = createClientState();
+    state.local.id = "p1";
 
     applyServerEvent(state, makeKnownEnvelope("city.finance", 1, {
         cityId: 2,
@@ -159,7 +160,9 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.chat.history.length, 2);
     assert.equal(state.chat.rateLimitedUntil, 99999);
     assert.equal(state.events.lastOrbedCityId, 2);
+    assert.equal(state.events.lastOrbEvent?.targetCityId, 2);
     assert.equal(state.events.effects.explosions.length > 0, true);
+    assert.equal(state.events.effects.floatingPoints.length > 0, true);
     assert.equal(state.events.promotions[0]?.rank, "captain");
     assert.equal(state.defenses.size, 0);
     assert.equal(state.buildings.size, 0);
