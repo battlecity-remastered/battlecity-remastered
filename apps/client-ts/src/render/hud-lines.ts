@@ -42,13 +42,15 @@ const readCityPopulation = (state: ClientState): number => {
 };
 
 const buildHudIdentityLines = (state: ClientState): string[] => {
+    const role = state.lobby.assignments
+        .find((entry) => entry.city === state.local.city)
+        ?.mayorId === state.local.id
+        ? "mayor"
+        : "recruit";
     return [
-        `id: ${state.local.id ?? "(joining...)"}`,
-        `user: ${state.scoreProfile.userId ?? "-"}`,
-        `city: ${state.local.city}`,
-        `rank: ${state.scoreProfile.rank ?? "-"} (${state.scoreProfile.score})`,
-        `health: ${state.local.health}/${state.local.maxHealth}`,
-        `remote: ${state.remotePlayers.size}`
+        `Player ${state.local.id ?? "(joining...)"}`,
+        `City ${state.local.city} ${role}  HP ${state.local.health}/${state.local.maxHealth}`,
+        `Rank ${state.scoreProfile.rank ?? "-"} (${state.scoreProfile.score})`
     ];
 };
 
@@ -58,45 +60,48 @@ const buildHudWorldLines = (
     researchLine: string
 ): string[] => {
     return [
-        `cash: ${finance.cash}`,
-        `income: ${finance.income}`,
-        `research: ${researchLine}`,
-        `population: ${readCityPopulation(state)}`,
-        `factory item0: ${readFactoryStock(state)}`,
-        `medkits: ${state.inventory.get(0) ?? 0}`,
-        `hazards: ${state.hazards.size}`,
-        `bullets: ${state.bullets.size}`,
-        `defenses: ${state.defenses.size}`,
-        `chat: ${state.chat.history.length}`
+        `Cash ${finance.cash}  Income ${finance.income}  Research ${researchLine}`,
+        `Pop ${readCityPopulation(state)}  Factory ${readFactoryStock(state)}  Medkits ${state.inventory.get(0) ?? 0}`,
+        `Hazards ${state.hazards.size}  Bullets ${state.bullets.size}  Defenses ${state.defenses.size}`
     ];
 };
 
 const buildHudEventLines = (state: ClientState): string[] => {
     const lastIconPickup = state.events.lastIconPickupConfirmed;
-    const lastPickupLine = lastIconPickup
-        ? `${lastIconPickup.itemType} x${lastIconPickup.amount}`
-        : "-";
-    return [
-        `last pickup: ${lastPickupLine}`,
-        `rejections: ${state.events.rejectionCount} (${state.events.lastRejectedReason ?? "-"})`,
-        `build denied: ${state.events.lastBuildDeniedReason ?? "-"}`,
-        `demolish denied: ${state.events.lastDemolishDeniedReason ?? "-"}`
-    ];
+    if (!lastIconPickup && !state.events.lastBuildDeniedReason && !state.events.lastDemolishDeniedReason) {
+        return [];
+    }
+    const lines: string[] = [];
+    if (lastIconPickup) {
+        lines.push(`Last pickup ${lastIconPickup.itemType} x${lastIconPickup.amount}`);
+    }
+    if (state.events.lastBuildDeniedReason) {
+        lines.push(`Build denied: ${state.events.lastBuildDeniedReason}`);
+    }
+    if (state.events.lastDemolishDeniedReason) {
+        lines.push(`Demolish denied: ${state.events.lastDemolishDeniedReason}`);
+    }
+    return lines;
 };
 
 export const buildHudLines = (state: ClientState): string[] => {
     const finance = readFinance(state);
     const researchLine = readResearch(state);
+    const base = [
+        ...buildHudIdentityLines(state),
+        ...buildHudWorldLines(state, finance, researchLine),
+        `Inventory ${buildInventoryHudLines(state).join(" | ")}`,
+    ];
+    const events = buildHudEventLines(state);
+    if (!state.ui.showBotDebug) {
+        return [...base, ...events];
+    }
     const rogue = summarizeRogueTanks(state);
     const defenders = summarizeDefenderState(state);
     return [
-        ...buildHudIdentityLines(state),
-        ...buildHudWorldLines(state, finance, researchLine),
-        ...buildInventoryHudLines(state),
-        `hostiles: ${rogue.hostilePlayers} (nearest ${rogue.nearestDistance === null ? "-" : Math.round(rogue.nearestDistance)})`,
-        `defenses damaged: ${defenders.damagedDefenses}/${defenders.defenseCount}`,
-        ...buildHudEventLines(state),
-        `pointer: ${Math.round(state.pointer.x)},${Math.round(state.pointer.y)} (${state.pointer.inside ? "in" : "out"})`,
-        "controls: W/Up move, A/D turn, Space fire, R research, C pickup, U use item, Shift+U drop, V arm bomb, X hazard, B orb, Shift+B defense"
+        ...base,
+        `Hostiles ${rogue.hostilePlayers} nearest ${rogue.nearestDistance === null ? "-" : Math.round(rogue.nearestDistance)}  Defense damage ${defenders.damagedDefenses}/${defenders.defenseCount}`,
+        ...events,
+        "W/Up move | A/D turn | Space fire | Ctrl+B build | Ctrl+X demolish | R research | C pickup | U use | Shift+U drop | B orb"
     ];
 };

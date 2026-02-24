@@ -252,6 +252,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added network-driven client visual effect queue (`player.dead`/`bullet.resolved`/`city.orbed`) for explosions and floating points.
   - Added side-panel subview rendering branches (`status`/`staff`/`city`/`points`) and active-button affordance states.
   - Added texture-backed panel glyph rendering (health/cash/research) and radar palette texture background integration.
+  - Reduced default left HUD diagnostics (debug/hostile/control-hint lines now gated behind bot-debug toggle) to better match player-facing legacy presentation.
 
 ---
 
