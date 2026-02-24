@@ -14,6 +14,11 @@ import { renderBotDebugLayer } from "./debug/BotDebugLayer.js";
 import { loadMapData, type LoadedMap } from "../world/map-loader.js";
 import { getFrameTexture, loadLegacyTextures, type LegacyTextures } from "./LegacyTextureRegistry.js";
 import {
+    resolveBuildingAnimationFrameX,
+    resolveBuildingBaseFrame,
+    resolveBuildingOverlay
+} from "./layers/building-parity-helpers.js";
+import {
     isPanelButtonActive,
     PANEL_BUTTONS,
     resolveRadarColor
@@ -145,6 +150,7 @@ type SceneLayers = {
     remoteTanks: Map<string, RenderableEntity>;
     objectLayer: Container;
     buildingSprites: Map<string, RenderableEntity>;
+    buildingOverlaySprites: Map<string, RenderableEntity>;
     defenseSprites: Map<string, RenderableEntity>;
     hazardSprites: Map<string, RenderableEntity>;
     bulletSprites: Map<string, RenderableEntity>;
@@ -218,6 +224,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         remoteTanks: new Map<string, RenderableEntity>(),
         objectLayer,
         buildingSprites: new Map<string, RenderableEntity>(),
+        buildingOverlaySprites: new Map<string, RenderableEntity>(),
         defenseSprites: new Map<string, RenderableEntity>(),
         hazardSprites: new Map<string, RenderableEntity>(),
         bulletSprites: new Map<string, RenderableEntity>(),
@@ -270,9 +277,21 @@ const renderGhostPlacement = (state: ClientState, sprite: Graphics): void => {
     sprite.position.set(ghostPlacement.tileX * TILE, ghostPlacement.tileY * TILE);
 };
 
-const resolveBuildingTexture = (textures: LegacyTextures, buildingType: number): Texture | null => {
-    const baseType = Math.max(0, Math.floor(buildingType / 100));
-    return getFrameTexture(textures.buildings, `building:${baseType}`, 0, baseType * 144, 144, 144);
+const resolveBuildingTexture = (
+    textures: LegacyTextures,
+    buildingType: number,
+    animateFrameCounter: number | null
+): Texture | null => {
+    const baseFrame = resolveBuildingBaseFrame(buildingType);
+    const frameX = animateFrameCounter === null ? baseFrame.x : resolveBuildingAnimationFrameX(animateFrameCounter);
+    return getFrameTexture(
+        textures.buildings,
+        `building:${buildingType}:${frameX}`,
+        frameX,
+        baseFrame.y,
+        baseFrame.width,
+        baseFrame.height
+    );
 };
 
 const resolveDefenseTexture = (textures: LegacyTextures, defenseType: number): Texture | null => {
@@ -292,10 +311,12 @@ const resolveBulletSprite = (textures: LegacyTextures): Sprite | null => {
 };
 
 const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
+    const animationCounter = Math.floor(Date.now() / 100);
+
     syncEntityCache(layers.buildingSprites, layers.objectLayer, state.buildings.keys(), () => {
         const firstBuilding = state.buildings.values().next().value;
         if (firstBuilding) {
-            const texture = resolveBuildingTexture(layers.textures, firstBuilding.type);
+            const texture = resolveBuildingTexture(layers.textures, firstBuilding.type, null);
             if (texture) {
                 return new Sprite(texture);
             }
@@ -308,13 +329,56 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
         const sprite = layers.buildingSprites.get(building.id);
         if (sprite) {
             if (sprite instanceof Sprite) {
-                const frame = resolveBuildingTexture(layers.textures, building.type);
+                const frame = resolveBuildingTexture(
+                    layers.textures,
+                    building.type,
+                    building.health < building.maxHealth ? animationCounter : null
+                );
                 if (frame) {
                     sprite.texture = frame;
                 }
             }
             sprite.position.set(building.tileX * TILE, building.tileY * TILE);
         }
+    }
+
+    const overlayBuildingIds = [...state.buildings.values()]
+        .filter((building) => resolveBuildingOverlay(building.type) !== null)
+        .map((building) => building.id);
+
+    syncEntityCache(layers.buildingOverlaySprites, layers.objectLayer, overlayBuildingIds, () => {
+        const sprite = new Sprite();
+        return sprite;
+    });
+
+    for (const buildingId of overlayBuildingIds) {
+        const building = state.buildings.get(buildingId);
+        const sprite = layers.buildingOverlaySprites.get(buildingId);
+        if (!building || !sprite) {
+            continue;
+        }
+        if (!(sprite instanceof Sprite)) {
+            continue;
+        }
+        const overlay = resolveBuildingOverlay(building.type);
+        if (!overlay) {
+            continue;
+        }
+        const frame = getFrameTexture(
+            layers.textures.items,
+            `building-overlay:${overlay.iconIndex}`,
+            overlay.iconIndex * 32,
+            0,
+            32,
+            32
+        );
+        if (frame) {
+            sprite.texture = frame;
+        }
+        sprite.position.set(
+            (building.tileX * TILE) + overlay.offset.x,
+            (building.tileY * TILE) + overlay.offset.y
+        );
     }
 
     syncEntityCache(layers.defenseSprites, layers.objectLayer, state.defenses.keys(), () => {

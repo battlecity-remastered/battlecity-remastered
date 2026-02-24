@@ -8,7 +8,7 @@ Last updated: 2026-02-24
 - [x] Phase 2 - Asset loading parity
 - [x] Phase 3 - Map decode + blocking parity
 - [x] Phase 4 - Ground + terrain tile parity
-- [ ] Phase 5 - Building base + overlays parity
+- [x] Phase 5 - Building base + overlays parity
 - [ ] Phase 6 - Population/research/smoke/digits parity
 - [ ] Phase 7 - Items/defense/bullets parity
 - [ ] Phase 8 - Panel + radar + home arrow parity
@@ -39,16 +39,16 @@ Last updated: 2026-02-24
 - [x] Out-of-bounds terrain tiles render black.
 
 ## D) Buildings
-- [ ] Building base frame uses `(0, baseType*144, 144, 144)`.
-- [ ] Building animation parity (`animX=144`, `animCountX=3`, cadence parity).
-- [ ] Factory overlay icon at `(+56,+52)`.
-- [ ] Research overlay icon at `(+14,+98)`.
+- [x] Building base frame uses `(0, baseType*144, 144, 144)`.
+- [x] Building animation parity (`animX=144`, `animCountX=3`, cadence parity).
+- [x] Factory overlay icon at `(+56,+52)`.
+- [x] Research overlay icon at `(+14,+98)`.
 - [ ] Research vertical strip crop/scale/position parity.
 - [ ] Population frame row/column parity.
 - [ ] Population offsets per family parity.
 - [ ] Factory smoke position parity.
 - [ ] Factory digit placement parity.
-- [ ] Command center world label center and y-offset parity.
+- [x] Command center world label center and y-offset parity.
 
 ## E) Defenses / items / bullets
 - [ ] Turret base damage column parity.

@@ -31,7 +31,7 @@ No plan can mathematically guarantee 100% correctness in complex UI systems. Thi
 | 2 | Asset loading parity | done | all required textures loaded + tested |
 | 3 | Map decode + blocking parity | done | client/server map tests aligned |
 | 4 | Ground + terrain tile parity | done | terrain frame math + draw transform parity |
-| 5 | Building base + overlays parity | pending | building visual matrix parity |
+| 5 | Building base + overlays parity | done | building visual matrix parity |
 | 6 | Population/research/smoke/digits parity | pending | changing-layer parity tests |
 | 7 | Items/defense/bullets parity | pending | frame/offset parity tests |
 | 8 | Panel + radar + home arrow parity | pending | panel coordinate tests + manual verify |
