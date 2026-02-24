@@ -41,11 +41,8 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/app/state.ts`
-- `apps/client-ts/src/ui/options/OptionsModal.ts`
-- `apps/client-ts/src/world/city-import.ts`
-- `apps/client-ts/test/options-modal.test.ts`
-- `apps/client-ts/test/city-import.test.ts`
+- `apps/client-ts/src/render/LegacyTextureRegistry.ts`
+- `apps/client-ts/src/render/scene.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/rewrite-progress.md`
 

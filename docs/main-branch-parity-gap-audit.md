@@ -228,7 +228,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 5. `RENDER-03` Port building overlay pipeline (research state, population, smoke, command-center labels). `status: partial (2026-02-24, texture-backed building/defense sprites plus population/research/smoke overlays wired; command-center label parity pending)`
 6. `RENDER-04` Port item/hazard sprite-frame rendering rules (mine visibility, bomb armed state, orb animation). `status: partial (2026-02-24, texture-backed hazard sprites wired; orb/item frame parity expansion pending)`
 7. `FX-01` Port sprite effects (muzzle flash/explosions/smoke/floating points) with texture assets. `status: partial (2026-02-24, texture-backed muzzle flash + explosion frames + floating points event queue wired; sprite-text and remaining variants pending)`
-8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background added; full legacy visual fidelity pending)`
+8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background + texture-backed button chrome added; full legacy visual fidelity pending)`
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, and finance-ranked scoreboard lines; full visual tab chrome still pending)`
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, city-import slot/mode controls, and concrete client import execution from `/assets/cities/<slot>/demo.city`; full legacy import UX still pending)`
 11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events; full legacy styling and orb-hint flow still pending)`
@@ -258,6 +258,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Expanded options parity controls for identity provider toggle, performance preset cycling, and city-import slot/mode controls.
   - Added client city-import execution flow (parse legacy `.city` file, apply imported layout to selected city objects, report import status in options panel).
   - Added notification parity baseline with event-driven toast queue for promotions, denials, and city-orbed events.
+  - Added texture-backed side-panel button chrome using legacy button atlas assets with active-state highlighting.
 
 ---
 

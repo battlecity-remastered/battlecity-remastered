@@ -491,16 +491,18 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
 
     for (let i = 0; i < PANEL_BUTTON_LABELS.length; i += 1) {
         const active = isPanelButtonActive(state.ui, i);
-        layers.panelBackground
-            .roundRect(
-                PANEL_BUTTON_START_X,
-                PANEL_BUTTON_START_Y + (i * PANEL_BUTTON_STEP),
-                PANEL_BUTTON_WIDTH,
-                PANEL_BUTTON_HEIGHT,
-                4
-            )
-            .fill({ color: active ? 0x35547c : 0x223248, alpha: active ? 0.9 : 0.72 })
-            .stroke({ color: 0x8ca8c8, width: 1, alpha: 0.9 });
+        const buttonY = PANEL_BUTTON_START_Y + (i * PANEL_BUTTON_STEP);
+        if (layers.textures.buttonStaff) {
+            layers.panelBackground
+                .roundRect(PANEL_BUTTON_START_X, buttonY, PANEL_BUTTON_WIDTH, PANEL_BUTTON_HEIGHT, 4)
+                .fill({ texture: layers.textures.buttonStaff, alpha: active ? 0.95 : 0.8 })
+                .stroke({ color: active ? 0xbfd7f5 : 0x8ca8c8, width: active ? 2 : 1, alpha: 0.92 });
+        } else {
+            layers.panelBackground
+                .roundRect(PANEL_BUTTON_START_X, buttonY, PANEL_BUTTON_WIDTH, PANEL_BUTTON_HEIGHT, 4)
+                .fill({ color: active ? 0x35547c : 0x223248, alpha: active ? 0.9 : 0.72 })
+                .stroke({ color: 0x8ca8c8, width: 1, alpha: 0.9 });
+        }
     }
 
     const detailLines = resolvePanelDetailLines(state);

@@ -21,6 +21,7 @@ export type LegacyTextures = {
     health: Texture | null;
     moneyUp: Texture | null;
     moneyDown: Texture | null;
+    buttonStaff: Texture | null;
 };
 
 const asTexture = (value: unknown): Texture | null => {
@@ -37,7 +38,7 @@ const safeLoadTexture = async (path: string): Promise<Texture | null> => {
 };
 
 export const loadLegacyTextures = async (): Promise<LegacyTextures> => {
-    const [tanks, buildings, items, bullets, turretBase, ground, rocks, lava, muzzleFlash, interfaceTop, interfaceBottom, radarColors, smallExplosion, population, research, researchComplete, smoke, health, moneyUp, moneyDown] = await Promise.all([
+    const [tanks, buildings, items, bullets, turretBase, ground, rocks, lava, muzzleFlash, interfaceTop, interfaceBottom, radarColors, smallExplosion, population, research, researchComplete, smoke, health, moneyUp, moneyDown, buttonStaff] = await Promise.all([
         safeLoadTexture("/assets/imgTanks.png"),
         safeLoadTexture("/assets/imgBuildings.png"),
         safeLoadTexture("/assets/imgItems.png"),
@@ -57,7 +58,8 @@ export const loadLegacyTextures = async (): Promise<LegacyTextures> => {
         safeLoadTexture("/assets/imgSmoke.png"),
         safeLoadTexture("/assets/imgHealth.png"),
         safeLoadTexture("/assets/imgMoneyUp.png"),
-        safeLoadTexture("/assets/imgMoneyDown.png")
+        safeLoadTexture("/assets/imgMoneyDown.png"),
+        safeLoadTexture("/assets/imgBtnStaff.png")
     ]);
     return {
         tanks,
@@ -79,7 +81,8 @@ export const loadLegacyTextures = async (): Promise<LegacyTextures> => {
         smoke,
         health,
         moneyUp,
-        moneyDown
+        moneyDown,
+        buttonStaff
     };
 };
 
