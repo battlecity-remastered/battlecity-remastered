@@ -4,6 +4,7 @@ import { createClientState } from "../src/app/state.js";
 import {
     registerMouseInputHandlers,
     resolveControlForMouseButton,
+    resolveCursorForState,
     resolvePanelAction,
     resolvePointerPosition
 } from "../src/input/mouse-input.js";
@@ -43,6 +44,7 @@ class MockSurface extends MockEventSource {
         width: 640,
         height: 480
     };
+    public style: { cursor?: string; } = {};
 
     public getBoundingClientRect(): {
         left: number;
@@ -58,6 +60,18 @@ test("resolveControlForMouseButton maps left/right buttons to controls", () => {
     assert.equal(resolveControlForMouseButton(0), "shoot");
     assert.equal(resolveControlForMouseButton(2), "useItem");
     assert.equal(resolveControlForMouseButton(1), null);
+});
+
+test("resolveCursorForState maps build/demolish/bomb modes", () => {
+    const state = createClientState();
+    assert.equal(resolveCursorForState(state), "default");
+    state.ui.showBuildMenu = true;
+    assert.equal(resolveCursorForState(state), "crosshair");
+    state.ui.showBuildMenu = false;
+    state.ui.bombArmed = true;
+    assert.equal(resolveCursorForState(state), "cell");
+    state.controls.demolish = true;
+    assert.equal(resolveCursorForState(state), "not-allowed");
 });
 
 test("resolvePanelAction maps right-side panel hotspots", () => {
@@ -99,6 +113,7 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
     const surface = new MockSurface();
     const windowSource = new MockEventSource();
     const unregister = registerMouseInputHandlers(state, surface, windowSource);
+    assert.equal(surface.style.cursor, "default");
 
     surface.emit("mousedown", {
         button: 0
@@ -135,6 +150,22 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
     assert.equal(state.ui.panelView, "status");
 
     surface.emit("mousedown", {
+        button: 0,
+        clientX: 560,
+        clientY: 248
+    } as MouseEvent as Event);
+    assert.equal(state.ui.showBuildMenu, true);
+    assert.equal(surface.style.cursor, "crosshair");
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 560,
+        clientY: 248
+    } as MouseEvent as Event);
+    assert.equal(state.ui.showBuildMenu, false);
+    assert.equal(surface.style.cursor, "default");
+
+    surface.emit("mousedown", {
         button: 2
     } as MouseEvent as Event);
     assert.equal(state.controls.useItem, true);
@@ -157,11 +188,28 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
     assert.equal(state.controls.build, true);
     assert.equal(state.controls.ctrl, true);
     assert.equal(state.controls.shoot, false);
+    assert.equal(surface.style.cursor, "crosshair");
     surface.emit("mouseup", {
         button: 0
     } as MouseEvent as Event);
     assert.equal(state.controls.build, false);
     assert.equal(state.controls.ctrl, false);
 
+    state.ui.showBuildMenu = false;
+    state.ui.bombArmed = true;
+    surface.emit("mousemove", {
+        clientX: 240,
+        clientY: 220
+    } as MouseEvent as Event);
+    assert.equal(surface.style.cursor, "cell");
+
+    state.controls.demolish = true;
+    surface.emit("mousemove", {
+        clientX: 240,
+        clientY: 220
+    } as MouseEvent as Event);
+    assert.equal(surface.style.cursor, "not-allowed");
+
     unregister();
+    assert.equal(surface.style.cursor, "default");
 });

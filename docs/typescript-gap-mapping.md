@@ -218,3 +218,4 @@ apps/client-ts/src/
   - `S2-17`: lobby UX extended with score-tab and city-filter navigation plus explicit tab-state labels.
   - `S2-22`: options modal advanced controls now include concrete city-import execution flow and legacy-texture backdrop styling.
   - `S2-24`: notification affordance flow expanded with event-driven toast panel integration, explicit menu control hints, and legacy-texture overlay chrome.
+  - `S2-16`: mouse interaction fidelity now includes state-driven cursor mode transitions for build/demolish/bomb flows.

@@ -14,6 +14,9 @@ type PointerSurface = EventSource & {
         width: number;
         height: number;
     };
+    style?: {
+        cursor?: string;
+    };
 };
 
 type PointerPosition = {
@@ -39,6 +42,19 @@ export type PanelAction =
     | "toggle_options"
     | "toggle_build"
     | "leave_lobby";
+
+export const resolveCursorForState = (state: ClientState): string => {
+    if (state.controls.demolish) {
+        return "not-allowed";
+    }
+    if (state.ui.showBuildMenu) {
+        return "crosshair";
+    }
+    if (state.ui.bombArmed) {
+        return "cell";
+    }
+    return "default";
+};
 
 export const resolvePanelAction = (
     pointerX: number,
@@ -201,6 +217,16 @@ const applyPointerUpdate = (state: ClientState, surface: PointerSurface, clientX
     state.pointer.surfaceHeight = resolved.height;
 };
 
+const syncCursor = (state: ClientState, surface: PointerSurface): void => {
+    if (!surface.style) {
+        return;
+    }
+    const cursor = resolveCursorForState(state);
+    if (surface.style.cursor !== cursor) {
+        surface.style.cursor = cursor;
+    }
+};
+
 const clearPointerControls = (state: ClientState): void => {
     state.controls.shoot = false;
     state.controls.useItem = false;
@@ -212,18 +238,21 @@ export const registerMouseInputHandlers = (
     windowSource: EventSource | null = typeof window === "undefined" ? null : window
 ): (() => void) => {
     syncSurfaceMetrics(state, surface);
+    syncCursor(state, surface);
 
     const onMouseDown = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
         const panelAction = resolvePanelAction(pointerEvent.clientX, pointerEvent.clientY, state.pointer.surfaceWidth);
         if (panelAction) {
             applyPanelAction(state, panelAction);
+            syncCursor(state, surface);
             return;
         }
         if (pointerEvent.button === 0 && state.ui.showBuildMenu) {
             state.controls.build = true;
             state.controls.ctrl = true;
             state.controls.shoot = false;
+            syncCursor(state, surface);
             return;
         }
         const control = resolveControlForMouseButton(pointerEvent.button);
@@ -231,6 +260,7 @@ export const registerMouseInputHandlers = (
             return;
         }
         state.controls[control] = true;
+        syncCursor(state, surface);
     };
 
     const onMouseUp = (event: Event): void => {
@@ -238,6 +268,7 @@ export const registerMouseInputHandlers = (
         if (pointerEvent.button === 0 && state.ui.showBuildMenu) {
             state.controls.build = false;
             state.controls.ctrl = false;
+            syncCursor(state, surface);
             return;
         }
         const control = resolveControlForMouseButton(pointerEvent.button);
@@ -245,16 +276,19 @@ export const registerMouseInputHandlers = (
             return;
         }
         state.controls[control] = false;
+        syncCursor(state, surface);
     };
 
     const onMouseMove = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
         applyPointerUpdate(state, surface, pointerEvent.clientX, pointerEvent.clientY);
+        syncCursor(state, surface);
     };
 
     const onMouseLeave = (): void => {
         state.pointer.inside = false;
         clearPointerControls(state);
+        syncCursor(state, surface);
     };
 
     const onContextMenu = (event: Event): void => {
@@ -263,6 +297,7 @@ export const registerMouseInputHandlers = (
 
     const onWindowResize = (): void => {
         syncSurfaceMetrics(state, surface);
+        syncCursor(state, surface);
     };
 
     surface.addEventListener("mousedown", onMouseDown);
@@ -283,6 +318,9 @@ export const registerMouseInputHandlers = (
         surface.removeEventListener("contextmenu", onContextMenu);
         if (windowSource) {
             windowSource.removeEventListener("resize", onWindowResize);
+        }
+        if (surface.style) {
+            surface.style.cursor = "default";
         }
     };
 };

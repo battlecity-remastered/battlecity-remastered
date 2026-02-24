@@ -219,4 +219,5 @@ The rewrite should only be considered complete when:
   - notification/toast overlay is event-driven for promotion/denial/orb flows.
   - notification panel now includes explicit in-game menu affordance lines (F1/F2/F3/F4 controls).
   - orb hint and notification overlays now share legacy-texture visual chrome.
+  - mouse interaction now drives cursor-mode cues for build/demolish/bomb states.
 - These are additive parity improvements on top of the already-closed S-ID matrix.

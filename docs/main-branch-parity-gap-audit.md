@@ -233,7 +233,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, city-import slot/mode controls, concrete client import execution from `/assets/cities/<slot>/demo.city`, and legacy-texture modal backdrop; full legacy import UX still pending)`
 11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events with explicit menu affordance hints, and both notification/orb overlays now use legacy texture backdrops; full legacy styling/menu affordances still pending)`
 12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs. `status: partial (2026-02-24, cue mapping expanded to orb/build-denied/demolish-denied/promotion/shot/damage transitions; full legacy sound-id routing still pending)`
-13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity.
+13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity. `status: partial (2026-02-24, cursor mode now tracks gameplay state with default/build/demolish/bomb visual cues; full legacy cursor sprite/mode fidelity still pending)`
 14. `QA-01` Add screenshot-based visual regression tests for parity checkpoints.
 
 ## Implementation Log
@@ -267,6 +267,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added texture-backed lobby/options overlay panel backgrounds using legacy interface atlas images.
   - Added notification overlay heading/menu-affordance lines for modal/build controls visibility.
   - Added texture-backed notification and orb-hint banner overlays using legacy interface textures.
+  - Added state-driven cursor fidelity in mouse input (`default`, `crosshair`, `cell`, `not-allowed`) tied to build/demolish/bomb states.
 
 ---
 
