@@ -1,8 +1,11 @@
 import { Graphics, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
-
-const TILE_SIZE = 128;
-const DRAW_RADIUS = 12;
+import {
+    GROUND_DRAW_MAX,
+    GROUND_DRAW_MIN,
+    GROUND_TILE_SIZE,
+    resolveGroundOrigin
+} from "./terrain-parity-helpers.js";
 
 export const renderGroundLayer = (
     state: ClientState,
@@ -11,21 +14,20 @@ export const renderGroundLayer = (
     texture: Texture | null = null
 ): void => {
     sprite.clear();
-    const centerTileX = Math.floor(state.local.x / TILE_SIZE);
-    const centerTileY = Math.floor(state.local.y / TILE_SIZE);
+    const origin = resolveGroundOrigin(state.local.x, state.local.y);
 
-    for (let tx = centerTileX - DRAW_RADIUS; tx <= centerTileX + DRAW_RADIUS; tx += 1) {
-        for (let ty = centerTileY - DRAW_RADIUS; ty <= centerTileY + DRAW_RADIUS; ty += 1) {
-            const x = tx * TILE_SIZE;
-            const y = ty * TILE_SIZE;
+    for (let tx = GROUND_DRAW_MIN; tx <= GROUND_DRAW_MAX; tx += 1) {
+        for (let ty = GROUND_DRAW_MIN; ty <= GROUND_DRAW_MAX; ty += 1) {
+            const x = origin.x + (tx * GROUND_TILE_SIZE);
+            const y = origin.y + (ty * GROUND_TILE_SIZE);
             if (texture) {
                 sprite
-                    .rect(x, y, TILE_SIZE, TILE_SIZE)
+                    .rect(x, y, GROUND_TILE_SIZE, GROUND_TILE_SIZE)
                     .fill({ texture });
             } else {
                 const alternate = (tx + ty) % 3 === 0;
                 sprite
-                    .rect(x, y, TILE_SIZE, TILE_SIZE)
+                    .rect(x, y, GROUND_TILE_SIZE, GROUND_TILE_SIZE)
                     .fill(alternate ? 0x1a2e27 : 0x20362d);
             }
         }

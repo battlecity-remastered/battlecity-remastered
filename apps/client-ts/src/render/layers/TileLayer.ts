@@ -1,9 +1,11 @@
 import { Graphics, type Container, type Texture } from "pixi.js";
 import type { LoadedMap } from "../../world/map-loader.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
-
-const TILE_SIZE = 48;
-const DRAW_RADIUS = 40;
+import {
+    resolveTerrainFrameOffset,
+    TILE_DRAW_RADIUS,
+    TILE_SIZE
+} from "./terrain-parity-helpers.js";
 const MAP_SQUARE_LAVA = 1;
 const MAP_SQUARE_ROCK = 2;
 const MAP_SQUARE_BUILDING = 3;
@@ -23,20 +25,6 @@ const isInsideMap = (mapData: LoadedMap, tileX: number, tileY: number): boolean 
     return tileX >= 0 && tileY >= 0 && tileX < mapData.map.length && tileY < mapData.map.length;
 };
 
-const resolveTerrainFrameOffset = (mapData: LoadedMap, tileX: number, tileY: number, tileValue: number): number => {
-    const same = (x: number, y: number): boolean => {
-        if (!isInsideMap(mapData, x, y)) {
-            return false;
-        }
-        return (mapData.map[x]?.[y] ?? 0) === tileValue;
-    };
-    const isLeft = same(tileX - 1, tileY) ? 0 : 1;
-    const isRight = same(tileX + 1, tileY) ? 0 : 1;
-    const isDown = same(tileX, tileY + 1) ? 0 : 1;
-    const isUp = same(tileX, tileY - 1) ? 0 : 1;
-    return (isLeft + (isRight * 2) + (isDown * 4) + (isUp * 8)) * TILE_SIZE;
-};
-
 export const renderTileLayer = (
     mapData: LoadedMap,
     cameraX: number,
@@ -51,8 +39,8 @@ export const renderTileLayer = (
     const centerTileX = Math.floor(cameraX / TILE_SIZE);
     const centerTileY = Math.floor(cameraY / TILE_SIZE);
 
-    for (let tx = centerTileX - DRAW_RADIUS; tx <= centerTileX + DRAW_RADIUS; tx += 1) {
-        for (let ty = centerTileY - DRAW_RADIUS; ty <= centerTileY + DRAW_RADIUS; ty += 1) {
+    for (let tx = centerTileX - TILE_DRAW_RADIUS; tx <= centerTileX + TILE_DRAW_RADIUS; tx += 1) {
+        for (let ty = centerTileY - TILE_DRAW_RADIUS; ty <= centerTileY + TILE_DRAW_RADIUS; ty += 1) {
             if (!isInsideMap(mapData, tx, ty)) {
                 sprite
                     .rect(tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, TILE_SIZE)

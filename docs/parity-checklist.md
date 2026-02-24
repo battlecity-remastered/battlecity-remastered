@@ -7,7 +7,7 @@ Last updated: 2026-02-24
 - [x] Phase 1 - Shared constants + item IDs
 - [x] Phase 2 - Asset loading parity
 - [x] Phase 3 - Map decode + blocking parity
-- [ ] Phase 4 - Ground + terrain tile parity
+- [x] Phase 4 - Ground + terrain tile parity
 - [ ] Phase 5 - Building base + overlays parity
 - [ ] Phase 6 - Population/research/smoke/digits parity
 - [ ] Phase 7 - Items/defense/bullets parity
@@ -34,9 +34,9 @@ Last updated: 2026-02-24
 - [x] Client map decode orientation matches legacy axis transform.
 - [x] Server map decode orientation matches client.
 - [x] Client and server blocking logic is explicitly aligned.
-- [ ] Ground layer uses tile size `128` and modulo camera alignment.
-- [ ] Terrain frame bitmasking produces correct `frameX = mask * 48`.
-- [ ] Out-of-bounds terrain tiles render black.
+- [x] Ground layer uses tile size `128` and modulo camera alignment.
+- [x] Terrain frame bitmasking produces correct `frameX = mask * 48`.
+- [x] Out-of-bounds terrain tiles render black.
 
 ## D) Buildings
 - [ ] Building base frame uses `(0, baseType*144, 144, 144)`.
