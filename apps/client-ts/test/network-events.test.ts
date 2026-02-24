@@ -304,3 +304,27 @@ test("population.update mutates known buildings and respects removed flag", () =
     }));
     assert.equal(state.buildings.has("b1"), false);
 });
+
+test("successful building events clear previous deny reasons", () => {
+    const state = createClientState();
+    state.events.lastBuildDeniedReason = "research_required";
+    state.events.lastDemolishDeniedReason = "not_mayor";
+
+    applyServerEvent(state, makeKnownEnvelope("building.placed", 1, {
+        id: "b1",
+        ownerId: "p-local",
+        cityId: 2,
+        type: 109,
+        tileX: 8,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120
+    }));
+    assert.equal(state.events.lastBuildDeniedReason, null);
+
+    applyServerEvent(state, makeKnownEnvelope("building.demolished", 2, {
+        id: "b1",
+        cityId: 2
+    }));
+    assert.equal(state.events.lastDemolishDeniedReason, null);
+});

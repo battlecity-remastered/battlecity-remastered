@@ -225,7 +225,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 2. `ASSET-02` Implement real Pixi asset loader + texture registry in TS client startup. `status: done (2026-02-24)`
 3. `RENDER-01` Replace procedural tank rendering with atlas frame renderer (`row/column` + role/city variants). `status: partial (2026-02-24, tank atlas rows/columns wired; full skin/frame parity pending)`
 4. `RENDER-02` Port tile/autotile texture logic for ground/rocks/lava from legacy mapping. `status: partial (2026-02-24, texture-backed terrain fallback wired; full autotile parity pending)`
-5. `RENDER-03` Port building overlay pipeline (research state, population, smoke, command-center labels). `status: partial (2026-02-24, texture-backed building/defense sprites plus population/research/smoke overlays wired; command-center label parity pending)`
+5. `RENDER-03` Port building overlay pipeline (research state, population, smoke, command-center labels). `status: partial (2026-02-24, texture-backed building/defense sprites plus population/research/smoke overlays wired; overlay rendering no longer depends on population > 0, command-center label parity pending)`
 6. `RENDER-04` Port item/hazard sprite-frame rendering rules (mine visibility, bomb armed state, orb animation). `status: partial (2026-02-24, texture-backed hazard sprites wired; orb/item frame parity expansion pending)`
 7. `FX-01` Port sprite effects (muzzle flash/explosions/smoke/floating points) with texture assets. `status: partial (2026-02-24, texture-backed muzzle flash + explosion frames + floating points event queue wired; sprite-text and remaining variants pending)`
 8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background + texture-backed button chrome added; full legacy visual fidelity pending)`
@@ -260,6 +260,8 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added notification parity baseline with event-driven toast queue for promotions, denials, and city-orbed events.
   - Added texture-backed side-panel button chrome using legacy button atlas assets with active-state highlighting.
   - Added orb-hint banner parity baseline via explicit orb event state (`source/target/by/score`) and timed contextual warning/success messages.
+  - Fixed changing-layer parity regression where research/smoke overlays were incorrectly skipped when population was zero.
+  - Synced deny-state UX with authoritative success events (`building.placed` clears build deny; `building.demolished` clears demolish deny).
 
 ---
 

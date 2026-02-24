@@ -114,6 +114,7 @@ const handlers: {
         state.events.lastBuildDeniedReason = payload.reason;
     },
     "building.placed": (state, payload) => {
+        state.events.lastBuildDeniedReason = null;
         state.buildings.set(payload.id, {
             id: payload.id,
             ownerId: payload.ownerId,
@@ -127,6 +128,7 @@ const handlers: {
         });
     },
     "building.demolished": (state, payload) => {
+        state.events.lastDemolishDeniedReason = null;
         state.buildings.delete(payload.id);
     },
     "population.update": (state, payload) => {

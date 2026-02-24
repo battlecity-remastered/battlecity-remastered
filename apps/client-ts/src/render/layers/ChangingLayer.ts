@@ -1,6 +1,7 @@
 import { Graphics, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { isCommandCenterType, isFactoryType, resolveSmokeFrame } from "./changing-layer-helpers.js";
 
 const TILE_SIZE = 48;
 
@@ -11,29 +12,33 @@ export const renderChangingLayer = (
     populationTexture: Texture | null = null,
     researchTexture: Texture | null = null,
     researchCompleteTexture: Texture | null = null,
-    smokeTexture: Texture | null = null
+    smokeTexture: Texture | null = null,
+    nowMs: number = Date.now()
 ): void => {
     sprite.clear();
 
     for (const building of state.buildings.values()) {
-        if (building.population <= 0) {
-            continue;
-        }
-        if (populationTexture) {
-            const frame = Math.min(6, Math.floor((Math.max(0, Math.min(100, building.population)) / 100) * 6));
-            const populationFrame = getFrameTexture(populationTexture, `population:${frame}`, frame * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-            if (populationFrame) {
-                sprite
-                    .rect(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    .fill({ texture: populationFrame, alpha: 0.88 });
-                continue;
+        if (building.population > 0) {
+            if (populationTexture) {
+                const frame = Math.min(6, Math.floor((Math.max(0, Math.min(100, building.population)) / 100) * 6));
+                const populationFrame = getFrameTexture(populationTexture, `population:${frame}`, frame * TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+                if (populationFrame) {
+                    sprite
+                        .rect(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                        .fill({ texture: populationFrame, alpha: 0.88 });
+                } else {
+                    const ratio = Math.max(0, Math.min(1, building.population / 100));
+                    const width = Math.floor(TILE_SIZE * ratio);
+                    sprite.rect(building.tileX * TILE_SIZE, (building.tileY * TILE_SIZE) - 6, width, 4).fill(0x66f2a0);
+                }
+            } else {
+                const ratio = Math.max(0, Math.min(1, building.population / 100));
+                const width = Math.floor(TILE_SIZE * ratio);
+                sprite.rect(building.tileX * TILE_SIZE, (building.tileY * TILE_SIZE) - 6, width, 4).fill(0x66f2a0);
             }
         }
-        const ratio = Math.max(0, Math.min(1, building.population / 100));
-        const width = Math.floor(TILE_SIZE * ratio);
-        sprite.rect(building.tileX * TILE_SIZE, (building.tileY * TILE_SIZE) - 6, width, 4).fill(0x66f2a0);
 
-        if (building.type === 200 || building.type === 201) {
+        if (isCommandCenterType(building.type)) {
             const cityResearch = state.research.get(building.cityId);
             const hasActiveResearch = Boolean(cityResearch?.active);
             const completedCount = cityResearch?.completed.length ?? 0;
@@ -48,8 +53,8 @@ export const renderChangingLayer = (
                     .fill({ texture: researchFrame, alpha: 0.9 });
             }
         }
-        if (building.type >= 100 && building.type <= 102 && smokeTexture) {
-            const smokeFrame = Math.floor(Date.now() / 120) % 8;
+        if (isFactoryType(building.type) && smokeTexture) {
+            const smokeFrame = resolveSmokeFrame(nowMs);
             const smoke = getFrameTexture(smokeTexture, `smoke:${smokeFrame}`, 0, smokeFrame * 60, 180, 60);
             if (smoke) {
                 sprite
