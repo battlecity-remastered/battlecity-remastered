@@ -148,5 +148,20 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
     assert.equal(state.pointer.surfaceWidth, 500);
     assert.equal(state.pointer.surfaceHeight, 300);
 
+    state.ui.showBuildMenu = true;
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 200,
+        clientY: 200
+    } as MouseEvent as Event);
+    assert.equal(state.controls.build, true);
+    assert.equal(state.controls.ctrl, true);
+    assert.equal(state.controls.shoot, false);
+    surface.emit("mouseup", {
+        button: 0
+    } as MouseEvent as Event);
+    assert.equal(state.controls.build, false);
+    assert.equal(state.controls.ctrl, false);
+
     unregister();
 });

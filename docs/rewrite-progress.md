@@ -41,11 +41,11 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/render/LegacyTextureRegistry.ts`
-- `apps/client-ts/src/render/scene.ts`
-- `apps/client-ts/src/render/panel/panel-visuals.ts`
+- `apps/client-ts/src/input/mouse-input.ts`
+- `apps/client-ts/src/ui/build-menu/BuildMenu.ts`
 - `apps/client-ts/src/render/hud-lines.ts`
-- `apps/client-ts/test/panel-visuals.test.ts`
+- `apps/client-ts/test/mouse-input.test.ts`
+- `apps/client-ts/test/build-menu.test.ts`
 - `apps/client-ts/test/hud-lines.test.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/rewrite-progress.md`
