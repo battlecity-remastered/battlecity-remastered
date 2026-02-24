@@ -7,12 +7,24 @@ test("parseCityImportFile converts legacy city rows into remastered tile coords/
     const layout = parseCityImportFile([
         "6 510 509",
         "18 500 500",
+        "1 0 0",
         "bad row"
     ].join("\n"));
 
-    assert.equal(layout.length, 2);
+    assert.equal(layout.length, 3);
     assert.deepEqual(layout[0], { type: 109, tileX: 1, tileY: 2 });
     assert.deepEqual(layout[1], { type: 101, tileX: 11, tileY: 11 });
+    assert.deepEqual(layout[2], { type: 200, tileX: 511, tileY: 511 });
+});
+
+test("parseCityImportFile uses 511-raw transform parity on x/y coordinates", () => {
+    const layout = parseCityImportFile([
+        "1 511 511",
+        "1 416 352"
+    ].join("\n"));
+
+    assert.deepEqual(layout[0], { type: 200, tileX: 0, tileY: 0 });
+    assert.deepEqual(layout[1], { type: 200, tileX: 95, tileY: 159 });
 });
 
 test("applyImportedCityLayout replaces city-local objects and seeds imported buildings", () => {

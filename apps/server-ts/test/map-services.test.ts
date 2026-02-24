@@ -81,6 +81,16 @@ test("loadCityFile parses and offsets against base spawn", () => {
     assert.deepEqual(layout[1], { type: 300, dx: 1, dy: 1 });
 });
 
+test("loadCityFile keeps 511-raw parity transform for edge coordinates", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "battlecity-city-edge-"));
+    const cityFile = path.join(tempDir, "edge.city");
+    fs.writeFileSync(cityFile, "1 511 511\n1 0 0\n");
+
+    const layout = loadCityFile(cityFile, 0, 0);
+    assert.deepEqual(layout[0], { type: 200, dx: 0, dy: 0 });
+    assert.deepEqual(layout[1], { type: 200, dx: 511, dy: 511 });
+});
+
 test("loadCityLayoutsFromDirectory reads .city files using spawn lookup", () => {
     const spawnLookup = buildCitySpawnLookup();
     const annaba = spawnLookup.get("annaba");

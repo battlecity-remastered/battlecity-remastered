@@ -13,7 +13,7 @@ Last updated: 2026-02-24
 - [x] Phase 7 - Items/defense/bullets parity
 - [x] Phase 8 - Panel + radar + home arrow parity
 - [x] Phase 9 - Map modal parity
-- [ ] Phase 10 - City spawn/layout parity
+- [x] Phase 10 - City spawn/layout parity
 - [ ] Phase 11 - End-to-end parity validation
 
 ## A) Shared constants + IDs
@@ -90,10 +90,10 @@ Last updated: 2026-02-24
 - [x] Escape/overlay/fullscreen close behavior parity.
 
 ## J) Spawn/layout
-- [ ] Client spawn data covers full city range (`0..63`).
-- [ ] Final row shifted x-coordinates preserved exactly.
-- [ ] Player spawn pixel formula parity from tile coords.
-- [ ] `.city` import transform parity.
+- [x] Client spawn data covers full city range (`0..63`).
+- [x] Final row shifted x-coordinates preserved exactly.
+- [x] Player spawn pixel formula parity from tile coords.
+- [x] `.city` import transform parity.
 
 ## K) Validation
 - [ ] All added parity tests pass.
