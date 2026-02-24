@@ -1,7 +1,6 @@
 import type { ClientState } from "../../app/state.js";
 import type { EventSender } from "../../network/events.js";
-
-const ITEM_TYPE_BOMB = 1;
+import { ITEM_TYPE_BOMB } from "../../render/parity/constants.js";
 
 type InventoryEntry = {
     itemType: number;

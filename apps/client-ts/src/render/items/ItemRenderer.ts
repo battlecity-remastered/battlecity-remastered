@@ -2,8 +2,11 @@ import { Graphics, Sprite, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { reconcileEntityCache } from "../entity-cache.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
-
-const ITEM_TYPE_MINE = 1;
+import {
+    ITEM_FRAME_SIZE,
+    ITEM_TYPE_BOMB,
+    ITEM_TYPE_MINE
+} from "../parity/constants.js";
 
 const resolveHazardSortKey = (type: number): number => {
     if (type === ITEM_TYPE_MINE) {
@@ -68,8 +71,8 @@ export const renderHazardItems = (
         if (sprite instanceof Sprite && itemTexture) {
             const isMine = hazard.type === ITEM_TYPE_MINE;
             const frame = isMine
-                ? getFrameTexture(itemTexture, "hazard:mine", ITEM_TYPE_MINE * 48, 42, 48, 48)
-                : getFrameTexture(itemTexture, "hazard:bomb", 3 * 48, 42, 48, 48);
+                ? getFrameTexture(itemTexture, "hazard:mine", ITEM_TYPE_MINE * ITEM_FRAME_SIZE, 42, 48, 48)
+                : getFrameTexture(itemTexture, "hazard:bomb", ITEM_TYPE_BOMB * ITEM_FRAME_SIZE, 42, 48, 48);
             if (frame) {
                 sprite.texture = frame;
                 sprite.scale.set(Math.max(0.4, Math.min(1.2, hazard.radius / 96)));

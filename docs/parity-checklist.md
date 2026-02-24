@@ -4,7 +4,7 @@ Last updated: 2026-02-24
 
 ## Phase Progress
 - [x] Phase 0 - Baseline + harness
-- [ ] Phase 1 - Shared constants + item IDs
+- [x] Phase 1 - Shared constants + item IDs
 - [ ] Phase 2 - Asset loading parity
 - [ ] Phase 3 - Map decode + blocking parity
 - [ ] Phase 4 - Ground + terrain tile parity
@@ -17,9 +17,9 @@ Last updated: 2026-02-24
 - [ ] Phase 11 - End-to-end parity validation
 
 ## A) Shared constants + IDs
-- [ ] All item IDs match legacy (`cloak=0 ... laser=12`).
-- [ ] No local duplicate item ID constants in render/input/intents.
-- [ ] Panel/radar constants imported from one parity constants module.
+- [x] All item IDs match legacy (`cloak=0 ... laser=12`).
+- [x] No local duplicate item ID constants in render/input/intents.
+- [x] Panel/radar constants imported from one parity constants module.
 
 ## B) Assets
 - [ ] `LegacyTextureRegistry` loads all required parity textures.

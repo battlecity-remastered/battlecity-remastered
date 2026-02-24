@@ -1,11 +1,13 @@
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
 import type { ClientState } from "./state.js";
 import { resolvePointerWorldTile } from "../gameplay/world-viewport.js";
+import {
+    BUILDING_FOOTPRINT_TILES,
+    ITEM_TYPE_BOMB,
+    TILE
+} from "../render/parity/constants.js";
 
 const ACTION_COOLDOWN_MS = 800;
-const TILE_SIZE = 48;
-const ITEM_TYPE_BOMB = 1;
-const BUILDING_FOOTPRINT_TILES = 3;
 
 type EnvelopeType = EventEnvelope["type"];
 export type Intent<TType extends EnvelopeType = EnvelopeType> = {
@@ -139,8 +141,8 @@ const appendDefenseDeployIntent = (state: ClientState, nowMs: number, intents: I
         payload: {
             cityId: state.local.city,
             type: 8,
-            tileX: Math.floor(state.local.x / TILE_SIZE),
-            tileY: Math.floor(state.local.y / TILE_SIZE)
+            tileX: Math.floor(state.local.x / TILE),
+            tileY: Math.floor(state.local.y / TILE)
         }
     });
 };

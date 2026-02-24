@@ -18,11 +18,15 @@ import {
     PANEL_BUTTONS,
     resolveRadarColor
 } from "./panel/panel-visuals.js";
-import { PANEL_WIDTH, TILE_SIZE, WORLD_MAX, resolveViewportFromState } from "../gameplay/world-viewport.js";
+import { WORLD_MAX, resolveViewportFromState } from "../gameplay/world-viewport.js";
+import {
+    PANEL,
+    RADAR_HEIGHT,
+    RADAR_WIDTH,
+    TILE
+} from "./parity/constants.js";
 
 const TANK_SIZE = 22;
-const RADAR_WIDTH = 138;
-const RADAR_HEIGHT = 138;
 
 type TankPalette = {
     tread: number;
@@ -260,10 +264,10 @@ const renderGhostPlacement = (state: ClientState, sprite: Graphics): void => {
     sprite.visible = true;
     sprite.clear();
     sprite
-        .rect(0, 0, TILE_SIZE * 3, TILE_SIZE * 3)
+        .rect(0, 0, TILE * 3, TILE * 3)
         .fill({ color: ghostPlacement.blocked ? 0xff5a6f : 0x4ae18f, alpha: 0.3 })
         .stroke({ color: ghostPlacement.blocked ? 0xffa7b1 : 0xc2ffd6, alpha: 0.9, width: 2 });
-    sprite.position.set(ghostPlacement.tileX * TILE_SIZE, ghostPlacement.tileY * TILE_SIZE);
+    sprite.position.set(ghostPlacement.tileX * TILE, ghostPlacement.tileY * TILE);
 };
 
 const resolveBuildingTexture = (textures: LegacyTextures, buildingType: number): Texture | null => {
@@ -297,7 +301,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
             }
         }
         const entity = new Graphics();
-        entity.roundRect(0, 0, TILE_SIZE * 3, TILE_SIZE * 3, 3).fill(0x8e7a56);
+        entity.roundRect(0, 0, TILE * 3, TILE * 3, 3).fill(0x8e7a56);
         return entity;
     });
     for (const building of state.buildings.values()) {
@@ -309,7 +313,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
                     sprite.texture = frame;
                 }
             }
-            sprite.position.set(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE);
+            sprite.position.set(building.tileX * TILE, building.tileY * TILE);
         }
     }
 
@@ -322,7 +326,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
             }
         }
         const entity = new Graphics();
-        entity.roundRect(4, 4, TILE_SIZE - 8, TILE_SIZE - 8, 2).fill(0x7d8ea8);
+        entity.roundRect(4, 4, TILE - 8, TILE - 8, 2).fill(0x7d8ea8);
         return entity;
     });
     for (const defense of state.defenses.values()) {
@@ -334,7 +338,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
                     sprite.texture = frame;
                 }
             }
-            sprite.position.set(defense.tileX * TILE_SIZE, defense.tileY * TILE_SIZE);
+            sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
         }
     }
 
@@ -461,21 +465,21 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
 
     if (layers.textures.interfaceTop) {
         layers.panelBackground
-            .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
+            .rect(0, 0, PANEL, viewport.surfaceHeight)
             .fill({ texture: layers.textures.interfaceTop, alpha: 0.92 });
     } else {
         layers.panelBackground
-            .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
+            .rect(0, 0, PANEL, viewport.surfaceHeight)
             .fill({ color: 0x111827, alpha: 0.85 });
     }
 
     layers.panelBackground
-        .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
+        .rect(0, 0, PANEL, viewport.surfaceHeight)
         .stroke({ color: 0x4d5f7a, width: 1, alpha: 0.85 });
 
     if (layers.textures.interfaceBottom) {
         layers.panelBackground
-            .rect(0, Math.max(0, viewport.surfaceHeight - 128), PANEL_WIDTH, 128)
+            .rect(0, Math.max(0, viewport.surfaceHeight - 128), PANEL, 128)
             .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
     }
 
@@ -530,7 +534,7 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
         layers.panelRadar.rect(rx, ry, 2, 2).fill(color);
     };
     for (const building of state.buildings.values()) {
-        mark(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE, resolveRadarColor("building"));
+        mark(building.tileX * TILE, building.tileY * TILE, resolveRadarColor("building"));
     }
     for (const remote of state.remotePlayers.values()) {
         mark(
