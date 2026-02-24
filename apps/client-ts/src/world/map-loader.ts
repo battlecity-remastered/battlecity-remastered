@@ -1,4 +1,8 @@
 export const MAP_SIZE = 512;
+const MAP_SQUARE_LAVA = 1;
+const MAP_SQUARE_ROCK = 2;
+const MAP_SQUARE_BUILDING = 3;
+const COMMAND_CENTER_FOOTPRINT_TILES = 3;
 
 export type LoadedMap = {
     map: number[][];
@@ -35,8 +39,22 @@ const buildBlockingTiles = (map: number[][]): Set<string> => {
         }
         for (let y = 0; y < column.length; y += 1) {
             const value = column[y] ?? 0;
-            if (value === 1 || value === 2) {
+            if (value === MAP_SQUARE_LAVA || value === MAP_SQUARE_ROCK) {
                 blocking.add(`${x},${y}`);
+                continue;
+            }
+            if (value !== MAP_SQUARE_BUILDING) {
+                continue;
+            }
+            for (let dx = 0; dx < COMMAND_CENTER_FOOTPRINT_TILES; dx += 1) {
+                for (let dy = 0; dy < COMMAND_CENTER_FOOTPRINT_TILES; dy += 1) {
+                    const tileX = x + dx;
+                    const tileY = y + dy;
+                    if (tileX < 0 || tileY < 0 || tileX >= MAP_SIZE || tileY >= MAP_SIZE) {
+                        continue;
+                    }
+                    blocking.add(`${tileX},${tileY}`);
+                }
             }
         }
     }

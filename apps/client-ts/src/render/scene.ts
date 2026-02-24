@@ -574,7 +574,8 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.world,
         layers.tileSprite,
         layers.textures.rocks,
-        layers.textures.lava
+        layers.textures.lava,
+        layers.textures.buildings
     );
     renderWorldObjects(state, layers);
     renderChangingLayer(
@@ -626,6 +627,13 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     return {
         app,
         render: () => {
+            const rect = app.canvas.getBoundingClientRect();
+            if (Number.isFinite(rect.width) && rect.width > 0) {
+                state.pointer.surfaceWidth = rect.width;
+            }
+            if (Number.isFinite(rect.height) && rect.height > 0) {
+                state.pointer.surfaceHeight = rect.height;
+            }
             renderSceneFrame(state, mapData, layers);
         }
     };

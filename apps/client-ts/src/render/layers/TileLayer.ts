@@ -6,6 +6,8 @@ const TILE_SIZE = 48;
 const DRAW_RADIUS = 40;
 const MAP_SQUARE_LAVA = 1;
 const MAP_SQUARE_ROCK = 2;
+const MAP_SQUARE_BUILDING = 3;
+const BUILDING_FRAME_SIZE = TILE_SIZE * 3;
 
 const terrainColor = (tileValue: number): number | null => {
     if (tileValue === MAP_SQUARE_ROCK) {
@@ -42,7 +44,8 @@ export const renderTileLayer = (
     layer: Container,
     sprite: Graphics,
     rockTexture: Texture | null = null,
-    lavaTexture: Texture | null = null
+    lavaTexture: Texture | null = null,
+    buildingTexture: Texture | null = null
 ): void => {
     sprite.clear();
     const centerTileX = Math.floor(cameraX / TILE_SIZE);
@@ -57,6 +60,26 @@ export const renderTileLayer = (
                 continue;
             }
             const value = mapData.map[tx]?.[ty] ?? 0;
+            if (value === MAP_SQUARE_BUILDING) {
+                const frame = getFrameTexture(
+                    buildingTexture,
+                    "building:command-center",
+                    0,
+                    0,
+                    BUILDING_FRAME_SIZE,
+                    BUILDING_FRAME_SIZE
+                );
+                if (frame) {
+                    sprite
+                        .rect(tx * TILE_SIZE, ty * TILE_SIZE, BUILDING_FRAME_SIZE, BUILDING_FRAME_SIZE)
+                        .fill({ texture: frame });
+                } else {
+                    sprite
+                        .rect(tx * TILE_SIZE, ty * TILE_SIZE, BUILDING_FRAME_SIZE, BUILDING_FRAME_SIZE)
+                        .fill(0x8f7757);
+                }
+                continue;
+            }
             const baseTexture = value === MAP_SQUARE_ROCK ? rockTexture : value === MAP_SQUARE_LAVA ? lavaTexture : null;
             if (baseTexture) {
                 const frameOffset = resolveTerrainFrameOffset(mapData, tx, ty, value);

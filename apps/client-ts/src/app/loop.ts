@@ -5,7 +5,7 @@ import { buildTickPlan } from "./intents.js";
 import { moveLocalPlayer } from "../gameplay/player-movement.js";
 import { stepClientBullets } from "../gameplay/bullets/BulletClientService.js";
 
-const TICK_MS = 100;
+const TICK_MS = 33;
 
 export type LoopRuntime = {
     stop: () => void;

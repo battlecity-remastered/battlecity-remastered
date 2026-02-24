@@ -26,7 +26,7 @@ test("resolvePointerWorldTile maps pointer using camera-centered world viewport"
 
     const tile = resolvePointerWorldTile(state);
     assert.ok(tile);
-    assert.equal(tile.tileX, 11);
+    assert.equal(tile.tileX, 10);
     assert.equal(tile.tileY, 4);
 });
 

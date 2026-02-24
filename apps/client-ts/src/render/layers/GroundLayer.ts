@@ -1,8 +1,8 @@
 import { Graphics, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 
-const TILE_SIZE = 48;
-const DRAW_RADIUS = 24;
+const TILE_SIZE = 128;
+const DRAW_RADIUS = 12;
 
 export const renderGroundLayer = (
     state: ClientState,

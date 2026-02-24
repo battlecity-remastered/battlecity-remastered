@@ -75,14 +75,14 @@ test("resolveCursorForState maps build/demolish/bomb modes", () => {
 });
 
 test("resolvePanelAction maps right-side panel hotspots", () => {
-    assert.equal(resolvePanelAction(740, 270, 800), "toggle_staff");
-    assert.equal(resolvePanelAction(740, 292, 800), "toggle_map");
-    assert.equal(resolvePanelAction(740, 314, 800), "toggle_city_info");
-    assert.equal(resolvePanelAction(740, 336, 800), "toggle_points");
-    assert.equal(resolvePanelAction(740, 358, 800), "toggle_options");
-    assert.equal(resolvePanelAction(740, 380, 800), "toggle_help");
+    assert.equal(resolvePanelAction(746, 270, 800), "toggle_staff");
+    assert.equal(resolvePanelAction(746, 292, 800), "toggle_map");
+    assert.equal(resolvePanelAction(746, 314, 800), "toggle_city_info");
+    assert.equal(resolvePanelAction(746, 336, 800), "toggle_points");
+    assert.equal(resolvePanelAction(746, 358, 800), "toggle_options");
+    assert.equal(resolvePanelAction(746, 380, 800), "toggle_help");
     assert.equal(resolvePanelAction(726, 404, 800), "toggle_build");
-    assert.equal(resolvePanelAction(744, 578, 800), "leave_lobby");
+    assert.equal(resolvePanelAction(750, 578, 800), "leave_lobby");
     assert.equal(resolvePanelAction(100, 80, 800), null);
 });
 
@@ -135,7 +135,7 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
 
     surface.emit("mousedown", {
         button: 0,
-        clientX: 620,
+        clientX: 625,
         clientY: 290
     } as MouseEvent as Event);
     assert.equal(state.ui.panelView, "staff");
@@ -143,7 +143,7 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
 
     surface.emit("mousedown", {
         button: 0,
-        clientX: 620,
+        clientX: 625,
         clientY: 312
     } as MouseEvent as Event);
     assert.equal(state.ui.showMapModal, true);

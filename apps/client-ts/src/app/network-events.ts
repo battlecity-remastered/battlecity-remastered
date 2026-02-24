@@ -6,6 +6,7 @@ import type { ClientState } from "./state.js";
 import { updateFromSnapshot } from "./state.js";
 import { resolveBulletSpeed } from "../gameplay/bullets/BulletClientService.js";
 import { onInventoryUpdate } from "../gameplay/items/IconInventoryService.js";
+import { resolveCitySpawn } from "../world/city-spawn.js";
 
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
@@ -83,8 +84,13 @@ const handlers: {
     [K in keyof KnownEventPayloadByType]?: EventHandler<K>;
 } = {
     "lobby.assignment": (state, payload) => {
+        const spawn = resolveCitySpawn(payload.city);
         state.local.id = payload.id;
         state.local.city = payload.city;
+        if (spawn) {
+            state.local.x = spawn.x;
+            state.local.y = spawn.y;
+        }
         state.lobby.deniedReason = null;
     },
     "lobby.denied": (state, payload) => {

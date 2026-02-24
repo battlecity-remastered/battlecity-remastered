@@ -29,6 +29,8 @@ test("lobby lifecycle events update lobby state", () => {
 
     assert.equal(state.local.id, "p1");
     assert.equal(state.local.city, 2);
+    assert.equal(state.local.x, 7673.5);
+    assert.equal(state.local.y, 1578.5);
     assert.equal(state.lobby.deniedReason, "lobby_full");
     assert.equal(state.lobby.assignments.length, 1);
     assert.equal(state.lobby.assignments[0]?.mayorId, "p1");

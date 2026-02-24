@@ -235,7 +235,7 @@ const createUiDefaults = (): ClientState["ui"] => ({
     showBuildMenu: false,
     showIntroModal: true,
     showTutorial: false,
-    selectedBuildType: 109,
+    selectedBuildType: 300,
     selectedInventoryItemType: null,
     bombArmed: false,
     overlaysOpacity: 0.8,
@@ -340,6 +340,8 @@ export const updateFromSnapshot = (
 
     for (const player of snapshot) {
         if (player.id === state.local.id) {
+            state.local.city = player.city;
+            state.local.direction = player.direction;
             state.local.x = player.offset.x;
             state.local.y = player.offset.y;
             if (typeof player.health === "number") {

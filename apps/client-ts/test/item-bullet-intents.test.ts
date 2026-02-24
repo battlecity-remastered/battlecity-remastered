@@ -67,7 +67,7 @@ test("ctrl+b emits building.place.request using pointer tile instead of orb drop
     assert.deepEqual(buildingIntent.payload, {
         ownerId: "local",
         cityId: 2,
-        type: 109,
+        type: 300,
         tileX: 3,
         tileY: 2
     });

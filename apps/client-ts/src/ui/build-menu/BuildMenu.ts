@@ -8,11 +8,11 @@ type BuildMenuEntry = {
 };
 
 export const BUILD_MENU_ENTRIES: ReadonlyArray<BuildMenuEntry> = [
-    { hotkey: "1", type: 109, label: "House" },
-    { hotkey: "2", type: 300, label: "Hospital" },
-    { hotkey: "3", type: 100, label: "Factory T1" },
-    { hotkey: "4", type: 101, label: "Factory T2" },
-    { hotkey: "5", type: 102, label: "Factory T3" }
+    { hotkey: "1", type: 300, label: "Housing" },
+    { hotkey: "2", type: 412, label: "Laser Research" },
+    { hotkey: "3", type: 401, label: "Bazooka Research" },
+    { hotkey: "4", type: 409, label: "Turret Research" },
+    { hotkey: "5", type: 200, label: "Hospital" }
 ];
 
 export const resolveBuildTypeHotkey = (key: string): number | null => {

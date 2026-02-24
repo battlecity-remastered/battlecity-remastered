@@ -1,7 +1,7 @@
 import type { ClientState } from "../app/state.js";
 
 export const TILE_SIZE = 48;
-export const PANEL_WIDTH = 206;
+export const PANEL_WIDTH = 200;
 export const WORLD_MAX = 24576;
 
 export type WorldViewport = {
