@@ -232,7 +232,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, and finance-ranked scoreboard lines; full visual tab chrome still pending)`
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, city-import slot/mode controls, and concrete client import execution from `/assets/cities/<slot>/demo.city`; full legacy import UX still pending)`
 11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events and orb-hint banner flow is wired; full legacy styling/menu affordances still pending)`
-12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs.
+12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs. `status: partial (2026-02-24, cue mapping expanded to orb/build-denied/demolish-denied/promotion/shot/damage transitions; full legacy sound-id routing still pending)`
 13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity.
 14. `QA-01` Add screenshot-based visual regression tests for parity checkpoints.
 
@@ -262,6 +262,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added orb-hint banner parity baseline via explicit orb event state (`source/target/by/score`) and timed contextual warning/success messages.
   - Fixed changing-layer parity regression where research/smoke overlays were incorrectly skipped when population was zero.
   - Synced deny-state UX with authoritative success events (`building.placed` clears build deny; `building.demolished` clears demolish deny).
+  - Expanded client audio cue mapping to include orb and denial transitions in addition to damage/promotion/shot events.
 
 ---
 

@@ -41,14 +41,11 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/app/network-events.ts`
-- `apps/client-ts/src/render/layers/ChangingLayer.ts`
-- `apps/client-ts/src/render/layers/changing-layer-helpers.ts`
-- `apps/client-ts/test/network-events.test.ts`
-- `apps/client-ts/test/changing-layer.test.ts`
+- `apps/client-ts/src/audio/AudioManager.ts`
+- `apps/client-ts/test/audio-manager.test.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/rewrite-progress.md`
 
 ## Validation Results
 - `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24)
-- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, 78/78)
+- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, 79/79)
