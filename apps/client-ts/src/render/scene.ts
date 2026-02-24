@@ -13,25 +13,20 @@ import { renderEffects } from "./effects/EffectsRenderer.js";
 import { renderBotDebugLayer } from "./debug/BotDebugLayer.js";
 import { loadMapData, type LoadedMap } from "../world/map-loader.js";
 import { getFrameTexture, loadLegacyTextures, type LegacyTextures } from "./LegacyTextureRegistry.js";
+import {
+    isPanelButtonActive,
+    PANEL_BUTTON_HEIGHT,
+    PANEL_BUTTON_LABELS,
+    PANEL_BUTTON_START_X,
+    PANEL_BUTTON_START_Y,
+    PANEL_BUTTON_STEP,
+    PANEL_BUTTON_WIDTH,
+    resolveRadarColor
+} from "./panel/panel-visuals.js";
 
 const TANK_SIZE = 22;
 const TILE_SIZE = 48;
 const PANEL_WIDTH = 206;
-const PANEL_BUTTON_START_X = 112;
-const PANEL_BUTTON_WIDTH = 82;
-const PANEL_BUTTON_HEIGHT = 22;
-const PANEL_BUTTON_START_Y = 72;
-const PANEL_BUTTON_STEP = 28;
-const PANEL_BUTTON_LABELS = [
-    "Staff",
-    "City",
-    "Points",
-    "Map",
-    "Help",
-    "Options",
-    "Build",
-    "Exit"
-] as const;
 const RADAR_WIDTH = 44;
 const RADAR_HEIGHT = 44;
 const WORLD_MAX = 24576;
@@ -434,6 +429,37 @@ const resolvePanelDetailLines = (state: ClientState): string[] => {
     ];
 };
 
+const renderPanelGlyphs = (state: ClientState, layers: SceneLayers): void => {
+    const iconSize = 12;
+    const iconX = 10;
+    const healthY = 34;
+    const cashY = 50;
+    const researchY = 66;
+
+    if (layers.textures.health) {
+        layers.panelBackground
+            .rect(iconX, healthY, iconSize, iconSize)
+            .fill({ texture: layers.textures.health, alpha: 0.95 });
+    }
+    if (layers.textures.moneyUp) {
+        layers.panelBackground
+            .rect(iconX, cashY, iconSize, iconSize)
+            .fill({ texture: layers.textures.moneyUp, alpha: 0.95 });
+    } else if (layers.textures.moneyDown) {
+        layers.panelBackground
+            .rect(iconX, cashY, iconSize, iconSize)
+            .fill({ texture: layers.textures.moneyDown, alpha: 0.95 });
+    }
+    const researchTexture = state.research.get(state.local.city)?.active
+        ? layers.textures.research
+        : layers.textures.researchComplete;
+    if (researchTexture) {
+        layers.panelBackground
+            .rect(iconX, researchY, iconSize, iconSize)
+            .fill({ texture: researchTexture, alpha: 0.95 });
+    }
+};
+
 const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     const panelX = Math.max(0, window.innerWidth - PANEL_WIDTH);
     layers.panelBackground.position.set(panelX, 0);
@@ -455,16 +481,16 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
         .rect(0, 0, PANEL_WIDTH, window.innerHeight)
         .stroke({ color: 0x4d5f7a, width: 1, alpha: 0.85 });
 
+    if (layers.textures.interfaceBottom) {
+        layers.panelBackground
+            .rect(0, Math.max(0, window.innerHeight - 128), PANEL_WIDTH, 128)
+            .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
+    }
+
+    renderPanelGlyphs(state, layers);
+
     for (let i = 0; i < PANEL_BUTTON_LABELS.length; i += 1) {
-        const active = (
-            (i === 0 && state.ui.panelView === "staff")
-            || (i === 1 && state.ui.panelView === "city")
-            || (i === 2 && state.ui.panelView === "points")
-            || (i === 3 && state.ui.showMapModal)
-            || (i === 4 && state.ui.showHelpModal)
-            || (i === 5 && state.ui.showOptionsModal)
-            || (i === 6 && state.ui.showBuildMenu)
-        );
+        const active = isPanelButtonActive(state.ui, i);
         layers.panelBackground
             .roundRect(
                 PANEL_BUTTON_START_X,
@@ -489,22 +515,33 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     ].join("\n");
 
     layers.panelRadar.clear();
-    layers.panelRadar
-        .rect(0, 0, RADAR_WIDTH, RADAR_HEIGHT)
-        .fill({ color: 0x081018, alpha: 0.78 })
-        .stroke({ color: 0x94b4d6, width: 1, alpha: 0.85 });
+    if (layers.textures.radarColors) {
+        layers.panelRadar
+            .rect(0, 0, RADAR_WIDTH, RADAR_HEIGHT)
+            .fill({ texture: layers.textures.radarColors, alpha: 0.82 })
+            .stroke({ color: 0x94b4d6, width: 1, alpha: 0.85 });
+    } else {
+        layers.panelRadar
+            .rect(0, 0, RADAR_WIDTH, RADAR_HEIGHT)
+            .fill({ color: 0x081018, alpha: 0.78 })
+            .stroke({ color: 0x94b4d6, width: 1, alpha: 0.85 });
+    }
     const mark = (x: number, y: number, color: number): void => {
         const rx = toRadarCoord(x, WORLD_MAX, RADAR_WIDTH);
         const ry = toRadarCoord(y, WORLD_MAX, RADAR_HEIGHT);
         layers.panelRadar.rect(rx, ry, 2, 2).fill(color);
     };
     for (const building of state.buildings.values()) {
-        mark(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE, 0x56d27f);
+        mark(building.tileX * TILE_SIZE, building.tileY * TILE_SIZE, resolveRadarColor("building"));
     }
     for (const remote of state.remotePlayers.values()) {
-        mark(remote.x, remote.y, remote.city === state.local.city ? 0x8ad4ff : 0xffaa61);
+        mark(
+            remote.x,
+            remote.y,
+            resolveRadarColor(remote.city === state.local.city ? "ally" : "enemy")
+        );
     }
-    mark(state.local.x, state.local.y, 0xffffff);
+    mark(state.local.x, state.local.y, resolveRadarColor("self"));
 };
 
 const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneLayers): void => {

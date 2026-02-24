@@ -228,7 +228,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 5. `RENDER-03` Port building overlay pipeline (research state, population, smoke, command-center labels). `status: partial (2026-02-24, texture-backed building/defense sprites plus population/research/smoke overlays wired; command-center label parity pending)`
 6. `RENDER-04` Port item/hazard sprite-frame rendering rules (mine visibility, bomb armed state, orb animation). `status: partial (2026-02-24, texture-backed hazard sprites wired; orb/item frame parity expansion pending)`
 7. `FX-01` Port sprite effects (muzzle flash/explosions/smoke/floating points) with texture assets. `status: partial (2026-02-24, texture-backed muzzle flash + explosion frames + floating points event queue wired; sprite-text and remaining variants pending)`
-8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels added; full legacy visual fidelity pending)`
+8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background added; full legacy visual fidelity pending)`
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows).
 10. `UI-03` Port options modal city-import/advanced controls.
 11. `UI-04` Port notifications/orb hint/menu affordance system.
@@ -251,6 +251,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added texture-backed orb explosion frame effect.
   - Added network-driven client visual effect queue (`player.dead`/`bullet.resolved`/`city.orbed`) for explosions and floating points.
   - Added side-panel subview rendering branches (`status`/`staff`/`city`/`points`) and active-button affordance states.
+  - Added texture-backed panel glyph rendering (health/cash/research) and radar palette texture background integration.
 
 ---
 
