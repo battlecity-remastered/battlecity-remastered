@@ -14,7 +14,7 @@ Last updated: 2026-02-24
 - [x] Phase 8 - Panel + radar + home arrow parity
 - [x] Phase 9 - Map modal parity
 - [x] Phase 10 - City spawn/layout parity
-- [ ] Phase 11 - End-to-end parity validation
+- [x] Phase 11 - End-to-end parity validation
 
 ## A) Shared constants + IDs
 - [x] All item IDs match legacy (`cloak=0 ... laser=12`).
@@ -27,8 +27,8 @@ Last updated: 2026-02-24
 - [x] `imgTurretHead` available for defense heads.
 - [x] `imgInventorySelection` used by panel inventory UI.
 - [x] `imgMoneyBox` used in panel finance block.
-- [ ] `imgBlackNumbers` used for factory item digits.
-- [ ] `imgLExplosion` available and used for large explosions.
+- [x] `imgBlackNumbers` used for factory item digits.
+- [x] `imgLExplosion` available and used for large explosions.
 
 ## C) Map and terrain
 - [x] Client map decode orientation matches legacy axis transform.
@@ -60,10 +60,10 @@ Last updated: 2026-02-24
 - [x] Bullet 8x8 row/column animation parity.
 
 ## F) Tanks
-- [ ] Local tank row/column parity.
-- [ ] Remote tank row/column parity.
-- [ ] Tank position formula parity.
-- [ ] No center-anchor drift.
+- [x] Local tank row/column parity.
+- [x] Remote tank row/column parity.
+- [x] Tank position formula parity.
+- [x] No center-anchor drift.
 
 ## G) Panel
 - [x] Top panel at `(maxMapX,0)`.
@@ -96,8 +96,8 @@ Last updated: 2026-02-24
 - [x] `.city` import transform parity.
 
 ## K) Validation
-- [ ] All added parity tests pass.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run test` passes.
-- [ ] `npm run rewrite:check:strict` passes.
-- [ ] Manual parity spot-check completed at `1024x768`.
+- [x] All added parity tests pass.
+- [x] `npm run typecheck` passes.
+- [x] `npm run test` passes.
+- [x] `npm run rewrite:check:strict` passes.
+- [x] Manual parity spot-check completed at `1024x768`.

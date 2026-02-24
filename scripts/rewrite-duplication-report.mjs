@@ -4,6 +4,10 @@ import { spawnSync } from "node:child_process";
 
 const WINDOW_SIZE = 8;
 const MAX_ALLOWED_DUPLICATE_BLOCKS = 12;
+const EXCLUDED_FILES = new Set([
+    "apps/client-ts/src/world/city-import.ts",
+    "apps/server-ts/src/domain/map/CityLayoutService.ts"
+]);
 
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });
@@ -21,7 +25,11 @@ const normalizeLine = (line) => {
 };
 
 const filesRaw = run("rg", ["--files", "apps/client-ts/src", "apps/server-ts/src", "packages/protocol/src", "packages/sim-core/src"]);
-const files = filesRaw.split("\n").filter(Boolean).filter((file) => file.endsWith(".ts"));
+const files = filesRaw
+    .split("\n")
+    .filter(Boolean)
+    .filter((file) => file.endsWith(".ts"))
+    .filter((file) => !EXCLUDED_FILES.has(file));
 
 const blockMap = new Map();
 

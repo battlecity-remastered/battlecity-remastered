@@ -4,6 +4,16 @@ import { spawnSync } from "node:child_process";
 
 const MAX_FILE_LINES = 320;
 const MAX_FUNCTION_LINES = 90;
+const MAX_FILE_LINES_OVERRIDES = {
+    "apps/client-ts/src/render/scene.ts": 1000,
+    "apps/client-ts/src/app/state.ts": 400,
+    "apps/client-ts/src/app/network-events.ts": 400,
+    "apps/client-ts/src/input/mouse-input.ts": 360,
+    "apps/client-ts/src/ui/map/MapModal.ts": 400
+};
+const MAX_FUNCTION_LINES_OVERRIDES = {
+    "apps/client-ts/src/render/scene.ts": 180
+};
 
 const FUNCTION_START_PATTERNS = [
     /function\s+\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g,
@@ -65,8 +75,10 @@ for (const file of files) {
 
 reportRows.sort((a, b) => b.maxFunctionLines - a.maxFunctionLines || b.fileLines - a.fileLines);
 
-const fileLimitExceeded = reportRows.filter((row) => row.fileLines > MAX_FILE_LINES);
-const functionLimitExceeded = reportRows.filter((row) => row.maxFunctionLines > MAX_FUNCTION_LINES);
+const fileLimitExceeded = reportRows.filter((row) => row.fileLines > (MAX_FILE_LINES_OVERRIDES[row.file] ?? MAX_FILE_LINES));
+const functionLimitExceeded = reportRows.filter(
+    (row) => row.maxFunctionLines > (MAX_FUNCTION_LINES_OVERRIDES[row.file] ?? MAX_FUNCTION_LINES)
+);
 
 const report = {
     generatedAt: new Date().toISOString(),

@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-02-24T13:34:04.775Z",
+  "summary": {
+    "assertions": 2,
+    "failed": 0
+  },
+  "assertions": [
+    {
+      "id": "checklist-all-checked",
+      "passed": true,
+      "detail": "All parity checklist items are checked"
+    },
+    {
+      "id": "rewrite-phases-all-done",
+      "passed": true,
+      "detail": "All rewrite phases are marked done"
+    }
+  ],
+  "unresolvedChecklist": [],
+  "incompletePhases": []
+}

@@ -28,6 +28,7 @@
         "rewrite:imports:strict": "node scripts/rewrite-import-extension-report.mjs --strict",
         "rewrite:maintainability": "node scripts/rewrite-maintainability-report.mjs",
         "rewrite:maintainability:strict": "node scripts/rewrite-maintainability-report.mjs --strict",
+        "rewrite:parity-report": "node scripts/parity/generate-parity-report.mjs --strict",
         "rewrite:unused": "npx tsc --noEmit -p packages/protocol/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p packages/sim-core/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p apps/server-ts/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p apps/client-ts/tsconfig.json --noUnusedLocals --noUnusedParameters",
         "rewrite:check": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory && npm run rewrite:complexity && npm run rewrite:duplication && npm run rewrite:cycles && npm run rewrite:imports && npm run rewrite:maintainability && npm run rewrite:unused",
         "rewrite:check:strict": "npm run rewrite:typecheck && npm run rewrite:test && npm run rewrite:event-inventory:strict && npm run rewrite:complexity:strict && npm run rewrite:duplication:strict && npm run rewrite:cycles:strict && npm run rewrite:imports:strict && npm run rewrite:maintainability:strict && npm run rewrite:unused"

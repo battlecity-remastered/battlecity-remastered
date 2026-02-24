@@ -16,7 +16,8 @@ export const renderEffects = (
     layer: Container,
     sprite: Graphics,
     muzzleFlashTexture: Texture | null = null,
-    smallExplosionTexture: Texture | null = null
+    smallExplosionTexture: Texture | null = null,
+    largeExplosionTexture: Texture | null = null
 ): void => {
     sprite.clear();
     const shotAge = nowMs - state.local.lastShotAt;
@@ -49,8 +50,9 @@ export const renderEffects = (
         }
         const frameCount = explosion.variant === "large" ? 16 : 10;
         const frameIndex = Math.min(frameCount - 1, Math.floor(age / EXPLOSION_FRAME_MS));
-        const frame = smallExplosionTexture
-            ? getFrameTexture(smallExplosionTexture, `explosion:${frameIndex}`, frameIndex * 48, 0, 48, 48)
+        const texture = explosion.variant === "large" ? largeExplosionTexture : smallExplosionTexture;
+        const frame = texture
+            ? getFrameTexture(texture, `explosion:${explosion.variant}:${frameIndex}`, frameIndex * 48, 0, 48, 48)
             : null;
         if (frame) {
             const size = explosion.variant === "large" ? 96 : 48;

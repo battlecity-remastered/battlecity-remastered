@@ -124,7 +124,7 @@ const createTankSprite = (textures: LegacyTextures, row: number, direction: numb
         });
     }
     const sprite = new Sprite(texture);
-    sprite.anchor.set(0.5, 0.5);
+    sprite.anchor.set(0, 0);
     return sprite;
 };
 
@@ -770,7 +770,8 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.world,
         layers.effectsSprite,
         layers.textures.muzzleFlash,
-        layers.textures.smallExplosion
+        layers.textures.smallExplosion,
+        layers.textures.largeExplosion
     );
     renderBotDebugLayer(state, layers.world, layers.botDebugSprite);
     renderHud(state, layers);
