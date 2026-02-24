@@ -3,13 +3,73 @@ import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 const MAX_ASSIGNMENTS = 8;
 
+const collectVisibleCities = (state: ClientState): number[] => {
+    const cities = new Set<number>();
+    cities.add(state.local.city);
+    for (const assignment of state.lobby.assignments) {
+        cities.add(assignment.city);
+    }
+    return Array.from(cities.values()).sort((a, b) => a - b);
+};
+
+const resolveFilterLabel = (state: ClientState): string => {
+    return state.ui.lobbyCityFilter < 0 ? "all" : String(state.ui.lobbyCityFilter);
+};
+
+export const applyLobbyAction = (state: ClientState, key: string): boolean => {
+    if (key === "Tab") {
+        state.ui.lobbyView = state.ui.lobbyView === "assignments" ? "scores" : "assignments";
+        return true;
+    }
+    if (key === "Home") {
+        state.ui.lobbyCityFilter = -1;
+        return true;
+    }
+    if (key !== "PageUp" && key !== "PageDown") {
+        return false;
+    }
+    const cities = collectVisibleCities(state);
+    if (cities.length === 0) {
+        state.ui.lobbyCityFilter = -1;
+        return true;
+    }
+    const sequence = [-1, ...cities];
+    const currentIndex = Math.max(0, sequence.indexOf(state.ui.lobbyCityFilter));
+    const offset = key === "PageDown" ? 1 : -1;
+    const nextIndex = (currentIndex + offset + sequence.length) % sequence.length;
+    state.ui.lobbyCityFilter = sequence[nextIndex] ?? -1;
+    return true;
+};
+
 export const buildLobbyLines = (state: ClientState): string[] => {
     const header = `City ${state.local.city} lobby  ${state.local.id ?? "pending"}`;
+    const mode = `View: ${state.ui.lobbyView}  Filter: ${resolveFilterLabel(state)} (Tab/PgUp/PgDn/Home)`;
     const denied = state.lobby.deniedReason ? `Denied: ${state.lobby.deniedReason}` : "Denied: -";
     const released = state.lobby.lastReleasedPlayerId
         ? `Released: ${state.lobby.lastReleasedPlayerId}`
         : "Released: -";
+    if (state.ui.lobbyView === "scores") {
+        const ranked = Array.from(state.cityFinance.entries())
+            .sort((a, b) => {
+                const scoreDiff = b[1].score - a[1].score;
+                if (scoreDiff !== 0) {
+                    return scoreDiff;
+                }
+                return b[1].cash - a[1].cash;
+            })
+            .filter(([city]) => state.ui.lobbyCityFilter < 0 || state.ui.lobbyCityFilter === city)
+            .slice(0, MAX_ASSIGNMENTS)
+            .map(([city, finance], index) => {
+                return `#${index + 1} C${city}: score ${finance.score} cash ${finance.cash} inc ${finance.income}`;
+            });
+        if (ranked.length === 0) {
+            ranked.push("No city finance snapshots");
+        }
+        return [header, mode, denied, released, ...ranked];
+    }
+
     const assignments = state.lobby.assignments
+        .filter((entry) => state.ui.lobbyCityFilter < 0 || state.ui.lobbyCityFilter === entry.city)
         .slice(0, MAX_ASSIGNMENTS)
         .map((entry) => {
             const mayor = entry.mayorId ?? "-";
@@ -18,7 +78,7 @@ export const buildLobbyLines = (state: ClientState): string[] => {
     if (assignments.length === 0) {
         assignments.push("No active assignments");
     }
-    return [header, denied, released, ...assignments];
+    return [header, mode, denied, released, ...assignments];
 };
 
 type LobbyManager = {
@@ -54,6 +114,15 @@ export const createLobbyManager = (
 
     root.appendChild(panel);
     const dirty = createDirtyFlagTracker();
+    const onKeyDown = (event: KeyboardEvent): void => {
+        if (state.ui.showIntroModal || state.ui.showOptionsModal) {
+            return;
+        }
+        if (applyLobbyAction(state, event.key)) {
+            event.preventDefault();
+        }
+    };
+    window.addEventListener("keydown", onKeyDown);
 
     return {
         render: () => {
@@ -66,6 +135,7 @@ export const createLobbyManager = (
             }
         },
         dispose: () => {
+            window.removeEventListener("keydown", onKeyDown);
             dirty.clear();
             panel.remove();
         }

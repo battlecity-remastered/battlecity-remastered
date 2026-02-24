@@ -229,8 +229,8 @@ This audit does not mark broad server authority systems as missing; it flags whe
 6. `RENDER-04` Port item/hazard sprite-frame rendering rules (mine visibility, bomb armed state, orb animation). `status: partial (2026-02-24, texture-backed hazard sprites wired; orb/item frame parity expansion pending)`
 7. `FX-01` Port sprite effects (muzzle flash/explosions/smoke/floating points) with texture assets. `status: partial (2026-02-24, texture-backed muzzle flash + explosion frames + floating points event queue wired; sprite-text and remaining variants pending)`
 8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background added; full legacy visual fidelity pending)`
-9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows).
-10. `UI-03` Port options modal city-import/advanced controls.
+9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, and finance-ranked scoreboard lines; full visual tab chrome still pending)`
+10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, and city-import slot/mode controls; concrete import execution flow still pending)`
 11. `UI-04` Port notifications/orb hint/menu affordance system.
 12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs.
 13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity.
@@ -254,6 +254,8 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added texture-backed panel glyph rendering (health/cash/research) and radar palette texture background integration.
   - Reduced default left HUD diagnostics (debug/hostile/control-hint lines now gated behind bot-debug toggle) to better match player-facing legacy presentation.
   - Added build usability parity improvements: build menu now shows mayor/recruit authority, last deny reason, and allows left-click placement while build menu is open.
+  - Added lobby parity controls for assignment/score tabs and city filters, plus high-score style city finance ranking lines.
+  - Expanded options parity controls for identity provider toggle, performance preset cycling, and city-import slot/mode metadata controls.
 
 ---
 

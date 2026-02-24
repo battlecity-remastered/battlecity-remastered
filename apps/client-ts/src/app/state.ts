@@ -186,6 +186,11 @@ export type ClientState = {
         showIdentityPanel: boolean;
         showBotDebug: boolean;
         panelView: "status" | "staff" | "city" | "points";
+        lobbyView: "assignments" | "scores";
+        lobbyCityFilter: number;
+        optionsCityImportCity: number;
+        optionsCityImportMode: "off" | "preview" | "apply";
+        optionsPerformanceMode: "balanced" | "quality" | "performance";
     };
 };
 
@@ -224,7 +229,12 @@ const createUiDefaults = (): ClientState["ui"] => ({
     audioEnabled: true,
     showIdentityPanel: false,
     showBotDebug: false,
-    panelView: "status"
+    panelView: "status",
+    lobbyView: "assignments",
+    lobbyCityFilter: -1,
+    optionsCityImportCity: 0,
+    optionsCityImportMode: "off",
+    optionsPerformanceMode: "balanced"
 });
 export const createClientState = (): ClientState => {
     return {
