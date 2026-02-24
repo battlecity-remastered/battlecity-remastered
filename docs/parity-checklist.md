@@ -6,7 +6,7 @@ Last updated: 2026-02-24
 - [x] Phase 0 - Baseline + harness
 - [x] Phase 1 - Shared constants + item IDs
 - [x] Phase 2 - Asset loading parity
-- [ ] Phase 3 - Map decode + blocking parity
+- [x] Phase 3 - Map decode + blocking parity
 - [ ] Phase 4 - Ground + terrain tile parity
 - [ ] Phase 5 - Building base + overlays parity
 - [ ] Phase 6 - Population/research/smoke/digits parity
@@ -31,9 +31,9 @@ Last updated: 2026-02-24
 - [ ] `imgLExplosion` available and used for large explosions.
 
 ## C) Map and terrain
-- [ ] Client map decode orientation matches legacy axis transform.
-- [ ] Server map decode orientation matches client.
-- [ ] Client and server blocking logic is explicitly aligned.
+- [x] Client map decode orientation matches legacy axis transform.
+- [x] Server map decode orientation matches client.
+- [x] Client and server blocking logic is explicitly aligned.
 - [ ] Ground layer uses tile size `128` and modulo camera alignment.
 - [ ] Terrain frame bitmasking produces correct `frameX = mask * 48`.
 - [ ] Out-of-bounds terrain tiles render black.

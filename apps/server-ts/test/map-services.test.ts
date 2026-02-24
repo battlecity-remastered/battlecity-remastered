@@ -31,16 +31,18 @@ test("decodeMapBuffer matches legacy axis-flipped indexing", () => {
     assert.equal(map[targetTileX]?.[targetTileY], 3);
 });
 
-test("buildBlockingTileSet only includes legacy blocking tile values", () => {
+test("buildBlockingTileSet includes lava/rock and expands command-center anchors", () => {
     const map = Array.from({ length: MAP_SIZE }, () => new Array<number>(MAP_SIZE).fill(0));
     map[3]![4] = 1;
     map[8]![9] = 2;
     map[13]![14] = 3;
 
     const blocking = buildBlockingTileSet(map);
-    assert.equal(blocking.has("3,4"), false);
+    assert.equal(blocking.has("3,4"), true);
     assert.equal(blocking.has("8,9"), true);
     assert.equal(blocking.has("13,14"), true);
+    assert.equal(blocking.has("15,16"), true);
+    assert.equal(blocking.has("16,16"), false);
 });
 
 test("loadBlockingTiles reads map bytes from file", () => {
