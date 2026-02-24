@@ -4,6 +4,7 @@ import { createClientState } from "../src/app/state.js";
 import {
     registerMouseInputHandlers,
     resolveControlForMouseButton,
+    resolvePanelAction,
     resolvePointerPosition
 } from "../src/input/mouse-input.js";
 
@@ -59,6 +60,18 @@ test("resolveControlForMouseButton maps left/right buttons to controls", () => {
     assert.equal(resolveControlForMouseButton(1), null);
 });
 
+test("resolvePanelAction maps right-side panel hotspots", () => {
+    assert.equal(resolvePanelAction(600, 80, 800), "toggle_staff");
+    assert.equal(resolvePanelAction(600, 110, 800), "toggle_city_info");
+    assert.equal(resolvePanelAction(600, 136, 800), "toggle_points");
+    assert.equal(resolvePanelAction(600, 164, 800), "toggle_map");
+    assert.equal(resolvePanelAction(600, 192, 800), "toggle_help");
+    assert.equal(resolvePanelAction(600, 220, 800), "toggle_options");
+    assert.equal(resolvePanelAction(600, 248, 800), "toggle_build");
+    assert.equal(resolvePanelAction(600, 276, 800), "leave_lobby");
+    assert.equal(resolvePanelAction(100, 80, 800), null);
+});
+
 test("resolvePointerPosition clamps coordinates and tracks inside state", () => {
     const inside = resolvePointerPosition(80, 40, {
         left: 40,
@@ -104,6 +117,22 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
         button: 0
     } as MouseEvent as Event);
     assert.equal(state.controls.shoot, false);
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 560,
+        clientY: 80
+    } as MouseEvent as Event);
+    assert.equal(state.ui.panelView, "staff");
+    assert.equal(state.controls.shoot, false);
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 560,
+        clientY: 164
+    } as MouseEvent as Event);
+    assert.equal(state.ui.showMapModal, true);
+    assert.equal(state.ui.panelView, "status");
 
     surface.emit("mousedown", {
         button: 2
