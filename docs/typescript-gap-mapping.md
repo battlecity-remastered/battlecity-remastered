@@ -217,4 +217,4 @@ apps/client-ts/src/
   - `S2-08`: panel/radar rendering advanced with texture-backed buttons/glyphs and active-state affordances.
   - `S2-17`: lobby UX extended with score-tab and city-filter navigation plus explicit tab-state labels.
   - `S2-22`: options modal advanced controls now include concrete city-import execution flow and legacy-texture backdrop styling.
-  - `S2-24`: notification affordance flow expanded with event-driven toast panel integration.
+  - `S2-24`: notification affordance flow expanded with event-driven toast panel integration, explicit menu control hints, and legacy-texture overlay chrome.

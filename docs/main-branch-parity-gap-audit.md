@@ -231,7 +231,7 @@ This audit does not mark broad server authority systems as missing; it flags whe
 8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background + texture-backed button chrome added; full legacy visual fidelity pending)`
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, finance-ranked scoreboard lines, and explicit tab state indicators; full legacy visual tab/table styling still pending)`
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, city-import slot/mode controls, concrete client import execution from `/assets/cities/<slot>/demo.city`, and legacy-texture modal backdrop; full legacy import UX still pending)`
-11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events and orb-hint banner flow is wired; full legacy styling/menu affordances still pending)`
+11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events with explicit menu affordance hints, and both notification/orb overlays now use legacy texture backdrops; full legacy styling/menu affordances still pending)`
 12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs. `status: partial (2026-02-24, cue mapping expanded to orb/build-denied/demolish-denied/promotion/shot/damage transitions; full legacy sound-id routing still pending)`
 13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity.
 14. `QA-01` Add screenshot-based visual regression tests for parity checkpoints.
@@ -265,6 +265,8 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Expanded client audio cue mapping to include orb and denial transitions in addition to damage/promotion/shot events.
   - Added explicit lobby tab state line (`Assignments`/`Scores`) for clearer parity with legacy tabbed lobby behavior.
   - Added texture-backed lobby/options overlay panel backgrounds using legacy interface atlas images.
+  - Added notification overlay heading/menu-affordance lines for modal/build controls visibility.
+  - Added texture-backed notification and orb-hint banner overlays using legacy interface textures.
 
 ---
 

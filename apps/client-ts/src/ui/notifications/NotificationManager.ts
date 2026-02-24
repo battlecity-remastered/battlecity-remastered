@@ -62,10 +62,14 @@ export const collectNotificationEvents = (
 };
 
 export const buildNotificationLines = (items: ReadonlyArray<NotificationItem>): string[] => {
+    const lines = [
+        "Notifications",
+        "Menu: F1 Help  F2 Map  F3 Options  F4 Build"
+    ];
     if (items.length === 0) {
-        return ["No notifications"];
+        return [...lines, "No notifications"];
     }
-    return items.map((entry) => entry.text);
+    return [...lines, ...items.map((entry) => entry.text)];
 };
 
 type NotificationManager = {
@@ -92,6 +96,8 @@ export const createNotificationManager = (
     panel.style.padding = "8px 10px";
     panel.style.margin = "0";
     panel.style.background = "rgba(16, 20, 28, 0.74)";
+    panel.style.backgroundImage = "url('/assets/imgInterfaceBottom.png')";
+    panel.style.backgroundSize = "cover";
     panel.style.border = "1px solid rgba(120, 148, 196, 0.82)";
     panel.style.color = "#d8e6ff";
     panel.style.font = "12px/1.35 monospace";

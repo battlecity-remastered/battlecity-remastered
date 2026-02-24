@@ -217,4 +217,6 @@ The rewrite should only be considered complete when:
   - options modal now includes operational city-import execution from legacy `.city` files.
   - lobby/options overlays now use legacy interface texture backdrops for improved visual parity.
   - notification/toast overlay is event-driven for promotion/denial/orb flows.
+  - notification panel now includes explicit in-game menu affordance lines (F1/F2/F3/F4 controls).
+  - orb hint and notification overlays now share legacy-texture visual chrome.
 - These are additive parity improvements on top of the already-closed S-ID matrix.

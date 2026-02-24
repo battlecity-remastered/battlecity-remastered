@@ -41,14 +41,14 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/ui/lobby/LobbyManager.ts`
-- `apps/client-ts/src/ui/options/OptionsModal.ts`
-- `apps/client-ts/test/lobby-manager.test.ts`
+- `apps/client-ts/src/ui/notifications/NotificationManager.ts`
+- `apps/client-ts/src/ui/orb/OrbHintBanner.ts`
+- `apps/client-ts/test/notification-manager.test.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 - `docs/rewrite-progress.md`
 
 ## Validation Results
-- `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24, lobby/options chrome parity slice)
-- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, `79/79`)
+- `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24, notification/orb overlay parity slice)
+- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, `80/80`)
