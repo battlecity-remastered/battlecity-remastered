@@ -1,0 +1,9 @@
+# Non-runtime legacy artifacts copied from Windows distributions or skin work dirs.
+Thumbs.db
+*.ini
+*.dll
+*.log
+*.dat
+*.jpeg
+*.jpg
+*.webp
