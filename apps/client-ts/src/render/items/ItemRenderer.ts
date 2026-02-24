@@ -3,17 +3,14 @@ import type { ClientState } from "../../app/state.js";
 import { reconcileEntityCache } from "../entity-cache.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
 import {
-    ITEM_FRAME_SIZE,
     ITEM_TYPE_BOMB,
     ITEM_TYPE_MINE
 } from "../parity/constants.js";
-
-const resolveHazardSortKey = (type: number): number => {
-    if (type === ITEM_TYPE_MINE) {
-        return 10;
-    }
-    return 20;
-};
+import {
+    resolveHazardFrameRect,
+    resolveHazardOffset,
+    resolveHazardSortKey
+} from "./item-parity-helpers.js";
 
 const hazardColor = (type: number): number => {
     if (type === ITEM_TYPE_MINE) {
@@ -50,7 +47,7 @@ export const renderHazardItems = (
         () => {
             const sprite = itemTexture ? new Sprite() : new Graphics();
             if (sprite instanceof Sprite) {
-                sprite.anchor.set(0.5, 0.5);
+                sprite.anchor.set(0, 0);
             }
             layer.addChild(sprite);
             return sprite;
@@ -70,14 +67,25 @@ export const renderHazardItems = (
 
         if (sprite instanceof Sprite && itemTexture) {
             const isMine = hazard.type === ITEM_TYPE_MINE;
-            const frame = isMine
-                ? getFrameTexture(itemTexture, "hazard:mine", ITEM_TYPE_MINE * ITEM_FRAME_SIZE, 42, 48, 48)
-                : getFrameTexture(itemTexture, "hazard:bomb", ITEM_TYPE_BOMB * ITEM_FRAME_SIZE, 42, 48, 48);
+            const isBomb = hazard.type === ITEM_TYPE_BOMB;
+            const animation = Math.floor(Date.now() / 120) % 4;
+            const bombArmed = isBomb && state.ui.bombArmed && hazard.cityId === state.local.city;
+            const rect = resolveHazardFrameRect(hazard.type, animation, bombArmed);
+            const frame = getFrameTexture(
+                itemTexture,
+                `hazard:${hazard.type}:${animation}:${bombArmed ? 1 : 0}`,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height
+            );
             if (frame) {
                 sprite.texture = frame;
-                sprite.scale.set(Math.max(0.4, Math.min(1.2, hazard.radius / 96)));
+                sprite.scale.set(1, 1);
                 sprite.alpha = isMine ? 0.86 : 0.9;
             }
+            const offset = resolveHazardOffset(hazard.type);
+            sprite.position.set(hazard.x + offset.x, hazard.y + offset.y);
         } else if (sprite instanceof Graphics) {
             sprite.clear();
             sprite
@@ -92,7 +100,9 @@ export const renderHazardItems = (
                     alpha: 0.8
                 });
         }
-        sprite.position.set(hazard.x, hazard.y);
+        if (sprite instanceof Graphics) {
+            sprite.position.set(hazard.x, hazard.y);
+        }
         layer.setChildIndex(sprite, Math.min(layer.children.length - 1, resolveHazardSortKey(hazard.type)));
     }
 };

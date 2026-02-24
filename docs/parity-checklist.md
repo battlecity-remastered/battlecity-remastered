@@ -10,7 +10,7 @@ Last updated: 2026-02-24
 - [x] Phase 4 - Ground + terrain tile parity
 - [x] Phase 5 - Building base + overlays parity
 - [x] Phase 6 - Population/research/smoke/digits parity
-- [ ] Phase 7 - Items/defense/bullets parity
+- [x] Phase 7 - Items/defense/bullets parity
 - [ ] Phase 8 - Panel + radar + home arrow parity
 - [ ] Phase 9 - Map modal parity
 - [ ] Phase 10 - City spawn/layout parity
@@ -51,13 +51,13 @@ Last updated: 2026-02-24
 - [x] Command center world label center and y-offset parity.
 
 ## E) Defenses / items / bullets
-- [ ] Turret base damage column parity.
-- [ ] Turret head orientation frame parity.
-- [ ] Mine frame/offset parity.
-- [ ] Bomb idle/armed frame parity.
-- [ ] Orb animation frame and x-offset parity.
-- [ ] Mine/wall draw order parity.
-- [ ] Bullet 8x8 row/column animation parity.
+- [x] Turret base damage column parity.
+- [x] Turret head orientation frame parity.
+- [x] Mine frame/offset parity.
+- [x] Bomb idle/armed frame parity.
+- [x] Orb animation frame and x-offset parity.
+- [x] Mine/wall draw order parity.
+- [x] Bullet 8x8 row/column animation parity.
 
 ## F) Tanks
 - [ ] Local tank row/column parity.

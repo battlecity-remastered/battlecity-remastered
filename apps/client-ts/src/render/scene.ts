@@ -18,6 +18,7 @@ import {
     resolveBuildingBaseFrame,
     resolveBuildingOverlay
 } from "./layers/building-parity-helpers.js";
+import { resolveBulletFrameRect } from "./items/item-parity-helpers.js";
 import {
     isPanelButtonActive,
     PANEL_BUTTONS,
@@ -152,6 +153,7 @@ type SceneLayers = {
     buildingSprites: Map<string, RenderableEntity>;
     buildingOverlaySprites: Map<string, RenderableEntity>;
     defenseSprites: Map<string, RenderableEntity>;
+    defenseHeadSprites: Map<string, RenderableEntity>;
     hazardSprites: Map<string, RenderableEntity>;
     bulletSprites: Map<string, RenderableEntity>;
     ghostPlacementSprite: Graphics;
@@ -226,6 +228,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         buildingSprites: new Map<string, RenderableEntity>(),
         buildingOverlaySprites: new Map<string, RenderableEntity>(),
         defenseSprites: new Map<string, RenderableEntity>(),
+        defenseHeadSprites: new Map<string, RenderableEntity>(),
         hazardSprites: new Map<string, RenderableEntity>(),
         bulletSprites: new Map<string, RenderableEntity>(),
         ghostPlacementSprite,
@@ -299,14 +302,19 @@ const resolveDefenseTexture = (textures: LegacyTextures, defenseType: number): T
     return getFrameTexture(textures.turretBase, `defense:${row}`, 0, row * 48, 48, 48);
 };
 
+const resolveDefenseHeadTexture = (textures: LegacyTextures, defenseType: number, orientation: number): Texture | null => {
+    const row = Math.max(0, Math.min(2, defenseType - 9));
+    const frame = Math.max(0, Math.min(15, orientation % 16));
+    return getFrameTexture(textures.turretHead, `defense-head:${row}:${frame}`, frame * 48, row * 48, 48, 48);
+};
+
 const resolveBulletSprite = (textures: LegacyTextures): Sprite | null => {
-    const texture = getFrameTexture(textures.bullets, "bullet:default", 0, 0, 24, 24);
+    const texture = getFrameTexture(textures.bullets, "bullet:default", 0, 0, 8, 8);
     if (!texture) {
         return null;
     }
     const sprite = new Sprite(texture);
-    sprite.anchor.set(0.5, 0.5);
-    sprite.scale.set(0.4, 0.4);
+    sprite.anchor.set(0, 0);
     return sprite;
 };
 
@@ -406,6 +414,23 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
         }
     }
 
+    syncEntityCache(layers.defenseHeadSprites, layers.objectLayer, state.defenses.keys(), () => {
+        const sprite = new Sprite();
+        return sprite;
+    });
+    for (const defense of state.defenses.values()) {
+        const sprite = layers.defenseHeadSprites.get(defense.id);
+        if (!sprite || !(sprite instanceof Sprite)) {
+            continue;
+        }
+        const orientation = Math.floor((Date.now() / 100) % 16);
+        const frame = resolveDefenseHeadTexture(layers.textures, defense.type, orientation);
+        if (frame) {
+            sprite.texture = frame;
+        }
+        sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
+    }
+
     renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items);
 
     syncEntityCache(layers.bulletSprites, layers.objectLayer, state.bullets.keys(), () => {
@@ -419,9 +444,25 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
     });
     for (const bullet of state.bullets.values()) {
         const sprite = layers.bulletSprites.get(bullet.id);
-        if (sprite) {
-            sprite.position.set(bullet.x, bullet.y);
+        if (!sprite) {
+            continue;
         }
+        if (sprite instanceof Sprite) {
+            const animation = Math.floor(Date.now() / 80) % 4;
+            const rect = resolveBulletFrameRect(animation, Math.max(0, bullet.type));
+            const frame = getFrameTexture(
+                layers.textures.bullets,
+                `bullet:${bullet.id}:${animation}:${bullet.type}`,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height
+            );
+            if (frame) {
+                sprite.texture = frame;
+            }
+        }
+        sprite.position.set(bullet.x, bullet.y);
     }
 };
 
