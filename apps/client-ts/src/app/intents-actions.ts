@@ -1,9 +1,11 @@
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
 import type { ClientState } from "./state.js";
+import { resolvePointerWorldTile } from "../gameplay/world-viewport.js";
 
 const ACTION_COOLDOWN_MS = 800;
 const TILE_SIZE = 48;
 const ITEM_TYPE_BOMB = 1;
+const BUILDING_FOOTPRINT_TILES = 3;
 
 type EnvelopeType = EventEnvelope["type"];
 export type Intent<TType extends EnvelopeType = EnvelopeType> = {
@@ -12,22 +14,38 @@ export type Intent<TType extends EnvelopeType = EnvelopeType> = {
 };
 
 const hasCooldownElapsed = (nowMs: number, lastAt: number): boolean => nowMs - lastAt > ACTION_COOLDOWN_MS;
-const asBuildingPlaceIntent = (state: ClientState): Intent<"building.place.request"> => ({
+const asBuildingPlaceIntent = (
+    state: ClientState,
+    tileX: number,
+    tileY: number
+): Intent<"building.place.request"> => ({
     type: "building.place.request",
     payload: {
         ownerId: state.local.id ?? "",
         cityId: state.local.city,
         type: state.ui.selectedBuildType,
-        tileX: Math.floor(state.pointer.x / TILE_SIZE),
-        tileY: Math.floor(state.pointer.y / TILE_SIZE)
+        tileX,
+        tileY
     }
 });
 
 const tryResolveDemolishTarget = (state: ClientState): string | null => {
-    const tileX = Math.floor(state.pointer.x / TILE_SIZE);
-    const tileY = Math.floor(state.pointer.y / TILE_SIZE);
+    const pointerTile = resolvePointerWorldTile(state);
+    if (!pointerTile) {
+        return null;
+    }
+    const tileX = pointerTile.tileX;
+    const tileY = pointerTile.tileY;
     for (const building of state.buildings.values()) {
-        if (building.cityId === state.local.city && building.tileX === tileX && building.tileY === tileY) {
+        if (building.cityId !== state.local.city) {
+            continue;
+        }
+        if (
+            tileX >= building.tileX
+            && tileX < (building.tileX + BUILDING_FOOTPRINT_TILES)
+            && tileY >= building.tileY
+            && tileY < (building.tileY + BUILDING_FOOTPRINT_TILES)
+        ) {
             return building.id;
         }
     }
@@ -139,15 +157,19 @@ const appendOrbDropIntent = (state: ClientState, nowMs: number, intents: Intent[
 };
 
 const appendBuildingPlaceIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
-    if (!state.controls.build || !state.controls.ctrl || state.controls.shift || !state.pointer.inside || !hasCooldownElapsed(nowMs, state.local.lastBuildAt)) {
+    if (!state.controls.build || !state.controls.ctrl || state.controls.shift || !hasCooldownElapsed(nowMs, state.local.lastBuildAt)) {
+        return;
+    }
+    const pointerTile = resolvePointerWorldTile(state);
+    if (!pointerTile) {
         return;
     }
     state.local.lastBuildAt = nowMs;
-    intents.push(asBuildingPlaceIntent(state));
+    intents.push(asBuildingPlaceIntent(state, pointerTile.tileX, pointerTile.tileY));
 };
 
 const appendBuildingDemolishIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
-    if (!state.controls.demolish || !state.controls.ctrl || !state.pointer.inside || !hasCooldownElapsed(nowMs, state.local.lastDemolishAt)) {
+    if (!state.controls.demolish || !state.controls.ctrl || !hasCooldownElapsed(nowMs, state.local.lastDemolishAt)) {
         return;
     }
     const id = tryResolveDemolishTarget(state);

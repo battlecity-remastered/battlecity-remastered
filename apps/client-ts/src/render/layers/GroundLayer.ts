@@ -2,7 +2,7 @@ import { Graphics, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 
 const TILE_SIZE = 48;
-const DRAW_RADIUS = 22;
+const DRAW_RADIUS = 24;
 
 export const renderGroundLayer = (
     state: ClientState,
@@ -11,19 +11,19 @@ export const renderGroundLayer = (
     texture: Texture | null = null
 ): void => {
     sprite.clear();
-    const offsetX = state.local.x % TILE_SIZE;
-    const offsetY = state.local.y % TILE_SIZE;
+    const centerTileX = Math.floor(state.local.x / TILE_SIZE);
+    const centerTileY = Math.floor(state.local.y / TILE_SIZE);
 
-    for (let dx = -DRAW_RADIUS; dx <= DRAW_RADIUS; dx += 1) {
-        for (let dy = -DRAW_RADIUS; dy <= DRAW_RADIUS; dy += 1) {
-            const x = dx * TILE_SIZE - offsetX;
-            const y = dy * TILE_SIZE - offsetY;
+    for (let tx = centerTileX - DRAW_RADIUS; tx <= centerTileX + DRAW_RADIUS; tx += 1) {
+        for (let ty = centerTileY - DRAW_RADIUS; ty <= centerTileY + DRAW_RADIUS; ty += 1) {
+            const x = tx * TILE_SIZE;
+            const y = ty * TILE_SIZE;
             if (texture) {
                 sprite
                     .rect(x, y, TILE_SIZE, TILE_SIZE)
                     .fill({ texture });
             } else {
-                const alternate = (dx + dy) % 3 === 0;
+                const alternate = (tx + ty) % 3 === 0;
                 sprite
                     .rect(x, y, TILE_SIZE, TILE_SIZE)
                     .fill(alternate ? 0x1a2e27 : 0x20362d);

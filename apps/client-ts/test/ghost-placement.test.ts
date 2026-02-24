@@ -17,8 +17,10 @@ test("resolveGhostPlacement computes pointer tile and selected build type", () =
     state.controls.ctrl = true;
     state.controls.build = true;
     state.pointer.inside = true;
-    state.pointer.x = 120;
-    state.pointer.y = 245;
+    state.pointer.surfaceWidth = 640;
+    state.pointer.surfaceHeight = 480;
+    state.pointer.x = 209;
+    state.pointer.y = 357;
     state.ui.selectedBuildType = 300;
 
     const ghost = resolveGhostPlacement(state);
@@ -55,4 +57,7 @@ test("isGhostTileBlocked returns true for building and defense occupancy", () =>
     assert.equal(isGhostTileBlocked(state, 3, 4), true);
     assert.equal(isGhostTileBlocked(state, 7, 8), true);
     assert.equal(isGhostTileBlocked(state, 1, 1), false);
+
+    state.world.blockingTiles.add("9,9");
+    assert.equal(isGhostTileBlocked(state, 8, 8), true);
 });

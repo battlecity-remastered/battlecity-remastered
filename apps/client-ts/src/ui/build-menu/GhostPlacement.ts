@@ -1,6 +1,7 @@
 import type { ClientState } from "../../app/state.js";
+import { resolvePointerWorldTile } from "../../gameplay/world-viewport.js";
 
-const TILE_SIZE = 48;
+const BUILDING_FOOTPRINT_TILES = 3;
 
 export type GhostPlacement = {
     tileX: number;
@@ -9,34 +10,95 @@ export type GhostPlacement = {
     buildType: number;
 };
 
-export const isGhostTileBlocked = (
+const overlapsFootprint = (
+    leftA: number,
+    topA: number,
+    leftB: number,
+    topB: number
+): boolean => {
+    return leftA < (leftB + BUILDING_FOOTPRINT_TILES)
+        && (leftA + BUILDING_FOOTPRINT_TILES) > leftB
+        && topA < (topB + BUILDING_FOOTPRINT_TILES)
+        && (topA + BUILDING_FOOTPRINT_TILES) > topB;
+};
+
+const footprintContains = (originX: number, originY: number, tileX: number, tileY: number): boolean => {
+    return tileX >= originX
+        && tileX < (originX + BUILDING_FOOTPRINT_TILES)
+        && tileY >= originY
+        && tileY < (originY + BUILDING_FOOTPRINT_TILES);
+};
+
+const hasBlockingTerrainFootprint = (
+    state: ClientState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    const maxTile = state.world.mapSize - 1;
+    for (let dx = 0; dx < BUILDING_FOOTPRINT_TILES; dx += 1) {
+        for (let dy = 0; dy < BUILDING_FOOTPRINT_TILES; dy += 1) {
+            const tx = tileX + dx;
+            const ty = tileY + dy;
+            if (tx < 0 || ty < 0 || tx > maxTile || ty > maxTile) {
+                return true;
+            }
+            if (state.world.blockingTiles.has(`${tx},${ty}`)) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+const hasBlockingBuildingFootprint = (
     state: ClientState,
     tileX: number,
     tileY: number
 ): boolean => {
     for (const building of state.buildings.values()) {
-        if (building.tileX === tileX && building.tileY === tileY) {
-            return true;
-        }
-    }
-    for (const defense of state.defenses.values()) {
-        if (defense.tileX === tileX && defense.tileY === tileY) {
+        if (overlapsFootprint(tileX, tileY, building.tileX, building.tileY)) {
             return true;
         }
     }
     return false;
 };
 
+const hasBlockingDefenseFootprint = (
+    state: ClientState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    for (const defense of state.defenses.values()) {
+        if (footprintContains(tileX, tileY, defense.tileX, defense.tileY)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+export const isGhostTileBlocked = (
+    state: ClientState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    return hasBlockingTerrainFootprint(state, tileX, tileY)
+        || hasBlockingBuildingFootprint(state, tileX, tileY)
+        || hasBlockingDefenseFootprint(state, tileX, tileY);
+};
+
 export const resolveGhostPlacement = (state: ClientState): GhostPlacement | null => {
-    if (!state.ui.showBuildMenu || !state.pointer.inside) {
+    if (!state.ui.showBuildMenu) {
         return null;
     }
     if (!state.controls.ctrl || !state.controls.build || state.controls.shift) {
         return null;
     }
-
-    const tileX = Math.floor(state.pointer.x / TILE_SIZE);
-    const tileY = Math.floor(state.pointer.y / TILE_SIZE);
+    const worldTile = resolvePointerWorldTile(state);
+    if (!worldTile) {
+        return null;
+    }
+    const tileX = worldTile.tileX;
+    const tileY = worldTile.tileY;
     return {
         tileX,
         tileY,

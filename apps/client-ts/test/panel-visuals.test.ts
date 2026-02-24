@@ -12,11 +12,11 @@ test("isPanelButtonActive maps subview and modal states to expected button index
     };
 
     assert.equal(isPanelButtonActive({ ...base, panelView: "staff" }, 0), true);
-    assert.equal(isPanelButtonActive({ ...base, panelView: "city" }, 1), true);
-    assert.equal(isPanelButtonActive({ ...base, panelView: "points" }, 2), true);
-    assert.equal(isPanelButtonActive({ ...base, showMapModal: true }, 3), true);
-    assert.equal(isPanelButtonActive({ ...base, showHelpModal: true }, 4), true);
-    assert.equal(isPanelButtonActive({ ...base, showOptionsModal: true }, 5), true);
+    assert.equal(isPanelButtonActive({ ...base, showMapModal: true }, 1), true);
+    assert.equal(isPanelButtonActive({ ...base, panelView: "city" }, 2), true);
+    assert.equal(isPanelButtonActive({ ...base, panelView: "points" }, 3), true);
+    assert.equal(isPanelButtonActive({ ...base, showOptionsModal: true }, 4), true);
+    assert.equal(isPanelButtonActive({ ...base, showHelpModal: true }, 5), true);
     assert.equal(isPanelButtonActive({ ...base, showBuildMenu: true }, 6), true);
     assert.equal(isPanelButtonActive(base, 7), false);
 });

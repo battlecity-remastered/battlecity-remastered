@@ -220,4 +220,8 @@ The rewrite should only be considered complete when:
   - notification panel now includes explicit in-game menu affordance lines (F1/F2/F3/F4 controls).
   - orb hint and notification overlays now share legacy-texture visual chrome.
   - mouse interaction now drives cursor-mode cues for build/demolish/bomb states.
+  - camera/world transform now centers gameplay viewport with right panel excluded, matching legacy default offset behavior.
+  - pointer-to-world tile conversion now drives build/demolish/ghost actions (instead of raw screen-space tiles).
+  - terrain draw/movement parity corrected to legacy tile semantics (`lava=1`, `rock=2`) with autotile frame offsets.
+  - movement collision now incorporates decoded map blocking tiles in addition to dynamic buildings/defenses.
 - These are additive parity improvements on top of the already-closed S-ID matrix.

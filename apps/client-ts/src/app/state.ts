@@ -170,6 +170,10 @@ export type ClientState = {
         research: boolean;
         collectFactory: boolean;
     };
+    world: {
+        blockingTiles: Set<string>;
+        mapSize: number;
+    };
     pointer: {
         x: number;
         y: number;
@@ -305,6 +309,10 @@ export const createClientState = (): ClientState => {
             leaveLobby: false,
             research: false,
             collectFactory: false
+        },
+        world: {
+            blockingTiles: new Set<string>(),
+            mapSize: 512
         },
         pointer: {
             x: 0,

@@ -1,4 +1,6 @@
 import type { ClientState } from "../app/state.js";
+import { PANEL_WIDTH } from "../gameplay/world-viewport.js";
+import { PANEL_BUTTONS, type PanelButtonKey } from "../render/panel/panel-visuals.js";
 
 type Listener = (event: Event) => void;
 
@@ -27,12 +29,6 @@ type PointerPosition = {
     height: number;
 };
 
-const PANEL_WIDTH = 206;
-const PANEL_BUTTON_START_Y = 72;
-const PANEL_BUTTON_HEIGHT = 22;
-const PANEL_BUTTON_STEP = 28;
-const PANEL_BUTTON_COUNT = 8;
-
 export type PanelAction =
     | "toggle_staff"
     | "toggle_city_info"
@@ -42,6 +38,31 @@ export type PanelAction =
     | "toggle_options"
     | "toggle_build"
     | "leave_lobby";
+
+const panelActionFromButtonKey = (key: PanelButtonKey): PanelAction => {
+    if (key === "staff") {
+        return "toggle_staff";
+    }
+    if (key === "city") {
+        return "toggle_city_info";
+    }
+    if (key === "points") {
+        return "toggle_points";
+    }
+    if (key === "map") {
+        return "toggle_map";
+    }
+    if (key === "help") {
+        return "toggle_help";
+    }
+    if (key === "options") {
+        return "toggle_options";
+    }
+    if (key === "build") {
+        return "toggle_build";
+    }
+    return "leave_lobby";
+};
 
 export const resolveCursorForState = (state: ClientState): string => {
     if (state.controls.demolish) {
@@ -68,39 +89,15 @@ export const resolvePanelAction = (
     if (pointerX < panelStart) {
         return null;
     }
-    const relativeY = pointerY - PANEL_BUTTON_START_Y;
-    if (relativeY < 0) {
-        return null;
+    const panelX = pointerX - panelStart;
+    for (const button of PANEL_BUTTONS) {
+        const insideX = panelX >= button.x && panelX <= (button.x + button.width);
+        const insideY = pointerY >= button.y && pointerY <= (button.y + button.height);
+        if (insideX && insideY) {
+            return panelActionFromButtonKey(button.key);
+        }
     }
-    const index = Math.floor(relativeY / PANEL_BUTTON_STEP);
-    if (index < 0 || index >= PANEL_BUTTON_COUNT) {
-        return null;
-    }
-    if ((relativeY % PANEL_BUTTON_STEP) >= PANEL_BUTTON_HEIGHT) {
-        return null;
-    }
-    if (index === 0) {
-        return "toggle_staff";
-    }
-    if (index === 1) {
-        return "toggle_city_info";
-    }
-    if (index === 2) {
-        return "toggle_points";
-    }
-    if (index === 3) {
-        return "toggle_map";
-    }
-    if (index === 4) {
-        return "toggle_help";
-    }
-    if (index === 5) {
-        return "toggle_options";
-    }
-    if (index === 6) {
-        return "toggle_build";
-    }
-    return "leave_lobby";
+    return null;
 };
 
 const togglePanelView = (
@@ -242,7 +239,12 @@ export const registerMouseInputHandlers = (
 
     const onMouseDown = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
-        const panelAction = resolvePanelAction(pointerEvent.clientX, pointerEvent.clientY, state.pointer.surfaceWidth);
+        if (Number.isFinite(pointerEvent.clientX) && Number.isFinite(pointerEvent.clientY)) {
+            applyPointerUpdate(state, surface, pointerEvent.clientX, pointerEvent.clientY);
+        }
+        const panelAction = pointerEvent.button === 0
+            ? resolvePanelAction(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth)
+            : null;
         if (panelAction) {
             applyPanelAction(state, panelAction);
             syncCursor(state, surface);

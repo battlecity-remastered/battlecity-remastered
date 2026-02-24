@@ -15,21 +15,14 @@ import { loadMapData, type LoadedMap } from "../world/map-loader.js";
 import { getFrameTexture, loadLegacyTextures, type LegacyTextures } from "./LegacyTextureRegistry.js";
 import {
     isPanelButtonActive,
-    PANEL_BUTTON_HEIGHT,
-    PANEL_BUTTON_LABELS,
-    PANEL_BUTTON_START_X,
-    PANEL_BUTTON_START_Y,
-    PANEL_BUTTON_STEP,
-    PANEL_BUTTON_WIDTH,
+    PANEL_BUTTONS,
     resolveRadarColor
 } from "./panel/panel-visuals.js";
+import { PANEL_WIDTH, TILE_SIZE, WORLD_MAX, resolveViewportFromState } from "../gameplay/world-viewport.js";
 
 const TANK_SIZE = 22;
-const TILE_SIZE = 48;
-const PANEL_WIDTH = 206;
-const RADAR_WIDTH = 44;
-const RADAR_HEIGHT = 44;
-const WORLD_MAX = 24576;
+const RADAR_WIDTH = 138;
+const RADAR_HEIGHT = 138;
 
 type TankPalette = {
     tread: number;
@@ -267,7 +260,7 @@ const renderGhostPlacement = (state: ClientState, sprite: Graphics): void => {
     sprite.visible = true;
     sprite.clear();
     sprite
-        .rect(0, 0, TILE_SIZE, TILE_SIZE)
+        .rect(0, 0, TILE_SIZE * 3, TILE_SIZE * 3)
         .fill({ color: ghostPlacement.blocked ? 0xff5a6f : 0x4ae18f, alpha: 0.3 })
         .stroke({ color: ghostPlacement.blocked ? 0xffa7b1 : 0xc2ffd6, alpha: 0.9, width: 2 });
     sprite.position.set(ghostPlacement.tileX * TILE_SIZE, ghostPlacement.tileY * TILE_SIZE);
@@ -300,13 +293,11 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
         if (firstBuilding) {
             const texture = resolveBuildingTexture(layers.textures, firstBuilding.type);
             if (texture) {
-                const sprite = new Sprite(texture);
-                sprite.scale.set(TILE_SIZE / 144, TILE_SIZE / 144);
-                return sprite;
+                return new Sprite(texture);
             }
         }
         const entity = new Graphics();
-        entity.roundRect(0, 0, TILE_SIZE, TILE_SIZE, 3).fill(0x8e7a56);
+        entity.roundRect(0, 0, TILE_SIZE * 3, TILE_SIZE * 3, 3).fill(0x8e7a56);
         return entity;
     });
     for (const building of state.buildings.values()) {
@@ -461,57 +452,62 @@ const renderPanelGlyphs = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
-    const panelX = Math.max(0, window.innerWidth - PANEL_WIDTH);
+    const viewport = resolveViewportFromState(state);
+    const panelX = viewport.panelStartX;
     layers.panelBackground.position.set(panelX, 0);
-    layers.panelRadar.position.set(panelX + 16, 338);
+    layers.panelRadar.position.set(panelX + 28, 8);
     layers.panelText.position.set(panelX + 10, 10);
     layers.panelBackground.clear();
 
     if (layers.textures.interfaceTop) {
         layers.panelBackground
-            .rect(0, 0, PANEL_WIDTH, window.innerHeight)
-            .fill({ texture: layers.textures.interfaceTop, alpha: 0.9 });
+            .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
+            .fill({ texture: layers.textures.interfaceTop, alpha: 0.92 });
     } else {
         layers.panelBackground
-            .rect(0, 0, PANEL_WIDTH, window.innerHeight)
+            .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
             .fill({ color: 0x111827, alpha: 0.85 });
     }
 
     layers.panelBackground
-        .rect(0, 0, PANEL_WIDTH, window.innerHeight)
+        .rect(0, 0, PANEL_WIDTH, viewport.surfaceHeight)
         .stroke({ color: 0x4d5f7a, width: 1, alpha: 0.85 });
 
     if (layers.textures.interfaceBottom) {
         layers.panelBackground
-            .rect(0, Math.max(0, window.innerHeight - 128), PANEL_WIDTH, 128)
+            .rect(0, Math.max(0, viewport.surfaceHeight - 128), PANEL_WIDTH, 128)
             .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
     }
 
     renderPanelGlyphs(state, layers);
 
-    for (let i = 0; i < PANEL_BUTTON_LABELS.length; i += 1) {
+    for (let i = 0; i < PANEL_BUTTONS.length; i += 1) {
         const active = isPanelButtonActive(state.ui, i);
-        const buttonY = PANEL_BUTTON_START_Y + (i * PANEL_BUTTON_STEP);
-        if (layers.textures.buttonStaff) {
-            layers.panelBackground
-                .roundRect(PANEL_BUTTON_START_X, buttonY, PANEL_BUTTON_WIDTH, PANEL_BUTTON_HEIGHT, 4)
-                .fill({ texture: layers.textures.buttonStaff, alpha: active ? 0.95 : 0.8 })
-                .stroke({ color: active ? 0xbfd7f5 : 0x8ca8c8, width: active ? 2 : 1, alpha: 0.92 });
-        } else {
-            layers.panelBackground
-                .roundRect(PANEL_BUTTON_START_X, buttonY, PANEL_BUTTON_WIDTH, PANEL_BUTTON_HEIGHT, 4)
-                .fill({ color: active ? 0x35547c : 0x223248, alpha: active ? 0.9 : 0.72 })
-                .stroke({ color: 0x8ca8c8, width: 1, alpha: 0.9 });
+        const button = PANEL_BUTTONS[i];
+        if (!button) {
+            continue;
         }
+        if (!layers.textures.interfaceTop) {
+            layers.panelBackground
+                .roundRect(button.x, button.y, button.width, button.height, 4)
+                .fill({ color: active ? 0x35547c : 0x223248, alpha: active ? 0.75 : 0.22 })
+                .stroke({ color: 0x8ca8c8, width: 1, alpha: 0.9 });
+            continue;
+        }
+        if (!active) {
+            continue;
+        }
+        layers.panelBackground
+            .roundRect(button.x, button.y, button.width, button.height, 4)
+            .fill({ color: 0x2f6a9f, alpha: 0.28 })
+            .stroke({ color: 0xbfd7f5, width: 1, alpha: 0.92 });
     }
 
     const detailLines = resolvePanelDetailLines(state);
-    const actionLines = PANEL_BUTTON_LABELS.map((label, idx) => `${idx + 1}. ${label}`);
     layers.panelText.text = [
         `City ${state.local.city} ${resolveLocalRole(state)}`,
+        `HP ${state.local.health}/${state.local.maxHealth}`,
         ...detailLines,
-        "",
-        ...actionLines,
         "",
         "Radar"
     ].join("\n");
@@ -547,6 +543,10 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneLayers): void => {
+    const viewport = resolveViewportFromState(state);
+    layers.world.position.set(viewport.centerX, viewport.centerY);
+    layers.world.pivot.set(state.local.x, state.local.y);
+
     const localRow = resolveLocalRole(state) === "mayor" ? 1 : 0;
     updateTankEntityTexture(layers.localTank, layers.textures, localRow, state.local.direction);
     layers.localTank.position.set(state.local.x, state.local.y);
@@ -620,6 +620,8 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     const textures = await loadLegacyTextures();
     const layers = createSceneLayers(app, textures);
     const mapData = await loadMapData();
+    state.world.blockingTiles = mapData.blockingTiles;
+    state.world.mapSize = mapData.map.length;
 
     return {
         app,

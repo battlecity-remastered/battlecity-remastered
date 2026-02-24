@@ -219,3 +219,7 @@ apps/client-ts/src/
   - `S2-22`: options modal advanced controls now include concrete city-import execution flow and legacy-texture backdrop styling.
   - `S2-24`: notification affordance flow expanded with event-driven toast panel integration, explicit menu control hints, and legacy-texture overlay chrome.
   - `S2-16`: mouse interaction fidelity now includes state-driven cursor mode transitions for build/demolish/bomb flows.
+  - `S2-02`: movement collision now includes decoded map blocking tiles near the local player.
+  - `S2-09`: build/demolish/ghost placement now use camera-correct world-space pointer tile conversion.
+  - `S2-11`: ground/tile rendering now runs with centered world pivot and legacy terrain value/autotile semantics.
+  - `S2-08`: panel button hitboxes/ordering aligned with legacy interface geometry and radar size.

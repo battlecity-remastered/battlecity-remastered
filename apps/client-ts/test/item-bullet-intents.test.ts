@@ -55,8 +55,10 @@ test("ctrl+b emits building.place.request using pointer tile instead of orb drop
     state.controls.build = true;
     state.controls.ctrl = true;
     state.pointer.inside = true;
-    state.pointer.x = 144;
-    state.pointer.y = 96;
+    state.pointer.surfaceWidth = 640;
+    state.pointer.surfaceHeight = 480;
+    state.pointer.x = 239;
+    state.pointer.y = 212;
 
     const plan = buildTickPlan(state, Date.now() + 10_000, 100);
     const buildingIntent = plan.intents.find((intent) => intent.type === "building.place.request");
@@ -78,8 +80,10 @@ test("ctrl+b uses selected build menu type for building.place.request", () => {
     state.controls.build = true;
     state.controls.ctrl = true;
     state.pointer.inside = true;
-    state.pointer.x = 144;
-    state.pointer.y = 96;
+    state.pointer.surfaceWidth = 640;
+    state.pointer.surfaceHeight = 480;
+    state.pointer.x = 239;
+    state.pointer.y = 212;
     state.ui.selectedBuildType = 300;
 
     const plan = buildTickPlan(state, Date.now() + 10_000, 100);
@@ -95,8 +99,10 @@ test("ctrl+demolish emits building.demolish.request for pointer tile building", 
     state.controls.ctrl = true;
     state.controls.demolish = true;
     state.pointer.inside = true;
-    state.pointer.x = 101;
-    state.pointer.y = 154;
+    state.pointer.surfaceWidth = 640;
+    state.pointer.surfaceHeight = 480;
+    state.pointer.x = 259;
+    state.pointer.y = 312;
     state.buildings.set("b1", {
         id: "b1",
         ownerId: "other",

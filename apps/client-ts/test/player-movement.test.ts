@@ -39,6 +39,19 @@ test("moveLocalPlayer does not pass through blocking building tile", () => {
     assert.ok(state.local.x < (3 * 48));
 });
 
+test("moveLocalPlayer does not pass through blocking terrain tiles", () => {
+    const state = createClientState();
+    state.local.id = "p1";
+    state.local.x = 130;
+    state.local.y = 120;
+    state.local.speed = 300;
+    state.world.blockingTiles.add("3,2");
+
+    moveLocalPlayer(state, 0, 100);
+
+    assert.ok(state.local.x < (3 * 48));
+});
+
 test("moveLocalPlayer unsticks from blocked tile using nearest-safe fallback", () => {
     const state = createClientState();
     state.local.id = "p1";

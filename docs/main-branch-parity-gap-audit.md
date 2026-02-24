@@ -224,16 +224,16 @@ This audit does not mark broad server authority systems as missing; it flags whe
 1. `ASSET-01` Restore full runtime asset pack into `apps/client-ts/public/assets` (sprites, ui atlases, audio, fonts, skins). `status: done (2026-02-24)`
 2. `ASSET-02` Implement real Pixi asset loader + texture registry in TS client startup. `status: done (2026-02-24)`
 3. `RENDER-01` Replace procedural tank rendering with atlas frame renderer (`row/column` + role/city variants). `status: partial (2026-02-24, tank atlas rows/columns wired; full skin/frame parity pending)`
-4. `RENDER-02` Port tile/autotile texture logic for ground/rocks/lava from legacy mapping. `status: partial (2026-02-24, texture-backed terrain fallback wired; full autotile parity pending)`
+4. `RENDER-02` Port tile/autotile texture logic for ground/rocks/lava from legacy mapping. `status: partial (2026-02-24, terrain draw now uses legacy tile-value mapping (`lava=1`,`rock=2`) plus autotile frame offsets and out-of-bounds edge fill; full legacy tilemap perf/cache parity pending)`
 5. `RENDER-03` Port building overlay pipeline (research state, population, smoke, command-center labels). `status: partial (2026-02-24, texture-backed building/defense sprites plus population/research/smoke overlays wired; overlay rendering no longer depends on population > 0, command-center label parity pending)`
 6. `RENDER-04` Port item/hazard sprite-frame rendering rules (mine visibility, bomb armed state, orb animation). `status: partial (2026-02-24, texture-backed hazard sprites wired; orb/item frame parity expansion pending)`
 7. `FX-01` Port sprite effects (muzzle flash/explosions/smoke/floating points) with texture assets. `status: partial (2026-02-24, texture-backed muzzle flash + explosion frames + floating points event queue wired; sprite-text and remaining variants pending)`
-8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/city/points/map/help/options/build/exit hotspots + subview state panels + texture-backed glyphs/radar palette background + texture-backed button chrome added; full legacy visual fidelity pending)`
+8. `UI-01` Rebuild textured side panel + radar + interactive panel buttons. `status: partial (2026-02-24, in-canvas textured side panel + radar + clickable staff/map/info/points/options/help/build/exit hotspots aligned to legacy coordinates, larger legacy-scale radar viewport, and active-state button overlays are in place; full legacy visual fidelity pending)`
 9. `UI-02` Port full lobby overlay UX (tabs/filter/high scores/identity workflows). `status: partial (2026-02-24, lobby overlay now supports assignment/scores views, city filter cycling, finance-ranked scoreboard lines, and explicit tab state indicators; full legacy visual tab/table styling still pending)`
 10. `UI-03` Port options modal city-import/advanced controls. `status: partial (2026-02-24, options now include provider toggle, performance preset, city-import slot/mode controls, concrete client import execution from `/assets/cities/<slot>/demo.city`, and legacy-texture modal backdrop; full legacy import UX still pending)`
 11. `UI-04` Port notifications/orb hint/menu affordance system. `status: partial (2026-02-24, notification manager now emits timed toasts for promotions/build-deny/demolish-deny/orb events with explicit menu affordance hints, and both notification/orb overlays now use legacy texture backdrops; full legacy styling/menu affordances still pending)`
 12. `AUDIO-01` Restore legacy audio packs and map event triggers to concrete sound IDs. `status: partial (2026-02-24, cue mapping expanded to orb/build-denied/demolish-denied/promotion/shot/damage transitions; full legacy sound-id routing still pending)`
-13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity. `status: partial (2026-02-24, cursor mode now tracks gameplay state with default/build/demolish/bomb visual cues; full legacy cursor sprite/mode fidelity still pending)`
+13. `INPUT-01` Port interaction-layer cursor/build/demolish fidelity. `status: partial (2026-02-24, cursor mode tracks gameplay state and pointer/build targeting now use camera-correct world-space conversion with legacy panel hit-area gating; full legacy cursor sprite/mode fidelity still pending)`
 14. `QA-01` Add screenshot-based visual regression tests for parity checkpoints.
 
 ## Implementation Log
@@ -268,6 +268,11 @@ This audit does not mark broad server authority systems as missing; it flags whe
   - Added notification overlay heading/menu-affordance lines for modal/build controls visibility.
   - Added texture-backed notification and orb-hint banner overlays using legacy interface textures.
   - Added state-driven cursor fidelity in mouse input (`default`, `crosshair`, `cell`, `not-allowed`) tied to build/demolish/bomb states.
+  - Restored legacy-style camera semantics (world pivot centered in gameplay viewport, right panel excluded from world center).
+  - Corrected build/demolish targeting to convert screen pointer to world tiles and ignore right-side panel area.
+  - Corrected terrain parity mapping (`lava=1`, `rock=2`) and added autotile frame selection from adjacency.
+  - Expanded local movement collision to include nearby terrain blocking tiles from decoded `map.dat`.
+  - Updated panel interaction regions to legacy y/x geometry and matching action order (`staff/map/info/points/options/help/build/exit`).
 
 ---
 

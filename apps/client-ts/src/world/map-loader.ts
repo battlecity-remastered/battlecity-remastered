@@ -35,7 +35,7 @@ const buildBlockingTiles = (map: number[][]): Set<string> => {
         }
         for (let y = 0; y < column.length; y += 1) {
             const value = column[y] ?? 0;
-            if (value === 2 || value === 3) {
+            if (value === 1 || value === 2) {
                 blocking.add(`${x},${y}`);
             }
         }

@@ -41,13 +41,33 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
+- `apps/client-ts/src/gameplay/world-viewport.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/app/intents-actions.ts`
+- `apps/client-ts/src/gameplay/collision/collision-helpers.ts`
+- `apps/client-ts/src/ui/build-menu/GhostPlacement.ts`
 - `apps/client-ts/src/input/mouse-input.ts`
+- `apps/client-ts/src/render/layers/GroundLayer.ts`
+- `apps/client-ts/src/render/layers/TileLayer.ts`
+- `apps/client-ts/src/render/panel/panel-visuals.ts`
+- `apps/client-ts/src/render/scene.ts`
+- `apps/client-ts/src/world/map-loader.ts`
+- `apps/client-ts/test/world-viewport.test.ts`
 - `apps/client-ts/test/mouse-input.test.ts`
+- `apps/client-ts/test/panel-visuals.test.ts`
+- `apps/client-ts/test/ghost-placement.test.ts`
+- `apps/client-ts/test/item-bullet-intents.test.ts`
+- `apps/client-ts/test/player-movement.test.ts`
+- `apps/client-ts/test/map-loader.test.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/typescript-gap-analysis.md`
 - `docs/typescript-gap-mapping.md`
 - `docs/rewrite-progress.md`
 
 ## Validation Results
-- `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24, mouse cursor/input parity slice)
-- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, `81/81`)
+- `npm run lint`: pass (2026-02-24)
+- `npm run typecheck`: pass (2026-02-24)
+- `npm run test`: pass (2026-02-24, `163/163`)
+- `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24, camera/terrain/input/build parity slice)
+- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, `85/85`)
+- `npm run rewrite:check:strict`: **fail** (2026-02-24) at `rewrite:complexity:strict`; blocker is pre-existing strict complexity threshold breaches in existing files (`apps/client-ts/src/render/scene.ts` complexity 26, `apps/client-ts/src/ui/options/OptionsModal.ts` complexity 24, `apps/client-ts/src/render/effects/EffectsRenderer.ts` complexity 20).
