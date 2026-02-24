@@ -80,13 +80,14 @@ export const createChatManager = (
     panel.style.position = "fixed";
     panel.style.left = "12px";
     panel.style.bottom = "12px";
-    panel.style.width = "360px";
-    panel.style.padding = "8px";
-    panel.style.background = "rgba(4, 8, 11, 0.66)";
-    panel.style.border = "1px solid rgba(155, 223, 177, 0.6)";
-    panel.style.color = "#adf4bf";
+    panel.style.width = "380px";
+    panel.style.padding = "10px";
+    panel.style.background = "rgba(16, 26, 20, 0.76)";
+    panel.style.border = "1px solid rgba(145, 198, 166, 0.8)";
+    panel.style.color = "#d7f3d3";
     panel.style.font = "12px/1.4 monospace";
     panel.style.zIndex = "60";
+    panel.style.boxShadow = "0 8px 22px rgba(0, 0, 0, 0.35)";
 
     const output = document.createElement("pre");
     output.style.margin = "0 0 8px 0";
@@ -96,9 +97,9 @@ export const createChatManager = (
     input.placeholder = "team chat (Enter), /g for global";
     input.style.width = "100%";
     input.style.boxSizing = "border-box";
-    input.style.background = "#0a1318";
-    input.style.border = "1px solid rgba(155, 223, 177, 0.4)";
-    input.style.color = "#ccffd8";
+    input.style.background = "#121f19";
+    input.style.border = "1px solid rgba(145, 198, 166, 0.55)";
+    input.style.color = "#e2f8de";
     input.style.padding = "6px";
 
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -122,7 +123,7 @@ export const createChatManager = (
 
     return {
         render: () => {
-            panel.style.display = state.ui.showOptionsModal ? "none" : "block";
+            panel.style.display = state.ui.showOptionsModal || state.ui.showIntroModal ? "none" : "block";
             panel.style.opacity = String(state.ui.overlaysOpacity);
             const text = buildChatLines(state).join("\n");
             const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;

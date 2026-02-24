@@ -13,6 +13,7 @@ test("resolveGhostPlacement returns null when placement mode is inactive", () =>
 
 test("resolveGhostPlacement computes pointer tile and selected build type", () => {
     const state = createClientState();
+    state.ui.showBuildMenu = true;
     state.controls.ctrl = true;
     state.controls.build = true;
     state.pointer.inside = true;

@@ -132,6 +132,22 @@ export type ClientState = {
             itemType: number;
             amount: number;
         } | null;
+        effects: {
+            explosions: Array<{
+                id: string;
+                x: number;
+                y: number;
+                createdAt: number;
+                variant: "small" | "large";
+            }>;
+            floatingPoints: Array<{
+                id: string;
+                x: number;
+                y: number;
+                amount: number;
+                createdAt: number;
+            }>;
+        };
     };
     controls: {
         moveForward: boolean;
@@ -169,6 +185,7 @@ export type ClientState = {
         audioEnabled: boolean;
         showIdentityPanel: boolean;
         showBotDebug: boolean;
+        panelView: "status" | "staff" | "city" | "points";
     };
 };
 
@@ -197,16 +214,17 @@ const createUiDefaults = (): ClientState["ui"] => ({
     showHelpModal: false,
     showMapModal: false,
     showOptionsModal: false,
-    showBuildMenu: true,
+    showBuildMenu: false,
     showIntroModal: true,
     showTutorial: false,
     selectedBuildType: 109,
     selectedInventoryItemType: null,
     bombArmed: false,
-    overlaysOpacity: 0.66,
+    overlaysOpacity: 0.8,
     audioEnabled: true,
     showIdentityPanel: false,
-    showBotDebug: false
+    showBotDebug: false,
+    panelView: "status"
 });
 export const createClientState = (): ClientState => {
     return {
@@ -246,7 +264,11 @@ export const createClientState = (): ClientState => {
             lastRejectedReason: null,
             lastBuildDeniedReason: null,
             lastDemolishDeniedReason: null,
-            lastIconPickupConfirmed: null
+            lastIconPickupConfirmed: null,
+            effects: {
+                explosions: [],
+                floatingPoints: []
+            }
         },
         controls: {
             moveForward: false,

@@ -32,6 +32,53 @@ const resolveMaxHealth = (state: ClientState, playerId: string): number => {
     return state.remotePlayers.get(playerId)?.maxHealth ?? 100;
 };
 
+const pushExplosion = (
+    state: ClientState,
+    x: number,
+    y: number,
+    variant: "small" | "large"
+): void => {
+    state.events.effects.explosions.push({
+        id: `${Date.now()}:${Math.random()}`,
+        x,
+        y,
+        createdAt: Date.now(),
+        variant
+    });
+    if (state.events.effects.explosions.length > 24) {
+        state.events.effects.explosions.shift();
+    }
+};
+
+const pushFloatingPoints = (
+    state: ClientState,
+    x: number,
+    y: number,
+    amount: number
+): void => {
+    state.events.effects.floatingPoints.push({
+        id: `${Date.now()}:${Math.random()}`,
+        x,
+        y,
+        amount,
+        createdAt: Date.now()
+    });
+    if (state.events.effects.floatingPoints.length > 24) {
+        state.events.effects.floatingPoints.shift();
+    }
+};
+
+const resolvePlayerPosition = (state: ClientState, playerId: string): { x: number; y: number } | null => {
+    if (playerId === state.local.id) {
+        return { x: state.local.x, y: state.local.y };
+    }
+    const remote = state.remotePlayers.get(playerId);
+    if (!remote) {
+        return null;
+    }
+    return { x: remote.x, y: remote.y };
+};
+
 const handlers: {
     [K in keyof KnownEventPayloadByType]?: EventHandler<K>;
 } = {
@@ -108,6 +155,13 @@ const handlers: {
     },
     "player.dead": (state, payload) => {
         setHealth(state, payload.id, 0, resolveMaxHealth(state, payload.id));
+        const position = resolvePlayerPosition(state, payload.id);
+        if (position) {
+            pushExplosion(state, position.x, position.y, "small");
+            if (payload.by && payload.by === state.local.id) {
+                pushFloatingPoints(state, position.x, position.y, 25);
+            }
+        }
     },
     "player.removed": (state, payload) => {
         if (payload.id === state.local.id) {
@@ -128,6 +182,22 @@ const handlers: {
         });
     },
     "bullet.resolved": (state, payload) => {
+        if (payload.reason === "hit_player" && payload.hitPlayerId) {
+            const position = resolvePlayerPosition(state, payload.hitPlayerId);
+            if (position) {
+                pushExplosion(state, position.x, position.y, "small");
+            }
+        } else if (payload.reason === "hit_building" && payload.hitBuildingId) {
+            const building = state.buildings.get(payload.hitBuildingId);
+            if (building) {
+                pushExplosion(state, (building.tileX * 48) + 24, (building.tileY * 48) + 24, "small");
+            }
+        } else if (payload.reason === "hit_hazard" && payload.hitHazardId) {
+            const hazard = state.hazards.get(payload.hitHazardId);
+            if (hazard) {
+                pushExplosion(state, hazard.x, hazard.y, "small");
+            }
+        }
         state.bullets.delete(payload.id);
     },
     "chat.history": (state, payload) => {
@@ -203,6 +273,7 @@ const handlers: {
     },
     "city.orbed": (state, payload) => {
         state.events.lastOrbedCityId = payload.targetCityId;
+        pushExplosion(state, state.local.x, state.local.y, "large");
     },
     "score.promotion": (state, payload) => {
         state.events.promotions.push(payload);

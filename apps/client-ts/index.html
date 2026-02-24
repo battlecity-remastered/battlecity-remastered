@@ -2,8 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BattleCity TS Rewrite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BattleCity Remastered</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="32x32" />
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        body {
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at top, rgba(58, 82, 155, 0.35), transparent 55%),
+                radial-gradient(circle at bottom, rgba(16, 23, 58, 0.62), transparent 60%),
+                linear-gradient(135deg, #121a34 0%, #1a2745 52%, #243b5d 100%);
+            color: #f0f3ff;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #app canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div id="app"></div>

@@ -18,7 +18,7 @@ test("buildLobbyLines reflects assignment/deny/release state", () => {
     ];
 
     const lines = buildLobbyLines(state);
-    assert.equal(lines[0], "Lobby city 2 (p1)");
+    assert.equal(lines[0], "City 2 lobby  p1");
     assert.equal(lines[1], "Denied: lobby_full");
     assert.equal(lines[2], "Released: p4");
     assert.equal(lines[3], "C2: mayor p1 recruits 2");

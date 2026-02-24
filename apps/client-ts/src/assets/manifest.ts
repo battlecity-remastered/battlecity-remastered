@@ -7,14 +7,33 @@ export type AssetManifest = {
 export const assetManifest: AssetManifest = {
     mapData: "/assets/map.dat",
     spriteSheets: [
-        "/assets/tankTexture.png",
-        "/assets/imageItems.png",
-        "/assets/buildings.png"
+        "/assets/imgTanks.png",
+        "/assets/imgBuildings.png",
+        "/assets/imgItems.png",
+        "/assets/imgbullets.png",
+        "/assets/imgGround.png",
+        "/assets/imgRocks.png",
+        "/assets/imgLava.png",
+        "/assets/imgTurretBase.png",
+        "/assets/imgTurretHead.png",
+        "/assets/imgMuzzleFlash.png",
+        "/assets/imgSExplosion.png",
+        "/assets/imgLExplosion.png",
+        "/assets/imgSmoke.png",
+        "/assets/imgRadarColors.png",
+        "/assets/imgMiniMapColors.png",
+        "/assets/imgHealth.png",
+        "/assets/imgBuildIcons.png",
+        "/assets/imgPopulation.png"
     ],
     audio: [
-        "/assets/music-loop.mp3",
-        "/assets/sfx-laser.mp3",
-        "/assets/sfx-orb.mp3"
+        "/assets/wav/laser.wav",
+        "/assets/wav/fire.wav",
+        "/assets/wav/explode.wav",
+        "/assets/wav/engine.wav",
+        "/assets/cloak.wav",
+        "/assets/flare.wav",
+        "/assets/music/bc1.ogg"
     ]
 };
 

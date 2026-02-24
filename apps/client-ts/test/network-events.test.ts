@@ -159,6 +159,7 @@ test("economy/research/factory/chat/orb events update client stores", () => {
     assert.equal(state.chat.history.length, 2);
     assert.equal(state.chat.rateLimitedUntil, 99999);
     assert.equal(state.events.lastOrbedCityId, 2);
+    assert.equal(state.events.effects.explosions.length > 0, true);
     assert.equal(state.events.promotions[0]?.rank, "captain");
     assert.equal(state.defenses.size, 0);
     assert.equal(state.buildings.size, 0);
@@ -237,6 +238,30 @@ test("bullet lifecycle and icon pickup confirmation apply to local state", () =>
     }));
 
     assert.equal(state.bullets.size, 0);
+});
+
+test("combat events enqueue visual effects metadata", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.x = 400;
+    state.local.y = 500;
+    state.remotePlayers.set("enemy_1", {
+        id: "enemy_1",
+        city: 2,
+        direction: 0,
+        x: 640,
+        y: 672,
+        health: 100,
+        maxHealth: 100
+    });
+
+    applyServerEvent(state, makeKnownEnvelope("player.dead", 1, {
+        id: "enemy_1",
+        by: "local"
+    }));
+
+    assert.equal(state.events.effects.explosions.length > 0, true);
+    assert.equal(state.events.effects.floatingPoints.length > 0, true);
 });
 
 test("population.update mutates known buildings and respects removed flag", () => {

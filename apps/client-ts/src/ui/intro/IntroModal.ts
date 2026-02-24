@@ -5,9 +5,11 @@ export const buildIntroLines = (state: ClientState): string[] => {
         "Battle City Remastered",
         "",
         `Player: ${state.local.id ?? "connecting..."}`,
+        "Objective: defend your city and destroy rival orbs",
         "Enter: Start",
         "T: Toggle tutorial",
-        "F1/F2/F3: Help/Map/Options"
+        "F1/F2/F3: Help/Map/Options",
+        "F4: Build menu"
     ];
 };
 
@@ -45,14 +47,15 @@ export const createIntroModal = (
     panel.style.left = "50%";
     panel.style.top = "50%";
     panel.style.transform = "translate(-50%, -50%)";
-    panel.style.padding = "16px";
+    panel.style.padding = "18px 20px";
     panel.style.margin = "0";
-    panel.style.background = "rgba(9, 12, 17, 0.95)";
-    panel.style.border = "1px solid rgba(173, 211, 255, 0.7)";
-    panel.style.color = "#d9ecff";
+    panel.style.background = "rgba(17, 24, 21, 0.92)";
+    panel.style.border = "1px solid rgba(174, 206, 151, 0.86)";
+    panel.style.color = "#ecf7db";
     panel.style.font = "14px/1.5 monospace";
     panel.style.zIndex = "130";
     panel.style.pointerEvents = "none";
+    panel.style.boxShadow = "0 16px 30px rgba(0, 0, 0, 0.4)";
     root.appendChild(panel);
 
     return {

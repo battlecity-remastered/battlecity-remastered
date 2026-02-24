@@ -4,7 +4,7 @@ import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 const MAX_ASSIGNMENTS = 8;
 
 export const buildLobbyLines = (state: ClientState): string[] => {
-    const header = `Lobby city ${state.local.city} (${state.local.id ?? "pending"})`;
+    const header = `City ${state.local.city} lobby  ${state.local.id ?? "pending"}`;
     const denied = state.lobby.deniedReason ? `Denied: ${state.lobby.deniedReason}` : "Denied: -";
     const released = state.lobby.lastReleasedPlayerId
         ? `Released: ${state.lobby.lastReleasedPlayerId}`
@@ -42,12 +42,13 @@ export const createLobbyManager = (
     panel.style.position = "fixed";
     panel.style.top = "12px";
     panel.style.right = "12px";
-    panel.style.padding = "10px";
+    panel.style.padding = "10px 12px";
     panel.style.margin = "0";
-    panel.style.background = "rgba(0, 0, 0, 0.55)";
-    panel.style.border = "1px solid rgba(144, 188, 255, 0.6)";
-    panel.style.color = "#9fd0ff";
+    panel.style.background = "rgba(18, 29, 26, 0.74)";
+    panel.style.border = "1px solid rgba(140, 189, 166, 0.82)";
+    panel.style.color = "#d0ecd4";
     panel.style.font = "12px/1.4 monospace";
+    panel.style.boxShadow = "0 8px 22px rgba(0, 0, 0, 0.35)";
     panel.style.pointerEvents = "none";
     panel.style.zIndex = "50";
 
@@ -56,7 +57,7 @@ export const createLobbyManager = (
 
     return {
         render: () => {
-            panel.style.display = state.ui.showOptionsModal ? "none" : "block";
+            panel.style.display = state.ui.showOptionsModal || state.ui.showIntroModal ? "none" : "block";
             panel.style.opacity = String(state.ui.overlaysOpacity);
             const text = buildLobbyLines(state).join("\n");
             const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;

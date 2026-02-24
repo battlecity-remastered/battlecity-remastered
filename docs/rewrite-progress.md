@@ -41,12 +41,23 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/input/mouse-input.ts`
-- `apps/client-ts/src/ui/build-menu/BuildMenu.ts`
-- `apps/client-ts/src/render/hud-lines.ts`
-- `apps/client-ts/test/mouse-input.test.ts`
-- `apps/client-ts/test/build-menu.test.ts`
-- `apps/client-ts/test/hud-lines.test.ts`
+- `apps/client-ts/index.html`
+- `apps/client-ts/src/app/network-events.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/assets/manifest.ts`
+- `apps/client-ts/src/render/effects/EffectsRenderer.ts`
+- `apps/client-ts/src/render/items/ItemRenderer.ts`
+- `apps/client-ts/src/render/labels/NameLabelRenderer.ts`
+- `apps/client-ts/src/render/layers/ChangingLayer.ts`
+- `apps/client-ts/src/render/layers/GroundLayer.ts`
+- `apps/client-ts/src/render/layers/TileLayer.ts`
+- `apps/client-ts/src/ui/chat/ChatManager.ts`
+- `apps/client-ts/src/ui/intro/IntroModal.ts`
+- `apps/client-ts/src/ui/lobby/LobbyManager.ts`
+- `apps/client-ts/test/ghost-placement.test.ts`
+- `apps/client-ts/test/lobby-manager.test.ts`
+- `apps/client-ts/test/network-events.test.ts`
+- `apps/client-ts/public/assets/cities/7/demo.city`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/rewrite-progress.md`
 

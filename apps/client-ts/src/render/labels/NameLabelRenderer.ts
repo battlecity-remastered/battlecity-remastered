@@ -1,6 +1,8 @@
-import { Text, type Container, type Graphics } from "pixi.js";
+import { Graphics, Sprite, Text, type Container } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { reconcileEntityCache } from "../entity-cache.js";
+
+type RenderEntity = Graphics | Sprite;
 
 const resolveRank = (state: ClientState): string => {
     return state.scoreProfile.rank ?? "Private";
@@ -32,8 +34,8 @@ const createLabel = (): Text => {
 export const renderNameLabels = (
     state: ClientState,
     layer: Container,
-    localTank: Graphics,
-    remoteTanks: Map<string, Graphics>,
+    localTank: RenderEntity,
+    remoteTanks: Map<string, RenderEntity>,
     cache: Map<string, Text>
 ): void => {
     const desiredIds = ["local", ...state.remotePlayers.keys()];
