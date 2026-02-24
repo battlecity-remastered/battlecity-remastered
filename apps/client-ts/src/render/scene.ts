@@ -653,7 +653,8 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.textures.population,
         layers.textures.research,
         layers.textures.researchComplete,
-        layers.textures.smoke
+        layers.textures.smoke,
+        layers.textures.blackNumbers
     );
     renderGhostPlacement(state, layers.ghostPlacementSprite);
     renderNameLabels(state, layers.labelLayer, layers.localTank, layers.remoteTanks, layers.labels);
