@@ -26,8 +26,10 @@ test("applyOptionsAction toggles HUD and clamps opacity range", () => {
     assert.equal(state.ui.optionsCityImportCity, 0);
     assert.equal(applyOptionsAction(state, "v"), true);
     assert.equal(state.ui.optionsCityImportMode, "preview");
+    assert.equal(state.ui.optionsCityImportStatus, "Previewing slot C0");
     assert.equal(applyOptionsAction(state, "y"), true);
     assert.equal(state.ui.optionsCityImportMode, "apply");
+    assert.equal(state.ui.optionsCityImportStatus, "Applying import for C0...");
 
     state.ui.overlaysOpacity = 0.25;
     assert.equal(applyOptionsAction(state, "["), true);
@@ -49,6 +51,7 @@ test("buildOptionsLines reflects current options state", () => {
     state.ui.optionsPerformanceMode = "quality";
     state.ui.optionsCityImportCity = 3;
     state.ui.optionsCityImportMode = "preview";
+    state.ui.optionsCityImportStatus = "Imported C3: 12 buildings";
     state.ui.overlaysOpacity = 0.7;
     const lines = buildOptionsLines(state);
     assert.equal(lines[1], "HUD: off (press H)");
@@ -60,5 +63,6 @@ test("buildOptionsLines reflects current options state", () => {
     assert.equal(lines[7], "Performance preset: quality (press K)");
     assert.equal(lines[8], "City import slot: C3 (press , or .)");
     assert.equal(lines[9], "City import mode: preview (press V/Y)");
-    assert.equal(lines[10], "Overlay opacity: 0.70 (press [ or ])");
+    assert.equal(lines[10], "City import status: Imported C3: 12 buildings");
+    assert.equal(lines[11], "Overlay opacity: 0.70 (press [ or ])");
 });

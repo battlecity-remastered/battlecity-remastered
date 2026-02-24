@@ -1,5 +1,6 @@
 import type { ClientState } from "../../app/state.js";
 import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
+import { importCityLayoutFromAsset } from "../../world/city-import.js";
 
 export const applyOptionsAction = (
     state: ClientState,
@@ -41,10 +42,16 @@ export const applyOptionsAction = (
     }
     if (normalized === "v") {
         state.ui.optionsCityImportMode = state.ui.optionsCityImportMode === "off" ? "preview" : "off";
+        if (state.ui.optionsCityImportMode === "preview") {
+            state.ui.optionsCityImportStatus = `Previewing slot C${state.ui.optionsCityImportCity}`;
+        }
         return true;
     }
     if (normalized === "y") {
         state.ui.optionsCityImportMode = state.ui.optionsCityImportMode === "apply" ? "preview" : "apply";
+        if (state.ui.optionsCityImportMode === "apply") {
+            state.ui.optionsCityImportStatus = `Applying import for C${state.ui.optionsCityImportCity}...`;
+        }
         return true;
     }
     if (normalized === "k") {
@@ -67,6 +74,9 @@ export const applyOptionsAction = (
 };
 
 export const buildOptionsLines = (state: ClientState): string[] => {
+    const importStatus = state.ui.optionsCityImportApplying
+        ? "applying..."
+        : (state.ui.optionsCityImportStatus ?? "idle");
     return [
         "Options",
         `HUD: ${state.ui.showHud ? "on" : "off"} (press H)`,
@@ -78,6 +88,7 @@ export const buildOptionsLines = (state: ClientState): string[] => {
         `Performance preset: ${state.ui.optionsPerformanceMode} (press K)`,
         `City import slot: C${state.ui.optionsCityImportCity} (press , or .)`,
         `City import mode: ${state.ui.optionsCityImportMode} (press V/Y)`,
+        `City import status: ${importStatus}`,
         `Overlay opacity: ${state.ui.overlaysOpacity.toFixed(2)} (press [ or ])`,
         "Close: F3"
     ];
@@ -120,6 +131,17 @@ export const createOptionsModal = (
         render: () => {
             panel.style.display = state.ui.showOptionsModal ? "block" : "none";
             if (state.ui.showOptionsModal) {
+                if (state.ui.optionsCityImportMode === "apply" && !state.ui.optionsCityImportApplying) {
+                    state.ui.optionsCityImportApplying = true;
+                    void importCityLayoutFromAsset(state, state.ui.optionsCityImportCity)
+                        .then((status) => {
+                            state.ui.optionsCityImportStatus = status;
+                            state.ui.optionsCityImportMode = "preview";
+                        })
+                        .finally(() => {
+                            state.ui.optionsCityImportApplying = false;
+                        });
+                }
                 const text = buildOptionsLines(state).join("\n");
                 const signature = `${panel.style.display}|${text}`;
                 if (dirty.shouldRender("options-modal", signature)) {

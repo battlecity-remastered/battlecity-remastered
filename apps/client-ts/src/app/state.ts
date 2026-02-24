@@ -190,6 +190,8 @@ export type ClientState = {
         lobbyCityFilter: number;
         optionsCityImportCity: number;
         optionsCityImportMode: "off" | "preview" | "apply";
+        optionsCityImportApplying: boolean;
+        optionsCityImportStatus: string | null;
         optionsPerformanceMode: "balanced" | "quality" | "performance";
     };
 };
@@ -234,6 +236,8 @@ const createUiDefaults = (): ClientState["ui"] => ({
     lobbyCityFilter: -1,
     optionsCityImportCity: 0,
     optionsCityImportMode: "off",
+    optionsCityImportApplying: false,
+    optionsCityImportStatus: null,
     optionsPerformanceMode: "balanced"
 });
 export const createClientState = (): ClientState => {

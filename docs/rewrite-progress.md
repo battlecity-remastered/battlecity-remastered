@@ -41,12 +41,14 @@
 | S5-12 | done | CI parity gates include lint/typecheck/test/strict |
 
 ## Exact Files Changed In This Delivery
-- `apps/client-ts/src/main.ts`
-- `apps/client-ts/src/ui/notifications/NotificationManager.ts`
-- `apps/client-ts/test/notification-manager.test.ts`
+- `apps/client-ts/src/app/state.ts`
+- `apps/client-ts/src/ui/options/OptionsModal.ts`
+- `apps/client-ts/src/world/city-import.ts`
+- `apps/client-ts/test/options-modal.test.ts`
+- `apps/client-ts/test/city-import.test.ts`
 - `docs/main-branch-parity-gap-audit.md`
 - `docs/rewrite-progress.md`
 
 ## Validation Results
 - `npm run typecheck --workspace @battlecity/client-ts`: pass (2026-02-24)
-- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, 69/69)
+- `npm run test --workspace @battlecity/client-ts`: pass (2026-02-24, 71/71)
