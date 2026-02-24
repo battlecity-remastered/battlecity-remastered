@@ -5,7 +5,7 @@ Last updated: 2026-02-24
 ## Phase Progress
 - [x] Phase 0 - Baseline + harness
 - [x] Phase 1 - Shared constants + item IDs
-- [ ] Phase 2 - Asset loading parity
+- [x] Phase 2 - Asset loading parity
 - [ ] Phase 3 - Map decode + blocking parity
 - [ ] Phase 4 - Ground + terrain tile parity
 - [ ] Phase 5 - Building base + overlays parity
@@ -22,9 +22,9 @@ Last updated: 2026-02-24
 - [x] Panel/radar constants imported from one parity constants module.
 
 ## B) Assets
-- [ ] `LegacyTextureRegistry` loads all required parity textures.
-- [ ] `imgMiniMapColors` available for radar dead marker.
-- [ ] `imgTurretHead` available for defense heads.
+- [x] `LegacyTextureRegistry` loads all required parity textures.
+- [x] `imgMiniMapColors` available for radar dead marker.
+- [x] `imgTurretHead` available for defense heads.
 - [ ] `imgInventorySelection` used by panel inventory UI.
 - [ ] `imgMoneyBox` used in panel finance block.
 - [ ] `imgBlackNumbers` used for factory item digits.

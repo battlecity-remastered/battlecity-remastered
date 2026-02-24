@@ -1,4 +1,5 @@
 import { Assets, Rectangle, Texture } from "pixi.js";
+import { LEGACY_TEXTURE_PATHS, type LegacyTextureKey } from "./parity/texture-paths.js";
 
 export type LegacyTextures = {
     tanks: Texture | null;
@@ -6,6 +7,7 @@ export type LegacyTextures = {
     items: Texture | null;
     bullets: Texture | null;
     turretBase: Texture | null;
+    turretHead: Texture | null;
     ground: Texture | null;
     rocks: Texture | null;
     lava: Texture | null;
@@ -13,14 +15,22 @@ export type LegacyTextures = {
     interfaceTop: Texture | null;
     interfaceBottom: Texture | null;
     radarColors: Texture | null;
+    miniMapColors: Texture | null;
+    arrows: Texture | null;
+    arrowsRed: Texture | null;
     smallExplosion: Texture | null;
+    largeExplosion: Texture | null;
     population: Texture | null;
     research: Texture | null;
     researchComplete: Texture | null;
     smoke: Texture | null;
     health: Texture | null;
+    moneyBox: Texture | null;
     moneyUp: Texture | null;
     moneyDown: Texture | null;
+    blackNumbers: Texture | null;
+    inventorySelection: Texture | null;
+    buildIcons: Texture | null;
     buttonStaff: Texture | null;
 };
 
@@ -32,57 +42,30 @@ const safeLoadTexture = async (path: string): Promise<Texture | null> => {
     try {
         const loaded = await Assets.load(path);
         return asTexture(loaded);
-    } catch {
-        return null;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/404|not found|enoent/i.test(message)) {
+            return null;
+        }
+        throw error;
     }
 };
 
+const loadTextureEntries = async (): Promise<Array<[LegacyTextureKey, Texture | null]>> => {
+    const loaded = await Promise.all(
+        Object.entries(LEGACY_TEXTURE_PATHS).map(async ([key, path]) => {
+            const texture = await safeLoadTexture(path);
+            return [key, texture] as [LegacyTextureKey, Texture | null];
+        })
+    );
+    return loaded;
+};
+
 export const loadLegacyTextures = async (): Promise<LegacyTextures> => {
-    const [tanks, buildings, items, bullets, turretBase, ground, rocks, lava, muzzleFlash, interfaceTop, interfaceBottom, radarColors, smallExplosion, population, research, researchComplete, smoke, health, moneyUp, moneyDown, buttonStaff] = await Promise.all([
-        safeLoadTexture("/assets/imgTanks.png"),
-        safeLoadTexture("/assets/imgBuildings.png"),
-        safeLoadTexture("/assets/imgItems.png"),
-        safeLoadTexture("/assets/imgbullets.png"),
-        safeLoadTexture("/assets/imgTurretBase.png"),
-        safeLoadTexture("/assets/imgGround.png"),
-        safeLoadTexture("/assets/imgRocks.png"),
-        safeLoadTexture("/assets/imgLava.png"),
-        safeLoadTexture("/assets/imgMuzzleFlash.png"),
-        safeLoadTexture("/assets/imgInterface.png"),
-        safeLoadTexture("/assets/imgInterfaceBottom.png"),
-        safeLoadTexture("/assets/imgRadarColors.png"),
-        safeLoadTexture("/assets/imgSExplosion.png"),
-        safeLoadTexture("/assets/imgPopulation.png"),
-        safeLoadTexture("/assets/imgResearch.png"),
-        safeLoadTexture("/assets/imgResearchComplete.png"),
-        safeLoadTexture("/assets/imgSmoke.png"),
-        safeLoadTexture("/assets/imgHealth.png"),
-        safeLoadTexture("/assets/imgMoneyUp.png"),
-        safeLoadTexture("/assets/imgMoneyDown.png"),
-        safeLoadTexture("/assets/imgBtnStaff.png")
-    ]);
+    const entries = await loadTextureEntries();
+    const textures = Object.fromEntries(entries) as Record<LegacyTextureKey, Texture | null>;
     return {
-        tanks,
-        buildings,
-        items,
-        bullets,
-        turretBase,
-        ground,
-        rocks,
-        lava,
-        muzzleFlash,
-        interfaceTop,
-        interfaceBottom,
-        radarColors,
-        smallExplosion,
-        population,
-        research,
-        researchComplete,
-        smoke,
-        health,
-        moneyUp,
-        moneyDown,
-        buttonStaff
+        ...textures
     };
 };
 
