@@ -32,6 +32,8 @@ type PointerPosition = {
     height: number;
 };
 
+const DEMOLISH_CURSOR = "url('/assets/imgDemolish.png') 0 0, auto";
+
 export type PanelAction =
     | "toggle_staff"
     | "toggle_city_info"
@@ -69,7 +71,7 @@ const panelActionFromButtonKey = (key: PanelButtonKey): PanelAction => {
 
 export const resolveCursorForState = (state: ClientState): string => {
     if (state.ui.buildDemolishMode || state.controls.demolish) {
-        return "not-allowed";
+        return DEMOLISH_CURSOR;
     }
     if (state.ui.buildGhostMode) {
         return "crosshair";

@@ -195,9 +195,57 @@ test("shift+use emits hazard.deploy.request for selected hazard inventory item",
     assert.deepEqual(dropIntent.payload, {
         cityId: 2,
         type: 3,
-        position: { x: 128, y: 128 },
+        position: { x: 144, y: 144 },
         armed: true
     });
+});
+
+test("shift+use hazard drop snaps to dominant player tile", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.local.x = 231;
+    state.local.y = 240;
+    state.controls.useItem = true;
+    state.controls.shift = true;
+    state.ui.selectedInventoryItemType = 3;
+    state.ui.bombArmed = true;
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    const dropIntent = plan.intents.find((intent) => intent.type === "hazard.deploy.request");
+    assert.ok(dropIntent);
+    assert.deepEqual(dropIntent.payload, {
+        cityId: 2,
+        type: 3,
+        position: { x: 240, y: 240 },
+        armed: true
+    });
+});
+
+test("shift+use hazard drop is skipped when dominant tile is blocked by building", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.local.x = 231;
+    state.local.y = 240;
+    state.controls.useItem = true;
+    state.controls.shift = true;
+    state.ui.selectedInventoryItemType = 3;
+    state.ui.bombArmed = true;
+    state.buildings.set("housing-1", {
+        id: "housing-1",
+        ownerId: "local",
+        cityId: 2,
+        type: 300,
+        tileX: 5,
+        tileY: 5,
+        health: 100,
+        maxHealth: 100,
+        population: 60
+    });
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    assert.equal(plan.intents.some((intent) => intent.type === "hazard.deploy.request"), false);
 });
 
 test("ctrl+b emits building.place.request using pointer tile instead of orb drop", () => {

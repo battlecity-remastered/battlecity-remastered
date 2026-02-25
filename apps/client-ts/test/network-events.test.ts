@@ -313,6 +313,32 @@ test("bullet.resolved hit_player does not enqueue tank impact explosion", () => 
     assert.equal(state.events.effects.explosions.length, 0);
 });
 
+test("building.demolished enqueues a large explosion centered on the structure footprint", () => {
+    const state = createClientState();
+    state.buildings.set("building_1", {
+        id: "building_1",
+        ownerId: "mayor_1",
+        cityId: 3,
+        type: 300,
+        tileX: 10,
+        tileY: 20,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    applyServerEvent(state, makeKnownEnvelope("building.demolished", 1, {
+        id: "building_1",
+        cityId: 3
+    }));
+
+    assert.equal(state.buildings.has("building_1"), false);
+    assert.equal(state.events.effects.explosions.length, 1);
+    assert.equal(state.events.effects.explosions[0]?.variant, "large");
+    assert.equal(state.events.effects.explosions[0]?.x, (10 * 48) + (48 * 1.5));
+    assert.equal(state.events.effects.explosions[0]?.y, (20 * 48) + (48 * 1.5));
+});
+
 test("combat events enqueue visual effects metadata", () => {
     const state = createClientState();
     state.local.id = "local";

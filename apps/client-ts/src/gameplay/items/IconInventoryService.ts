@@ -11,6 +11,10 @@ import {
     TILE
 } from "../../render/parity/constants.js";
 import { listCitySpawns } from "../../world/city-spawn.js";
+import {
+    resolveHazardDropPlacement,
+    resolvePlayerDominantTile
+} from "./drop-placement.js";
 
 type InventoryEntry = {
     itemType: number;
@@ -163,25 +167,29 @@ const dropSelectedIcon = (state: ClientState, send: EventSender): boolean => {
         return true;
     }
     if (DEFENSE_DROP_TYPES.has(selected)) {
-        const tileX = Math.floor((state.local.x + (TILE / 2)) / TILE);
-        const tileY = Math.floor((state.local.y + (TILE / 2)) / TILE);
+        const dominantTile = resolvePlayerDominantTile(state);
         send("defense.deploy.request", {
             cityId: state.local.city,
             type: selected,
-            tileX,
-            tileY,
+            tileX: dominantTile.tileX,
+            tileY: dominantTile.tileY,
             fromInventory: true
         });
         return true;
     }
 
-    // Legacy behavior: non-defense items are dropped on-map via hazard deploy.
+    // Legacy behavior: non-defense items are dropped on-map via hazard deploy,
+    // snapped to the player's dominant tile and blocked by local collision guards.
+    const placement = resolveHazardDropPlacement(state);
+    if (!placement) {
+        return false;
+    }
     send("hazard.deploy.request", {
         cityId: state.local.city,
         type: selected,
         position: {
-            x: state.local.x,
-            y: state.local.y
+            x: placement.x,
+            y: placement.y
         },
         armed: selected === ITEM_TYPE_BOMB ? state.ui.bombArmed : true
     });
@@ -211,12 +219,16 @@ const dropArmedBombShortcut = (state: ClientState, send: EventSender): boolean =
 
     state.ui.selectedInventoryItemType = ITEM_TYPE_BOMB;
     state.ui.bombArmed = true;
+    const placement = resolveHazardDropPlacement(state);
+    if (!placement) {
+        return false;
+    }
     send("hazard.deploy.request", {
         cityId: state.local.city,
         type: ITEM_TYPE_BOMB,
         position: {
-            x: state.local.x,
-            y: state.local.y
+            x: placement.x,
+            y: placement.y
         },
         armed: true
     });

@@ -35,6 +35,8 @@ const LEGACY_DFG_FREEZE_MS = 5000;
 const COMMAND_CENTER_BUILDING_TYPE = 0;
 const BUILDING_FOOTPRINT_TILES = 3;
 const PASSIVE_DROP_RADIUS = TILE / 2;
+const WORLD_TILE_MIN = 0;
+const WORLD_TILE_MAX = 512;
 const PASSIVE_DROP_TYPES = new Set([
     ITEM_TYPE_CLOAK,
     ITEM_TYPE_ROCKET,
@@ -53,6 +55,90 @@ const snapToTile = (value: number): number => {
         return 0;
     }
     return Math.floor(value / TILE) * TILE;
+};
+
+const isFactoryType = (type: number): boolean => {
+    return Math.floor(type / 100) === 1;
+};
+
+const isCommandCenter = (type: number): boolean => {
+    return type === COMMAND_CENTER_BUILDING_TYPE;
+};
+
+const isHospital = (type: number): boolean => {
+    const family = Math.floor(type / 100);
+    return type === 300 || type === 301 || (family === 2 && type >= 200 && type < 300);
+};
+
+const isPlacementAllowedOnBuilding = (
+    tileX: number,
+    tileY: number,
+    building: { type: number; tileX: number; tileY: number }
+): boolean => {
+    if (isFactoryType(building.type)) {
+        const pickupY = building.tileY + 2;
+        return tileY === pickupY && tileX >= building.tileX && tileX <= (building.tileX + 2);
+    }
+
+    if (isCommandCenter(building.type) || isHospital(building.type)) {
+        return tileY === (building.tileY + 2) && tileX >= building.tileX && tileX <= (building.tileX + 2);
+    }
+
+    return false;
+};
+
+const isOutOfBounds = (tileX: number, tileY: number): boolean => {
+    if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+        return true;
+    }
+    if (tileX < WORLD_TILE_MIN || tileY < WORLD_TILE_MIN || tileX > WORLD_TILE_MAX || tileY > WORLD_TILE_MAX) {
+        return true;
+    }
+    return false;
+};
+
+const hasBlockingBuilding = (state: RuntimeState, tileX: number, tileY: number): boolean => {
+    for (const building of state.buildings.values()) {
+        const inFootprint = tileX >= building.tileX
+            && tileX <= (building.tileX + 2)
+            && tileY >= building.tileY
+            && tileY <= (building.tileY + 2);
+        if (!inFootprint) {
+            continue;
+        }
+        if (!isPlacementAllowedOnBuilding(tileX, tileY, building)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const hasBlockingDefense = (state: RuntimeState, tileX: number, tileY: number): boolean => {
+    for (const defense of state.defenses.values()) {
+        if (defense.tileX === tileX && defense.tileY === tileY) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const hasBlockingHazard = (state: RuntimeState, tileX: number, tileY: number): boolean => {
+    for (const hazard of state.hazards.values()) {
+        const hazardTileX = Math.floor(hazard.x / TILE);
+        const hazardTileY = Math.floor(hazard.y / TILE);
+        if (hazardTileX === tileX && hazardTileY === tileY) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const isHazardPlacementBlocked = (state: RuntimeState, tileX: number, tileY: number): boolean => {
+    return isOutOfBounds(tileX, tileY)
+        || state.blockingTiles.has(`${tileX},${tileY}`)
+        || hasBlockingBuilding(state, tileX, tileY)
+        || hasBlockingDefense(state, tileX, tileY)
+        || hasBlockingHazard(state, tileX, tileY);
 };
 
 const intersectsHazardTile = (
@@ -445,6 +531,17 @@ export const deployHazard = (
     if (!Number.isFinite(type) || !isHazardType(type)) {
         return rejectResult("hazard_invalid");
     }
+    if (!Number.isFinite(payload.position.x) || !Number.isFinite(payload.position.y)) {
+        return rejectResult("hazard_invalid");
+    }
+
+    const snappedX = snapToTile(payload.position.x);
+    const snappedY = snapToTile(payload.position.y);
+    const tileX = Math.floor(snappedX / TILE);
+    const tileY = Math.floor(snappedY / TILE);
+    if (isHazardPlacementBlocked(state, tileX, tileY)) {
+        return rejectResult("hazard_invalid");
+    }
 
     const consumed = consumeInventoryItem(state, socketId, type);
     if (!consumed.ok) {
@@ -476,8 +573,8 @@ export const deployHazard = (
         ownerId: socketId,
         cityId,
         type,
-        x: snapToTile(payload.position.x),
-        y: snapToTile(payload.position.y),
+        x: snappedX,
+        y: snappedY,
         radius: Math.max(8, Math.floor(
             payload.radius
             ?? (isPassiveDrop

@@ -36,13 +36,44 @@ export type BulletStepResult =
 
 const TILE_SIZE = 48;
 const PLAYER_HIT_RADIUS = 24;
-const BUILDING_HIT_RADIUS = 28;
 const BULLET_SIZE = 4;
 const TERRAIN_SAMPLE_STEP_PX = 8;
 
 const sq = (value: number): number => value * value;
 const distanceSquared = (ax: number, ay: number, bx: number, by: number): number => {
     return sq(ax - bx) + sq(ay - by);
+};
+
+type Rect = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
+const intersectsRect = (left: Rect, right: Rect): boolean => {
+    if ((left.x + left.width) <= right.x) {
+        return false;
+    }
+    if ((right.x + right.width) <= left.x) {
+        return false;
+    }
+    if ((left.y + left.height) <= right.y) {
+        return false;
+    }
+    if ((right.y + right.height) <= left.y) {
+        return false;
+    }
+    return true;
+};
+
+const resolveBulletRect = (bullet: BulletState): Rect => {
+    return {
+        x: bullet.x,
+        y: bullet.y,
+        width: BULLET_SIZE,
+        height: BULLET_SIZE
+    };
 };
 
 const bulletDamage = (bulletType: number): number => {
@@ -52,13 +83,6 @@ const bulletDamage = (bulletType: number): number => {
         default:
             return 20;
     }
-};
-
-const buildingCenter = (building: CombatBuildingState): { x: number; y: number } => {
-    return {
-        x: (building.tileX * TILE_SIZE) + (TILE_SIZE / 2),
-        y: (building.tileY * TILE_SIZE) + (TILE_SIZE / 2)
-    };
 };
 
 const resolvePlayerHit = (
@@ -90,22 +114,28 @@ const resolveBuildingHit = (
     bullet: BulletState,
     buildings: Iterable<CombatBuildingState>
 ): BulletStepResult | undefined => {
-    const buildingRadiusSq = sq(BUILDING_HIT_RADIUS);
+    const bulletRect = resolveBulletRect(nextBullet);
     for (const building of buildings) {
-        if (building.cityId === bullet.city || building.health <= 0) {
+        if (building.health <= 0) {
             continue;
         }
-        const center = buildingCenter(building);
-        if (distanceSquared(nextBullet.x, nextBullet.y, center.x, center.y) <= buildingRadiusSq) {
-            const nextHealth = Math.max(0, building.health - bulletDamage(bullet.type));
-            return {
-                kind: "hit_building",
-                bulletId: bullet.id,
-                buildingId: building.id,
-                nextHealth,
-                isDemolished: nextHealth <= 0
-            };
+        const structureRect = {
+            x: building.tileX * TILE_SIZE,
+            y: building.tileY * TILE_SIZE,
+            width: TILE_SIZE,
+            height: TILE_SIZE
+        };
+        if (!intersectsRect(bulletRect, structureRect)) {
+            continue;
         }
+        const nextHealth = Math.max(0, building.health - bulletDamage(bullet.type));
+        return {
+            kind: "hit_building",
+            bulletId: bullet.id,
+            buildingId: building.id,
+            nextHealth,
+            isDemolished: nextHealth <= 0
+        };
     }
     return undefined;
 };
@@ -115,15 +145,23 @@ const resolveHazardHit = (
     bulletId: string,
     hazards: Iterable<CombatHazardState>
 ): BulletStepResult | undefined => {
+    const bulletRect = resolveBulletRect(nextBullet);
     for (const hazard of hazards) {
-        const radius = Math.max(16, hazard.radius * 0.5);
-        if (distanceSquared(nextBullet.x, nextBullet.y, hazard.x, hazard.y) <= sq(radius)) {
-            return {
-                kind: "hit_hazard",
-                bulletId,
-                hazardId: hazard.id
-            };
+        const size = Math.max(16, Number.isFinite(hazard.radius) ? hazard.radius : TILE_SIZE);
+        const hazardRect = {
+            x: hazard.x - (size / 2),
+            y: hazard.y - (size / 2),
+            width: size,
+            height: size
+        };
+        if (!intersectsRect(bulletRect, hazardRect)) {
+            continue;
         }
+        return {
+            kind: "hit_hazard",
+            bulletId,
+            hazardId: hazard.id
+        };
     }
     return undefined;
 };

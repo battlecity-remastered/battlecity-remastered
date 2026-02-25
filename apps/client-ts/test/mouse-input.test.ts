@@ -75,7 +75,7 @@ test("resolveCursorForState maps build/demolish/bomb modes", () => {
     state.ui.bombArmed = true;
     assert.equal(resolveCursorForState(state), "cell");
     state.ui.buildDemolishMode = true;
-    assert.equal(resolveCursorForState(state), "not-allowed");
+    assert.equal(resolveCursorForState(state), "url('/assets/imgDemolish.png') 0 0, auto");
 });
 
 test("resolvePanelAction maps right-side panel hotspots", () => {
@@ -246,7 +246,7 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
         clientX: 240,
         clientY: 220
     } as MouseEvent as Event);
-    assert.equal(surface.style.cursor, "not-allowed");
+    assert.equal(surface.style.cursor, "url('/assets/imgDemolish.png') 0 0, auto");
 
     unregister();
     assert.equal(surface.style.cursor, "default");

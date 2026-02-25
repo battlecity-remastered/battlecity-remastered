@@ -1683,6 +1683,31 @@ test("hazard deploy detonates and damages nearby players", () => {
     assert.ok(health.length >= 1);
 });
 
+test("hazard deploy rejects placement inside housing footprint", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("owner", makeEnvelope("building.place.request", 2, {
+        ownerId: "owner",
+        cityId: 1,
+        type: 300,
+        tileX: 6,
+        tileY: 6
+    }));
+
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_BOMB, 1);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 1,
+        type: ITEM_TYPE_BOMB,
+        position: { x: 6 * TILE_SIZE, y: 6 * TILE_SIZE },
+        armed: true
+    }));
+
+    assert.equal(runtime.getReadonlyState().hazards.size, 0);
+    assert.equal(runtime.getReadonlyState().playerInventory.get("owner")?.get(ITEM_TYPE_BOMB) ?? 0, 1);
+    assert.ok(rejected.some((entry) => entry.reason === "hazard_invalid"));
+    assert.equal(broadcast.some((event) => event.type === "hazard.spawn"), false);
+});
+
 test("mine hazards only trigger on enemy players", () => {
     const { runtime, broadcast } = makeHarness();
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
@@ -1796,7 +1821,7 @@ test("bomb detonation destroys nearby buildings and defenses but not command cen
         id: "target_defense",
         cityId: 2,
         type: 8,
-        tileX: 7,
+        tileX: 5,
         tileY: 7,
         health: 100,
         maxHealth: 100
@@ -1805,7 +1830,7 @@ test("bomb detonation destroys nearby buildings and defenses but not command cen
     runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
         cityId: 1,
         type: ITEM_TYPE_BOMB,
-        position: { x: 6 * TILE_SIZE, y: 6 * TILE_SIZE },
+        position: { x: 5 * TILE_SIZE, y: 6 * TILE_SIZE },
         armed: true,
         fuseMs: 100
     }));

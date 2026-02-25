@@ -14,6 +14,7 @@ import {
     ITEM_TYPE_ROCKET,
     TILE
 } from "../render/parity/constants.js";
+import { resolveHazardDropPlacement } from "../gameplay/items/drop-placement.js";
 
 const ACTION_COOLDOWN_MS = 800;
 const FACTORY_DROP_OFFSET_X = 56;
@@ -218,13 +219,20 @@ const appendInventoryDropIntent = (state: ClientState, nowMs: number, intents: I
     if (selectedItemType === null || !HAZARD_DROP_TYPES.has(selectedItemType)) {
         return;
     }
+    const placement = resolveHazardDropPlacement(state);
+    if (!placement) {
+        return;
+    }
     state.local.lastHazardAt = nowMs;
     intents.push({
         type: "hazard.deploy.request",
         payload: {
             cityId: state.local.city,
             type: selectedItemType,
-            position: { x: state.local.x, y: state.local.y },
+            position: {
+                x: placement.x,
+                y: placement.y
+            },
             armed: selectedItemType === ITEM_TYPE_BOMB ? state.ui.bombArmed : true
         }
     });

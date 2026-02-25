@@ -134,6 +134,107 @@ test("inventory hotkeys support D for dropping selected item", () => {
     assert.equal(state.inventory.get(ITEM_TYPE_MINE), 2);
 });
 
+test("inventory hazard drops snap to dominant player tile", () => {
+    const state = createClientState();
+    state.local.city = 6;
+    state.local.x = 231;
+    state.local.y = 240;
+    state.inventory.set(ITEM_TYPE_MINE, 1);
+    onInventoryUpdate(state);
+
+    const sent: Array<{ type: string; payload: unknown; }> = [];
+    const send: EventSender = (type, payload): void => {
+        sent.push({ type: String(type), payload });
+    };
+    const mockWindow = new MockWindow();
+    const previousWindow = globalThis.window;
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: mockWindow
+    });
+
+    let prevented = false;
+    const unregister = registerInventoryHotkeys(state, send);
+    mockWindow.emit("keydown", {
+        key: "d",
+        preventDefault: () => {
+            prevented = true;
+        }
+    } as KeyboardEvent as Event);
+
+    unregister();
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: previousWindow
+    });
+
+    assert.equal(prevented, true);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.type, "hazard.deploy.request");
+    assert.deepEqual(sent[0]?.payload, {
+        cityId: 6,
+        type: ITEM_TYPE_MINE,
+        position: {
+            x: 240,
+            y: 240
+        },
+        armed: true
+    });
+});
+
+test("inventory hotkeys block hazard drop on occupied building tile", () => {
+    const state = createClientState();
+    state.local.city = 6;
+    state.local.x = 231;
+    state.local.y = 240;
+    state.inventory.set(ITEM_TYPE_MINE, 1);
+    state.buildings.set("housing-1", {
+        id: "housing-1",
+        ownerId: "p1",
+        cityId: 6,
+        type: 300,
+        tileX: 5,
+        tileY: 5,
+        health: 100,
+        maxHealth: 100,
+        population: 80
+    });
+    onInventoryUpdate(state);
+
+    const sent: Array<{ type: string; payload: unknown; }> = [];
+    const send: EventSender = (type, payload): void => {
+        sent.push({ type: String(type), payload });
+    };
+    const mockWindow = new MockWindow();
+    const previousWindow = globalThis.window;
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: mockWindow
+    });
+
+    let prevented = false;
+    const unregister = registerInventoryHotkeys(state, send);
+    mockWindow.emit("keydown", {
+        key: "d",
+        preventDefault: () => {
+            prevented = true;
+        }
+    } as KeyboardEvent as Event);
+
+    unregister();
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: previousWindow
+    });
+
+    assert.equal(prevented, false);
+    assert.equal(sent.length, 0);
+});
+
 test("inventory hotkeys support D for deploying selected defense item from inventory", () => {
     const state = createClientState();
     state.local.city = 4;

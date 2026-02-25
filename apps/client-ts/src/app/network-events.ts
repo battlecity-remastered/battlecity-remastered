@@ -11,6 +11,9 @@ import { resolveCitySpawn } from "../world/city-spawn.js";
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
 
+const TILE_SIZE = 48;
+const BUILDING_CENTER_OFFSET = TILE_SIZE * 1.5;
+
 const setHealth = (state: ClientState, playerId: string, health: number, maxHealth: number): void => {
     if (playerId === state.local.id) {
         state.local.health = health;
@@ -166,6 +169,15 @@ const handlers: {
     },
     "building.demolished": (state, payload) => {
         state.events.lastDemolishDeniedReason = null;
+        const building = state.buildings.get(payload.id);
+        if (building) {
+            pushExplosion(
+                state,
+                (building.tileX * TILE_SIZE) + BUILDING_CENTER_OFFSET,
+                (building.tileY * TILE_SIZE) + BUILDING_CENTER_OFFSET,
+                "large"
+            );
+        }
         state.buildings.delete(payload.id);
     },
     "population.update": (state, payload) => {

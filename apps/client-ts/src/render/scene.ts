@@ -239,6 +239,7 @@ type SceneLayers = {
     tileSprite: Graphics;
     changingSprite: Graphics;
     effectsSprite: Graphics;
+    effectExplosionSprites: Map<string, Sprite>;
     botDebugSprite: Graphics;
     commandCenterLabelLayer: Container;
     commandCenterLabels: Map<string, Text>;
@@ -406,6 +407,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         tileSprite,
         changingSprite,
         effectsSprite,
+        effectExplosionSprites: new Map<string, Sprite>(),
         botDebugSprite,
         commandCenterLabelLayer,
         commandCenterLabels: new Map<string, Text>(),
@@ -1247,6 +1249,7 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.world,
         layers.world,
         layers.effectsSprite,
+        layers.effectExplosionSprites,
         layers.textures.muzzleFlash,
         layers.textures.smallExplosion,
         layers.textures.largeExplosion
