@@ -15,6 +15,18 @@ type CitySpawnEntry = {
     tileY?: number;
 };
 
+type DropCenter = {
+    x: number;
+    y: number;
+};
+
+type CommandCenterRect = {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+};
+
 const CITY_SPAWNS = citySpawnsJson as Record<string, CitySpawnEntry>;
 
 const resolveRank = (score: number): string => {
@@ -39,10 +51,10 @@ const hasCommandCenter = (state: RuntimeState, cityId: number): boolean => {
     return false;
 };
 
-const resolveTargetCityFromDropPosition = (
+const resolveDropCenter = (
     payload: KnownEventPayloadByType["orb.drop.request"],
     config: RuntimeConfig
-): number | null => {
+): DropCenter | null => {
     const position = payload.position;
     if (!position) {
         return null;
@@ -52,9 +64,60 @@ const resolveTargetCityFromDropPosition = (
     if (!Number.isFinite(rawX) || !Number.isFinite(rawY)) {
         return null;
     }
+    return {
+        x: rawX + (config.tileSize / 2),
+        y: rawY + (config.tileSize / 2)
+    };
+};
 
-    const centerX = rawX + (config.tileSize / 2);
-    const centerY = rawY + (config.tileSize / 2);
+const resolveSpawnTile = (value: number | undefined): number | null => {
+    const tile = Number(value);
+    return Number.isFinite(tile) ? Math.floor(tile) : null;
+};
+
+const resolveCommandCenterRect = (
+    spawn: CitySpawnEntry,
+    config: RuntimeConfig
+): CommandCenterRect | null => {
+    const tileX = resolveSpawnTile(spawn?.tileX);
+    const tileY = resolveSpawnTile(spawn?.tileY);
+    if (tileX === null || tileY === null) {
+        return null;
+    }
+    const left = tileX * config.tileSize;
+    const top = (tileY + COMMAND_CENTER_HEIGHT_TILES) * config.tileSize;
+    return {
+        left,
+        top,
+        right: left + (COMMAND_CENTER_WIDTH_TILES * config.tileSize),
+        bottom: top + config.tileSize
+    };
+};
+
+const isInsideRect = (point: DropCenter, rect: CommandCenterRect): boolean => {
+    return point.x >= rect.left
+        && point.x <= rect.right
+        && point.y >= rect.top
+        && point.y <= rect.bottom;
+};
+
+const distanceSqToRect = (point: DropCenter, rect: CommandCenterRect): number => {
+    const clampedX = Math.max(rect.left, Math.min(point.x, rect.right));
+    const clampedY = Math.max(rect.top, Math.min(point.y, rect.bottom));
+    const dx = point.x - clampedX;
+    const dy = point.y - clampedY;
+    return (dx * dx) + (dy * dy);
+};
+
+const resolveTargetCityFromDropPosition = (
+    payload: KnownEventPayloadByType["orb.drop.request"],
+    config: RuntimeConfig
+): number | null => {
+    const center = resolveDropCenter(payload, config);
+    if (!center) {
+        return null;
+    }
+
     let bestCityId: number | null = null;
     let bestDistanceSq = Number.POSITIVE_INFINITY;
 
@@ -66,27 +129,12 @@ const resolveTargetCityFromDropPosition = (
         if (cityId === payload.sourceCityId) {
             continue;
         }
-        const tileX = Number(spawn?.tileX);
-        const tileY = Number(spawn?.tileY);
-        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+        const rect = resolveCommandCenterRect(spawn, config);
+        if (!rect || !isInsideRect(center, rect)) {
             continue;
         }
 
-        const rectX = Math.floor(tileX) * config.tileSize;
-        const rectY = (Math.floor(tileY) + COMMAND_CENTER_HEIGHT_TILES) * config.tileSize;
-        const rectWidth = COMMAND_CENTER_WIDTH_TILES * config.tileSize;
-        const rectHeight = config.tileSize;
-        const rectRight = rectX + rectWidth;
-        const rectBottom = rectY + rectHeight;
-        if (centerX < rectX || centerX > rectRight || centerY < rectY || centerY > rectBottom) {
-            continue;
-        }
-
-        const clampedX = Math.max(rectX, Math.min(centerX, rectRight));
-        const clampedY = Math.max(rectY, Math.min(centerY, rectBottom));
-        const dx = centerX - clampedX;
-        const dy = centerY - clampedY;
-        const distanceSq = (dx * dx) + (dy * dy);
+        const distanceSq = distanceSqToRect(center, rect);
         if (distanceSq < bestDistanceSq) {
             bestDistanceSq = distanceSq;
             bestCityId = Math.floor(cityId);

@@ -2,12 +2,10 @@ import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
 import {
-    isCommandCenterType,
     isFactoryType,
     resolveFactoryDigits,
     resolvePopulationFrame,
     resolvePopulationOffset,
-    resolveResearchStripPlacement,
     resolveSmokeFrame,
     resolveSmokePlacement
 } from "./changing-layer-helpers.js";
@@ -69,8 +67,6 @@ export const renderChangingLayer = (
     layer: Container,
     sprite: Graphics,
     populationTexture: Texture | null = null,
-    researchTexture: Texture | null = null,
-    researchCompleteTexture: Texture | null = null,
     smokeTexture: Texture | null = null,
     blackNumbersTexture: Texture | null = null,
     itemTexture: Texture | null = null,
@@ -118,28 +114,6 @@ export const renderChangingLayer = (
             }
         }
 
-        if (isCommandCenterType(building.type)) {
-            const cityResearch = state.research.get(building.cityId);
-            const hasActiveResearch = Boolean(cityResearch?.active);
-            const completedCount = cityResearch?.completed.length ?? 0;
-            const researchFrame = hasActiveResearch
-                ? getFrameTexture(researchTexture, "research:active", 0, 5, 10, 134)
-                : completedCount > 0
-                    ? getFrameTexture(researchCompleteTexture, "research:complete", 0, 5, 10, 134)
-                    : null;
-            if (researchFrame) {
-                const placement = resolveResearchStripPlacement(building.tileX, building.tileY);
-                overlayDefs.push({
-                    key: `research-strip:${building.id}`,
-                    texture: researchFrame,
-                    x: placement.x,
-                    y: placement.y,
-                    width: placement.width,
-                    height: placement.height,
-                    alpha: 0.9
-                });
-            }
-        }
         if (isFactoryType(building.type) && smokeTexture) {
             const smokeFrame = resolveSmokeFrame(nowMs);
             const smoke = getFrameTexture(smokeTexture, `smoke:${smokeFrame}`, 0, smokeFrame * 60, 180, 60);

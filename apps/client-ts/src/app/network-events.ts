@@ -222,10 +222,7 @@ const handlers: {
     },
     "bullet.resolved": (state, payload) => {
         if (payload.reason === "hit_player" && payload.hitPlayerId) {
-            const position = resolvePlayerPosition(state, payload.hitPlayerId);
-            if (position) {
-                pushExplosion(state, position.x, position.y, "small");
-            }
+            // Legacy parity: player bullet hits do not spawn an impact overlay on the tank.
         } else if (payload.reason === "hit_building" && payload.hitBuildingId) {
             const building = state.buildings.get(payload.hitBuildingId);
             if (building) {

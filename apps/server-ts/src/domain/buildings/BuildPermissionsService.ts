@@ -87,40 +87,6 @@ export const resolveCityBuildStates = (
         states.set(building.type, HAS_BUILT);
     }
 
-    const queue: number[] = [];
-    const queued = new Set<number>();
-    for (const [type, buildState] of states.entries()) {
-        if (buildState !== HAS_BUILT) {
-            continue;
-        }
-        queue.push(type);
-        queued.add(type);
-    }
-
-    while (queue.length > 0) {
-        const parent = queue.shift();
-        if (parent === undefined) {
-            continue;
-        }
-        const children = CHILDREN_BY_PARENT.get(parent);
-        if (!children) {
-            continue;
-        }
-        for (const child of children) {
-            const current = states.get(child.type) ?? CANT_BUILD;
-            if (current === HAS_BUILT) {
-                if (!queued.has(child.type)) {
-                    queue.push(child.type);
-                    queued.add(child.type);
-                }
-                continue;
-            }
-            if (current === CANT_BUILD) {
-                states.set(child.type, CAN_BUILD);
-            }
-        }
-    }
-
     const research = state.research.get(cityId);
     if (research?.active) {
         applyResearchState(states, research.active.researchType, RESEARCH_PENDING);
@@ -134,4 +100,3 @@ export const resolveCityBuildStates = (
         state: states.get(entry.type) ?? CANT_BUILD
     }));
 };
-

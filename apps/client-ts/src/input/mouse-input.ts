@@ -109,6 +109,22 @@ export const resolvePanelInventoryItemType = (
     surfaceWidth: number,
     inventory?: ReadonlyMap<number, number>
 ): number | null => {
+    const panelPointer = resolvePanelPointer(pointerX, pointerY, surfaceWidth);
+    if (!panelPointer) {
+        return null;
+    }
+    const matchingSlots = collectInventorySlotMatches(panelPointer.panelX, panelPointer.pointerY);
+    if (matchingSlots.length === 0) {
+        return null;
+    }
+    return resolveInventorySlotSelection(matchingSlots, inventory);
+};
+
+const resolvePanelPointer = (
+    pointerX: number,
+    pointerY: number,
+    surfaceWidth: number
+): { panelX: number; pointerY: number; } | null => {
     if (!Number.isFinite(pointerX) || !Number.isFinite(pointerY) || !Number.isFinite(surfaceWidth)) {
         return null;
     }
@@ -116,25 +132,51 @@ export const resolvePanelInventoryItemType = (
     if (pointerX < panelStart) {
         return null;
     }
-    const panelX = pointerX - panelStart;
-    let fallbackMatch: number | null = null;
+    return {
+        panelX: pointerX - panelStart,
+        pointerY
+    };
+};
+
+const collectInventorySlotMatches = (panelX: number, pointerY: number): number[] => {
+    const matchingSlots: number[] = [];
     for (let index = PANEL_INVENTORY_SLOTS.length - 1; index >= 0; index -= 1) {
         const slot = PANEL_INVENTORY_SLOTS[index];
         if (!slot) {
             continue;
         }
-        const insideX = panelX >= slot.x && panelX < (slot.x + 32);
-        const insideY = pointerY >= slot.y && pointerY < (slot.y + 32);
-        if (insideX && insideY) {
-            if (fallbackMatch === null) {
-                fallbackMatch = slot.itemType;
-            }
-            if (inventory && (inventory.get(slot.itemType) ?? 0) > 0) {
-                return slot.itemType;
-            }
+        if (!isPointInsideInventorySlot(panelX, pointerY, slot.x, slot.y)) {
+            continue;
+        }
+        matchingSlots.push(slot.itemType);
+    }
+    return matchingSlots;
+};
+
+const isPointInsideInventorySlot = (
+    panelX: number,
+    pointerY: number,
+    slotX: number,
+    slotY: number
+): boolean => {
+    const insideX = panelX >= slotX && panelX < (slotX + 32);
+    const insideY = pointerY >= slotY && pointerY < (slotY + 32);
+    return insideX && insideY;
+};
+
+const resolveInventorySlotSelection = (
+    matchingSlots: number[],
+    inventory?: ReadonlyMap<number, number>
+): number | null => {
+    if (!inventory) {
+        return matchingSlots[0] ?? null;
+    }
+    for (const itemType of matchingSlots) {
+        if ((inventory.get(itemType) ?? 0) > 0) {
+            return itemType;
         }
     }
-    return fallbackMatch;
+    return matchingSlots[0] ?? null;
 };
 
 const togglePanelView = (
@@ -270,6 +312,121 @@ const clearPointerControls = (state: ClientState): void => {
     state.controls.ctrl = false;
 };
 
+const updatePointerFromMouseEvent = (state: ClientState, surface: PointerSurface, event: MouseEvent): void => {
+    if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        applyPointerUpdate(state, surface, event.clientX, event.clientY);
+    }
+};
+
+const isLeftClick = (event: MouseEvent): boolean => event.button === 0;
+
+const tryHandleRightClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (event.button !== 2) {
+        return false;
+    }
+    if (typeof event.preventDefault === "function") {
+        event.preventDefault();
+    }
+    state.ui.pendingBuildPlacement = null;
+    if (state.ui.buildGhostMode || state.ui.buildDemolishMode) {
+        clearBuildInteractionModes(state);
+        state.ui.showBuildMenu = false;
+    }
+    applyBuildMenuHotkey(state, "F4", {
+        anchorX: state.pointer.x,
+        anchorY: state.pointer.y
+    });
+    return true;
+};
+
+const tryHandleGhostBuildClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (!isLeftClick(event) || !state.ui.buildGhostMode) {
+        return false;
+    }
+    const placementTile = resolveBuildPlacementTile(state);
+    state.ui.pendingBuildPlacement = placementTile
+        ? {
+            tileX: placementTile.tileX,
+            tileY: placementTile.tileY,
+            type: state.ui.selectedBuildType
+        }
+        : null;
+    state.controls.shoot = false;
+    state.ui.buildGhostMode = false;
+    state.ui.showBuildMenu = false;
+    return true;
+};
+
+const tryHandleDemolishClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (!isLeftClick(event) || !state.ui.buildDemolishMode) {
+        return false;
+    }
+    state.controls.demolish = true;
+    state.controls.ctrl = true;
+    state.controls.shoot = false;
+    return true;
+};
+
+const tryHandlePanelActionClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (!isLeftClick(event)) {
+        return false;
+    }
+    const panelAction = resolvePanelAction(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth);
+    if (!panelAction) {
+        return false;
+    }
+    applyPanelAction(state, panelAction);
+    return true;
+};
+
+const applyInventorySelection = (state: ClientState, itemType: number): void => {
+    if ((state.inventory.get(itemType) ?? 0) <= 0) {
+        return;
+    }
+    if (itemType === ITEM_TYPE_BOMB && state.ui.selectedInventoryItemType === ITEM_TYPE_BOMB) {
+        state.ui.bombArmed = !state.ui.bombArmed;
+        return;
+    }
+    state.ui.selectedInventoryItemType = itemType;
+    if (itemType !== ITEM_TYPE_BOMB) {
+        state.ui.bombArmed = false;
+    }
+};
+
+const tryHandlePanelInventoryClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (!isLeftClick(event)) {
+        return false;
+    }
+    const panelInventoryItemType = resolvePanelInventoryItemType(
+        state.pointer.x,
+        state.pointer.y,
+        state.pointer.surfaceWidth,
+        state.inventory
+    );
+    if (panelInventoryItemType === null) {
+        return false;
+    }
+    applyInventorySelection(state, panelInventoryItemType);
+    return true;
+};
+
+const tryHandleBuildMenuDismissClick = (state: ClientState, event: MouseEvent): boolean => {
+    if (!isLeftClick(event) || !state.ui.showBuildMenu) {
+        return false;
+    }
+    state.ui.showBuildMenu = false;
+    return true;
+};
+
+const tryHandleControlPress = (state: ClientState, event: MouseEvent): boolean => {
+    const control = resolveControlForMouseButton(event.button);
+    if (!control) {
+        return false;
+    }
+    state.controls[control] = true;
+    return true;
+};
+
 export const registerMouseInputHandlers = (
     state: ClientState,
     surface: PointerSurface,
@@ -280,87 +437,17 @@ export const registerMouseInputHandlers = (
 
     const onMouseDown = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
-        if (Number.isFinite(pointerEvent.clientX) && Number.isFinite(pointerEvent.clientY)) {
-            applyPointerUpdate(state, surface, pointerEvent.clientX, pointerEvent.clientY);
-        }
-        if (pointerEvent.button === 2) {
-            if (typeof pointerEvent.preventDefault === "function") {
-                pointerEvent.preventDefault();
-            }
-            state.ui.pendingBuildPlacement = null;
-            if (state.ui.buildGhostMode || state.ui.buildDemolishMode) {
-                clearBuildInteractionModes(state);
-                state.ui.showBuildMenu = false;
-            }
-            applyBuildMenuHotkey(state, "F4", {
-                anchorX: state.pointer.x,
-                anchorY: state.pointer.y
-            });
+        updatePointerFromMouseEvent(state, surface, pointerEvent);
+        const handled = tryHandleRightClick(state, pointerEvent)
+            || tryHandleGhostBuildClick(state, pointerEvent)
+            || tryHandleDemolishClick(state, pointerEvent)
+            || tryHandlePanelActionClick(state, pointerEvent)
+            || tryHandlePanelInventoryClick(state, pointerEvent)
+            || tryHandleBuildMenuDismissClick(state, pointerEvent)
+            || tryHandleControlPress(state, pointerEvent);
+        if (handled) {
             syncCursor(state, surface);
-            return;
         }
-        if (pointerEvent.button === 0 && state.ui.buildGhostMode) {
-            const placementTile = resolveBuildPlacementTile(state);
-            state.ui.pendingBuildPlacement = placementTile
-                ? {
-                    tileX: placementTile.tileX,
-                    tileY: placementTile.tileY,
-                    type: state.ui.selectedBuildType
-                }
-                : null;
-            state.controls.shoot = false;
-            state.ui.buildGhostMode = false;
-            state.ui.showBuildMenu = false;
-            syncCursor(state, surface);
-            return;
-        }
-        if (pointerEvent.button === 0 && state.ui.buildDemolishMode) {
-            state.controls.demolish = true;
-            state.controls.ctrl = true;
-            state.controls.shoot = false;
-            syncCursor(state, surface);
-            return;
-        }
-        const panelAction = pointerEvent.button === 0
-            ? resolvePanelAction(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth)
-            : null;
-        if (panelAction) {
-            applyPanelAction(state, panelAction);
-            syncCursor(state, surface);
-            return;
-        }
-        const panelInventoryItemType = pointerEvent.button === 0
-            ? resolvePanelInventoryItemType(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth, state.inventory)
-            : null;
-        if (panelInventoryItemType !== null) {
-            const hasItem = (state.inventory.get(panelInventoryItemType) ?? 0) > 0;
-            if (hasItem) {
-                if (
-                    panelInventoryItemType === ITEM_TYPE_BOMB
-                    && state.ui.selectedInventoryItemType === ITEM_TYPE_BOMB
-                ) {
-                    state.ui.bombArmed = !state.ui.bombArmed;
-                } else {
-                    state.ui.selectedInventoryItemType = panelInventoryItemType;
-                    if (panelInventoryItemType !== ITEM_TYPE_BOMB) {
-                        state.ui.bombArmed = false;
-                    }
-                }
-            }
-            syncCursor(state, surface);
-            return;
-        }
-        if (pointerEvent.button === 0 && state.ui.showBuildMenu) {
-            state.ui.showBuildMenu = false;
-            syncCursor(state, surface);
-            return;
-        }
-        const control = resolveControlForMouseButton(pointerEvent.button);
-        if (!control) {
-            return;
-        }
-        state.controls[control] = true;
-        syncCursor(state, surface);
     };
 
     const onMouseUp = (event: Event): void => {

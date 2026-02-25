@@ -7,9 +7,11 @@ import { renderHazardItems } from "./items/ItemRenderer.js";
 import { renderGroundLayer } from "./layers/GroundLayer.js";
 import { renderTileLayer } from "./layers/TileLayer.js";
 import { renderChangingLayer } from "./layers/ChangingLayer.js";
+import { resolveResearchStripPlacement } from "./layers/changing-layer-helpers.js";
 import { renderNameLabels } from "./labels/NameLabelRenderer.js";
 import { renderEffects } from "./effects/EffectsRenderer.js";
 import { renderBotDebugLayer } from "./debug/BotDebugLayer.js";
+import { formatNearestOrbableCityLine, resolveNearestOrbableCity } from "./orb-target.js";
 import { loadMapData, type LoadedMap } from "../world/map-loader.js";
 import { getFrameTexture, loadLegacyTextures, type LegacyTextures } from "./LegacyTextureRegistry.js";
 import {
@@ -42,6 +44,7 @@ import {
     ITEM_TYPE_ORB,
     TILE
 } from "./parity/constants.js";
+import { resolveDefenseDamageColumn } from "./parity/defense-damage.js";
 import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
 
 const TANK_SIZE = 22;
@@ -54,6 +57,11 @@ type TankPalette = {
 };
 
 type RenderableEntity = Graphics | Sprite;
+const RESEARCH_BUILDING_FAMILY = 4;
+
+const isResearchBuildingType = (buildingType: number): boolean => {
+    return Math.floor(buildingType / 100) === RESEARCH_BUILDING_FAMILY;
+};
 
 const makeTank = (palette: TankPalette): Graphics => {
     const tank = new Graphics();
@@ -211,6 +219,8 @@ type SceneLayers = {
     remoteLayer: Container;
     remoteTanks: Map<string, RenderableEntity>;
     objectLayer: Container;
+    buildingUnderlayLayer: Container;
+    researchStripSprites: Map<string, RenderableEntity>;
     buildingSprites: Map<string, RenderableEntity>;
     buildingOverlaySprites: Map<string, RenderableEntity>;
     defenseSprites: Map<string, RenderableEntity>;
@@ -248,6 +258,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
     const groundSprite = new Graphics();
     const tileSprite = new Graphics();
     const objectLayer = new Container();
+    const buildingUnderlayLayer = new Container();
     const changingSprite = new Graphics();
     const effectsSprite = new Graphics();
     const botDebugSprite = new Graphics();
@@ -267,6 +278,8 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
 
     const labelLayer = new Container();
     world.addChild(labelLayer);
+
+    objectLayer.addChild(buildingUnderlayLayer);
 
     const ghostPlacementLayer = new Container();
     const ghostPlacementFill = new Sprite(Texture.EMPTY);
@@ -369,6 +382,8 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         remoteLayer,
         remoteTanks: new Map<string, RenderableEntity>(),
         objectLayer,
+        buildingUnderlayLayer,
+        researchStripSprites: new Map<string, RenderableEntity>(),
         buildingSprites: new Map<string, RenderableEntity>(),
         buildingOverlaySprites: new Map<string, RenderableEntity>(),
         defenseSprites: new Map<string, RenderableEntity>(),
@@ -473,9 +488,22 @@ const resolveBuildingTexture = (
     );
 };
 
-const resolveDefenseTexture = (textures: LegacyTextures, defenseType: number): Texture | null => {
-    const row = Math.max(0, Math.min(2, defenseType - 8));
-    return getFrameTexture(textures.turretBase, `defense:${row}`, 0, row * 48, 48, 48);
+const resolveDefenseTexture = (
+    textures: LegacyTextures,
+    defenseType: number,
+    health: number,
+    maxHealth: number
+): Texture | null => {
+    const typeRow = Math.max(0, Math.min(2, defenseType - 9));
+    const damageColumn = resolveDefenseDamageColumn(defenseType, health, maxHealth);
+    return getFrameTexture(
+        textures.turretBase,
+        `defense:${typeRow}:${damageColumn}`,
+        damageColumn * 48,
+        typeRow * 48,
+        48,
+        48
+    );
 };
 
 const resolveDefenseHeadTexture = (textures: LegacyTextures, defenseType: number, orientation: number): Texture | null => {
@@ -495,54 +523,128 @@ const resolveBulletSprite = (textures: LegacyTextures): Sprite | null => {
     return sprite;
 };
 
-const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
-    const animationCounter = Math.floor(Date.now() / 100);
+const resolveResearchStripTexture = (
+    state: ClientState,
+    textures: LegacyTextures,
+    buildingId: string,
+    buildingType: number,
+    cityId: number
+): Texture | null => {
+    const cityResearch = state.research.get(cityId);
+    const isComplete = cityResearch?.completed.includes(buildingType) ?? false;
+    const source = isComplete ? textures.researchComplete : textures.research;
+    if (!source) {
+        return null;
+    }
+    return getFrameTexture(
+        source,
+        `research-strip:${buildingId}:${isComplete ? "complete" : "pending"}`,
+        0,
+        5,
+        10,
+        134
+    );
+};
 
-    syncEntityCache(layers.buildingSprites, layers.objectLayer, state.buildings.keys(), () => {
-        const firstBuilding = state.buildings.values().next().value;
-        if (firstBuilding) {
-            const texture = resolveBuildingTexture(layers.textures, firstBuilding.type, null);
-            if (texture) {
-                return new Sprite(texture);
-            }
-        }
-        const entity = new Graphics();
-        entity.roundRect(0, 0, TILE * 3, TILE * 3, 3).fill(0x8e7a56);
-        return entity;
-    });
+const resolveResearchStripBuildingIds = (state: ClientState): string[] => {
+    const ids: string[] = [];
     for (const building of state.buildings.values()) {
-        const sprite = layers.buildingSprites.get(building.id);
-        if (sprite) {
-            if (sprite instanceof Sprite) {
-                const frame = resolveBuildingTexture(
-                    layers.textures,
-                    building.type,
-                    animationCounter
-                );
-                if (frame) {
-                    sprite.texture = frame;
-                }
-            }
-            sprite.position.set(building.tileX * TILE, building.tileY * TILE);
+        if (isResearchBuildingType(building.type)) {
+            ids.push(building.id);
         }
     }
+    return ids;
+};
 
-    const overlayBuildingIds = [...state.buildings.values()]
-        .filter((building) => resolveBuildingOverlay(building.type) !== null)
-        .map((building) => building.id);
+const syncResearchStripSprites = (
+    state: ClientState,
+    layers: SceneLayers,
+    researchStripBuildingIds: string[]
+): void => {
+    syncEntityCache(layers.researchStripSprites, layers.buildingUnderlayLayer, researchStripBuildingIds, () => new Sprite());
+    for (const buildingId of researchStripBuildingIds) {
+        const building = state.buildings.get(buildingId);
+        const sprite = layers.researchStripSprites.get(buildingId);
+        if (!building || !(sprite instanceof Sprite)) {
+            continue;
+        }
+        const frame = resolveResearchStripTexture(
+            state,
+            layers.textures,
+            building.id,
+            building.type,
+            building.cityId
+        );
+        if (!frame) {
+            sprite.visible = false;
+            continue;
+        }
+        const placement = resolveResearchStripPlacement(building.tileX, building.tileY);
+        sprite.texture = frame;
+        sprite.position.set(placement.x, placement.y);
+        sprite.width = placement.width;
+        sprite.height = placement.height;
+        sprite.alpha = 0.95;
+        sprite.visible = true;
+    }
+};
 
-    syncEntityCache(layers.buildingOverlaySprites, layers.objectLayer, overlayBuildingIds, () => {
-        const sprite = new Sprite();
-        return sprite;
-    });
+const createFallbackBuildingEntity = (): Graphics => {
+    const entity = new Graphics();
+    entity.roundRect(0, 0, TILE * 3, TILE * 3, 3).fill(0x8e7a56);
+    return entity;
+};
 
+const createBuildingEntity = (layers: SceneLayers, state: ClientState): Sprite | Graphics => {
+    const firstBuilding = state.buildings.values().next().value;
+    if (!firstBuilding) {
+        return createFallbackBuildingEntity();
+    }
+    const texture = resolveBuildingTexture(layers.textures, firstBuilding.type, null);
+    return texture ? new Sprite(texture) : createFallbackBuildingEntity();
+};
+
+const syncBuildingSprites = (
+    state: ClientState,
+    layers: SceneLayers,
+    animationCounter: number
+): void => {
+    syncEntityCache(layers.buildingSprites, layers.objectLayer, state.buildings.keys(), () => createBuildingEntity(layers, state));
+    for (const building of state.buildings.values()) {
+        const sprite = layers.buildingSprites.get(building.id);
+        if (!sprite) {
+            continue;
+        }
+        if (sprite instanceof Sprite) {
+            const frame = resolveBuildingTexture(layers.textures, building.type, animationCounter);
+            if (frame) {
+                sprite.texture = frame;
+            }
+        }
+        sprite.position.set(building.tileX * TILE, building.tileY * TILE);
+    }
+};
+
+const resolveOverlayBuildingIds = (state: ClientState): string[] => {
+    const ids: string[] = [];
+    for (const building of state.buildings.values()) {
+        if (resolveBuildingOverlay(building.type) !== null) {
+            ids.push(building.id);
+        }
+    }
+    return ids;
+};
+
+const syncBuildingOverlaySprites = (
+    state: ClientState,
+    layers: SceneLayers,
+    overlayBuildingIds: string[]
+): void => {
+    syncEntityCache(layers.buildingOverlaySprites, layers.objectLayer, overlayBuildingIds, () => new Sprite());
     for (const buildingId of overlayBuildingIds) {
         const building = state.buildings.get(buildingId);
         const sprite = layers.buildingOverlaySprites.get(buildingId);
-        if (!building || !sprite) {
-            continue;
-        }
-        if (!(sprite instanceof Sprite)) {
+        if (!building || !(sprite instanceof Sprite)) {
             continue;
         }
         const overlay = resolveBuildingOverlay(building.type);
@@ -565,70 +667,92 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
             (building.tileY * TILE) + overlay.offset.y
         );
     }
+};
 
-    syncEntityCache(layers.defenseSprites, layers.objectLayer, state.defenses.keys(), () => {
-        const firstDefense = state.defenses.values().next().value;
-        if (firstDefense) {
-            const texture = resolveDefenseTexture(layers.textures, firstDefense.type);
-            if (texture) {
-                return new Sprite(texture);
-            }
-        }
-        const entity = new Graphics();
-        entity.roundRect(4, 4, TILE - 8, TILE - 8, 2).fill(0x7d8ea8);
-        return entity;
-    });
+const createFallbackDefenseEntity = (): Graphics => {
+    const entity = new Graphics();
+    entity.roundRect(4, 4, TILE - 8, TILE - 8, 2).fill(0x7d8ea8);
+    return entity;
+};
+
+const createDefenseEntity = (layers: SceneLayers, state: ClientState): Sprite | Graphics => {
+    const firstDefense = state.defenses.values().next().value;
+    if (!firstDefense) {
+        return createFallbackDefenseEntity();
+    }
+    const texture = resolveDefenseTexture(layers.textures, firstDefense.type, firstDefense.health, firstDefense.maxHealth);
+    return texture ? new Sprite(texture) : createFallbackDefenseEntity();
+};
+
+const syncDefenseSprites = (state: ClientState, layers: SceneLayers): void => {
+    syncEntityCache(layers.defenseSprites, layers.objectLayer, state.defenses.keys(), () => createDefenseEntity(layers, state));
     for (const defense of state.defenses.values()) {
         const sprite = layers.defenseSprites.get(defense.id);
-        if (sprite) {
-            if (sprite instanceof Sprite) {
-                const frame = resolveDefenseTexture(layers.textures, defense.type);
-                if (frame) {
-                    sprite.texture = frame;
-                }
-            }
-            sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
-        }
-    }
-
-    syncEntityCache(layers.defenseHeadSprites, layers.objectLayer, state.defenses.keys(), () => {
-        const sprite = new Sprite();
-        return sprite;
-    });
-    for (const defense of state.defenses.values()) {
-        const sprite = layers.defenseHeadSprites.get(defense.id);
-        if (!sprite || !(sprite instanceof Sprite)) {
+        if (!sprite) {
             continue;
         }
-        const fallback = Math.floor((Date.now() / 100) % 32);
-        const orientation = typeof defense.orientation === "number" && Number.isFinite(defense.orientation)
-            ? defense.orientation
-            : fallback;
-        const frame = resolveDefenseHeadTexture(layers.textures, defense.type, orientation);
+        if (sprite instanceof Sprite) {
+            const frame = resolveDefenseTexture(
+                layers.textures,
+                defense.type,
+                defense.health,
+                defense.maxHealth
+            );
+            if (frame) {
+                sprite.texture = frame;
+            }
+        }
+        sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
+    }
+};
+
+const resolveDefenseOrientation = (orientation: number | undefined, nowMs: number): number => {
+    const fallback = Math.floor((nowMs / 100) % 32);
+    if (typeof orientation === "number" && Number.isFinite(orientation)) {
+        return orientation;
+    }
+    return fallback;
+};
+
+const syncDefenseHeadSprites = (state: ClientState, layers: SceneLayers, nowMs: number): void => {
+    syncEntityCache(layers.defenseHeadSprites, layers.objectLayer, state.defenses.keys(), () => new Sprite());
+    for (const defense of state.defenses.values()) {
+        const sprite = layers.defenseHeadSprites.get(defense.id);
+        if (!(sprite instanceof Sprite)) {
+            continue;
+        }
+        const frame = resolveDefenseHeadTexture(
+            layers.textures,
+            defense.type,
+            resolveDefenseOrientation(defense.orientation, nowMs)
+        );
         if (frame) {
             sprite.texture = frame;
         }
         sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
     }
+};
 
-    renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items);
+const createFallbackBulletEntity = (): Graphics => {
+    const bullet = new Graphics();
+    bullet.circle(0, 0, 3).fill(0xf2cb56);
+    return bullet;
+};
 
-    syncEntityCache(layers.bulletSprites, layers.objectLayer, state.bullets.keys(), () => {
-        const textureSprite = resolveBulletSprite(layers.textures);
-        if (textureSprite) {
-            return textureSprite;
-        }
-        const bullet = new Graphics();
-        bullet.circle(0, 0, 3).fill(0xf2cb56);
-        return bullet;
-    });
+const createBulletEntity = (layers: SceneLayers): Sprite | Graphics => {
+    const sprite = resolveBulletSprite(layers.textures);
+    return sprite ?? createFallbackBulletEntity();
+};
+
+const syncBulletSprites = (state: ClientState, layers: SceneLayers, nowMs: number): void => {
+    syncEntityCache(layers.bulletSprites, layers.objectLayer, state.bullets.keys(), () => createBulletEntity(layers));
+    const animation = Math.floor(nowMs / 80) % 4;
     for (const bullet of state.bullets.values()) {
         const sprite = layers.bulletSprites.get(bullet.id);
         if (!sprite) {
             continue;
         }
         if (sprite instanceof Sprite) {
-            const animation = Math.floor(Date.now() / 80) % 4;
             const rect = resolveBulletFrameRect(animation, Math.max(0, bullet.type));
             const frame = getFrameTexture(
                 layers.textures.bullets,
@@ -646,7 +770,21 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
     }
 };
 
+const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
+    const nowMs = Date.now();
+    const animationCounter = Math.floor(nowMs / 100);
+    const researchStripBuildingIds = resolveResearchStripBuildingIds(state);
+    syncResearchStripSprites(state, layers, researchStripBuildingIds);
+    syncBuildingSprites(state, layers, animationCounter);
+    syncBuildingOverlaySprites(state, layers, resolveOverlayBuildingIds(state));
+    syncDefenseSprites(state, layers);
+    syncDefenseHeadSprites(state, layers, nowMs);
+    renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items);
+    syncBulletSprites(state, layers, nowMs);
+};
+
 const renderHud = (state: ClientState, layers: SceneLayers): void => {
+    void formatNearestOrbableCityLine(resolveNearestOrbableCity(state));
     layers.hudPanel.visible = false;
     layers.hudPanel.clear();
     if (layers.hud.visible || layers.hud.text.length > 0) {
@@ -655,57 +793,97 @@ const renderHud = (state: ClientState, layers: SceneLayers): void => {
     }
 };
 
-const resolvePanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
+const resolveStaffPanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
+    const assignment = state.lobby.assignments.find((entry) => entry.city === state.local.city);
+    return {
+        heading: "Staff",
+        lines: [
+            `Mayor:   ${assignment?.mayorId ?? "(unknown)"}`,
+            `Recruits: ${assignment?.recruitCount ?? 0}`,
+            `Players: ${state.remotePlayers.size + (state.local.id ? 1 : 0)}`
+        ]
+    };
+};
+
+const countCityEntities = <T extends { cityId: number; }>(
+    values: Iterable<T>,
+    cityId: number
+): number => {
+    let total = 0;
+    for (const value of values) {
+        if (value.cityId === cityId) {
+            total += 1;
+        }
+    }
+    return total;
+};
+
+const resolveCityPanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
     const cityId = state.local.city;
-    if (state.ui.panelView === "staff") {
-        const assignment = state.lobby.assignments.find((entry) => entry.city === cityId);
-        return {
-            heading: "Staff",
-            lines: [
-                `Mayor:   ${assignment?.mayorId ?? "(unknown)"}`,
-                `Recruits: ${assignment?.recruitCount ?? 0}`,
-                `Players: ${state.remotePlayers.size + (state.local.id ? 1 : 0)}`
-            ]
-        };
-    }
-    if (state.ui.panelView === "city") {
-        const buildings = Array.from(state.buildings.values()).filter((entry) => entry.cityId === cityId).length;
-        const defenses = Array.from(state.defenses.values()).filter((entry) => entry.cityId === cityId).length;
-        const hazards = Array.from(state.hazards.values()).filter((entry) => entry.cityId === cityId).length;
-        return {
-            heading: getCityDisplayName(cityId),
-            lines: [
-                `Buildings: ${buildings}`,
-                `Defenses: ${defenses}`,
-                `Hazards: ${hazards}`
-            ]
-        };
-    }
-    if (state.ui.panelView === "points") {
-        const lastPromotion = state.events.promotions.at(-1);
-        return {
-            heading: "Points",
-            lines: [
-                `Score: ${state.scoreProfile.score}`,
-                `Rank: ${state.scoreProfile.rank ?? "-"}`,
-                `Last promo: ${lastPromotion?.rank ?? "-"}`
-            ]
-        };
-    }
+    const buildings = countCityEntities(state.buildings.values(), cityId);
+    const defenses = countCityEntities(state.defenses.values(), cityId);
+    const hazards = countCityEntities(state.hazards.values(), cityId);
+    return {
+        heading: getCityDisplayName(cityId),
+        lines: [
+            `Buildings: ${buildings}`,
+            `Defenses: ${defenses}`,
+            `Hazards: ${hazards}`
+        ]
+    };
+};
+
+const resolvePointsPanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
+    const lastPromotion = state.events.promotions.at(-1);
+    return {
+        heading: "Points",
+        lines: [
+            `Score: ${state.scoreProfile.score}`,
+            `Rank: ${state.scoreProfile.rank ?? "-"}`,
+            `Last promo: ${lastPromotion?.rank ?? "-"}`
+        ]
+    };
+};
+
+const resolveDefaultPanelMessage = (): { heading: string; lines: string[] } => {
     return {
         heading: "Intel",
         lines: ["Right-click a city building to inspect."]
     };
 };
 
-const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
+const PANEL_MESSAGE_RESOLVERS: Readonly<Record<ClientState["ui"]["panelView"], (state: ClientState) => { heading: string; lines: string[] }>> = {
+    staff: resolveStaffPanelMessage,
+    city: resolveCityPanelMessage,
+    points: resolvePointsPanelMessage,
+    status: resolveDefaultPanelMessage
+};
+
+const resolvePanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
+    const resolver = PANEL_MESSAGE_RESOLVERS[state.ui.panelView];
+    return resolver ? resolver(state) : resolveDefaultPanelMessage();
+};
+
+type SidePanelRenderContext = {
+    state: ClientState;
+    layers: SceneLayers;
+    panelX: number;
+    panelVisualHeight: number;
+    nowMs: number;
+};
+
+const createSidePanelRenderContext = (state: ClientState, layers: SceneLayers): SidePanelRenderContext => {
     const viewport = resolveViewportFromState(state);
-    const panelX = viewport.panelStartX;
-    const panelVisualHeight = Math.min(viewport.surfaceHeight, PANEL_TOP_HEIGHT + PANEL_BOTTOM_HEIGHT);
-    layers.panelBackground.position.set(panelX, PANEL_TOP_Y);
-    layers.panelHomeArrow.position.set(panelX + HOME_ARROW.x, HOME_ARROW.y);
-    layers.panelHomeArrow.width = HOME_ARROW.frameWidth;
-    layers.panelHomeArrow.height = HOME_ARROW.frameHeight;
+    return {
+        state,
+        layers,
+        panelX: viewport.panelStartX,
+        panelVisualHeight: Math.min(viewport.surfaceHeight, PANEL_TOP_HEIGHT + PANEL_BOTTOM_HEIGHT),
+        nowMs: Date.now()
+    };
+};
+
+const resetSidePanelSprites = (layers: SceneLayers): void => {
     layers.panelHomeArrow.visible = false;
     layers.panelInventorySelection.visible = false;
     for (const iconSprite of layers.panelInventoryIcons.values()) {
@@ -714,16 +892,26 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     for (const countText of layers.panelInventoryCountTexts.values()) {
         countText.visible = false;
     }
+};
+
+const layoutSidePanelSprites = (context: SidePanelRenderContext): void => {
+    const { layers, panelX } = context;
+    layers.panelBackground.position.set(panelX, PANEL_TOP_Y);
+    layers.panelHomeArrow.position.set(panelX + HOME_ARROW.x, HOME_ARROW.y);
+    layers.panelHomeArrow.width = HOME_ARROW.frameWidth;
+    layers.panelHomeArrow.height = HOME_ARROW.frameHeight;
     layers.panelRadar.position.set(panelX + RADAR_BOUNDS.offsetX, RADAR_BOUNDS.offsetY);
     layers.panelMessageHeading.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y);
     layers.panelMessageBody.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y + PANEL_MESSAGE.lineSpacing);
     layers.panelCashText.position.set(panelX + PANEL_FINANCE.cashText.x, PANEL_FINANCE.cashText.y);
-    layers.panelBackground.clear();
+};
 
+const renderSidePanelBackground = (context: SidePanelRenderContext): void => {
+    const { layers, panelVisualHeight } = context;
+    layers.panelBackground.clear();
     layers.panelBackground
         .rect(0, 0, PANEL, panelVisualHeight)
         .fill({ color: 0x111827, alpha: 0.85 });
-
     if (layers.textures.interfaceTop) {
         const topHeight = Math.max(0, Math.min(PANEL_TOP_HEIGHT, panelVisualHeight));
         if (topHeight > 0) {
@@ -732,11 +920,9 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
                 .fill({ texture: layers.textures.interfaceTop, alpha: 0.92 });
         }
     }
-
     layers.panelBackground
         .rect(0, 0, PANEL, panelVisualHeight)
         .stroke({ color: 0x4d5f7a, width: 1, alpha: 0.85 });
-
     if (layers.textures.interfaceBottom && panelVisualHeight > PANEL_BOTTOM_Y) {
         const bottomHeight = Math.max(0, Math.min(PANEL_BOTTOM_HEIGHT, panelVisualHeight - PANEL_BOTTOM_Y));
         if (bottomHeight > 0) {
@@ -745,11 +931,13 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
                 .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
         }
     }
+};
 
+const renderSidePanelFinance = (context: SidePanelRenderContext): void => {
+    const { state, layers } = context;
     const finance = state.cityFinance.get(state.local.city);
     const income = finance?.income ?? 0;
     const cash = finance?.cash ?? 0;
-
     if (layers.textures.moneyBox) {
         const moneyBoxWidth = Math.max(1, Math.floor(layers.textures.moneyBox.width));
         const moneyBoxHeight = Math.max(1, Math.floor(layers.textures.moneyBox.height));
@@ -767,9 +955,10 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     }
     layers.panelCashText.style.fill = income < 0 ? 0xe74c3c : 0x2ecc71;
     layers.panelCashText.text = formatCash(cash);
+};
 
-    const nowMs = Date.now();
-
+const renderSidePanelHealth = (context: SidePanelRenderContext): void => {
+    const { state, layers } = context;
     const healthMask = resolveHealthMaskRect(state.local.health, state.local.maxHealth);
     layers.panelBackground
         .rect(PANEL_HEALTH.x, PANEL_HEALTH.y, PANEL_HEALTH.width, PANEL_HEALTH.height)
@@ -779,7 +968,10 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             .rect(healthMask.x, healthMask.y, healthMask.width, healthMask.height)
             .fill({ texture: layers.textures.health, alpha: 0.95 });
     }
+};
 
+const renderSidePanelInventory = (context: SidePanelRenderContext): void => {
+    const { state, layers, panelX, nowMs } = context;
     for (const slot of PANEL_INVENTORY_SLOTS) {
         const count = state.inventory.get(slot.itemType) ?? 0;
         if (count <= 0) {
@@ -824,7 +1016,10 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             }
         }
     }
+};
 
+const renderSidePanelButtons = (context: SidePanelRenderContext): void => {
+    const { state, layers } = context;
     for (let i = 0; i < PANEL_BUTTONS.length; i += 1) {
         const active = isPanelButtonActive(state.ui, i);
         const button = PANEL_BUTTONS[i];
@@ -846,61 +1041,79 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             .fill({ color: 0x2f6a9f, alpha: 0.28 })
             .stroke({ color: 0xbfd7f5, width: 1, alpha: 0.92 });
     }
+};
 
-    const panelMessage = resolvePanelMessage(state);
-    layers.panelMessageHeading.text = panelMessage.heading;
-    layers.panelMessageHeading.visible = panelMessage.heading.length > 0;
-    layers.panelMessageBody.text = panelMessage.lines.join("\n");
-    layers.panelMessageBody.visible = panelMessage.lines.length > 0;
+const renderSidePanelMessage = (context: SidePanelRenderContext): void => {
+    const panelMessage = resolvePanelMessage(context.state);
+    context.layers.panelMessageHeading.text = panelMessage.heading;
+    context.layers.panelMessageHeading.visible = panelMessage.heading.length > 0;
+    context.layers.panelMessageBody.text = panelMessage.lines.join("\n");
+    context.layers.panelMessageBody.visible = panelMessage.lines.length > 0;
+};
 
-    layers.panelRadar.clear();
-    const radarSelfColor = 0x48ff62;
-    const radarEnemyColor = 0xff4040;
-    const radarBlobRadius = 2;
+const markSidePanelEnemy = (
+    context: SidePanelRenderContext,
+    enemyX: number,
+    enemyY: number
+): void => {
+    const point = projectRadarPoint(context.panelX, context.state.local.x, context.state.local.y, enemyX, enemyY);
+    if (!point) {
+        return;
+    }
+    context.layers.panelRadar
+        .circle(point.x, point.y, 2)
+        .fill(0xff4040);
+};
 
-    const markEnemy = (x: number, y: number): void => {
-        const point = projectRadarPoint(panelX, state.local.x, state.local.y, x, y);
-        if (!point) {
-            return;
-        }
-        layers.panelRadar
-            .circle(point.x, point.y, radarBlobRadius)
-            .fill(radarEnemyColor);
-    };
-
-    for (const remote of state.remotePlayers.values()) {
-        if (remote.city === state.local.city) {
+const renderSidePanelRadar = (context: SidePanelRenderContext): void => {
+    context.layers.panelRadar.clear();
+    for (const remote of context.state.remotePlayers.values()) {
+        if (remote.city === context.state.local.city || (remote.health ?? 1) <= 0) {
             continue;
         }
-        if ((remote.health ?? 1) <= 0) {
-            continue;
-        }
-        markEnemy(remote.x, remote.y);
+        markSidePanelEnemy(context, remote.x, remote.y);
     }
+    context.layers.panelRadar
+        .circle(RADAR_BOUNDS.width / 2, RADAR_BOUNDS.height / 2, 2)
+        .fill(0x48ff62);
+};
 
-    layers.panelRadar
-        .circle(RADAR_BOUNDS.width / 2, RADAR_BOUNDS.height / 2, radarBlobRadius)
-        .fill(radarSelfColor);
-
-    const spawn = resolveCitySpawn(state.local.city);
-    if (spawn && layers.textures.arrows) {
-        const homeX = (spawn.tileX * TILE) + (1.5 * TILE);
-        const homeY = (spawn.tileY * TILE) + (1.5 * TILE);
-        const arrowFrame = resolveHomeArrowFrame(state.local.x, state.local.y, homeX, homeY);
-        const frame = getFrameTexture(
-            layers.textures.arrows,
-            `home-arrow:${arrowFrame}`,
-            arrowFrame * HOME_ARROW.frameWidth,
-            0,
-            HOME_ARROW.frameWidth,
-            HOME_ARROW.frameHeight
-        );
-        if (frame) {
-            layers.panelHomeArrow.texture = frame;
-            layers.panelHomeArrow.alpha = 0.95;
-            layers.panelHomeArrow.visible = true;
-        }
+const renderSidePanelHomeArrow = (context: SidePanelRenderContext): void => {
+    const spawn = resolveCitySpawn(context.state.local.city);
+    if (!spawn || !context.layers.textures.arrows) {
+        return;
     }
+    const homeX = (spawn.tileX * TILE) + (1.5 * TILE);
+    const homeY = (spawn.tileY * TILE) + (1.5 * TILE);
+    const arrowFrame = resolveHomeArrowFrame(context.state.local.x, context.state.local.y, homeX, homeY);
+    const frame = getFrameTexture(
+        context.layers.textures.arrows,
+        `home-arrow:${arrowFrame}`,
+        arrowFrame * HOME_ARROW.frameWidth,
+        0,
+        HOME_ARROW.frameWidth,
+        HOME_ARROW.frameHeight
+    );
+    if (!frame) {
+        return;
+    }
+    context.layers.panelHomeArrow.texture = frame;
+    context.layers.panelHomeArrow.alpha = 0.95;
+    context.layers.panelHomeArrow.visible = true;
+};
+
+const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
+    const context = createSidePanelRenderContext(state, layers);
+    layoutSidePanelSprites(context);
+    resetSidePanelSprites(layers);
+    renderSidePanelBackground(context);
+    renderSidePanelFinance(context);
+    renderSidePanelHealth(context);
+    renderSidePanelInventory(context);
+    renderSidePanelButtons(context);
+    renderSidePanelMessage(context);
+    renderSidePanelRadar(context);
+    renderSidePanelHomeArrow(context);
 };
 
 const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneLayers): void => {
@@ -944,8 +1157,6 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.world,
         layers.changingSprite,
         layers.textures.population,
-        layers.textures.research,
-        layers.textures.researchComplete,
         layers.textures.smoke,
         layers.textures.blackNumbers,
         layers.textures.items

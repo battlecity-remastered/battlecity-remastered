@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { isInteractiveKeyboardTarget } from "../../input/interactive-target.js";
 import type { EventSender } from "../../network/events.js";
 import {
     ITEM_TYPE_BOMB,
@@ -19,20 +20,6 @@ type InventoryEntry = {
 const DEFENSE_DROP_TYPES = new Set([ITEM_TYPE_WALL, ITEM_TYPE_TURRET, ITEM_TYPE_SLEEPER, ITEM_TYPE_PLASMA]);
 const COMMAND_CENTER_WIDTH_TILES = 3;
 const COMMAND_CENTER_HEIGHT_TILES = 2;
-
-const isInteractiveTarget = (event: KeyboardEvent): boolean => {
-    const target = event.target as Element | null;
-    if (!target) {
-        return false;
-    }
-    const tag = target.tagName?.toLowerCase();
-    if (tag === "input" || tag === "textarea" || tag === "select") {
-        return true;
-    }
-    return typeof HTMLElement !== "undefined"
-        && target instanceof HTMLElement
-        && target.isContentEditable;
-};
 
 const sortedInventoryEntries = (state: ClientState): InventoryEntry[] => {
     return [...state.inventory.entries()]
@@ -244,51 +231,43 @@ export const registerInventoryHotkeys = (
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
     };
 
-    const onKeyDown = (event: KeyboardEvent): void => {
-        if (isInteractiveTarget(event)) {
-            return;
-        }
-        if (event.key === "q" || event.key === "Q") {
+    const handleInventoryHotkey = (event: KeyboardEvent): boolean => {
+        const key = event.key.toLowerCase();
+        if (key === "q") {
             cycleInventorySelection(state, -1);
-            event.preventDefault();
-            return;
+            return true;
         }
-        if (event.key === "e" || event.key === "E") {
+        if (key === "e") {
             cycleInventorySelection(state, 1);
-            event.preventDefault();
-            return;
+            return true;
         }
-        if (event.key === "v" || event.key === "V") {
-            if (toggleBombArming(state)) {
-                event.preventDefault();
-            }
-            return;
+        if (key === "v") {
+            return toggleBombArming(state);
         }
-        if (event.key === "d" || event.key === "D") {
-            if (dropSelectedIcon(state, send)) {
-                event.preventDefault();
-            }
-            return;
+        if (key === "d") {
+            return dropSelectedIcon(state, send);
         }
-        if (event.key === "o" || event.key === "O") {
+        if (key === "o") {
             if (hasModifiers(event)) {
-                return;
+                return false;
             }
-            if (dropOrbShortcut(state, send)) {
-                event.preventDefault();
-            }
+            return dropOrbShortcut(state, send);
+        }
+        if (key === "b") {
+            return dropArmedBombShortcut(state, send);
+        }
+        if (key === "x") {
+            return event.shiftKey && dropSelectedIcon(state, send);
+        }
+        return false;
+    };
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+        if (isInteractiveKeyboardTarget(event)) {
             return;
         }
-        if (event.key === "b" || event.key === "B") {
-            if (dropArmedBombShortcut(state, send)) {
-                event.preventDefault();
-            }
-            return;
-        }
-        if (event.key === "x" || event.key === "X") {
-            if (event.shiftKey && dropSelectedIcon(state, send)) {
-                event.preventDefault();
-            }
+        if (handleInventoryHotkey(event)) {
+            event.preventDefault();
         }
     };
 

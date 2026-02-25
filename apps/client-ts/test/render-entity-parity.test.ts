@@ -49,6 +49,21 @@ test("building sprites always animate across bitmap columns", () => {
     assert.doesNotMatch(sceneSource, /building\.health < building\.maxHealth \? animationCounter : null/);
 });
 
+test("defense base sprites use legacy row and health-based damage columns", () => {
+    const sceneSource = fs.readFileSync(scenePath, "utf8");
+    assert.match(sceneSource, /resolveDefenseDamageColumn\(defenseType,\s*health,\s*maxHealth\)/);
+    assert.match(sceneSource, /const typeRow = Math\.max\(0,\s*Math\.min\(2,\s*defenseType - 9\)\);/);
+    assert.match(sceneSource, /damageColumn \* 48/);
+    assert.doesNotMatch(sceneSource, /defenseType - 8/);
+});
+
+test("research strips render as right-side underlays beneath research buildings", () => {
+    const sceneSource = fs.readFileSync(scenePath, "utf8");
+    assert.match(sceneSource, /buildingUnderlayLayer: Container/);
+    assert.match(sceneSource, /syncEntityCache\(layers\.researchStripSprites,\s*layers\.buildingUnderlayLayer/);
+    assert.match(sceneSource, /resolveResearchStripPlacement\(building\.tileX,\s*building\.tileY\)/);
+});
+
 test("panel inventory icons use sprite textures for framed item icons", () => {
     const sceneSource = fs.readFileSync(scenePath, "utf8");
     assert.match(sceneSource, /panelInventoryIcons: Map<number, Sprite>/);

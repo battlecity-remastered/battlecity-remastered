@@ -34,7 +34,7 @@ export const placeBuildingFromRequest = (
 
     const tileX = Math.max(0, Math.floor(payload.tileX));
     const tileY = Math.max(0, Math.floor(payload.tileY));
-    const placement = canBuildInCity(state, city, tileX, tileY, config);
+    const placement = canBuildInCity(state, city, payload.type, tileX, tileY, config);
     if (placement === "collision") {
         return rejectResult("building_collision");
     }

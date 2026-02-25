@@ -18,6 +18,8 @@ test("resolveGhostPlacement computes pointer tile and selected build type", () =
     state.pointer.surfaceHeight = 480;
     state.pointer.x = 209;
     state.pointer.y = 357;
+    state.local.x = 83;
+    state.local.y = 99;
     state.ui.selectedBuildType = 300;
 
     const ghost = resolveGhostPlacement(state);

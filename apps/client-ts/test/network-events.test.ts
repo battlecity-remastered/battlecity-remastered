@@ -272,6 +272,28 @@ test("bullet lifecycle and icon pickup confirmation apply to local state", () =>
     assert.equal(state.bullets.size, 0);
 });
 
+test("bullet.resolved hit_player does not enqueue tank impact explosion", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.remotePlayers.set("enemy_1", {
+        id: "enemy_1",
+        city: 2,
+        direction: 0,
+        x: 640,
+        y: 672,
+        health: 100,
+        maxHealth: 100
+    });
+
+    applyServerEvent(state, makeKnownEnvelope("bullet.resolved", 1, {
+        id: "bullet_1",
+        reason: "hit_player",
+        hitPlayerId: "enemy_1"
+    }));
+
+    assert.equal(state.events.effects.explosions.length, 0);
+});
+
 test("combat events enqueue visual effects metadata", () => {
     const state = createClientState();
     state.local.id = "local";

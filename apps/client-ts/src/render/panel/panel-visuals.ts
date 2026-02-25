@@ -36,19 +36,22 @@ export type PanelVisualState = {
     buildDemolishMode: boolean;
 };
 
+const PANEL_BUTTON_ACTIVE_BY_INDEX: ReadonlyArray<(state: PanelVisualState) => boolean> = [
+    (state) => state.panelView === "staff",
+    (state) => state.showMapModal,
+    (state) => state.panelView === "city",
+    (state) => state.panelView === "points",
+    (state) => state.showOptionsModal,
+    (state) => state.showHelpModal,
+    (state) => state.showBuildMenu || state.buildGhostMode || state.buildDemolishMode
+];
+
 export const isPanelButtonActive = (
     state: PanelVisualState,
     index: number
 ): boolean => {
-    return (
-        (index === 0 && state.panelView === "staff")
-        || (index === 1 && state.showMapModal)
-        || (index === 2 && state.panelView === "city")
-        || (index === 3 && state.panelView === "points")
-        || (index === 4 && state.showOptionsModal)
-        || (index === 5 && state.showHelpModal)
-        || (index === 6 && (state.showBuildMenu || state.buildGhostMode || state.buildDemolishMode))
-    );
+    const resolver = PANEL_BUTTON_ACTIVE_BY_INDEX[index];
+    return typeof resolver === "function" ? resolver(state) : false;
 };
 
 export type RadarEntityKind = "self" | "ally" | "enemy" | "building";

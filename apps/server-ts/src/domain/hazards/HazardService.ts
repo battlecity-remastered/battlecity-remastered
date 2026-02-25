@@ -149,29 +149,51 @@ const triggerHazardReveal = (
     });
 };
 
-const detonateBomb = (
+const isWithinTileRadius = (
+    tileX: number,
+    tileY: number,
+    centerTileX: number,
+    centerTileY: number,
+    radiusTiles: number
+): boolean => {
+    return Math.abs(tileX - centerTileX) <= radiusTiles
+        && Math.abs(tileY - centerTileY) <= radiusTiles;
+};
+
+const damagePlayersInBombRadius = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
-    hazardId: string,
-    hazard: RuntimeHazard
+    hazard: RuntimeHazard,
+    centerTileX: number,
+    centerTileY: number
 ): boolean => {
     let snapshotDirty = false;
-    const centerTileX = toTileCenter(hazard.x);
-    const centerTileY = toTileCenter(hazard.y);
-
     for (const [playerId, player] of state.players.entries()) {
         if (!shouldDamagePlayer(hazard, playerId, player.city)) {
             continue;
         }
         const playerTileX = toTileCenter(player.x);
         const playerTileY = toTileCenter(player.y);
-        if (Math.abs(playerTileX - centerTileX) > LEGACY_BOMB_PLAYER_TILE_RADIUS
-            || Math.abs(playerTileY - centerTileY) > LEGACY_BOMB_PLAYER_TILE_RADIUS) {
+        if (!isWithinTileRadius(
+            playerTileX,
+            playerTileY,
+            centerTileX,
+            centerTileY,
+            LEGACY_BOMB_PLAYER_TILE_RADIUS
+        )) {
             continue;
         }
         snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
     }
+    return snapshotDirty;
+};
 
+const removeBuildingsInBombRadius = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    centerTileX: number,
+    centerTileY: number
+): void => {
     for (const [buildingId, building] of Array.from(state.buildings.entries())) {
         const minTileX = building.tileX;
         const maxTileX = building.tileX + BUILDING_FOOTPRINT_TILES - 1;
@@ -179,8 +201,13 @@ const detonateBomb = (
         const maxTileY = building.tileY + BUILDING_FOOTPRINT_TILES - 1;
         const nearestX = Math.max(minTileX, Math.min(centerTileX, maxTileX));
         const nearestY = Math.max(minTileY, Math.min(centerTileY, maxTileY));
-        if (Math.abs(nearestX - centerTileX) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS
-            || Math.abs(nearestY - centerTileY) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS) {
+        if (!isWithinTileRadius(
+            nearestX,
+            nearestY,
+            centerTileX,
+            centerTileY,
+            LEGACY_BOMB_STRUCTURE_TILE_RADIUS
+        )) {
             continue;
         }
         if (building.type === COMMAND_CENTER_BUILDING_TYPE) {
@@ -196,10 +223,22 @@ const detonateBomb = (
             emitter.emit("population.update", update);
         }
     }
+};
 
+const removeDefensesInBombRadius = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    centerTileX: number,
+    centerTileY: number
+): void => {
     for (const [defenseId, defense] of Array.from(state.defenses.entries())) {
-        if (Math.abs(defense.tileX - centerTileX) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS
-            || Math.abs(defense.tileY - centerTileY) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS) {
+        if (!isWithinTileRadius(
+            defense.tileX,
+            defense.tileY,
+            centerTileX,
+            centerTileY,
+            LEGACY_BOMB_STRUCTURE_TILE_RADIUS
+        )) {
             continue;
         }
         state.defenses.delete(defenseId);
@@ -208,12 +247,24 @@ const detonateBomb = (
             reason: "destroyed"
         });
     }
+};
 
+const removeHazardsInBombRadius = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    centerTileX: number,
+    centerTileY: number
+): void => {
     for (const [otherHazardId, otherHazard] of Array.from(state.hazards.entries())) {
         const hazardTileX = toTileCenter(otherHazard.x);
         const hazardTileY = toTileCenter(otherHazard.y);
-        if (Math.abs(hazardTileX - centerTileX) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS
-            || Math.abs(hazardTileY - centerTileY) > LEGACY_BOMB_STRUCTURE_TILE_RADIUS) {
+        if (!isWithinTileRadius(
+            hazardTileX,
+            hazardTileY,
+            centerTileX,
+            centerTileY,
+            LEGACY_BOMB_STRUCTURE_TILE_RADIUS
+        )) {
             continue;
         }
         state.hazards.delete(otherHazardId);
@@ -222,6 +273,21 @@ const detonateBomb = (
             reason: "detonated"
         });
     }
+};
+
+const detonateBomb = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    hazardId: string,
+    hazard: RuntimeHazard
+): boolean => {
+    const centerTileX = toTileCenter(hazard.x);
+    const centerTileY = toTileCenter(hazard.y);
+
+    const snapshotDirty = damagePlayersInBombRadius(state, emitter, hazard, centerTileX, centerTileY);
+    removeBuildingsInBombRadius(state, emitter, centerTileX, centerTileY);
+    removeDefensesInBombRadius(state, emitter, centerTileX, centerTileY);
+    removeHazardsInBombRadius(state, emitter, centerTileX, centerTileY);
 
     if (state.hazards.has(hazardId)) {
         state.hazards.delete(hazardId);
@@ -230,6 +296,116 @@ const detonateBomb = (
             reason: "detonated"
         });
     }
+    return snapshotDirty;
+};
+
+const tickInactiveHazard = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    hazardId: string,
+    hazard: RuntimeHazard,
+    deltaMs: number
+): boolean => {
+    if (hazard.active) {
+        return false;
+    }
+    if (hazard.remainingMs === Number.POSITIVE_INFINITY) {
+        return true;
+    }
+    hazard.remainingMs -= deltaMs;
+    if (hazard.remainingMs <= 0) {
+        state.hazards.delete(hazardId);
+        emitter.emit("hazard.remove", {
+            id: hazardId,
+            reason: "expired"
+        });
+        return true;
+    }
+    state.hazards.set(hazardId, hazard);
+    return true;
+};
+
+const triggerProximityHazard = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    hazard: RuntimeHazard
+): boolean => {
+    if (hazard.type !== ITEM_TYPE_MINE && hazard.type !== ITEM_TYPE_DFG) {
+        return false;
+    }
+
+    let snapshotDirty = false;
+    let triggered = false;
+    for (const [playerId, player] of state.players.entries()) {
+        if (!shouldDamagePlayer(hazard, playerId, player.city)) {
+            continue;
+        }
+        if (!intersectsHazardTile(player.x, player.y, hazard.x, hazard.y)) {
+            continue;
+        }
+        if (hazard.type === ITEM_TYPE_MINE) {
+            snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
+        } else {
+            state.players.set(playerId, {
+                ...player,
+                frozenUntil: Date.now() + LEGACY_DFG_FREEZE_MS,
+                frozenBy: "dfg"
+            });
+        }
+        triggered = true;
+        break;
+    }
+    if (!triggered) {
+        return false;
+    }
+    triggerHazardReveal(state, emitter, hazard);
+    return snapshotDirty;
+};
+
+const applyRadiusHazardDamage = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    hazard: RuntimeHazard
+): boolean => {
+    let snapshotDirty = false;
+    const radiusSq = hazard.radius * hazard.radius;
+    for (const [playerId, player] of state.players.entries()) {
+        if (!shouldDamagePlayer(hazard, playerId, player.city)) {
+            continue;
+        }
+        if (distanceSquared({ x: player.x, y: player.y }, { x: hazard.x, y: hazard.y }) > radiusSq) {
+            continue;
+        }
+        snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
+    }
+    return snapshotDirty;
+};
+
+const tickActiveTimedHazard = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    hazardId: string,
+    hazard: RuntimeHazard,
+    deltaMs: number
+): boolean => {
+    if (hazard.remainingMs !== Number.POSITIVE_INFINITY) {
+        hazard.remainingMs -= deltaMs;
+    }
+    if (hazard.remainingMs > 0) {
+        state.hazards.set(hazardId, hazard);
+        return false;
+    }
+
+    if (hazard.type === ITEM_TYPE_BOMB) {
+        return detonateBomb(state, emitter, hazardId, hazard);
+    }
+
+    const snapshotDirty = applyRadiusHazardDamage(state, emitter, hazard);
+    state.hazards.delete(hazardId);
+    emitter.emit("hazard.remove", {
+        id: hazardId,
+        reason: "detonated"
+    });
     return snapshotDirty;
 };
 
@@ -335,80 +511,17 @@ export const tickHazards = (
 ): void => {
     let snapshotDirty = false;
     for (const [hazardId, hazard] of state.hazards.entries()) {
-        if (!hazard.active) {
-            if (hazard.remainingMs !== Number.POSITIVE_INFINITY) {
-                hazard.remainingMs -= deltaMs;
-                if (hazard.remainingMs <= 0) {
-                    state.hazards.delete(hazardId);
-                    emitter.emit("hazard.remove", {
-                        id: hazardId,
-                        reason: "expired"
-                    });
-                    continue;
-                }
-                state.hazards.set(hazardId, hazard);
-            }
+        if (tickInactiveHazard(state, emitter, hazardId, hazard, deltaMs)) {
             continue;
         }
 
-        if (hazard.type === ITEM_TYPE_MINE || hazard.type === ITEM_TYPE_DFG) {
-            let triggered = false;
-            for (const [playerId, player] of state.players.entries()) {
-                if (!shouldDamagePlayer(hazard, playerId, player.city)) {
-                    continue;
-                }
-                if (!intersectsHazardTile(player.x, player.y, hazard.x, hazard.y)) {
-                    continue;
-                }
-                if (hazard.type === ITEM_TYPE_MINE) {
-                    snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
-                } else {
-                    state.players.set(playerId, {
-                        ...player,
-                        frozenUntil: Date.now() + LEGACY_DFG_FREEZE_MS,
-                        frozenBy: "dfg"
-                    });
-                }
-                triggered = true;
-                break;
-            }
-            if (!triggered) {
-                continue;
-            }
-
-            triggerHazardReveal(state, emitter, hazard);
+        const proximityDirty = triggerProximityHazard(state, emitter, hazard);
+        if (proximityDirty || (hazard.type === ITEM_TYPE_MINE || hazard.type === ITEM_TYPE_DFG)) {
+            snapshotDirty = proximityDirty || snapshotDirty;
             continue;
         }
 
-        if (hazard.remainingMs !== Number.POSITIVE_INFINITY) {
-            hazard.remainingMs -= deltaMs;
-        }
-        if (hazard.remainingMs > 0) {
-            state.hazards.set(hazardId, hazard);
-            continue;
-        }
-
-        if (hazard.type === ITEM_TYPE_BOMB) {
-            snapshotDirty = detonateBomb(state, emitter, hazardId, hazard) || snapshotDirty;
-            continue;
-        }
-
-        const radiusSq = hazard.radius * hazard.radius;
-        for (const [playerId, player] of state.players.entries()) {
-            if (!shouldDamagePlayer(hazard, playerId, player.city)) {
-                continue;
-            }
-            if (distanceSquared({ x: player.x, y: player.y }, { x: hazard.x, y: hazard.y }) > radiusSq) {
-                continue;
-            }
-            snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
-        }
-
-        state.hazards.delete(hazardId);
-        emitter.emit("hazard.remove", {
-            id: hazardId,
-            reason: "detonated"
-        });
+        snapshotDirty = tickActiveTimedHazard(state, emitter, hazardId, hazard, deltaMs) || snapshotDirty;
     }
     if (snapshotDirty) {
         emitPlayersSnapshot(state, emitter);

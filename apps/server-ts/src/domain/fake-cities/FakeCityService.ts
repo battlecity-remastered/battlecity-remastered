@@ -349,6 +349,82 @@ const buildCcOccupiedTiles = (
     return occupied;
 };
 
+type HazardCandidate = {
+    tileX: number;
+    tileY: number;
+};
+
+type HazardCandidateCollectionContext = {
+    state: RuntimeState;
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+    occupiedTiles: Set<string>;
+    placedTiles: Set<string>;
+    candidateKeys: Set<string>;
+    candidates: HazardCandidate[];
+};
+
+const collectHazardCandidates = (
+    context: HazardCandidateCollectionContext,
+    paddingTiles: number
+): void => {
+    const paddedMinX = clampTile(context.minX - paddingTiles);
+    const paddedMaxX = clampTile(context.maxX + paddingTiles);
+    const paddedMinY = clampTile(context.minY - paddingTiles);
+    const paddedMaxY = clampTile(context.maxY + paddingTiles);
+    for (let tileX = paddedMinX; tileX <= paddedMaxX; tileX += 1) {
+        for (let tileY = paddedMinY; tileY <= paddedMaxY; tileY += 1) {
+            const tileKey = `${tileX}_${tileY}`;
+            if (context.candidateKeys.has(tileKey)) {
+                continue;
+            }
+            if (context.occupiedTiles.has(tileKey) || context.placedTiles.has(tileKey)) {
+                continue;
+            }
+            if (context.state.blockingTiles.has(`${tileX},${tileY}`)) {
+                continue;
+            }
+            context.candidateKeys.add(tileKey);
+            context.candidates.push({ tileX, tileY });
+        }
+    }
+};
+
+const populateHazardCandidates = (
+    context: HazardCandidateCollectionContext,
+    count: number
+): void => {
+    collectHazardCandidates(context, 0);
+    for (let padding = 2; context.candidates.length < count && padding <= 10; padding += 2) {
+        collectHazardCandidates(context, padding);
+    }
+};
+
+const shouldApplyDefenseAngle = (type: "mine" | "turret" | "plasma" | "sleeper" | "dfg"): boolean => {
+    return type === "turret" || type === "plasma" || type === "sleeper";
+};
+
+const buildRandomHazardEntry = (
+    candidate: HazardCandidate,
+    type: "mine" | "turret" | "plasma" | "sleeper" | "dfg",
+    baseTileX: number,
+    baseTileY: number
+): FakeCityDefenseEntry => {
+    const offsetX = 0.1 + (Math.random() * 0.8);
+    const offsetY = 0.1 + (Math.random() * 0.8);
+    const entry: FakeCityDefenseEntry = {
+        type,
+        dx: (candidate.tileX - baseTileX) + offsetX,
+        dy: (candidate.tileY - baseTileY) + offsetY
+    };
+    if (shouldApplyDefenseAngle(type)) {
+        entry.angle = Math.floor(Math.random() * 32);
+    }
+    return entry;
+};
+
 const generateRandomHazards = (
     state: RuntimeState,
     runtimeConfig: RuntimeConfig,
@@ -375,39 +451,21 @@ const generateRandomHazards = (
         occupiedTiles.add(occupied);
     }
 
-    const placed = new Set<string>();
+    const placedTiles = new Set<string>();
     const candidateKeys = new Set<string>();
     const candidates: Array<{ tileX: number; tileY: number }> = [];
-
-    const collectCandidates = (paddingTiles: number): void => {
-        const paddedMinX = clampTile(minX - paddingTiles);
-        const paddedMaxX = clampTile(maxX + paddingTiles);
-        const paddedMinY = clampTile(minY - paddingTiles);
-        const paddedMaxY = clampTile(maxY + paddingTiles);
-        for (let tileX = paddedMinX; tileX <= paddedMaxX; tileX += 1) {
-            for (let tileY = paddedMinY; tileY <= paddedMaxY; tileY += 1) {
-                const tileKey = `${tileX}_${tileY}`;
-                if (candidateKeys.has(tileKey)) {
-                    continue;
-                }
-                if (occupiedTiles.has(tileKey) || placed.has(tileKey)) {
-                    continue;
-                }
-                if (state.blockingTiles.has(`${tileX},${tileY}`)) {
-                    continue;
-                }
-                candidateKeys.add(tileKey);
-                candidates.push({ tileX, tileY });
-            }
-        }
+    const candidateContext: HazardCandidateCollectionContext = {
+        state,
+        minX,
+        maxX,
+        minY,
+        maxY,
+        occupiedTiles,
+        placedTiles,
+        candidateKeys,
+        candidates
     };
-
-    collectCandidates(0);
-    let padding = 2;
-    while (candidates.length < count && padding <= 10) {
-        collectCandidates(padding);
-        padding += 2;
-    }
+    populateHazardCandidates(candidateContext, count);
 
     shuffleInPlace(candidates);
 
@@ -416,18 +474,8 @@ const generateRandomHazards = (
         if (hazards.length >= count) {
             break;
         }
-        const offsetX = 0.1 + (Math.random() * 0.8);
-        const offsetY = 0.1 + (Math.random() * 0.8);
-        const entry: FakeCityDefenseEntry = {
-            type,
-            dx: (candidate.tileX - baseTileX) + offsetX,
-            dy: (candidate.tileY - baseTileY) + offsetY
-        };
-        if (type === "turret" || type === "plasma" || type === "sleeper") {
-            entry.angle = Math.floor(Math.random() * 32);
-        }
-        hazards.push(entry);
-        placed.add(`${candidate.tileX}_${candidate.tileY}`);
+        hazards.push(buildRandomHazardEntry(candidate, type, baseTileX, baseTileY));
+        placedTiles.add(`${candidate.tileX}_${candidate.tileY}`);
     }
 
     return hazards;
@@ -442,6 +490,181 @@ const resolveDefenseItemType = (type: number | string | undefined): number | nul
     }
     const normalized = String(type).toLowerCase();
     return DEFENSE_TYPE_BY_KEY[normalized] ?? null;
+};
+
+type ResolvedDefensePlacement = {
+    column: number;
+    row: number;
+    tileKey: string;
+    worldX: number;
+    worldY: number;
+    normalizedType: number | string;
+    orientation: number;
+};
+
+type DefenseDeploymentContext = {
+    state: RuntimeState;
+    runtimeConfig: RuntimeConfig;
+    emitter: RuntimeEmitter;
+    cityId: number;
+    ownerId: string;
+    baseTileX: number;
+    baseTileY: number;
+    mapMaxTile: number;
+    layoutOccupied: Set<string>;
+    placedTiles: Set<string>;
+    defenseIds: string[];
+    hazardIds: string[];
+};
+
+const HAZARD_DEFENSE_TYPES = new Set(["mine", "mines", "minefield", "dfg"]);
+
+const resolveDefensePlacement = (
+    defense: FakeCityDefenseEntry,
+    context: DefenseDeploymentContext
+): ResolvedDefensePlacement | null => {
+    if (defense.type === undefined || defense.type === null) {
+        return null;
+    }
+    const dx = asFiniteNumber(defense.dx, Number.NaN);
+    const dy = asFiniteNumber(defense.dy, Number.NaN);
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) {
+        return null;
+    }
+    const tileX = context.baseTileX + dx;
+    const tileY = context.baseTileY + dy;
+    if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
+        return null;
+    }
+    if (tileX < 0 || tileY < 0 || tileX > context.mapMaxTile || tileY > context.mapMaxTile) {
+        return null;
+    }
+
+    const column = Math.floor(tileX);
+    const row = Math.floor(tileY);
+    const normalizedType = typeof defense.type === "string" ? defense.type.toLowerCase() : defense.type;
+    const orientation = Math.max(0, Math.min(31, Math.floor(asFiniteNumber(defense.angle, 0)) % 32));
+    return {
+        column,
+        row,
+        tileKey: `${column}_${row}`,
+        worldX: tileX * context.runtimeConfig.tileSize,
+        worldY: tileY * context.runtimeConfig.tileSize,
+        normalizedType,
+        orientation
+    };
+};
+
+const canPlaceDefenseAtTile = (
+    defense: FakeCityDefenseEntry,
+    tileKey: string,
+    layoutOccupied: Set<string>,
+    placedTiles: Set<string>
+): boolean => {
+    if (defense.allowOverlap === true) {
+        return true;
+    }
+    return !layoutOccupied.has(tileKey) && !placedTiles.has(tileKey);
+};
+
+const isHazardDefenseType = (normalizedType: number | string): normalizedType is string => {
+    return typeof normalizedType === "string" && HAZARD_DEFENSE_TYPES.has(normalizedType);
+};
+
+const spawnFakeCityHazard = (
+    context: DefenseDeploymentContext,
+    defense: FakeCityDefenseEntry,
+    placement: ResolvedDefensePlacement
+): void => {
+    const normalizedType = placement.normalizedType;
+    if (!isHazardDefenseType(normalizedType)) {
+        return;
+    }
+    context.state.seq += 1;
+    const hazard: RuntimeHazard = {
+        id: defense.id ?? `fake_hazard_${context.cityId}_${context.state.seq}`,
+        ownerId: context.ownerId,
+        cityId: context.cityId,
+        type: normalizedType === "dfg" ? ITEM_TYPE_DFG : ITEM_TYPE_MINE,
+        x: placement.worldX,
+        y: placement.worldY,
+        radius: context.runtimeConfig.tileSize,
+        damage: normalizedType === "dfg" ? context.runtimeConfig.hazardDefaultDamage : 19,
+        remainingMs: Number.POSITIVE_INFINITY,
+        armed: true,
+        active: true
+    };
+    context.state.hazards.set(hazard.id, hazard);
+    context.hazardIds.push(hazard.id);
+    context.placedTiles.add(placement.tileKey);
+    context.emitter.emit("hazard.spawn", {
+        id: hazard.id,
+        cityId: context.cityId,
+        type: hazard.type,
+        position: { x: hazard.x, y: hazard.y },
+        radius: hazard.radius,
+        armed: true
+    });
+};
+
+const spawnFakeCityDefense = (
+    context: DefenseDeploymentContext,
+    defense: FakeCityDefenseEntry,
+    placement: ResolvedDefensePlacement,
+    itemType: number
+): void => {
+    context.state.seq += 1;
+    const maxHealth = DEFENSE_MAX_HEALTH[itemType] ?? 20;
+    const runtimeDefense: RuntimeDefense = {
+        id: defense.id ?? `fake_defense_${context.cityId}_${context.state.seq}`,
+        cityId: context.cityId,
+        type: itemType,
+        tileX: placement.column,
+        tileY: placement.row,
+        health: maxHealth,
+        maxHealth,
+        orientation: placement.orientation,
+        nextShotAt: 0
+    };
+    context.state.defenses.set(runtimeDefense.id, runtimeDefense);
+    context.defenseIds.push(runtimeDefense.id);
+    context.placedTiles.add(placement.tileKey);
+    const basePayload = {
+        id: runtimeDefense.id,
+        cityId: context.cityId,
+        type: runtimeDefense.type,
+        tileX: runtimeDefense.tileX,
+        tileY: runtimeDefense.tileY,
+        health: runtimeDefense.health,
+        maxHealth: runtimeDefense.maxHealth
+    };
+    const payload: KnownEventPayloadByType["defense.spawn"] =
+        typeof runtimeDefense.orientation === "number" && Number.isFinite(runtimeDefense.orientation)
+            ? { ...basePayload, orientation: runtimeDefense.orientation }
+            : basePayload;
+    context.emitter.emit("defense.spawn", payload);
+};
+
+const deploySingleDefense = (
+    context: DefenseDeploymentContext,
+    defense: FakeCityDefenseEntry
+): void => {
+    const placement = resolveDefensePlacement(defense, context);
+    if (!placement) {
+        return;
+    }
+    if (!canPlaceDefenseAtTile(defense, placement.tileKey, context.layoutOccupied, context.placedTiles)) {
+        return;
+    }
+    if (isHazardDefenseType(placement.normalizedType)) {
+        spawnFakeCityHazard(context, defense, placement);
+        return;
+    }
+    const itemType = resolveDefenseItemType(placement.normalizedType);
+    if (itemType === null) {
+        return;
+    }
+    spawnFakeCityDefense(context, defense, placement, itemType);
 };
 
 const deployDefenses = (
@@ -461,102 +684,23 @@ const deployDefenses = (
         return { defenseIds, hazardIds };
     }
 
-    const mapMaxTile = mapMaxTileFromConfig(runtimeConfig);
-    const layoutOccupied = createLayoutOccupiedSet(layout, baseTileX, baseTileY);
-    const placedTiles = new Set<string>();
+    const context: DefenseDeploymentContext = {
+        state,
+        runtimeConfig,
+        emitter,
+        cityId,
+        ownerId,
+        baseTileX,
+        baseTileY,
+        mapMaxTile: mapMaxTileFromConfig(runtimeConfig),
+        layoutOccupied: createLayoutOccupiedSet(layout, baseTileX, baseTileY),
+        placedTiles: new Set<string>(),
+        defenseIds,
+        hazardIds
+    };
 
     for (const defense of defenses) {
-        const rawType = defense.type;
-        const dx = asFiniteNumber(defense.dx, Number.NaN);
-        const dy = asFiniteNumber(defense.dy, Number.NaN);
-        if (!Number.isFinite(dx) || !Number.isFinite(dy) || rawType === undefined || rawType === null) {
-            continue;
-        }
-
-        const tileX = baseTileX + dx;
-        const tileY = baseTileY + dy;
-        if (!Number.isFinite(tileX) || !Number.isFinite(tileY)) {
-            continue;
-        }
-        if (tileX < 0 || tileY < 0 || tileX > mapMaxTile || tileY > mapMaxTile) {
-            continue;
-        }
-
-        const column = Math.floor(tileX);
-        const row = Math.floor(tileY);
-        const tileKey = `${column}_${row}`;
-        if (defense.allowOverlap !== true && (layoutOccupied.has(tileKey) || placedTiles.has(tileKey))) {
-            continue;
-        }
-
-        const worldX = tileX * runtimeConfig.tileSize;
-        const worldY = tileY * runtimeConfig.tileSize;
-        const normalizedType = typeof rawType === "string" ? rawType.toLowerCase() : rawType;
-
-        if (normalizedType === "mine" || normalizedType === "mines" || normalizedType === "minefield" || normalizedType === "dfg") {
-            state.seq += 1;
-            const hazard: RuntimeHazard = {
-                id: defense.id ?? `fake_hazard_${cityId}_${state.seq}`,
-                ownerId,
-                cityId,
-                type: normalizedType === "dfg" ? ITEM_TYPE_DFG : ITEM_TYPE_MINE,
-                x: worldX,
-                y: worldY,
-                radius: runtimeConfig.tileSize,
-                damage: normalizedType === "dfg" ? runtimeConfig.hazardDefaultDamage : 19,
-                remainingMs: Number.POSITIVE_INFINITY,
-                armed: true,
-                active: true
-            };
-            state.hazards.set(hazard.id, hazard);
-            hazardIds.push(hazard.id);
-            placedTiles.add(tileKey);
-            emitter.emit("hazard.spawn", {
-                id: hazard.id,
-                cityId,
-                type: hazard.type,
-                position: { x: hazard.x, y: hazard.y },
-                radius: hazard.radius,
-                armed: true
-            });
-            continue;
-        }
-
-        const itemType = resolveDefenseItemType(normalizedType);
-        if (itemType === null) {
-            continue;
-        }
-
-        state.seq += 1;
-        const maxHealth = DEFENSE_MAX_HEALTH[itemType] ?? 20;
-        const runtimeDefense: RuntimeDefense = {
-            id: defense.id ?? `fake_defense_${cityId}_${state.seq}`,
-            cityId,
-            type: itemType,
-            tileX: column,
-            tileY: row,
-            health: maxHealth,
-            maxHealth,
-            orientation: Math.max(0, Math.min(31, Math.floor(asFiniteNumber(defense.angle, 0)) % 32)),
-            nextShotAt: 0
-        };
-        state.defenses.set(runtimeDefense.id, runtimeDefense);
-        defenseIds.push(runtimeDefense.id);
-        placedTiles.add(tileKey);
-        const basePayload = {
-            id: runtimeDefense.id,
-            cityId,
-            type: runtimeDefense.type,
-            tileX: runtimeDefense.tileX,
-            tileY: runtimeDefense.tileY,
-            health: runtimeDefense.health,
-            maxHealth: runtimeDefense.maxHealth
-        };
-        const payload: KnownEventPayloadByType["defense.spawn"] =
-            typeof runtimeDefense.orientation === "number" && Number.isFinite(runtimeDefense.orientation)
-                ? { ...basePayload, orientation: runtimeDefense.orientation }
-                : basePayload;
-        emitter.emit("defense.spawn", payload);
+        deploySingleDefense(context, defense);
     }
 
     return { defenseIds, hazardIds };
@@ -869,6 +1013,79 @@ export const markFakeCityCooldown = (
     state.fakeCityEvaluationAt = 0;
 };
 
+const countActiveFakeCities = (state: RuntimeState): number => {
+    return Array.from(state.fakeCities.values()).filter((city) => city.active).length;
+};
+
+const tryActivateSoloCity = (
+    state: RuntimeState,
+    runtimeConfig: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    configured: FakeCityConfigEntry[],
+    now: number
+): number | null => {
+    if (countActiveFakeCities(state) !== 0) {
+        return null;
+    }
+    const soloCity = resolveSoloPlayerCity(state);
+    if (soloCity === null) {
+        return null;
+    }
+    const nearby = nearestConfiguredCity(configured, soloCity, state, now);
+    if (!nearby || !spawnFakeCity(state, runtimeConfig, emitter, nearby, now)) {
+        return null;
+    }
+    return toFiniteCityId(nearby.cityId);
+};
+
+const resolveDesiredActiveFakeCities = (
+    state: RuntimeState,
+    humanCount: number,
+    minPlayers: number,
+    maxActive: number
+): number => {
+    const underThreshold = humanCount < minPlayers;
+    let desired = underThreshold ? maxActive : 0;
+    const orbableCount = activeOrbableFakeCityCount(state);
+    if (orbableCount < MIN_ORBABLE_CITIES) {
+        const needed = MIN_ORBABLE_CITIES - orbableCount;
+        desired = Math.max(desired, Math.min(needed, maxActive));
+    }
+    return desired;
+};
+
+const appendActivatedCityIds = (target: number[], createdIds: number[]): void => {
+    for (const cityId of createdIds) {
+        if (target.includes(cityId)) {
+            continue;
+        }
+        target.push(cityId);
+    }
+};
+
+const resolveCitiesToDeactivate = (
+    state: RuntimeState,
+    activeCount: number,
+    desired: number
+): number[] => {
+    const toRemove = activeCount - desired;
+    return Array.from(state.fakeCities.values())
+        .filter((fakeCity) => fakeCity.active)
+        .map((fakeCity) => fakeCity.cityId)
+        .sort((a, b) => b - a)
+        .slice(0, toRemove);
+};
+
+const appendRemovedCityIds = (
+    deactivated: number[],
+    activeIds: number[],
+    removed: number
+): void => {
+    for (let index = 0; index < Math.min(removed, activeIds.length); index += 1) {
+        deactivated.push(activeIds[index] as number);
+    }
+};
+
 export const tickFakeCityLifecycle = (
     state: RuntimeState,
     runtimeConfig: RuntimeConfig,
@@ -893,49 +1110,24 @@ export const tickFakeCityLifecycle = (
     const maxActive = Math.min(configured.length, Math.max(0, Math.floor(asFiniteNumber(config.maxActive, configured.length))));
     const minPlayers = Math.max(LOW_PLAYER_THRESHOLD, Math.floor(asFiniteNumber(config.minPlayers, LOW_PLAYER_THRESHOLD)));
 
-    const activeCountBefore = Array.from(state.fakeCities.values()).filter((city) => city.active).length;
-    if (humanCount === 1 && activeCountBefore === 0) {
-        const soloCity = resolveSoloPlayerCity(state);
-        if (soloCity !== null) {
-            const nearby = nearestConfiguredCity(configured, soloCity, state, now);
-            if (nearby && spawnFakeCity(state, runtimeConfig, emitter, nearby, now)) {
-                const cityId = toFiniteCityId(nearby.cityId);
-                if (cityId !== null) {
-                    activated.push(cityId);
-                }
-            }
+    if (humanCount === 1) {
+        const soloCityId = tryActivateSoloCity(state, runtimeConfig, emitter, configured, now);
+        if (soloCityId !== null) {
+            activated.push(soloCityId);
         }
     }
 
-    const activeCount = Array.from(state.fakeCities.values()).filter((city) => city.active).length;
-    const underThreshold = humanCount < minPlayers;
-    let desired = underThreshold ? maxActive : 0;
-
-    const orbableCount = activeOrbableFakeCityCount(state);
-    if (orbableCount < MIN_ORBABLE_CITIES) {
-        const needed = MIN_ORBABLE_CITIES - orbableCount;
-        desired = Math.max(desired, Math.min(needed, maxActive));
-    }
+    const activeCount = countActiveFakeCities(state);
+    const desired = resolveDesiredActiveFakeCities(state, humanCount, minPlayers, maxActive);
 
     if (desired > activeCount) {
         const createdIds = spawnFakeCities(state, runtimeConfig, emitter, now, desired - activeCount, configured);
-        for (const cityId of createdIds) {
-            if (activated.includes(cityId)) {
-                continue;
-            }
-            activated.push(cityId);
-        }
-    } else if (desired < activeCount) {
-        const toRemove = activeCount - desired;
-        const activeIds = Array.from(state.fakeCities.values())
-            .filter((fakeCity) => fakeCity.active)
-            .map((fakeCity) => fakeCity.cityId)
-            .sort((a, b) => b - a)
-            .slice(0, toRemove);
-        const removed = removeFakeCities(state, emitter, toRemove);
-        for (let index = 0; index < Math.min(removed, activeIds.length); index += 1) {
-            deactivated.push(activeIds[index] as number);
-        }
+        appendActivatedCityIds(activated, createdIds);
+    }
+    if (desired < activeCount) {
+        const activeIds = resolveCitiesToDeactivate(state, activeCount, desired);
+        const removed = removeFakeCities(state, emitter, activeCount - desired);
+        appendRemovedCityIds(deactivated, activeIds, removed);
     }
 
     return { activated, deactivated };

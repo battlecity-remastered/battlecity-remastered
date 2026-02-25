@@ -37,16 +37,7 @@ const hasResearchRequirementSatisfied = (
     }
 
     const completed = state.research.get(cityId)?.completed ?? [];
-    if (completed.includes(requiredResearch)) {
-        return true;
-    }
-
-    for (const building of state.buildings.values()) {
-        if (building.cityId === cityId && building.type === requiredResearch) {
-            return true;
-        }
-    }
-    return false;
+    return completed.includes(requiredResearch);
 };
 
 const overlapsFootprint = (
@@ -133,6 +124,7 @@ const hasBlockingDefenseFootprint = (
 export const canBuildInCity = (
     state: RuntimeState,
     cityId: number,
+    buildingType: number,
     tileX: number,
     tileY: number,
     config: RuntimeConfig
@@ -150,6 +142,11 @@ export const canBuildInCity = (
         return "collision";
     }
 
+    // Command centers are chain roots and bypass distance checks in legacy runtime.
+    if (Math.floor(buildingType) === 0) {
+        return "ok";
+    }
+
     const cityBuildings = Array.from(state.buildings.values()).filter((building) => {
         return building.cityId === cityId;
     });
@@ -158,10 +155,11 @@ export const canBuildInCity = (
         return "ok";
     }
 
+    const maxDistanceSq = config.maxBuildingChainDistanceTiles * config.maxBuildingChainDistanceTiles;
     const hasChainAnchor = cityBuildings.some((building) => {
-        const dx = Math.abs(building.tileX - tileX);
-        const dy = Math.abs(building.tileY - tileY);
-        return Math.max(dx, dy) <= config.maxBuildingChainDistanceTiles;
+        const dx = building.tileX - tileX;
+        const dy = building.tileY - tileY;
+        return (dx * dx) + (dy * dy) <= maxDistanceSq;
     });
 
     return hasChainAnchor ? "ok" : "too_far";

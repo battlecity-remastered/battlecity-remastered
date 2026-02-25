@@ -528,12 +528,18 @@ test("building placement enforces research, chain, collision and budget rules", 
     }));
     assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "build_too_far");
 
+    const city = runtime.getReadonlyState().cities.get(1);
+    assert.ok(city);
+    if (city) {
+        city.cash = 0;
+    }
+
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 7, {
         ownerId: "p1",
         cityId: 1,
         type: 300,
-        tileX: 12,
-        tileY: 12
+        tileX: 14,
+        tileY: 14
     }));
     assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "insufficient_funds");
 
@@ -541,8 +547,11 @@ test("building placement enforces research, chain, collision and budget rules", 
     assert.ok(rejected.some((entry) => entry.reason === "InsufficientFunds"));
 });
 
-test("building placement allows factory when matching research building already exists", () => {
-    const { runtime, broadcast, direct } = makeHarness({ buildingCost: 10 });
+test("factory placement waits for research completion after research building population is full", () => {
+    const { runtime, broadcast, direct } = makeHarness({
+        buildingCost: 10,
+        researchDurationMs: 250
+    });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
 
@@ -557,7 +566,31 @@ test("building placement allows factory when matching research building already 
         ownerId: "p1",
         cityId: 1,
         type: 107,
-        tileX: 9,
+        tileX: 12,
+        tileY: 8
+    }));
+    assert.equal((direct.at(-1)?.event.payload as { reason?: string } | undefined)?.reason, "research_required");
+
+    const researchBuilding = broadcast
+        .filter((event) => event.type === "building.placed")
+        .map((event) => event.payload as { id: string; type: number })
+        .find((payload) => payload.type === 407);
+    assert.ok(researchBuilding);
+    const research = runtime.getReadonlyState().buildings.get(researchBuilding?.id ?? "");
+    assert.ok(research);
+    if (research) {
+        research.population = 50;
+    }
+
+    for (let i = 0; i < 4; i += 1) {
+        runtime.tickBullets();
+    }
+
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 4, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 107,
+        tileX: 12,
         tileY: 8
     }));
 
@@ -566,7 +599,6 @@ test("building placement allows factory when matching research building already 
         .map((event) => event.payload as { type: number });
     assert.ok(placedBuildings.some((payload) => payload.type === 407));
     assert.ok(placedBuildings.some((payload) => payload.type === 107));
-    assert.notEqual((direct.at(-1)?.event.payload as { reason?: string } | undefined)?.reason, "research_required");
 });
 
 test("building placement rejects terrain-blocked housing footprint", () => {
@@ -604,6 +636,29 @@ test("building placement uses placement blocking set when terrain is passable fo
 
     assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "building_collision");
     assert.equal(broadcast.filter((event) => event.type === "building.placed").length, 0);
+});
+
+test("building placement chain distance uses euclidean radius like legacy server", () => {
+    const { runtime, broadcast, direct } = makeHarness({ buildingCost: 10 });
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 300,
+        tileX: 10,
+        tileY: 10
+    }));
+    runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 3, {
+        ownerId: "p1",
+        cityId: 1,
+        type: 300,
+        tileX: 30,
+        tileY: 30
+    }));
+
+    assert.equal((direct.at(-1)?.event.payload as { reason: string }).reason, "build_too_far");
+    assert.equal(broadcast.filter((event) => event.type === "building.placed").length, 1);
 });
 
 test("building placement rejects overlapping footprint even with different top-left tile", () => {
@@ -1270,7 +1325,7 @@ test("medkit use heals player and consumes inventory", () => {
     assert.equal(rejected.length, 0);
 });
 
-test("hospital building heals players over ticks", () => {
+test("hospital building does not passively heal players", () => {
     const { runtime, broadcast } = makeHarness();
 
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 3 }));
@@ -1305,7 +1360,10 @@ test("hospital building heals players over ticks", () => {
     runtime.tickBullets();
 
     const healthEvents = broadcast.filter((event) => event.type === "player.health");
-    assert.ok(healthEvents.some((event) => (event.payload as { source?: string }).source === "hospital"));
+    assert.equal(healthEvents.some((event) => (event.payload as { source?: string }).source === "hospital"), false);
+    const target = runtime.getReadonlyState().players.get("target");
+    assert.ok(target);
+    assert.equal(target?.health, 80);
 });
 
 test("hazard deploy detonates and damages nearby players", () => {

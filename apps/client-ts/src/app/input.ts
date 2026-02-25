@@ -1,4 +1,5 @@
 import type { ClientState } from "./state.js";
+import { isInteractiveKeyboardTarget } from "../input/interactive-target.js";
 
 const asLower = (value: string): string => value.toLowerCase();
 
@@ -48,20 +49,6 @@ const isControlEvent = (event: KeyboardEvent): boolean => {
     }
     const code = asLower(event.code);
     return code === "controlleft" || code === "controlright";
-};
-
-const isInteractiveTarget = (event: KeyboardEvent): boolean => {
-    const target = event.target as Element | null;
-    if (!target) {
-        return false;
-    }
-    const tag = target.tagName?.toLowerCase();
-    if (tag === "input" || tag === "textarea" || tag === "select") {
-        return true;
-    }
-    return typeof HTMLElement !== "undefined"
-        && target instanceof HTMLElement
-        && target.isContentEditable;
 };
 
 const outputBuildings = (state: ClientState): void => {
@@ -115,7 +102,7 @@ const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: bo
 
 export const registerInputHandlers = (state: ClientState): (() => void) => {
     const onKeyDown = (event: KeyboardEvent): void => {
-        if (isInteractiveTarget(event)) {
+        if (isInteractiveKeyboardTarget(event)) {
             return;
         }
         setControlFromEvent(state, event, true);

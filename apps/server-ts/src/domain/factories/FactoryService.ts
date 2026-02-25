@@ -1,5 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
-import { rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
+import { rejectResult, type CommandResult, type RuntimeBuilding, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 
 const POPULATION_MAX_NON_HOUSE = 50;
@@ -85,6 +85,86 @@ const resolveCityOutstandingItemCount = (state: RuntimeState, cityId: number, it
         + resolveDefenseCount(state, cityId, itemType);
 };
 
+const isFactoryBuildingType = (type: number): boolean => {
+    return Math.floor(type / 100) === 1;
+};
+
+const addActiveFactoryItemType = (
+    activeFactoryItemTypes: Map<number, Set<number>>,
+    cityId: number,
+    itemType: number
+): void => {
+    const cityItems = activeFactoryItemTypes.get(cityId) ?? new Set<number>();
+    cityItems.add(itemType);
+    activeFactoryItemTypes.set(cityId, cityItems);
+};
+
+const resolveFactoryCap = (
+    config: RuntimeConfig,
+    buildingType: number
+): number => {
+    const buildingLimit = FACTORY_ITEM_LIMITS[buildingType] ?? config.factoryStockCap;
+    return Math.max(0, Math.min(config.factoryStockCap, buildingLimit));
+};
+
+const tryProduceFactoryStock = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    cityId: number,
+    buildingType: number,
+    itemType: number
+): void => {
+    const cityStock = ensureCityStock(state, cityId);
+    const current = cityStock.get(itemType) ?? 0;
+    const cap = resolveFactoryCap(config, buildingType);
+    const outstanding = resolveCityOutstandingItemCount(state, cityId, itemType);
+    if (outstanding >= cap) {
+        return;
+    }
+
+    const next = current + 1;
+    cityStock.set(itemType, next);
+    state.factoryStock.set(cityId, cityStock);
+    emitter.emit("factory.stock", toPayload(cityId, itemType, next));
+};
+
+const processFactoryBuilding = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    activeFactoryItemTypes: Map<number, Set<number>>,
+    building: RuntimeBuilding
+): void => {
+    if (!isFactoryBuildingType(building.type)) {
+        return;
+    }
+    const cityId = building.cityId;
+    const itemType = building.type % 100;
+    addActiveFactoryItemType(activeFactoryItemTypes, cityId, itemType);
+    if (building.population < POPULATION_MAX_NON_HOUSE) {
+        return;
+    }
+    tryProduceFactoryStock(state, config, emitter, cityId, building.type, itemType);
+};
+
+const clearInactiveFactoryStock = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    activeFactoryItemTypes: Map<number, Set<number>>
+): void => {
+    for (const [cityId, cityStock] of state.factoryStock.entries()) {
+        const cityItems = activeFactoryItemTypes.get(cityId) ?? new Set<number>();
+        for (const [itemType, stock] of cityStock.entries()) {
+            if (stock <= 0 || cityItems.has(itemType)) {
+                continue;
+            }
+            cityStock.set(itemType, 0);
+            emitter.emit("factory.stock", toPayload(cityId, itemType, 0));
+        }
+    }
+};
+
 export const collectFactoryStock = (
     state: RuntimeState,
     cityId: number,
@@ -133,43 +213,8 @@ export const tickFactories = (
     const activeFactoryItemTypes = new Map<number, Set<number>>();
 
     for (const building of state.buildings.values()) {
-        const family = Math.floor(building.type / 100);
-        if (family !== 1) {
-            continue;
-        }
-        const cityId = building.cityId;
-        const itemType = building.type % 100;
-        const cityItems = activeFactoryItemTypes.get(cityId) ?? new Set<number>();
-        cityItems.add(itemType);
-        activeFactoryItemTypes.set(cityId, cityItems);
-
-        if (building.population < POPULATION_MAX_NON_HOUSE) {
-            continue;
-        }
-
-        const cityStock = ensureCityStock(state, cityId);
-        const current = cityStock.get(itemType) ?? 0;
-        const buildingLimit = FACTORY_ITEM_LIMITS[building.type] ?? config.factoryStockCap;
-        const cap = Math.max(0, Math.min(config.factoryStockCap, buildingLimit));
-        const outstanding = resolveCityOutstandingItemCount(state, cityId, itemType);
-        if (outstanding >= cap) {
-            continue;
-        }
-
-        const next = current + 1;
-        cityStock.set(itemType, next);
-        state.factoryStock.set(cityId, cityStock);
-        emitter.emit("factory.stock", toPayload(cityId, itemType, next));
+        processFactoryBuilding(state, config, emitter, activeFactoryItemTypes, building);
     }
 
-    for (const [cityId, cityStock] of state.factoryStock.entries()) {
-        const cityItems = activeFactoryItemTypes.get(cityId) ?? new Set<number>();
-        for (const [itemType, stock] of cityStock.entries()) {
-            if (stock <= 0 || cityItems.has(itemType)) {
-                continue;
-            }
-            cityStock.set(itemType, 0);
-            emitter.emit("factory.stock", toPayload(cityId, itemType, 0));
-        }
-    }
+    clearInactiveFactoryStock(state, emitter, activeFactoryItemTypes);
 };

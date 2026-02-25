@@ -8,12 +8,7 @@ const FUNCTION_START_PATTERNS = [
     /(?:public|private|protected)?\s*(?:readonly\s+)?(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g
 ];
 const DECISION_REGEX = /\b(if|else\s+if|for|while|switch|case|catch)\b|\?|&&|\|\|/g;
-const FILE_MAX_OVERRIDES = {
-    "apps/client-ts/src/render/scene.ts": 50,
-    "apps/client-ts/src/ui/options/OptionsModal.ts": 30,
-    "apps/client-ts/src/render/effects/EffectsRenderer.ts": 25,
-    "apps/client-ts/src/render/items/ItemRenderer.ts": 20
-};
+const FILE_MAX_OVERRIDES = {};
 
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });

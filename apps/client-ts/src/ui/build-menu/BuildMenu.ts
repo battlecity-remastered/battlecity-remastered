@@ -143,40 +143,6 @@ const resolveBuildUnlockStates = (state: ClientState): Map<number, number> => {
         }
     }
 
-    const queue: number[] = [];
-    const queuedTypes = new Set<number>();
-    for (const [type, unlockState] of unlockStates.entries()) {
-        if (unlockState !== HAS_BUILT) {
-            continue;
-        }
-        queue.push(type);
-        queuedTypes.add(type);
-    }
-
-    while (queue.length > 0) {
-        const parentType = queue.shift();
-        if (parentType === undefined) {
-            continue;
-        }
-        const children = CHILDREN_BY_PARENT.get(parentType);
-        if (!children) {
-            continue;
-        }
-        for (const child of children) {
-            const current = unlockStates.get(child.type) ?? CANT_BUILD;
-            if (current === HAS_BUILT) {
-                if (!queuedTypes.has(child.type)) {
-                    queue.push(child.type);
-                    queuedTypes.add(child.type);
-                }
-                continue;
-            }
-            if (current === CANT_BUILD) {
-                unlockStates.set(child.type, CAN_BUILD);
-            }
-        }
-    }
-
     const research = state.research.get(state.local.city);
     const applyResearchState = (researchType: number, nextState: number): void => {
         const children = CHILDREN_BY_PARENT.get(researchType);
@@ -390,17 +356,12 @@ const createMenuRow = (
     return row;
 };
 
-export const createBuildMenu = (
-    state: ClientState,
-    root: HTMLElement | null = typeof document === "undefined" ? null : document.body
-): BuildMenu => {
-    if (!root || typeof document === "undefined") {
-        return {
-            render: () => {},
-            dispose: () => {}
-        };
-    }
+type BuildMenuDom = {
+    panel: HTMLDivElement;
+    list: HTMLDivElement;
+};
 
+const createBuildMenuDom = (root: HTMLElement): BuildMenuDom => {
     const panel = document.createElement("div");
     panel.setAttribute("data-ui", "build-menu");
     panel.style.position = "fixed";
@@ -420,80 +381,134 @@ export const createBuildMenu = (
     panel.appendChild(list);
     root.appendChild(panel);
 
+    return {
+        panel,
+        list
+    };
+};
+
+const resolveBuildMenuViewSize = (state: ClientState): { width: number; height: number; } => {
+    const width = state.pointer.surfaceWidth > 0
+        ? state.pointer.surfaceWidth
+        : (typeof window !== "undefined" ? window.innerWidth : 1024);
+    const height = state.pointer.surfaceHeight > 0
+        ? state.pointer.surfaceHeight
+        : (typeof window !== "undefined" ? window.innerHeight : 768);
+    return { width, height };
+};
+
+const positionBuildMenu = (
+    state: ClientState,
+    panel: HTMLDivElement,
+    entryCount: number
+): void => {
+    const { width, height } = resolveBuildMenuViewSize(state);
+    const menuHeight = Math.max(BUILD_MENU_ROW_HEIGHT, (entryCount + 1) * BUILD_MENU_ROW_HEIGHT);
+    const left = Math.max(BUILD_MENU_EDGE_X, Math.min(width - BUILD_MENU_WIDTH - BUILD_MENU_EDGE_X, state.ui.buildMenuAnchorX));
+    const bottom = Math.max(menuHeight, Math.min(height - BUILD_MENU_EDGE_Y, state.ui.buildMenuAnchorY));
+    const top = Math.max(0, bottom - menuHeight);
+    panel.style.height = `${menuHeight}px`;
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+};
+
+const buildMenuEntriesSignature = (entries: ResolvedBuildMenuEntry[]): string => {
+    return entries
+        .map((entry) => `${entry.hotkey}:${entry.type}:${entry.label}:${entry.menuIcon}:${entry.state}`)
+        .join(";");
+};
+
+const resolveBuildMenuSignature = (
+    state: ClientState,
+    entries: ResolvedBuildMenuEntry[]
+): string => {
+    const lines = buildBuildMenuLines(state).join("|");
+    return `${state.ui.showBuildMenu}|${state.ui.buildGhostMode}|${state.ui.buildDemolishMode}|${state.ui.selectedBuildType}|${state.ui.buildMenuAnchorX},${state.ui.buildMenuAnchorY}|${buildMenuEntriesSignature(entries)}|${lines}`;
+};
+
+const renderBuildMenuRows = (
+    state: ClientState,
+    list: HTMLDivElement,
+    entries: ResolvedBuildMenuEntry[]
+): void => {
+    list.replaceChildren();
+
+    const demolishRow = createMenuRow(
+        "Demolish building",
+        13,
+        true,
+        state.ui.buildDemolishMode,
+        () => {
+            activateDemolishMode(state);
+        }
+    );
+    list.appendChild(demolishRow);
+
+    for (const entry of entries) {
+        const suffix = entry.state === "pending" ? " (researching)" : "";
+        const enabled = entry.state === "available";
+        const selected = enabled && state.ui.buildGhostMode && state.ui.selectedBuildType === entry.type;
+        const row = createMenuRow(
+            `${entry.label}${suffix}`,
+            entry.menuIcon,
+            enabled,
+            selected,
+            enabled
+                ? () => {
+                    activateGhostBuildMode(state, entry.type);
+                }
+                : null
+        );
+        list.appendChild(row);
+    }
+};
+
+const renderBuildMenuPanel = (
+    state: ClientState,
+    panel: HTMLDivElement,
+    list: HTMLDivElement,
+    dirty: ReturnType<typeof createDirtyFlagTracker>
+): void => {
+    const lobbyVisible = state.local.id === null;
+    const canBuild = canOpenBuildMenu(state);
+    if (!canBuild) {
+        state.ui.showBuildMenu = false;
+        clearBuildInteractionModes(state);
+    }
+
+    const visible = state.ui.showBuildMenu && !state.ui.showIntroModal && !lobbyVisible && canBuild;
+    panel.style.display = visible ? "block" : "none";
+    panel.style.opacity = String(state.ui.overlaysOpacity);
+    if (!visible) {
+        return;
+    }
+
+    const entries = resolveBuildMenuEntries(state);
+    if (!dirty.shouldRender("build-menu", resolveBuildMenuSignature(state, entries))) {
+        return;
+    }
+
+    renderBuildMenuRows(state, list, entries);
+    positionBuildMenu(state, panel, entries.length);
+};
+
+export const createBuildMenu = (
+    state: ClientState,
+    root: HTMLElement | null = typeof document === "undefined" ? null : document.body
+): BuildMenu => {
+    if (!root || typeof document === "undefined") {
+        return {
+            render: () => {},
+            dispose: () => {}
+        };
+    }
+
+    const { panel, list } = createBuildMenuDom(root);
     const dirty = createDirtyFlagTracker();
 
     return {
         render: () => {
-            const lobbyVisible = state.local.id === null;
-            const canBuild = canOpenBuildMenu(state);
-            if (!canBuild) {
-                state.ui.showBuildMenu = false;
-                clearBuildInteractionModes(state);
-            }
-
-            const visible = state.ui.showBuildMenu && !state.ui.showIntroModal && !lobbyVisible && canBuild;
-            panel.style.display = visible ? "block" : "none";
-            panel.style.opacity = String(state.ui.overlaysOpacity);
-
-            if (!visible) {
-                return;
-            }
-
-            const entries = resolveBuildMenuEntries(state);
-            const lines = buildBuildMenuLines(state).join("|");
-            const entriesSignature = entries
-                .map((entry) => `${entry.hotkey}:${entry.type}:${entry.label}:${entry.menuIcon}:${entry.state}`)
-                .join(";");
-            const signature = `${state.ui.showBuildMenu}|${state.ui.buildGhostMode}|${state.ui.buildDemolishMode}|${state.ui.selectedBuildType}|${state.ui.buildMenuAnchorX},${state.ui.buildMenuAnchorY}|${entriesSignature}|${lines}`;
-
-            if (!dirty.shouldRender("build-menu", signature)) {
-                return;
-            }
-
-            list.replaceChildren();
-
-            const demolishRow = createMenuRow(
-                "Demolish building",
-                13,
-                true,
-                state.ui.buildDemolishMode,
-                () => {
-                    activateDemolishMode(state);
-                }
-            );
-            list.appendChild(demolishRow);
-
-            for (const entry of entries) {
-                const suffix = entry.state === "pending" ? " (researching)" : "";
-                const enabled = entry.state === "available";
-                const selected = enabled && state.ui.buildGhostMode && state.ui.selectedBuildType === entry.type;
-                const row = createMenuRow(
-                    `${entry.label}${suffix}`,
-                    entry.menuIcon,
-                    enabled,
-                    selected,
-                    enabled
-                        ? () => {
-                            activateGhostBuildMode(state, entry.type);
-                        }
-                        : null
-                );
-                list.appendChild(row);
-            }
-
-            const viewWidth = state.pointer.surfaceWidth > 0
-                ? state.pointer.surfaceWidth
-                : (typeof window !== "undefined" ? window.innerWidth : 1024);
-            const viewHeight = state.pointer.surfaceHeight > 0
-                ? state.pointer.surfaceHeight
-                : (typeof window !== "undefined" ? window.innerHeight : 768);
-            const menuHeight = Math.max(BUILD_MENU_ROW_HEIGHT, (entries.length + 1) * BUILD_MENU_ROW_HEIGHT);
-            const left = Math.max(BUILD_MENU_EDGE_X, Math.min(viewWidth - BUILD_MENU_WIDTH - BUILD_MENU_EDGE_X, state.ui.buildMenuAnchorX));
-            const bottom = Math.max(menuHeight, Math.min(viewHeight - BUILD_MENU_EDGE_Y, state.ui.buildMenuAnchorY));
-            const top = Math.max(0, bottom - menuHeight);
-            panel.style.height = `${menuHeight}px`;
-            panel.style.left = `${left}px`;
-            panel.style.top = `${top}px`;
+            renderBuildMenuPanel(state, panel, list, dirty);
         },
         dispose: () => {
             dirty.clear();

@@ -1,4 +1,5 @@
 import type { Application } from "pixi.js";
+import { isInteractiveKeyboardTarget } from "../../input/interactive-target.js";
 
 type EventSource = {
     addEventListener: (type: string, listener: (event?: unknown) => void) => void;
@@ -11,20 +12,6 @@ type DocumentLike = {
         requestFullscreen: () => Promise<void>;
     };
     exitFullscreen: () => Promise<void>;
-};
-
-const isInteractiveTarget = (event: KeyboardEvent): boolean => {
-    const target = event.target as Element | null;
-    if (!target) {
-        return false;
-    }
-    const tag = target.tagName?.toLowerCase();
-    if (tag === "input" || tag === "textarea" || tag === "select") {
-        return true;
-    }
-    return typeof HTMLElement !== "undefined"
-        && target instanceof HTMLElement
-        && target.isContentEditable;
 };
 
 export const syncRendererSize = (
@@ -88,7 +75,7 @@ export const registerWindowModeHandlers = (
         if (!event || (event.key !== "f" && event.key !== "F")) {
             return;
         }
-        if (event.ctrlKey || event.altKey || event.metaKey || isInteractiveTarget(event)) {
+        if (event.ctrlKey || event.altKey || event.metaKey || isInteractiveKeyboardTarget(event)) {
             return;
         }
         const documentLike = resolveDocumentLike();

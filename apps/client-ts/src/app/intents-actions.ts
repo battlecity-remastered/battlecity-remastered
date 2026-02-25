@@ -85,11 +85,11 @@ const appendResearchIntent = (state: ClientState, nowMs: number, intents: Intent
     intents.push({ type: "research.start.request", payload: { cityId: state.local.city, researchType: 1 } });
 };
 
-const resolveFactoryPickupItemType = (state: ClientState): number | null => {
-    const cityId = state.local.city;
-    const cityStock = state.factoryStock.get(cityId);
-    const selected = state.ui.selectedInventoryItemType;
+const isWithinFactoryPickupRange = (dx: number, dy: number): boolean => {
+    return Math.abs(dx) <= FACTORY_PICKUP_RANGE && Math.abs(dy) <= FACTORY_PICKUP_RANGE;
+};
 
+const resolveNearestHazardPickupItemType = (state: ClientState, cityId: number): number | null => {
     let nearestHazardPickup: { itemType: number; distanceSq: number } | null = null;
     for (const hazard of state.hazards.values()) {
         if (hazard.cityId !== cityId || !MAP_DROP_PICKUP_TYPES.has(hazard.type)) {
@@ -97,7 +97,7 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
         }
         const dx = hazard.x - state.local.x;
         const dy = hazard.y - state.local.y;
-        if (Math.abs(dx) > FACTORY_PICKUP_RANGE || Math.abs(dy) > FACTORY_PICKUP_RANGE) {
+        if (!isWithinFactoryPickupRange(dx, dy)) {
             continue;
         }
         const distanceSq = (dx * dx) + (dy * dy);
@@ -108,14 +108,14 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
             };
         }
     }
-    if (nearestHazardPickup) {
-        return nearestHazardPickup.itemType;
-    }
+    return nearestHazardPickup?.itemType ?? null;
+};
 
-    if (!cityStock) {
-        return selected ?? ITEM_TYPE_LASER;
-    }
-
+const resolveNearestFactoryPickupItemType = (
+    state: ClientState,
+    cityId: number,
+    cityStock: ReadonlyMap<number, number>
+): number | null => {
     let nearest: { itemType: number; distanceSq: number } | null = null;
     for (const building of state.buildings.values()) {
         if (building.cityId !== cityId || Math.floor(building.type / 100) !== 1) {
@@ -131,7 +131,7 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
         const iconY = (building.tileY * TILE) + FACTORY_DROP_OFFSET_Y;
         const dx = iconX - state.local.x;
         const dy = iconY - state.local.y;
-        if (Math.abs(dx) > FACTORY_PICKUP_RANGE || Math.abs(dy) > FACTORY_PICKUP_RANGE) {
+        if (!isWithinFactoryPickupRange(dx, dy)) {
             continue;
         }
 
@@ -140,12 +140,15 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
             nearest = { itemType, distanceSq };
         }
     }
-    if (nearest) {
-        return nearest.itemType;
-    }
+    return nearest?.itemType ?? null;
+};
 
-    if (selected !== null && (cityStock.get(selected) ?? 0) > 0) {
-        return selected;
+const resolveFactoryStockFallbackItemType = (
+    cityStock: ReadonlyMap<number, number>,
+    selectedItemType: number | null
+): number | null => {
+    if (selectedItemType !== null && (cityStock.get(selectedItemType) ?? 0) > 0) {
+        return selectedItemType;
     }
     if ((cityStock.get(ITEM_TYPE_LASER) ?? 0) > 0) {
         return ITEM_TYPE_LASER;
@@ -156,6 +159,28 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
         }
     }
     return null;
+};
+
+const resolveFactoryPickupItemType = (state: ClientState): number | null => {
+    const cityId = state.local.city;
+    const cityStock = state.factoryStock.get(cityId);
+    const selected = state.ui.selectedInventoryItemType;
+
+    const hazardPickupItemType = resolveNearestHazardPickupItemType(state, cityId);
+    if (hazardPickupItemType !== null) {
+        return hazardPickupItemType;
+    }
+
+    if (!cityStock) {
+        return selected ?? ITEM_TYPE_LASER;
+    }
+
+    const factoryPickupItemType = resolveNearestFactoryPickupItemType(state, cityId, cityStock);
+    if (factoryPickupItemType !== null) {
+        return factoryPickupItemType;
+    }
+
+    return resolveFactoryStockFallbackItemType(cityStock, selected);
 };
 
 const appendFactoryCollectIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {

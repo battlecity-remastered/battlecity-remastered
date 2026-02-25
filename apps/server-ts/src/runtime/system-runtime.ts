@@ -4,7 +4,6 @@ import { tickCityEconomy } from "../domain/economy/CityEconomyService.js";
 import { tickResearch } from "../domain/research/ResearchService.js";
 import { tickFactories } from "../domain/factories/FactoryService.js";
 import { tickHazards } from "../domain/hazards/HazardService.js";
-import { tickHospitalHealing } from "../domain/health/HealingService.js";
 import { tickPopulation } from "../domain/population/PopulationService.js";
 import { tickFakeCityLifecycle } from "../domain/fake-cities/FakeCityService.js";
 import { tickDefenderBots } from "../domain/bots/DefenderBotService.js";
@@ -22,7 +21,6 @@ export const tickRuntimeSystems = (
     tickResearch(state, config, emitter, deltaMs);
     tickFactories(state, config, emitter, deltaMs);
     tickHazards(state, emitter, deltaMs);
-    tickHospitalHealing(state, config, emitter);
     const populationUpdates = tickPopulation(state, config, deltaMs);
     for (const update of populationUpdates) {
         emitter.emit("population.update", update);
