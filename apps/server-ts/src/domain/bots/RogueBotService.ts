@@ -1,6 +1,13 @@
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
-import { headingToTarget, moveBotByHeading, nearestHumanPlayer, normalizeBotHeading, resolveCityCenter } from "./BotShared.js";
+import {
+    headingToTarget,
+    legacyHeadingToBulletHeading,
+    moveBotByHeading,
+    nearestHumanPlayer,
+    normalizeBotHeading,
+    resolveCityCenter
+} from "./BotShared.js";
 
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
@@ -10,6 +17,7 @@ const SPAWN_RADIUS_TILES = 18;
 const MOVE_SPEED_MULTIPLIER = 0.85;
 const BOT_HALF = 24;
 const MUZZLE_OFFSET_PX = 30;
+const BOT_HEALTH = 20;
 
 const countRogues = (state: RuntimeState): number => {
     let total = 0;
@@ -85,8 +93,8 @@ const spawnRogue = (
         y: safeSpawn.y,
         direction: Math.floor(Math.random() * 32),
         speed: config.botMoveSpeed * MOVE_SPEED_MULTIPLIER,
-        health: 100,
-        maxHealth: 100,
+        health: BOT_HEALTH,
+        maxHealth: BOT_HEALTH,
         isBot: true,
         botType: ROGUE_TYPE
     };
@@ -150,6 +158,7 @@ const fireAtTarget = (
     }
 
     const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
+    const bulletDirection = legacyHeadingToBulletHeading(direction);
     const radians = (-normalizeBotHeading(direction) / 16) * Math.PI;
     const muzzleX = botCenterX + (Math.sin(radians) * -MUZZLE_OFFSET_PX);
     const muzzleY = botCenterY + (Math.cos(radians) * -MUZZLE_OFFSET_PX);
@@ -163,7 +172,7 @@ const fireAtTarget = (
         city: -1,
         x: muzzleX,
         y: muzzleY,
-        direction,
+        direction: bulletDirection,
         speed: config.bulletSpeed,
         type: 0
     });
@@ -172,7 +181,7 @@ const fireAtTarget = (
         ownerId: bot.id,
         city: -1,
         position: { x: muzzleX, y: muzzleY },
-        direction,
+        direction: bulletDirection,
         type: 0
     });
 };

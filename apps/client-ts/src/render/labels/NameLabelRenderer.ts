@@ -6,6 +6,7 @@ import { reconcileEntityCache } from "../entity-cache.js";
 type RenderEntity = Graphics | Sprite;
 const DEFAULT_ENTITY_SIZE = 48;
 const LABEL_CLEARANCE = 8;
+const MIN_ENEMY_NAME_ALPHA = 0.35;
 
 const resolveRank = (state: ClientState): string => {
     return state.scoreProfile.rank ?? "Private";
@@ -20,6 +21,24 @@ const resolveCallsign = (state: ClientState, id: string | null): string => {
         return state.identity.callsign;
     }
     return id ?? "Unit";
+};
+
+const resolveHealthAlpha = (
+    state: ClientState,
+    city: number,
+    health: number | undefined,
+    maxHealth: number | undefined
+): number => {
+    if (city === state.local.city) {
+        return 1;
+    }
+    if (!Number.isFinite(health)) {
+        return 1;
+    }
+    const safeMaxHealth = Number.isFinite(maxHealth) && (maxHealth ?? 0) > 0 ? (maxHealth ?? 100) : 100;
+    const safeHealth = Math.max(0, health ?? 0);
+    const ratio = Math.max(0, Math.min(1, safeHealth / safeMaxHealth));
+    return MIN_ENEMY_NAME_ALPHA + (ratio * (1 - MIN_ENEMY_NAME_ALPHA));
 };
 
 const createLabel = (): Text => {
@@ -82,6 +101,7 @@ export const renderNameLabels = (
     if (localLabel) {
         const text = buildLabel(resolveRank(state), resolveCallsign(state, state.local.id), state.local.city);
         localLabel.text = text;
+        localLabel.alpha = 1;
         const localPos = resolveLabelPosition(localTank);
         localLabel.position.set(localPos.x, localPos.y);
     }
@@ -94,6 +114,7 @@ export const renderNameLabels = (
         }
         const text = buildLabel(remote.health !== undefined && remote.health <= 0 ? "KIA" : "Unit", resolveCallsign(state, remote.id), remote.city);
         label.text = text;
+        label.alpha = resolveHealthAlpha(state, remote.city, remote.health, remote.maxHealth);
         const remotePos = resolveLabelPosition(tank);
         label.position.set(remotePos.x, remotePos.y);
     }

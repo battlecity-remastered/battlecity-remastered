@@ -248,3 +248,7 @@ export const moveBotByHeading = (
 export const normalizeBotHeading = (direction: number): number => {
     return normalizeHeading(direction);
 };
+
+export const legacyHeadingToBulletHeading = (direction: number): number => {
+    return normalizeHeading(direction - 8);
+};

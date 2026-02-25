@@ -1,6 +1,13 @@
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
-import { headingToTarget, moveBotByHeading, nearestHumanPlayer, normalizeBotHeading, resolveCityCenter } from "./BotShared.js";
+import {
+    headingToTarget,
+    legacyHeadingToBulletHeading,
+    moveBotByHeading,
+    nearestHumanPlayer,
+    normalizeBotHeading,
+    resolveCityCenter
+} from "./BotShared.js";
 
 const DEFENDER_TYPE: RuntimeBotController["botType"] = "defender";
 const MAX_DEFENDERS_PER_CITY = 4;
@@ -9,6 +16,7 @@ const SPAWN_CHECK_INTERVAL_MS = 3000;
 const SHOOT_RANGE_TILES = 16;
 const MUZZLE_OFFSET_PX = 30;
 const BOT_HALF = 24;
+const BOT_HEALTH = 20;
 
 const countDefendersForCity = (state: RuntimeState, cityId: number): number => {
     let count = 0;
@@ -93,8 +101,8 @@ const createDefender = (
         y: safeSpawn.y,
         direction: Math.floor(Math.random() * 32),
         speed: config.botMoveSpeed,
-        health: 100,
-        maxHealth: 100,
+        health: BOT_HEALTH,
+        maxHealth: BOT_HEALTH,
         isBot: true,
         botType: DEFENDER_TYPE
     };
@@ -177,6 +185,7 @@ const fireAtTarget = (
     }
 
     const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
+    const bulletDirection = legacyHeadingToBulletHeading(direction);
     const radians = (-normalizeBotHeading(direction) / 16) * Math.PI;
     const muzzleX = botCenterX + (Math.sin(radians) * -MUZZLE_OFFSET_PX);
     const muzzleY = botCenterY + (Math.cos(radians) * -MUZZLE_OFFSET_PX);
@@ -190,7 +199,7 @@ const fireAtTarget = (
         city: bot.city,
         x: muzzleX,
         y: muzzleY,
-        direction,
+        direction: bulletDirection,
         speed: config.bulletSpeed,
         type: 0
     });
@@ -199,7 +208,7 @@ const fireAtTarget = (
         ownerId: bot.id,
         city: bot.city,
         position: { x: muzzleX, y: muzzleY },
-        direction,
+        direction: bulletDirection,
         type: 0
     });
 };

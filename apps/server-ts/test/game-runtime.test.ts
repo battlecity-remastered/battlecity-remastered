@@ -9,6 +9,7 @@ import { createRuntimeState, type RuntimeConfig } from "../src/runtime/types.js"
 
 const ITEM_TYPE_LASER = 12;
 const ITEM_TYPE_BOMB = 3;
+const ITEM_TYPE_MINE = 4;
 const ITEM_TYPE_ORB = 5;
 const ITEM_TYPE_DFG = 7;
 const TILE_SIZE = 48;
@@ -1850,8 +1851,8 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
         if (event.type !== "bullet.fired") {
             return false;
         }
-        const payload = event.payload as { ownerId: string };
-        return payload.ownerId === defenseId;
+        const payload = event.payload as { ownerId: string; direction: number };
+        return payload.ownerId === defenseId && payload.direction === 0;
     });
     assert.ok(defensiveShot);
 });
@@ -2239,7 +2240,68 @@ test("rogue bots spawn against developed non-fake cities", () => {
     runtime.tickBullets();
 
     const state = runtime.getReadonlyState();
-    assert.ok(Array.from(state.players.values()).some((player) => player.isBot && player.botType === "rogue"));
+    const rogue = Array.from(state.players.values()).find((player) => player.isBot && player.botType === "rogue");
+    assert.ok(rogue);
+    assert.equal(rogue?.health, 20);
+    assert.equal(rogue?.maxHealth, 20);
+});
+
+test("mine hazards damage and can destroy rogue bots", () => {
+    const { runtime, broadcast } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        rogueBuildingThreshold: 2,
+        rogueMaxBots: 1,
+        botMoveSpeed: 0
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    const mutableState = runtime.getReadonlyState() as unknown as {
+        buildings: Map<string, { cityId: number; id: string }>;
+    };
+    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2 });
+    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2 });
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const rogue = Array.from(runtime.getReadonlyState().players.values())
+        .find((player) => player.isBot && player.botType === "rogue");
+    assert.ok(rogue);
+
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_MINE, 2);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 2, {
+        cityId: 2,
+        type: ITEM_TYPE_MINE,
+        position: {
+            x: (rogue?.x ?? 0) + 24,
+            y: (rogue?.y ?? 0) + 24
+        }
+    }));
+
+    runtime.tickBullets();
+
+    const rogueAfterFirstMine = runtime.getReadonlyState().players.get(rogue?.id ?? "");
+    assert.ok(rogueAfterFirstMine);
+    assert.ok((rogueAfterFirstMine?.health ?? 0) < (rogue?.health ?? 0));
+
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 2,
+        type: ITEM_TYPE_MINE,
+        position: {
+            x: (rogueAfterFirstMine?.x ?? 0) + 24,
+            y: (rogueAfterFirstMine?.y ?? 0) + 24
+        }
+    }));
+    runtime.tickBullets();
+
+    assert.equal(runtime.getReadonlyState().players.has(rogue?.id ?? ""), false);
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "player.dead") {
+            return false;
+        }
+        return (event.payload as { id?: string }).id === rogue?.id;
+    }));
 });
 
 test("player:bot_damage legacy alias applies authoritative health updates", () => {

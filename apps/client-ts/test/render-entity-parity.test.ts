@@ -71,6 +71,13 @@ test("name labels are centered above tank bounds with outlined high-contrast tex
     assert.match(source, /stroke:\s*{\s*color: 0x101010,\s*width: 3,\s*join: "round"/);
 });
 
+test("enemy name labels fade with health depletion while local labels stay fully visible", () => {
+    const source = fs.readFileSync(nameLabelPath, "utf8");
+    assert.match(source, /const MIN_ENEMY_NAME_ALPHA = 0\.35;/);
+    assert.match(source, /localLabel\.alpha = 1;/);
+    assert.match(source, /label\.alpha = resolveHealthAlpha\(state,\s*remote\.city,\s*remote\.health,\s*remote\.maxHealth\);/);
+});
+
 test("name labels show city display names instead of numeric city ids", () => {
     const source = fs.readFileSync(nameLabelPath, "utf8");
     assert.match(source, /getCityDisplayName\(city\)/);
