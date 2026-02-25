@@ -5,21 +5,20 @@ import { buildTickPlan } from "./intents.js";
 import { moveLocalPlayer } from "../gameplay/player-movement.js";
 import { stepClientBullets } from "../gameplay/bullets/BulletClientService.js";
 import { recordDebugUpdateTick } from "./debug-metrics.js";
+import { captureLocalSimulationBase, CLIENT_SIMULATION_STEP_MS } from "./render-timing.js";
 
-const TICK_MS = 33;
+const TICK_MS = CLIENT_SIMULATION_STEP_MS;
 
 export type LoopRuntime = {
     stop: () => void;
 };
 
 export const startGameLoop = (state: ClientState, send: EventSender): LoopRuntime => {
-    let lastTickAt = Date.now();
-
     const timer = window.setInterval(() => {
         const now = Date.now();
         recordDebugUpdateTick(state, now);
-        const dtMs = Math.max(1, now - lastTickAt);
-        lastTickAt = now;
+        const dtMs = TICK_MS;
+        captureLocalSimulationBase(state);
 
         const plan = buildTickPlan(state, now, dtMs);
         if (plan.isMoving && state.local.id) {

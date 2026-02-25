@@ -59,3 +59,18 @@ test("latency samples compute aggregate fields", () => {
     assert.ok(lines.some((line) => line.includes("Ping: 40 ms")));
     assert.ok(lines.some((line) => line.includes("n=3")));
 });
+
+test("render mismatch counter tracks stale update starvation, not normal render cadence", () => {
+    const state = createClientState();
+
+    recordDebugUpdateTick(state, 1_000);
+    recordDebugRenderTick(state, 1_016);
+    recordDebugRenderTick(state, 1_033);
+    assert.equal(state.debug.loop.mismatchEvents, 0);
+
+    recordDebugRenderTick(state, 1_080);
+    assert.equal(state.debug.loop.mismatchEvents, 1);
+
+    const lines = buildDebugHudLines(state, 1_080);
+    assert.ok(lines.some((line) => line.includes("stale updates 1")));
+});

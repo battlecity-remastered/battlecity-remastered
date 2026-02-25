@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveGroundOrigin, resolveTerrainFrameOffset, TILE_SIZE } from "../src/render/layers/terrain-parity-helpers.js";
+import {
+    resolveGroundOrigin,
+    resolveTerrainFrameOffset,
+    resolveTileDrawRadius,
+    TILE_DRAW_RADIUS,
+    TILE_SIZE
+} from "../src/render/layers/terrain-parity-helpers.js";
 import type { LoadedMap } from "../src/world/map-loader.js";
 
 const buildMapFixture = (mask: number): LoadedMap => {
@@ -32,4 +38,10 @@ test("terrain adjacency bitmask frame offset matches all 16 parity cases", () =>
 test("ground origin uses modulo camera placement parity", () => {
     assert.deepEqual(resolveGroundOrigin(6000, 6100), { x: 5888, y: 6016 });
     assert.deepEqual(resolveGroundOrigin(-1, -129), { x: -128, y: -256 });
+});
+
+test("tile draw radius adapts to viewport span with fallback and overscan", () => {
+    assert.equal(resolveTileDrawRadius(1720), 21);
+    assert.equal(resolveTileDrawRadius(1080), 15);
+    assert.equal(resolveTileDrawRadius(0), TILE_DRAW_RADIUS);
 });

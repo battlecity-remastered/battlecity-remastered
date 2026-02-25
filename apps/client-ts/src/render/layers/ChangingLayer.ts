@@ -1,6 +1,7 @@
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { isRefreshDue } from "../pacing.js";
 import {
     isFactoryType,
     resolveFactoryDigits,
@@ -12,6 +13,7 @@ import {
 import { isDefenseVisibleToLocalPlayer } from "../parity/defense-visibility.js";
 
 const TILE_SIZE = 48;
+const CHANGING_LAYER_REFRESH_MS = 33;
 
 type OverlaySpriteDef = {
     key: string;
@@ -26,6 +28,7 @@ type OverlaySpriteDef = {
 type OverlayRuntime = {
     container: Container;
     sprites: Map<string, Sprite>;
+    lastRefreshAt: number | null;
 };
 
 const overlayRuntimeBySprite = new WeakMap<Graphics, OverlayRuntime>();
@@ -57,7 +60,8 @@ const ensureOverlayRuntime = (layer: Container, sprite: Graphics): OverlayRuntim
     layer.addChildAt(container, insertIndex);
     const created: OverlayRuntime = {
         container,
-        sprites: new Map<string, Sprite>()
+        sprites: new Map<string, Sprite>(),
+        lastRefreshAt: null
     };
     overlayRuntimeBySprite.set(sprite, created);
     return created;
@@ -77,6 +81,10 @@ export const renderChangingLayer = (
         layer.addChild(sprite);
     }
     const overlayRuntime = ensureOverlayRuntime(layer, sprite);
+    if (!isRefreshDue(overlayRuntime.lastRefreshAt, nowMs, CHANGING_LAYER_REFRESH_MS)) {
+        return;
+    }
+    overlayRuntime.lastRefreshAt = nowMs;
     const overlayDefs: OverlaySpriteDef[] = [];
     sprite.clear();
 

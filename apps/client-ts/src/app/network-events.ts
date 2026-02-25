@@ -98,6 +98,11 @@ const handlers: {
         if (spawn) {
             state.local.x = spawn.x;
             state.local.y = spawn.y;
+            state.render.previousLocalX = spawn.x;
+            state.render.previousLocalY = spawn.y;
+            state.render.projectedOffsetX = 0;
+            state.render.projectedOffsetY = 0;
+            state.render.lastResolvedAt = null;
         }
         state.lobby.deniedReason = null;
     },

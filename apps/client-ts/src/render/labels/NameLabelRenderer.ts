@@ -59,6 +59,12 @@ const createLabel = (): Text => {
     });
 };
 
+const setTextIfChanged = (label: Text, value: string): void => {
+    if (label.text !== value) {
+        label.text = value;
+    }
+};
+
 const resolveLabelPosition = (tank: RenderEntity): { x: number; y: number } => {
     const width = Number.isFinite(tank.width) && tank.width > 0 ? tank.width : DEFAULT_ENTITY_SIZE;
     const height = Number.isFinite(tank.height) && tank.height > 0 ? tank.height : DEFAULT_ENTITY_SIZE;
@@ -100,7 +106,7 @@ export const renderNameLabels = (
     const localLabel = cache.get("local");
     if (localLabel) {
         const text = buildLabel(resolveRank(state), resolveCallsign(state, state.local.id), state.local.city);
-        localLabel.text = text;
+        setTextIfChanged(localLabel, text);
         localLabel.alpha = 1;
         const localPos = resolveLabelPosition(localTank);
         localLabel.position.set(localPos.x, localPos.y);
@@ -113,7 +119,7 @@ export const renderNameLabels = (
             continue;
         }
         const text = buildLabel(remote.health !== undefined && remote.health <= 0 ? "KIA" : "Unit", resolveCallsign(state, remote.id), remote.city);
-        label.text = text;
+        setTextIfChanged(label, text);
         label.alpha = resolveHealthAlpha(state, remote.city, remote.health, remote.maxHealth);
         const remotePos = resolveLabelPosition(tank);
         label.position.set(remotePos.x, remotePos.y);

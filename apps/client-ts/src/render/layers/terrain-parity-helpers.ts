@@ -7,6 +7,8 @@ export const GROUND_DRAW_MAX = 11;
 
 export const TILE_SIZE = 48;
 export const TILE_DRAW_RADIUS = 40;
+const TILE_DRAW_MIN_RADIUS = 12;
+const TILE_DRAW_OVERSCAN = 3;
 
 const normalizeModulo = (value: number, divisor: number): number => {
     return ((value % divisor) + divisor) % divisor;
@@ -19,6 +21,14 @@ export const resolveGroundOrigin = (cameraX: number, cameraY: number): { x: numb
         x: cameraX - offX,
         y: cameraY - offY
     };
+};
+
+export const resolveTileDrawRadius = (worldSpanPixels: number): number => {
+    if (!Number.isFinite(worldSpanPixels) || worldSpanPixels <= 0) {
+        return TILE_DRAW_RADIUS;
+    }
+    const halfTiles = worldSpanPixels / TILE_SIZE / 2;
+    return Math.max(TILE_DRAW_MIN_RADIUS, Math.ceil(halfTiles) + TILE_DRAW_OVERSCAN);
 };
 
 const isInsideMap = (mapData: LoadedMap, tileX: number, tileY: number): boolean => {

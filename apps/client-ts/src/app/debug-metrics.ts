@@ -2,6 +2,7 @@ import type { ClientState } from "./state.js";
 
 const MAX_LATENCY_SAMPLES = 40;
 const MAX_SEND_INTERVALS = 60;
+const STALE_UPDATE_THRESHOLD_MS = 66;
 
 const pushWindowedSample = (samples: number[], value: number, maxSize: number): void => {
     if (!Number.isFinite(value) || value <= 0) {
@@ -74,7 +75,7 @@ export const recordDebugRenderTick = (state: ClientState, nowMs: number = Date.n
     if (loop.lastUpdateAt !== null) {
         loop.lastRenderDeltaMs = Math.max(0, nowMs - loop.lastUpdateAt);
     }
-    if (loop.renderCount !== loop.updateCount) {
+    if (loop.lastUpdateAt !== null && (nowMs - loop.lastUpdateAt) > STALE_UPDATE_THRESHOLD_MS) {
         loop.mismatchEvents += 1;
     }
     loop.lastRenderAt = nowMs;
@@ -162,7 +163,7 @@ export const buildDebugHudLines = (state: ClientState, nowMs: number = Date.now(
     }
 
     const loop = state.debug.loop;
-    const mismatch = loop.mismatchEvents > 0 ? `, mismatches ${loop.mismatchEvents}` : "";
+    const mismatch = loop.mismatchEvents > 0 ? `, stale updates ${loop.mismatchEvents}` : "";
     lines.push(`Render/update: ${loop.renderCount}/${loop.updateCount} (last render +${formatMs(loop.lastRenderDeltaMs)}${mismatch})`);
     lines.push(`FPS: ${formatRate(loop.renderHz)}  Tick: ${formatRate(loop.updateHz)} Hz`);
     lines.push(`Socket: ${state.debug.socketConnected ? "connected" : "disconnected"}`);

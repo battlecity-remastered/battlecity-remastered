@@ -2,6 +2,7 @@ import { Graphics, Sprite, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { reconcileEntityCache } from "../entity-cache.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { isWorldPointVisible, type WorldViewBounds } from "../world-bounds.js";
 import {
     ITEM_TYPE_BOMB,
     ITEM_TYPE_MINE
@@ -24,10 +25,24 @@ export const renderHazardItems = (
     state: ClientState,
     layer: Container,
     cache: Map<string, Graphics | Sprite>,
-    itemTexture: Texture | null = null
+    itemTexture: Texture | null = null,
+    visibleBounds: WorldViewBounds | null = null
 ): void => {
     const visibleHazardIds = [...state.hazards.values()]
-        .filter((hazard) => !isHiddenEnemyProximityHazard(state.local.city, hazard))
+        .filter((hazard) => {
+            if (isHiddenEnemyProximityHazard(state.local.city, hazard)) {
+                return false;
+            }
+            if (!visibleBounds) {
+                return true;
+            }
+            return isWorldPointVisible(
+                visibleBounds,
+                hazard.x,
+                hazard.y,
+                Math.max(24, Number.isFinite(hazard.radius) ? hazard.radius : 24)
+            );
+        })
         .sort((left, right) => {
             const leftKey = resolveHazardSortKey(left.type);
             const rightKey = resolveHazardSortKey(right.type);

@@ -1,4 +1,5 @@
 import type { ClientState } from "../app/state.js";
+import { peekLocalRenderPosition } from "../app/render-timing.js";
 
 export const TILE_SIZE = 48;
 export const PANEL_WIDTH = 200;
@@ -66,14 +67,15 @@ export type PointerWorldPosition = {
 
 export const resolvePointerWorldPosition = (state: ClientState): PointerWorldPosition => {
     const viewport = resolveViewportFromState(state);
+    const localRender = peekLocalRenderPosition(state);
     const insideWorld = state.pointer.inside
         && state.pointer.x >= 0
         && state.pointer.y >= 0
         && state.pointer.x < viewport.panelStartX
         && state.pointer.y <= viewport.surfaceHeight;
     return {
-        x: state.local.x + (state.pointer.x - viewport.centerX),
-        y: state.local.y + (state.pointer.y - viewport.centerY),
+        x: localRender.x + (state.pointer.x - viewport.centerX),
+        y: localRender.y + (state.pointer.y - viewport.centerY),
         insideWorld
     };
 };

@@ -38,6 +38,7 @@ import {
     resolveHomeArrowFrame
 } from "./panel/panel-visuals.js";
 import { resolveViewportFromState } from "../gameplay/world-viewport.js";
+import { resolveTileDrawRadius } from "./layers/terrain-parity-helpers.js";
 import {
     PANEL,
     ITEM_TYPE_BOMB,
@@ -45,14 +46,24 @@ import {
     TILE
 } from "./parity/constants.js";
 import { resolveDefenseDamageColumn } from "./parity/defense-damage.js";
-import { resolveVisibleDefenseIds } from "./parity/defense-visibility.js";
+import { resolveVisibleDefenseIds as resolveSleeperVisibleDefenseIds } from "./parity/defense-visibility.js";
 import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
 import { recordDebugRenderTick } from "../app/debug-metrics.js";
+import { resolveLocalRenderPosition } from "../app/render-timing.js";
+import { isRefreshDue } from "./pacing.js";
+import {
+    isWorldPointVisible,
+    isWorldRectVisible,
+    resolveWorldViewBounds,
+    type WorldViewBounds
+} from "./world-bounds.js";
 
 const TANK_SIZE = 22;
 const COMMAND_CENTER_LABEL_OFFSET_Y = -32;
 const COMMAND_CENTER_LABEL_VIEW_THRESHOLD = 40 * TILE;
 const COMMAND_CENTER_LABEL_RESOLUTION = 2;
+const SIDE_PANEL_REFRESH_MS = 33;
+const WORLD_OBJECT_OVERSCAN_PX = TILE * 4;
 
 type TankPalette = {
     tread: number;
@@ -126,6 +137,12 @@ const formatCash = (value: number): string => {
         return amount.toLocaleString("en-US");
     } catch {
         return `${amount}`;
+    }
+};
+
+const setTextIfChanged = (target: Text, value: string): void => {
+    if (target.text !== value) {
+        target.text = value;
     }
 };
 
@@ -540,7 +557,6 @@ const resolveBulletSprite = (textures: LegacyTextures): Sprite | null => {
 const resolveResearchStripTexture = (
     state: ClientState,
     textures: LegacyTextures,
-    buildingId: string,
     buildingType: number,
     cityId: number
 ): Texture | null => {
@@ -552,7 +568,7 @@ const resolveResearchStripTexture = (
     }
     return getFrameTexture(
         source,
-        `research-strip:${buildingId}:${isComplete ? "complete" : "pending"}`,
+        `research-strip:${isComplete ? "complete" : "pending"}`,
         0,
         5,
         10,
@@ -560,11 +576,25 @@ const resolveResearchStripTexture = (
     );
 };
 
-const resolveResearchStripBuildingIds = (state: ClientState): string[] => {
+const resolveVisibleBuildingIds = (state: ClientState, viewBounds: WorldViewBounds): string[] => {
     const ids: string[] = [];
     for (const building of state.buildings.values()) {
-        if (isResearchBuildingType(building.type)) {
+        if (isWorldRectVisible(viewBounds, building.tileX * TILE, building.tileY * TILE, TILE * 3, TILE * 3)) {
             ids.push(building.id);
+        }
+    }
+    return ids;
+};
+
+const resolveResearchStripBuildingIds = (
+    state: ClientState,
+    visibleBuildingIds: ReadonlyArray<string>
+): string[] => {
+    const ids: string[] = [];
+    for (const buildingId of visibleBuildingIds) {
+        const building = state.buildings.get(buildingId);
+        if (building && isResearchBuildingType(building.type)) {
+            ids.push(buildingId);
         }
     }
     return ids;
@@ -585,7 +615,6 @@ const syncResearchStripSprites = (
         const frame = resolveResearchStripTexture(
             state,
             layers.textures,
-            building.id,
             building.type,
             building.cityId
         );
@@ -594,7 +623,9 @@ const syncResearchStripSprites = (
             continue;
         }
         const placement = resolveResearchStripPlacement(building.tileX, building.tileY);
-        sprite.texture = frame;
+        if (sprite.texture !== frame) {
+            sprite.texture = frame;
+        }
         sprite.position.set(placement.x, placement.y);
         sprite.width = placement.width;
         sprite.height = placement.height;
@@ -678,17 +709,19 @@ const createBuildingEntity = (layers: SceneLayers, state: ClientState): Sprite |
 const syncBuildingSprites = (
     state: ClientState,
     layers: SceneLayers,
-    animationCounter: number
+    animationCounter: number,
+    visibleBuildingIds: string[]
 ): void => {
-    syncEntityCache(layers.buildingSprites, layers.objectLayer, state.buildings.keys(), () => createBuildingEntity(layers, state));
-    for (const building of state.buildings.values()) {
-        const sprite = layers.buildingSprites.get(building.id);
-        if (!sprite) {
+    syncEntityCache(layers.buildingSprites, layers.objectLayer, visibleBuildingIds, () => createBuildingEntity(layers, state));
+    for (const buildingId of visibleBuildingIds) {
+        const building = state.buildings.get(buildingId);
+        const sprite = layers.buildingSprites.get(buildingId);
+        if (!building || !sprite) {
             continue;
         }
         if (sprite instanceof Sprite) {
             const frame = resolveBuildingTexture(layers.textures, building.type, animationCounter);
-            if (frame) {
+            if (frame && sprite.texture !== frame) {
                 sprite.texture = frame;
             }
         }
@@ -696,11 +729,15 @@ const syncBuildingSprites = (
     }
 };
 
-const resolveOverlayBuildingIds = (state: ClientState): string[] => {
+const resolveOverlayBuildingIds = (
+    state: ClientState,
+    visibleBuildingIds: ReadonlyArray<string>
+): string[] => {
     const ids: string[] = [];
-    for (const building of state.buildings.values()) {
-        if (resolveBuildingOverlay(building.type) !== null) {
-            ids.push(building.id);
+    for (const buildingId of visibleBuildingIds) {
+        const building = state.buildings.get(buildingId);
+        if (building && resolveBuildingOverlay(building.type) !== null) {
+            ids.push(buildingId);
         }
     }
     return ids;
@@ -730,7 +767,7 @@ const syncBuildingOverlaySprites = (
             32,
             32
         );
-        if (frame) {
+        if (frame && sprite.texture !== frame) {
             sprite.texture = frame;
         }
         sprite.position.set(
@@ -738,6 +775,20 @@ const syncBuildingOverlaySprites = (
             (building.tileY * TILE) + overlay.offset.y
         );
     }
+};
+
+const resolveVisibleDefenseIds = (state: ClientState, viewBounds: WorldViewBounds): string[] => {
+    const ids: string[] = [];
+    for (const defenseId of resolveSleeperVisibleDefenseIds(state)) {
+        const defense = state.defenses.get(defenseId);
+        if (!defense) {
+            continue;
+        }
+        if (isWorldRectVisible(viewBounds, defense.tileX * TILE, defense.tileY * TILE, TILE, TILE)) {
+            ids.push(defenseId);
+        }
+    }
+    return ids;
 };
 
 const createFallbackDefenseEntity = (): Graphics => {
@@ -773,7 +824,7 @@ const syncDefenseSprites = (state: ClientState, layers: SceneLayers, visibleDefe
                 defense.health,
                 defense.maxHealth
             );
-            if (frame) {
+            if (frame && sprite.texture !== frame) {
                 sprite.texture = frame;
             }
         }
@@ -805,7 +856,7 @@ const syncDefenseHeadSprites = (state: ClientState, layers: SceneLayers, nowMs: 
             defense.type,
             resolveDefenseOrientation(defense.orientation, nowMs)
         );
-        if (frame) {
+        if (frame && sprite.texture !== frame) {
             sprite.texture = frame;
         }
         sprite.position.set(defense.tileX * TILE, defense.tileY * TILE);
@@ -823,11 +874,30 @@ const createBulletEntity = (layers: SceneLayers): Sprite | Graphics => {
     return sprite ?? createFallbackBulletEntity();
 };
 
-const syncBulletSprites = (state: ClientState, layers: SceneLayers, nowMs: number): void => {
-    syncEntityCache(layers.bulletSprites, layers.objectLayer, state.bullets.keys(), () => createBulletEntity(layers));
-    const animation = Math.floor(nowMs / 80) % 4;
+const resolveVisibleBulletIds = (state: ClientState, viewBounds: WorldViewBounds): string[] => {
+    const ids: string[] = [];
     for (const bullet of state.bullets.values()) {
-        const sprite = layers.bulletSprites.get(bullet.id);
+        if (isWorldPointVisible(viewBounds, bullet.x, bullet.y, 24)) {
+            ids.push(bullet.id);
+        }
+    }
+    return ids;
+};
+
+const syncBulletSprites = (
+    state: ClientState,
+    layers: SceneLayers,
+    nowMs: number,
+    visibleBulletIds: ReadonlyArray<string>
+): void => {
+    syncEntityCache(layers.bulletSprites, layers.objectLayer, visibleBulletIds, () => createBulletEntity(layers));
+    const animation = Math.floor(nowMs / 80) % 4;
+    for (const bulletId of visibleBulletIds) {
+        const bullet = state.bullets.get(bulletId);
+        const sprite = layers.bulletSprites.get(bulletId);
+        if (!bullet) {
+            continue;
+        }
         if (!sprite) {
             continue;
         }
@@ -835,13 +905,13 @@ const syncBulletSprites = (state: ClientState, layers: SceneLayers, nowMs: numbe
             const rect = resolveBulletFrameRect(animation, Math.max(0, bullet.type));
             const frame = getFrameTexture(
                 layers.textures.bullets,
-                `bullet:${bullet.id}:${animation}:${bullet.type}`,
+                `bullet:${animation}:${bullet.type}`,
                 rect.x,
                 rect.y,
                 rect.width,
                 rect.height
             );
-            if (frame) {
+            if (frame && sprite.texture !== frame) {
                 sprite.texture = frame;
             }
         }
@@ -849,18 +919,24 @@ const syncBulletSprites = (state: ClientState, layers: SceneLayers, nowMs: numbe
     }
 };
 
-const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
+const renderWorldObjects = (
+    state: ClientState,
+    layers: SceneLayers,
+    viewBounds: WorldViewBounds
+): void => {
     const nowMs = Date.now();
     const animationCounter = Math.floor(nowMs / 100);
-    const researchStripBuildingIds = resolveResearchStripBuildingIds(state);
-    const visibleDefenseIds = resolveVisibleDefenseIds(state);
+    const visibleBuildingIds = resolveVisibleBuildingIds(state, viewBounds);
+    const researchStripBuildingIds = resolveResearchStripBuildingIds(state, visibleBuildingIds);
+    const visibleDefenseIds = resolveVisibleDefenseIds(state, viewBounds);
+    const visibleBulletIds = resolveVisibleBulletIds(state, viewBounds);
     syncResearchStripSprites(state, layers, researchStripBuildingIds);
-    syncBuildingSprites(state, layers, animationCounter);
-    syncBuildingOverlaySprites(state, layers, resolveOverlayBuildingIds(state));
+    syncBuildingSprites(state, layers, animationCounter, visibleBuildingIds);
+    syncBuildingOverlaySprites(state, layers, resolveOverlayBuildingIds(state, visibleBuildingIds));
     syncDefenseSprites(state, layers, visibleDefenseIds);
     syncDefenseHeadSprites(state, layers, nowMs, visibleDefenseIds);
-    renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items);
-    syncBulletSprites(state, layers, nowMs);
+    renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items, viewBounds);
+    syncBulletSprites(state, layers, nowMs, visibleBulletIds);
 };
 
 const renderHud = (state: ClientState, layers: SceneLayers): void => {
@@ -953,6 +1029,24 @@ type SidePanelRenderContext = {
     nowMs: number;
 };
 
+type SidePanelRuntime = {
+    lastRefreshAt: number | null;
+};
+
+const sidePanelRuntimeByBackground = new WeakMap<Graphics, SidePanelRuntime>();
+
+const ensureSidePanelRuntime = (layers: SceneLayers): SidePanelRuntime => {
+    const existing = sidePanelRuntimeByBackground.get(layers.panelBackground);
+    if (existing) {
+        return existing;
+    }
+    const created: SidePanelRuntime = {
+        lastRefreshAt: null
+    };
+    sidePanelRuntimeByBackground.set(layers.panelBackground, created);
+    return created;
+};
+
 const createSidePanelRenderContext = (state: ClientState, layers: SceneLayers): SidePanelRenderContext => {
     const viewport = resolveViewportFromState(state);
     return {
@@ -1034,8 +1128,11 @@ const renderSidePanelFinance = (context: SidePanelRenderContext): void => {
             .rect(PANEL_FINANCE.incomeIcon.x, PANEL_FINANCE.incomeIcon.y, incomeWidth, incomeHeight)
             .fill({ texture: incomeTexture });
     }
-    layers.panelCashText.style.fill = income < 0 ? 0xe74c3c : 0x2ecc71;
-    layers.panelCashText.text = formatCash(cash);
+    const cashFill = income < 0 ? 0xe74c3c : 0x2ecc71;
+    if (layers.panelCashText.style.fill !== cashFill) {
+        layers.panelCashText.style.fill = cashFill;
+    }
+    setTextIfChanged(layers.panelCashText, formatCash(cash));
 };
 
 const renderSidePanelHealth = (context: SidePanelRenderContext): void => {
@@ -1091,7 +1188,7 @@ const renderSidePanelInventory = (context: SidePanelRenderContext): void => {
         if (countValue > 1) {
             const countText = layers.panelInventoryCountTexts.get(slot.itemType);
             if (countText) {
-                countText.text = `${countValue}`;
+                setTextIfChanged(countText, `${countValue}`);
                 countText.position.set(panelX + slot.x + 22, slot.y + 12);
                 countText.visible = true;
             }
@@ -1126,9 +1223,9 @@ const renderSidePanelButtons = (context: SidePanelRenderContext): void => {
 
 const renderSidePanelMessage = (context: SidePanelRenderContext): void => {
     const panelMessage = resolvePanelMessage(context.state);
-    context.layers.panelMessageHeading.text = panelMessage.heading;
+    setTextIfChanged(context.layers.panelMessageHeading, panelMessage.heading);
     context.layers.panelMessageHeading.visible = panelMessage.heading.length > 0;
-    context.layers.panelMessageBody.text = panelMessage.lines.join("\n");
+    setTextIfChanged(context.layers.panelMessageBody, panelMessage.lines.join("\n"));
     context.layers.panelMessageBody.visible = panelMessage.lines.length > 0;
 };
 
@@ -1186,6 +1283,11 @@ const renderSidePanelHomeArrow = (context: SidePanelRenderContext): void => {
 const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     const context = createSidePanelRenderContext(state, layers);
     layoutSidePanelSprites(context);
+    const runtime = ensureSidePanelRuntime(layers);
+    if (!isRefreshDue(runtime.lastRefreshAt, context.nowMs, SIDE_PANEL_REFRESH_MS)) {
+        return;
+    }
+    runtime.lastRefreshAt = context.nowMs;
     resetSidePanelSprites(layers);
     renderSidePanelBackground(context);
     renderSidePanelFinance(context);
@@ -1198,13 +1300,24 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneLayers): void => {
+    const nowMs = Date.now();
+    const localRender = resolveLocalRenderPosition(state, nowMs);
     const viewport = resolveViewportFromState(state);
+    const viewBounds = resolveWorldViewBounds(
+        localRender.x,
+        localRender.y,
+        viewport.worldWidth,
+        viewport.worldHeight,
+        WORLD_OBJECT_OVERSCAN_PX
+    );
+    const tileDrawRadiusX = resolveTileDrawRadius(viewport.worldWidth);
+    const tileDrawRadiusY = resolveTileDrawRadius(viewport.worldHeight);
     layers.world.position.set(viewport.centerX, viewport.centerY);
-    layers.world.pivot.set(state.local.x, state.local.y);
+    layers.world.pivot.set(localRender.x, localRender.y);
 
     const localRow = resolveLocalRole(state) === "mayor" ? 1 : 0;
     updateTankEntityTexture(layers.localTank, layers.textures, localRow, state.local.direction);
-    layers.localTank.position.set(state.local.x, state.local.y);
+    layers.localTank.position.set(localRender.x, localRender.y);
     layers.localTank.rotation = 0;
 
     syncEntityCache(layers.remoteTanks, layers.remoteLayer, state.remotePlayers.keys(), () => createTankSprite(layers.textures, 2, 0));
@@ -1221,18 +1334,20 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         tank.rotation = 0;
     }
 
-    renderGroundLayer(state, layers.world, layers.groundSprite, layers.textures.ground);
+    renderGroundLayer(localRender.x, localRender.y, layers.world, layers.groundSprite, layers.textures.ground);
     renderTileLayer(
         mapData,
-        state.local.x,
-        state.local.y,
+        localRender.x,
+        localRender.y,
         layers.world,
         layers.tileSprite,
         layers.textures.rocks,
         layers.textures.lava,
-        layers.textures.buildings
+        layers.textures.buildings,
+        tileDrawRadiusX,
+        tileDrawRadiusY
     );
-    renderWorldObjects(state, layers);
+    renderWorldObjects(state, layers, viewBounds);
     renderChangingLayer(
         state,
         layers.world,
@@ -1256,7 +1371,7 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.textures.smallExplosion,
         layers.textures.largeExplosion
     );
-    renderBotDebugLayer(state, layers.world, layers.botDebugSprite);
+    renderBotDebugLayer(state, layers.world, layers.botDebugSprite, localRender.x, localRender.y);
     renderHud(state, layers);
     renderSidePanel(state, layers);
 }
@@ -1272,7 +1387,8 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
         width: window.innerWidth,
         height: window.innerHeight,
         background: "#15241f",
-        antialias: false
+        antialias: false,
+        roundPixels: true
     });
 
     attachCanvasToRoot(app);

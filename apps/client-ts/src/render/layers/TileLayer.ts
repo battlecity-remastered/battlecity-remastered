@@ -14,6 +14,14 @@ const BUILDING_FRAME_SIZE = TILE_SIZE * 3;
 type TexturedTileState = {
     layer: Container;
     sprites: Map<string, Sprite>;
+    lastCenterTileX: number | null;
+    lastCenterTileY: number | null;
+    lastMapRef: ReadonlyArray<ReadonlyArray<number>> | null;
+    lastRockTextureUid: number;
+    lastLavaTextureUid: number;
+    lastBuildingTextureUid: number;
+    lastDrawRadiusX: number;
+    lastDrawRadiusY: number;
 };
 
 const texturedTileStateByLayer = new WeakMap<Container, TexturedTileState>();
@@ -43,10 +51,22 @@ const ensureTexturedTileState = (layer: Container, anchor: Graphics): TexturedTi
     layer.addChildAt(textureLayer, Math.min(insertIndex, layer.children.length));
     const created = {
         layer: textureLayer,
-        sprites: new Map<string, Sprite>()
+        sprites: new Map<string, Sprite>(),
+        lastCenterTileX: null,
+        lastCenterTileY: null,
+        lastMapRef: null,
+        lastRockTextureUid: -1,
+        lastLavaTextureUid: -1,
+        lastBuildingTextureUid: -1,
+        lastDrawRadiusX: -1,
+        lastDrawRadiusY: -1
     };
     texturedTileStateByLayer.set(layer, created);
     return created;
+};
+
+const resolveTextureUid = (texture: Texture | null): number => {
+    return texture?.source?.uid ?? -1;
 };
 
 const syncTexturedTileSprite = (
@@ -93,16 +113,36 @@ export const renderTileLayer = (
     sprite: Graphics,
     rockTexture: Texture | null = null,
     lavaTexture: Texture | null = null,
-    buildingTexture: Texture | null = null
+    buildingTexture: Texture | null = null,
+    drawRadiusX: number = TILE_DRAW_RADIUS,
+    drawRadiusY: number = TILE_DRAW_RADIUS
 ): void => {
-    sprite.clear();
     const texturedTileState = ensureTexturedTileState(layer, sprite);
-    const texturedTileKeys = new Set<string>();
     const centerTileX = Math.floor(cameraX / TILE_SIZE);
     const centerTileY = Math.floor(cameraY / TILE_SIZE);
+    const rockTextureUid = resolveTextureUid(rockTexture);
+    const lavaTextureUid = resolveTextureUid(lavaTexture);
+    const buildingTextureUid = resolveTextureUid(buildingTexture);
+    const unchanged = texturedTileState.lastCenterTileX === centerTileX
+        && texturedTileState.lastCenterTileY === centerTileY
+        && texturedTileState.lastMapRef === mapData.map
+        && texturedTileState.lastRockTextureUid === rockTextureUid
+        && texturedTileState.lastLavaTextureUid === lavaTextureUid
+        && texturedTileState.lastBuildingTextureUid === buildingTextureUid
+        && texturedTileState.lastDrawRadiusX === drawRadiusX
+        && texturedTileState.lastDrawRadiusY === drawRadiusY;
+    if (unchanged) {
+        if (!layer.children.includes(sprite)) {
+            layer.addChild(sprite);
+        }
+        return;
+    }
 
-    for (let tx = centerTileX - TILE_DRAW_RADIUS; tx <= centerTileX + TILE_DRAW_RADIUS; tx += 1) {
-        for (let ty = centerTileY - TILE_DRAW_RADIUS; ty <= centerTileY + TILE_DRAW_RADIUS; ty += 1) {
+    sprite.clear();
+    const texturedTileKeys = new Set<string>();
+
+    for (let tx = centerTileX - drawRadiusX; tx <= centerTileX + drawRadiusX; tx += 1) {
+        for (let ty = centerTileY - drawRadiusY; ty <= centerTileY + drawRadiusY; ty += 1) {
             const key = `${tx},${ty}`;
             if (!isInsideMap(mapData, tx, ty)) {
                 sprite
@@ -174,6 +214,14 @@ export const renderTileLayer = (
         }
     }
     pruneTexturedTileSprites(texturedTileState, texturedTileKeys);
+    texturedTileState.lastCenterTileX = centerTileX;
+    texturedTileState.lastCenterTileY = centerTileY;
+    texturedTileState.lastMapRef = mapData.map;
+    texturedTileState.lastRockTextureUid = rockTextureUid;
+    texturedTileState.lastLavaTextureUid = lavaTextureUid;
+    texturedTileState.lastBuildingTextureUid = buildingTextureUid;
+    texturedTileState.lastDrawRadiusX = drawRadiusX;
+    texturedTileState.lastDrawRadiusY = drawRadiusY;
 
     if (!layer.children.includes(sprite)) {
         layer.addChild(sprite);

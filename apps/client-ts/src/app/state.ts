@@ -245,6 +245,13 @@ export type ClientState = {
         surfaceWidth: number;
         surfaceHeight: number;
     };
+    render: {
+        previousLocalX: number;
+        previousLocalY: number;
+        projectedOffsetX: number;
+        projectedOffsetY: number;
+        lastResolvedAt: number | null;
+    };
     debug: DebugState;
     ui: {
         showHud: boolean;
@@ -368,8 +375,9 @@ const createDebugDefaults = (): DebugState => ({
     }
 });
 export const createClientState = (): ClientState => {
+    const local = createLocalDefaults();
     return {
-        local: createLocalDefaults(),
+        local,
         remotePlayers: new Map(),
         lobby: {
             deniedReason: null,
@@ -441,10 +449,20 @@ export const createClientState = (): ClientState => {
             surfaceWidth: 0,
             surfaceHeight: 0
         },
+        render: {
+            previousLocalX: local.x,
+            previousLocalY: local.y,
+            projectedOffsetX: 0,
+            projectedOffsetY: 0,
+            lastResolvedAt: null
+        },
         debug: createDebugDefaults(),
         ui: createUiDefaults()
     };
 };
+
+// Ignore tiny server/client drift to avoid constant micro snap-back jitter while moving.
+const LOCAL_SNAPSHOT_RECONCILE_DISTANCE_PX = 12;
 
 export const updateFromSnapshot = (
     state: ClientState,
@@ -463,8 +481,17 @@ export const updateFromSnapshot = (
         if (player.id === state.local.id) {
             state.local.city = player.city;
             state.local.direction = player.direction;
-            state.local.x = player.offset.x;
-            state.local.y = player.offset.y;
+            const dx = player.offset.x - state.local.x;
+            const dy = player.offset.y - state.local.y;
+            if ((dx * dx) + (dy * dy) > (LOCAL_SNAPSHOT_RECONCILE_DISTANCE_PX ** 2)) {
+                state.local.x = player.offset.x;
+                state.local.y = player.offset.y;
+                state.render.previousLocalX = player.offset.x;
+                state.render.previousLocalY = player.offset.y;
+                state.render.projectedOffsetX = 0;
+                state.render.projectedOffsetY = 0;
+                state.render.lastResolvedAt = null;
+            }
             state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
             if (typeof player.health === "number") {
                 state.local.health = player.health;
