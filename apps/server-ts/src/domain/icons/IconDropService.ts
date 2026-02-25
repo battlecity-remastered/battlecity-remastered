@@ -5,7 +5,7 @@ import { collectFactoryStock } from "../factories/FactoryService.js";
 import { addInventoryItem, resolveInventoryCap } from "../inventory/InventoryService.js";
 
 const HAZARD_PICKUP_RANGE = 24;
-const PICKUP_HAZARD_TYPES = new Set([3, 4, 7]);
+const PICKUP_HAZARD_TYPES = new Set([0, 1, 2, 3, 4, 6, 7, 12]);
 
 export type IconPickupResult = {
     stock: KnownEventPayloadByType["factory.stock"];

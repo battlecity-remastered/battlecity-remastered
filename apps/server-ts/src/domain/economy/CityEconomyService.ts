@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeCity, RuntimeConfig, RuntimeState } from "../../runtime/types.js";
+import { resolveCityBuildStates } from "../buildings/BuildPermissionsService.js";
 
 const ensureCity = (state: RuntimeState, cityId: number, config: RuntimeConfig): RuntimeCity => {
     const existing = state.cities.get(cityId);
@@ -19,14 +20,33 @@ const ensureCity = (state: RuntimeState, cityId: number, config: RuntimeConfig):
     return city;
 };
 
-const toFinancePayload = (city: RuntimeCity): KnownEventPayloadByType["city.finance"] => {
+const hasCommandCenter = (state: RuntimeState, cityId: number): boolean => {
+    for (const building of state.buildings.values()) {
+        if (building.cityId === cityId && building.type === 0) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const toFinancePayload = (state: RuntimeState, city: RuntimeCity): KnownEventPayloadByType["city.finance"] => {
     return {
         cityId: city.cityId,
         cash: city.cash,
         income: city.income,
         score: city.score,
-        researchLevel: city.researchLevel
+        researchLevel: city.researchLevel,
+        isOrbable: hasCommandCenter(state, city.cityId),
+        canBuildStates: resolveCityBuildStates(state, city.cityId)
     };
+};
+
+export const buildCityFinancePayload = (
+    state: RuntimeState,
+    cityId: number,
+    config: RuntimeConfig
+): KnownEventPayloadByType["city.finance"] => {
+    return toFinancePayload(state, ensureCity(state, cityId, config));
 };
 
 export const getOrCreateCity = (state: RuntimeState, cityId: number, config: RuntimeConfig): RuntimeCity => {
@@ -61,7 +81,7 @@ export const emitCityFinance = (
     config: RuntimeConfig,
     emitter: RuntimeEmitter
 ): void => {
-    emitter.emit("city.finance", toFinancePayload(ensureCity(state, cityId, config)));
+    emitter.emit("city.finance", buildCityFinancePayload(state, cityId, config));
 };
 
 export const tickCityEconomy = (
@@ -82,6 +102,6 @@ export const tickCityEconomy = (
         city.income = config.cityBaseIncome + (cityBuildings * 2);
         city.cash += city.income;
         state.cities.set(cityId, city);
-        emitter.emit("city.finance", toFinancePayload(city));
+        emitter.emit("city.finance", toFinancePayload(state, city));
     }
 };

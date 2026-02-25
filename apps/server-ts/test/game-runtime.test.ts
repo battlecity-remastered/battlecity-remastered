@@ -2,12 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { makeEnvelope, type EventEnvelope } from "@battlecity/protocol";
 import { Effect } from "effect";
+import citySpawnsJson from "../data/citySpawns.json" with { type: "json" };
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
 import { createRuntimeState, type RuntimeConfig } from "../src/runtime/types.js";
 
 const ITEM_TYPE_LASER = 12;
 const ITEM_TYPE_BOMB = 3;
+const ITEM_TYPE_ORB = 5;
+const ITEM_TYPE_DFG = 7;
+const TILE_SIZE = 48;
+const COMMAND_CENTER_HEIGHT_TILES = 2;
+
+const CITY_SPAWNS = citySpawnsJson as Record<string, { tileX?: number; tileY?: number }>;
 
 const makeHarness = (
     config: Partial<RuntimeConfig> = {},
@@ -47,6 +54,24 @@ const grantInventoryItem = (runtime: GameRuntime, socketId: string, itemType: nu
     const inventory = state.playerInventory.get(socketId) ?? new Map<number, number>();
     inventory.set(itemType, count);
     state.playerInventory.set(socketId, inventory);
+};
+
+const makeOrbDropPayload = (
+    sourceCityId: number,
+    targetCityId: number
+): { sourceCityId: number; targetCityId: number; position: { x: number; y: number; }; } => {
+    const spawn = CITY_SPAWNS[String(targetCityId)];
+    if (!spawn || !Number.isFinite(spawn.tileX) || !Number.isFinite(spawn.tileY)) {
+        throw new Error(`Missing city spawn for target city ${targetCityId}`);
+    }
+    return {
+        sourceCityId,
+        targetCityId,
+        position: {
+            x: Math.floor(spawn.tileX) * TILE_SIZE,
+            y: (Math.floor(spawn.tileY) + COMMAND_CENTER_HEIGHT_TILES) * TILE_SIZE
+        }
+    };
 };
 
 test("join + movement emits assignment and snapshots", () => {
@@ -1346,6 +1371,156 @@ test("mine hazards only trigger on enemy players", () => {
     assert.equal(healthEvents.some((event) => (event.payload as { id?: string }).id === "ally"), false);
 });
 
+test("dfg hazards freeze enemy players and expire after reveal window", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("player.update", 3, {
+        id: "enemy",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 240, y: 240 }
+    }));
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_DFG, 1);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 4, {
+        cityId: 1,
+        type: ITEM_TYPE_DFG,
+        position: { x: 240, y: 240 }
+    }));
+
+    runtime.tickBullets();
+
+    const enemy = runtime.getReadonlyState().players.get("enemy");
+    assert.ok(enemy);
+    assert.ok((enemy.frozenUntil ?? 0) > Date.now());
+    const dfgHazard = Array.from(runtime.getReadonlyState().hazards.values())
+        .find((hazard) => hazard.type === ITEM_TYPE_DFG);
+    assert.ok(dfgHazard);
+    assert.equal(dfgHazard?.armed, false);
+    assert.equal(dfgHazard?.active, false);
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    assert.equal(Array.from(runtime.getReadonlyState().hazards.values())
+        .some((hazard) => hazard.type === ITEM_TYPE_DFG), false);
+    const removed = broadcast.find((event) => {
+        return event.type === "hazard.remove"
+            && (event.payload as { reason?: string }).reason === "expired";
+    });
+    assert.ok(removed);
+});
+
+test("bomb detonation destroys nearby buildings and defenses but not command centers", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.getReadonlyState().buildings.set("target_housing", {
+        id: "target_housing",
+        ownerId: "target",
+        cityId: 2,
+        type: 300,
+        tileX: 6,
+        tileY: 6,
+        health: 120,
+        maxHealth: 120,
+        population: 30
+    });
+    runtime.getReadonlyState().buildings.set("target_cc", {
+        id: "target_cc",
+        ownerId: "target",
+        cityId: 2,
+        type: 0,
+        tileX: 8,
+        tileY: 8,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+    runtime.getReadonlyState().defenses.set("target_defense", {
+        id: "target_defense",
+        cityId: 2,
+        type: 8,
+        tileX: 7,
+        tileY: 7,
+        health: 100,
+        maxHealth: 100
+    });
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_BOMB, 1);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 1,
+        type: ITEM_TYPE_BOMB,
+        position: { x: 6 * TILE_SIZE, y: 6 * TILE_SIZE },
+        armed: true,
+        fuseMs: 100
+    }));
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    assert.equal(runtime.getReadonlyState().buildings.has("target_housing"), false);
+    assert.equal(runtime.getReadonlyState().buildings.has("target_cc"), true);
+    assert.equal(runtime.getReadonlyState().defenses.has("target_defense"), false);
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "building.demolished") {
+            return false;
+        }
+        return (event.payload as { id?: string }).id === "target_housing";
+    }));
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "defense.remove") {
+            return false;
+        }
+        return (event.payload as { id?: string; reason?: string }).id === "target_defense"
+            && (event.payload as { reason?: string }).reason === "destroyed";
+    }));
+});
+
+test("active bombs detonate when the owner dies", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("owner", makeEnvelope("player.update", 3, {
+        id: "owner",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 10 * TILE_SIZE, y: 10 * TILE_SIZE }
+    }));
+
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_BOMB, 1);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 4, {
+        cityId: 1,
+        type: ITEM_TYPE_BOMB,
+        position: { x: 10 * TILE_SIZE, y: 10 * TILE_SIZE },
+        armed: true,
+        fuseMs: 5_000
+    }));
+
+    const owner = runtime.getReadonlyState().players.get("owner");
+    assert.ok(owner);
+    runtime.getReadonlyState().players.set("owner", {
+        ...owner,
+        health: 20
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("player.bot_damage", 5, {
+        shooterId: "enemy",
+        amount: 40
+    }));
+
+    assert.equal(Array.from(runtime.getReadonlyState().hazards.values())
+        .some((hazard) => hazard.type === ITEM_TYPE_BOMB), false);
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "hazard.remove") {
+            return false;
+        }
+        return (event.payload as { reason?: string }).reason === "detonated";
+    }));
+});
+
 test("bullet collision removes active hazards authoritatively", () => {
     const { runtime, broadcast } = makeHarness();
 
@@ -1389,6 +1564,48 @@ test("bullet collision removes active hazards authoritatively", () => {
             && (event.payload as { reason?: string }).reason === "cleared";
     });
     assert.ok(hazardRemoved);
+    const stockRestored = broadcast.find((event) => {
+        if (event.type !== "factory.stock") {
+            return false;
+        }
+        const payload = event.payload as { cityId: number; itemType: number; stock: number };
+        return payload.cityId === 1 && payload.itemType === ITEM_TYPE_BOMB && payload.stock === 1;
+    });
+    assert.ok(stockRestored);
+});
+
+test("dropping non-hazard inventory item creates passive map icon without auto-detonation", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_LASER, 1);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 2, {
+        cityId: 1,
+        type: ITEM_TYPE_LASER,
+        position: { x: 240, y: 240 }
+    }));
+
+    assert.equal(rejected.length, 0);
+    const spawned = broadcast.find((event) => {
+        if (event.type !== "hazard.spawn") {
+            return false;
+        }
+        return (event.payload as { type: number }).type === ITEM_TYPE_LASER;
+    });
+    assert.ok(spawned);
+    const hazardId = (spawned.payload as { id: string }).id;
+    assert.ok(runtime.getReadonlyState().hazards.has(hazardId));
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    assert.ok(runtime.getReadonlyState().hazards.has(hazardId));
+    const removed = broadcast.find((event) => {
+        return event.type === "hazard.remove"
+            && (event.payload as { id?: string }).id === hazardId;
+    });
+    assert.equal(removed, undefined);
 });
 
 test("bullet collision resolves against blocking terrain tiles", () => {
@@ -1423,10 +1640,19 @@ test("orb drop emits city.orbed and score.promotion", () => {
     const { runtime, broadcast } = makeHarness();
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
-    runtime.handleRawEvent("p1", makeEnvelope("orb.drop.request", 2, {
-        sourceCityId: 1,
-        targetCityId: 2
-    }));
+    grantInventoryItem(runtime, "p1", ITEM_TYPE_ORB, 1);
+    runtime.getReadonlyState().buildings.set("cc_city2", {
+        id: "cc_city2",
+        ownerId: "p2",
+        cityId: 2,
+        type: 0,
+        tileX: 10,
+        tileY: 10,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+    runtime.handleRawEvent("p1", makeEnvelope("orb.drop.request", 2, makeOrbDropPayload(1, 2)));
 
     const orbed = broadcast.find((event) => event.type === "city.orbed");
     assert.ok(orbed);
@@ -1548,6 +1774,128 @@ test("defense deploy is authoritative and emits spawn + finance update", () => {
     assert.ok((finance.payload as { cash: number }).cash < 200);
 });
 
+test("defense deploy from inventory consumes stock and does not require city cash", () => {
+    const { runtime, broadcast, direct, rejected } = makeHarness({
+        cityStartingCash: 0
+    });
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    grantInventoryItem(runtime, "p1", 9, 1);
+    const financeBefore = broadcast.filter((event) => event.type === "city.finance").length;
+
+    runtime.handleRawEvent("p1", makeEnvelope("defense.deploy.request", 2, {
+        cityId: 2,
+        type: 9,
+        tileX: 10,
+        tileY: 10,
+        fromInventory: true
+    }));
+
+    assert.equal(rejected.length, 0);
+    const spawned = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(spawned);
+    assert.equal((spawned.payload as { type: number }).type, 9);
+
+    const inventoryUpdate = direct
+        .filter((entry) => entry.socketId === "p1" && entry.event.type === "inventory.update")
+        .at(-1);
+    assert.ok(inventoryUpdate);
+    const items = (inventoryUpdate.event.payload as { items: Array<{ itemType: number; count: number }> }).items;
+    assert.equal(items.some((item) => item.itemType === 9), false);
+
+    const financeAfter = broadcast.filter((event) => event.type === "city.finance").length;
+    assert.equal(financeAfter, financeBefore);
+});
+
+test("deployed turret tracks enemy players and fires authoritatively", () => {
+    const { runtime, broadcast } = makeHarness({
+        botTickMs: 100,
+        fakeCityPlayerThreshold: 999
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("owner", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 1,
+        type: 9,
+        tileX: 10,
+        tileY: 10
+    }));
+    runtime.handleRawEvent("enemy", makeEnvelope("player.update", 4, {
+        id: "enemy",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 560, y: 480 }
+    }));
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const defenseSpawn = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(defenseSpawn);
+    const defenseId = (defenseSpawn.payload as { id: string }).id;
+
+    const orientationUpdate = broadcast.find((event) => {
+        if (event.type !== "defense.update") {
+            return false;
+        }
+        const payload = event.payload as { id: string; orientation?: number };
+        return payload.id === defenseId && typeof payload.orientation === "number";
+    });
+    assert.ok(orientationUpdate);
+
+    const defensiveShot = broadcast.find((event) => {
+        if (event.type !== "bullet.fired") {
+            return false;
+        }
+        const payload = event.payload as { ownerId: string };
+        return payload.ownerId === defenseId;
+    });
+    assert.ok(defensiveShot);
+});
+
+test("deployed turret does not fire at same-city players", () => {
+    const { runtime, broadcast } = makeHarness({
+        botTickMs: 100,
+        fakeCityPlayerThreshold: 999
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("ally", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+    runtime.handleRawEvent("owner", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 1,
+        type: 9,
+        tileX: 10,
+        tileY: 10
+    }));
+    runtime.handleRawEvent("ally", makeEnvelope("player.update", 4, {
+        id: "ally",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 560, y: 480 }
+    }));
+
+    for (let i = 0; i < 8; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const defenseSpawn = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(defenseSpawn);
+    const defenseId = (defenseSpawn.payload as { id: string }).id;
+
+    const defensiveShot = broadcast.find((event) => {
+        if (event.type !== "bullet.fired") {
+            return false;
+        }
+        const payload = event.payload as { ownerId: string };
+        return payload.ownerId === defenseId;
+    });
+    assert.equal(defensiveShot, undefined);
+});
+
 test("defense deploy blocks occupied building footprint tiles but allows hospital bottom-row placement", () => {
     const { runtime, broadcast, rejected } = makeHarness({
         cityStartingCash: 1000
@@ -1651,6 +1999,61 @@ test("bullets can damage and remove defenses", () => {
     assert.ok((latest.payload as { health: number }).health < 40);
 });
 
+test("bullet destroying defense restores city stock for that defense type", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("defender", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("defender", makeEnvelope("defense.deploy.request", 3, {
+        cityId: 1,
+        type: 8,
+        tileX: 10,
+        tileY: 10
+    }));
+
+    const defenseSpawn = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(defenseSpawn);
+    const defenseId = (defenseSpawn.payload as { id: string }).id;
+    const defense = runtime.getReadonlyState().defenses.get(defenseId);
+    assert.ok(defense);
+    defense.health = 1;
+
+    runtime.handleRawEvent("attacker", makeEnvelope("player.update", 4, {
+        id: "attacker",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 420, y: 504 }
+    }));
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_LASER, 1);
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
+        ownerId: "attacker",
+        position: { x: 420, y: 504 },
+        direction: 0,
+        type: 0
+    }));
+
+    for (let i = 0; i < 6; i += 1) {
+        runtime.tickBullets();
+    }
+
+    assert.equal(rejected.length, 0);
+    const defenseRemoved = broadcast.find((event) => {
+        return event.type === "defense.remove"
+            && (event.payload as { id?: string; reason?: string }).id === defenseId
+            && (event.payload as { reason?: string }).reason === "destroyed";
+    });
+    assert.ok(defenseRemoved);
+    const stockRestored = broadcast.find((event) => {
+        if (event.type !== "factory.stock") {
+            return false;
+        }
+        const payload = event.payload as { cityId: number; itemType: number; stock: number };
+        return payload.cityId === 1 && payload.itemType === 8 && payload.stock === 1;
+    });
+    assert.ok(stockRestored);
+});
+
 test("orb drop clears target defenses and updates actor score profile", () => {
     const { runtime, broadcast, direct } = makeHarness({
         cityStartingCash: 1000
@@ -1674,6 +2077,18 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         tileX: 12,
         tileY: 12
     }));
+    runtime.getReadonlyState().buildings.set("cc_city2", {
+        id: "cc_city2",
+        ownerId: "target",
+        cityId: 2,
+        type: 0,
+        tileX: 12,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ORB, 1);
     grantInventoryItem(runtime, "target", ITEM_TYPE_BOMB, 1);
     runtime.handleRawEvent("target", makeEnvelope("hazard.deploy.request", 5, {
         cityId: 2,
@@ -1684,10 +2099,7 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         fuseMs: 5000
     }));
 
-    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 6, {
-        sourceCityId: 1,
-        targetCityId: 2
-    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 6, makeOrbDropPayload(1, 2)));
 
     const defenseRemoved = broadcast.find((event) => event.type === "defense.remove");
     assert.ok(defenseRemoved);
@@ -1723,10 +2135,19 @@ test("orb drop invokes notifier adapter with authoritative payload", async () =>
         desiredCity: 1,
         userId: "u-attacker"
     }));
-    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, {
-        sourceCityId: 1,
-        targetCityId: 2
-    }));
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ORB, 1);
+    runtime.getReadonlyState().buildings.set("cc_city2", {
+        id: "cc_city2",
+        ownerId: "target",
+        cityId: 2,
+        type: 0,
+        tileX: 12,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, makeOrbDropPayload(1, 2)));
 
     await new Promise<void>((resolve) => {
         setTimeout(resolve, 0);
@@ -1775,24 +2196,23 @@ test("orbing a fake city applies cooldown and removes its defender bots", () => 
         fakeCityIds: [17]
     });
 
-    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
-    runtime.handleRawEvent("attacker", makeEnvelope("player.update", 2, {
-        id: "attacker",
+    runtime.handleRawEvent("seed", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("seed", makeEnvelope("player.update", 2, {
+        id: "seed",
         city: 17,
         direction: 0,
         isMoving: false,
         offset: { x: 4600, y: 7600 }
     }));
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 3, { desiredCity: 1 }));
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ORB, 1);
     runtime.tickBullets();
     runtime.tickBullets();
     const defenderBefore = Array.from(runtime.getReadonlyState().players.values())
         .filter((player) => player.botType === "defender").length;
     assert.ok(defenderBefore >= 1);
 
-    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 3, {
-        sourceCityId: 1,
-        targetCityId: 17
-    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 4, makeOrbDropPayload(1, 17)));
 
     const state = runtime.getReadonlyState();
     assert.equal(state.fakeCities.get(17)?.active, false);

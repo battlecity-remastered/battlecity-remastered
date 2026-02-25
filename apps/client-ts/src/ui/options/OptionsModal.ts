@@ -84,13 +84,13 @@ export const buildOptionsLines = (state: ClientState): string[] => {
         `Tutorial: ${state.ui.showTutorial ? "on" : "off"} (press T)`,
         `Identity panel: ${state.ui.showIdentityPanel ? "on" : "off"} (press I/F6)`,
         `Identity provider: ${state.identity.provider} (press G)`,
-        `Bot debug: ${state.ui.showBotDebug ? "on" : "off"} (press P/F7)`,
+        `Bot debug: ${state.ui.showBotDebug ? "on" : "off"} (press P/F3)`,
         `Performance preset: ${state.ui.optionsPerformanceMode} (press K)`,
         `City import slot: C${state.ui.optionsCityImportCity} (press , or .)`,
         `City import mode: ${state.ui.optionsCityImportMode} (press V/Y)`,
         `City import status: ${importStatus}`,
         `Overlay opacity: ${state.ui.overlaysOpacity.toFixed(2)} (press [ or ])`,
-        "Close: F3"
+        "Close: panel button"
     ];
 };
 

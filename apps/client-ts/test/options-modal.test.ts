@@ -59,7 +59,7 @@ test("buildOptionsLines reflects current options state", () => {
     assert.equal(lines[3], "Tutorial: on (press T)");
     assert.equal(lines[4], "Identity panel: on (press I/F6)");
     assert.equal(lines[5], "Identity provider: google (press G)");
-    assert.equal(lines[6], "Bot debug: on (press P/F7)");
+    assert.equal(lines[6], "Bot debug: on (press P/F3)");
     assert.equal(lines[7], "Performance preset: quality (press K)");
     assert.equal(lines[8], "City import slot: C3 (press , or .)");
     assert.equal(lines[9], "City import mode: preview (press V/Y)");

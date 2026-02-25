@@ -4,6 +4,7 @@ import { applyIntroAction } from "../intro/IntroModal.js";
 import { applyTutorialToggle } from "../tutorial/TutorialManager.js";
 
 export const applyModalToggle = (state: ClientState, key: string): boolean => {
+    const normalized = key.toLowerCase();
     if (applyIntroAction(state, key)) {
         return true;
     }
@@ -18,7 +19,7 @@ export const applyModalToggle = (state: ClientState, key: string): boolean => {
         }
         return true;
     }
-    if (key === "F2") {
+    if (key === "F2" || (normalized === "m" && !state.ui.showOptionsModal)) {
         state.ui.showMapModal = !state.ui.showMapModal;
         if (state.ui.showMapModal) {
             state.ui.showHelpModal = false;
@@ -27,11 +28,7 @@ export const applyModalToggle = (state: ClientState, key: string): boolean => {
         return true;
     }
     if (key === "F3") {
-        state.ui.showOptionsModal = !state.ui.showOptionsModal;
-        if (state.ui.showOptionsModal) {
-            state.ui.showHelpModal = false;
-            state.ui.showMapModal = false;
-        }
+        state.ui.showBotDebug = !state.ui.showBotDebug;
         return true;
     }
     if (state.ui.showOptionsModal) {

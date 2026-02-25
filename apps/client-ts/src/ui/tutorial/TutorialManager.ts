@@ -7,7 +7,7 @@ export const buildTutorialLines = (state: ClientState): string[] => {
         "1. Join a city and move with W/S + Left/Right arrows.",
         "2. Hold Ctrl+B to place a building at cursor tile.",
         "3. Press U to pick up factory drops, H/C to use selected item, D to drop.",
-        "4. Press B to orb enemy city, Shift+B to deploy defense.",
+        "4. Press B for an armed bomb drop, O on an enemy command center strip.",
         `Ready: ${canBuild}`,
         "Toggle: T"
     ];

@@ -532,16 +532,13 @@ export const createLobbyManager = (
     };
 
     const buildJoinPayload = (desiredCity?: number): KnownEventPayloadByType["lobby.join.request"] => {
-        const payload: KnownEventPayloadByType["lobby.join.request"] = {
-            callsign: state.identity.callsign
+        return {
+            callsign: state.identity.callsign,
+            ...(typeof desiredCity === "number" ? { desiredCity } : {}),
+            ...(typeof state.identity.userId === "string" && state.identity.userId.length > 0
+                ? { userId: state.identity.userId }
+                : {})
         };
-        if (typeof desiredCity === "number") {
-            payload.desiredCity = desiredCity;
-        }
-        if (typeof state.identity.userId === "string" && state.identity.userId.length > 0) {
-            payload.userId = state.identity.userId;
-        }
-        return payload;
     };
 
     const requestJoin = (desiredCity?: number): void => {

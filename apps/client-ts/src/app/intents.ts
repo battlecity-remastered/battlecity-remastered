@@ -2,8 +2,12 @@ import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protoco
 import { normalizeHeading32 } from "@battlecity/sim-core";
 import type { ClientState } from "./state.js";
 import { appendActionIntents, type Intent } from "./intents-actions.js";
-import { legacyDirectionToBulletHeading, resolveTankMuzzlePosition } from "../gameplay/combat/shot-geometry.js";
-import { ITEM_TYPE_LASER, ITEM_TYPE_ROCKET } from "../render/parity/constants.js";
+import {
+    legacyDirectionToBulletHeading,
+    normalizeLegacyDirection,
+    resolveTankMuzzlePosition
+} from "../gameplay/combat/shot-geometry.js";
+import { ITEM_TYPE_FLARE, ITEM_TYPE_LASER, ITEM_TYPE_ROCKET } from "../render/parity/constants.js";
 
 type EnvelopeType = EventEnvelope["type"];
 
@@ -15,6 +19,9 @@ export type TypedIntent<TType extends EnvelopeType = EnvelopeType> = {
 
 const TURN_SPEED_STEPS_PER_SECOND = 12;
 const SHOT_COOLDOWN_MS = 1000;
+const FLARE_BURST_COOLDOWN_MS = 500;
+const BULLET_TYPE_FLARE = 3;
+const FLARE_BURST_SPREAD_OFFSETS = [4, 0, -4];
 
 export type TickPlan = {
     intents: ReadonlyArray<Intent>;
@@ -35,6 +42,39 @@ const asBulletIntent = (state: ClientState, bulletType: number): Intent<"bullet.
             type: bulletType
         }
     };
+};
+
+const appendFlareBurstIntents = (state: ClientState, nowMs: number, intents: Intent[]): boolean => {
+    if (!state.local.pendingFlareBurst) {
+        return false;
+    }
+    state.local.pendingFlareBurst = false;
+
+    const flareCount = state.inventory.get(ITEM_TYPE_FLARE) ?? 0;
+    if (flareCount <= 0) {
+        return false;
+    }
+    if (nowMs - state.local.lastFlareBurstAt <= FLARE_BURST_COOLDOWN_MS) {
+        return false;
+    }
+
+    const direction = normalizeLegacyDirection(state.local.direction);
+    const reverseCenter = normalizeLegacyDirection(direction + 16);
+    const muzzle = resolveTankMuzzlePosition(state.local.x, state.local.y, reverseCenter);
+    for (const offset of FLARE_BURST_SPREAD_OFFSETS) {
+        const shotDirection = normalizeLegacyDirection(reverseCenter + offset);
+        intents.push({
+            type: "bullet.fire.request",
+            payload: {
+                ownerId: state.local.id ?? "",
+                position: { x: muzzle.x, y: muzzle.y },
+                direction: legacyDirectionToBulletHeading(shotDirection),
+                type: BULLET_TYPE_FLARE
+            }
+        });
+    }
+    state.local.lastFlareBurstAt = nowMs;
+    return true;
 };
 
 const resolveDirection = (state: ClientState, dtMs: number): number => {
@@ -104,6 +144,9 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
     appendPlayerUpdateIntent(state, nextDirection, isMoving, throttle, intents);
 
     let shouldShoot = false;
+    if (appendFlareBurstIntents(state, nowMs, intents)) {
+        shouldShoot = true;
+    }
     const shotBulletType = resolveShotBulletType(state, isMoving);
     if (state.controls.shoot && shotBulletType !== null && nowMs - state.local.lastShotAt > SHOT_COOLDOWN_MS) {
         state.local.lastShotAt = nowMs;

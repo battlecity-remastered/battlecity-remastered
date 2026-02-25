@@ -33,7 +33,7 @@ test("collectNotificationEvents appends notices for promotion, denials, and orb"
 test("buildNotificationLines returns fallback when queue is empty", () => {
     assert.deepEqual(buildNotificationLines([]), [
         "Notifications",
-        "Menu: F1 Help  F2 Map  F3 Options  F4 Build",
+        "Menu: F1 Help  F2/M Map  F3 Debug  F4 Build",
         "No notifications"
     ]);
 });
@@ -43,6 +43,6 @@ test("buildNotificationLines prepends heading/menu affordance when queue has eve
         { id: "1", text: "Build denied: research_required", createdAt: Date.now() }
     ]);
     assert.equal(lines[0], "Notifications");
-    assert.equal(lines[1], "Menu: F1 Help  F2 Map  F3 Options  F4 Build");
+    assert.equal(lines[1], "Menu: F1 Help  F2/M Map  F3 Debug  F4 Build");
     assert.equal(lines[2], "Build denied: research_required");
 });

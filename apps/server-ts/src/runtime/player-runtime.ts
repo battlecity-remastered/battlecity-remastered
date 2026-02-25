@@ -180,18 +180,21 @@ export const upsertPlayerFromUpdate = (
     state.socketCities.set(socketId, city);
 
     const current = state.players.get(socketId) ?? makeDefaultPlayer(socketId, city, payload, config);
+    const nowMs = Date.now();
+    const frozenUntil = Number.isFinite(current.frozenUntil) ? current.frozenUntil as number : 0;
+    const isFrozen = frozenUntil > nowMs;
     const withDirection: RuntimePlayer = {
         ...current,
         city,
         speed: config.playerSpeed,
-        direction: normalizeHeading32(payload.direction)
+        direction: isFrozen ? current.direction : normalizeHeading32(payload.direction)
     };
     const movementThrottle = resolveMovementThrottle(payload);
     const currentCenter = toCollisionPoint(withDirection.x, withDirection.y);
     const collisionWorld = buildCollisionWorld(state, config, currentCenter.x, currentCenter.y);
     const currentSafeCenter = resolveStuckPlayerPosition(collisionWorld, currentCenter);
 
-    const moved = movementThrottle !== 0
+    const moved = movementThrottle !== 0 && !isFrozen
         ? (() => {
             const advanced = advancePointByLegacyHeading32(
                 currentSafeCenter.x,
@@ -221,6 +224,11 @@ export const upsertPlayerFromUpdate = (
                 y: clampedTopLeft.y
             };
         })();
+
+    if (!isFrozen && frozenUntil > 0) {
+        delete moved.frozenUntil;
+        delete moved.frozenBy;
+    }
 
     state.players.set(socketId, moved);
 };

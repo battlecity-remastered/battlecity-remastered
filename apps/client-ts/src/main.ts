@@ -57,14 +57,6 @@ const runTickSegment = (label: string, fn: () => void): void => {
     }
 };
 
-const onDebugToggle = (event: KeyboardEvent): void => {
-    if (event.key === "F7") {
-        state.ui.showBotDebug = !state.ui.showBotDebug;
-        event.preventDefault();
-    }
-};
-window.addEventListener("keydown", onDebugToggle);
-
 scene.app.ticker.add(() => {
     runTickSegment("scene.render", scene.render);
     runTickSegment("lobby.render", lobbyUi.render);
@@ -90,7 +82,6 @@ window.addEventListener("beforeunload", () => {
     unregisterBuildMenuHotkeys();
     unregisterIdentityHotkeys();
     unregisterInventoryHotkeys();
-    window.removeEventListener("keydown", onDebugToggle);
     lobbyUi.dispose();
     chatUi.dispose();
     helpModal.dispose();

@@ -1,5 +1,6 @@
 import fakeCityConfigJson from "../../../data/fakeCities.json" with { type: "json" };
 import citySpawnsJson from "../../../data/citySpawns.json" with { type: "json" };
+import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBuilding, RuntimeConfig, RuntimeDefense, RuntimeFakeCityState, RuntimeHazard, RuntimeState } from "../../runtime/types.js";
 import { registerBuildingPopulation, unregisterBuildingPopulation } from "../population/PopulationService.js";
@@ -535,12 +536,14 @@ const deployDefenses = (
             tileX: column,
             tileY: row,
             health: maxHealth,
-            maxHealth
+            maxHealth,
+            orientation: Math.max(0, Math.min(31, Math.floor(asFiniteNumber(defense.angle, 0)) % 32)),
+            nextShotAt: 0
         };
         state.defenses.set(runtimeDefense.id, runtimeDefense);
         defenseIds.push(runtimeDefense.id);
         placedTiles.add(tileKey);
-        emitter.emit("defense.spawn", {
+        const basePayload = {
             id: runtimeDefense.id,
             cityId,
             type: runtimeDefense.type,
@@ -548,7 +551,12 @@ const deployDefenses = (
             tileY: runtimeDefense.tileY,
             health: runtimeDefense.health,
             maxHealth: runtimeDefense.maxHealth
-        });
+        };
+        const payload: KnownEventPayloadByType["defense.spawn"] =
+            typeof runtimeDefense.orientation === "number" && Number.isFinite(runtimeDefense.orientation)
+                ? { ...basePayload, orientation: runtimeDefense.orientation }
+                : basePayload;
+        emitter.emit("defense.spawn", payload);
     }
 
     return { defenseIds, hazardIds };

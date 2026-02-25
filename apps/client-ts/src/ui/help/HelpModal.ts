@@ -5,20 +5,26 @@ export const buildHelpLines = (): string[] => {
         "Help",
         "F1: Toggle help",
         "F2: Toggle map",
-        "F3: Toggle options",
+        "M: Toggle map",
+        "F3: Toggle debug",
+        "F: Toggle fullscreen",
         "T: Toggle tutorial",
-        "W/S or Up/Down: Move",
+        "W/Up or Down: Move",
         "A or Left: Turn left",
         "Right: Turn right",
         "Shift or Space: Fire",
+        "Ctrl: Rear flare burst",
         "R: Research",
         "U: Pickup item",
-        "H/C: Use selected item",
+        "H: Use selected item",
+        "C: Activate cloak",
         "D: Drop selected item",
+        "S: Output city buildings (console)",
         "Mouse: click inventory slot to select item",
         "X/Delete: Hazard",
-        "B: Orb, Shift+B: Defense",
-        "Options: H HUD, M audio, [/] overlay opacity"
+        "B: Drop armed bomb",
+        "O: Drop orb on enemy command center front strip",
+        "Options: H HUD, P debug, [/] overlay opacity"
     ];
 };
 

@@ -1,6 +1,7 @@
 import type { ClientState } from "../app/state.js";
 import { PANEL_WIDTH } from "../gameplay/world-viewport.js";
 import { PANEL_BUTTONS, PANEL_INVENTORY_SLOTS, type PanelButtonKey } from "../render/panel/panel-visuals.js";
+import { ITEM_TYPE_BOMB } from "../render/parity/constants.js";
 import { applyBuildMenuHotkey, clearBuildInteractionModes } from "../ui/build-menu/BuildMenu.js";
 import { resolveBuildPlacementTile } from "../ui/build-menu/GhostPlacement.js";
 
@@ -332,9 +333,19 @@ export const registerMouseInputHandlers = (
             ? resolvePanelInventoryItemType(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth, state.inventory)
             : null;
         if (panelInventoryItemType !== null) {
-            if ((state.inventory.get(panelInventoryItemType) ?? 0) > 0) {
-                state.ui.selectedInventoryItemType = panelInventoryItemType;
-                state.ui.bombArmed = false;
+            const hasItem = (state.inventory.get(panelInventoryItemType) ?? 0) > 0;
+            if (hasItem) {
+                if (
+                    panelInventoryItemType === ITEM_TYPE_BOMB
+                    && state.ui.selectedInventoryItemType === ITEM_TYPE_BOMB
+                ) {
+                    state.ui.bombArmed = !state.ui.bombArmed;
+                } else {
+                    state.ui.selectedInventoryItemType = panelInventoryItemType;
+                    if (panelInventoryItemType !== ITEM_TYPE_BOMB) {
+                        state.ui.bombArmed = false;
+                    }
+                }
             }
             syncCursor(state, surface);
             return;

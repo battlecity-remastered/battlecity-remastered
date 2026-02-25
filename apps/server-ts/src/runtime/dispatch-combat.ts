@@ -4,6 +4,7 @@ import { removePlayer } from "./player-runtime.js";
 import { rejectSocket } from "./rejections.js";
 import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
 import type { RuntimeState } from "./types.js";
+import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
 
 type BotDamageContext = {
     state: RuntimeState;
@@ -58,6 +59,7 @@ export const handlePlayerBotDamage = (
                 reason: "out_of_bounds"
             });
         }
+        detonateActiveBombsOwnedBy(context.state, context.emitter, socketId);
     }
 
     emitPlayersSnapshot(context.state, context.emitter);

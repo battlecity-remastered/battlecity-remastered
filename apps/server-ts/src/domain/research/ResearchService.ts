@@ -1,7 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { rejectResult, type CommandResult, type RuntimeConfig, type RuntimeResearchState, type RuntimeState } from "../../runtime/types.js";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
-import { getOrCreateCity, spendCityCash } from "../economy/CityEconomyService.js";
+import { emitCityFinance, getOrCreateCity, spendCityCash } from "../economy/CityEconomyService.js";
 
 const ensureResearchState = (state: RuntimeState, cityId: number): RuntimeResearchState => {
     const existing = state.research.get(cityId);
@@ -80,6 +80,7 @@ export const tickResearch = (
         state.cities.set(cityId, city);
         state.research.set(cityId, next);
         emitter.emit("research.update", toPayload(state, cityId));
+        emitCityFinance(state, cityId, config, emitter);
     }
 };
 

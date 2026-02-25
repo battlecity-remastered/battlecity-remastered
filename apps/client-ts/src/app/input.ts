@@ -9,8 +9,6 @@ const KEY_TO_CONTROL: Record<string, ControlKey> = {
     keyw: "moveForward",
     arrowup: "moveForward",
     up: "moveForward",
-    s: "moveBackward",
-    keys: "moveBackward",
     arrowdown: "moveBackward",
     down: "moveBackward",
     a: "turnLeft",
@@ -25,16 +23,13 @@ const KEY_TO_CONTROL: Record<string, ControlKey> = {
     shiftleft: "shift",
     shiftright: "shift",
     shift: "shift",
-    control: "ctrl",
-    b: "build",
-    o: "build",
     x: "demolish",
     delete: "demolish",
     u: "collectFactory",
     h: "useItem",
     l: "leaveLobby",
     r: "research",
-    c: "useItem"
+    c: "useCloak"
 };
 
 const isShiftEvent = (event: KeyboardEvent): boolean => {
@@ -46,14 +41,71 @@ const isShiftEvent = (event: KeyboardEvent): boolean => {
     return code === "shiftleft" || code === "shiftright";
 };
 
+const isControlEvent = (event: KeyboardEvent): boolean => {
+    const key = asLower(event.key);
+    if (key === "control") {
+        return true;
+    }
+    const code = asLower(event.code);
+    return code === "controlleft" || code === "controlright";
+};
+
+const isInteractiveTarget = (event: KeyboardEvent): boolean => {
+    const target = event.target as Element | null;
+    if (!target) {
+        return false;
+    }
+    const tag = target.tagName?.toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") {
+        return true;
+    }
+    return typeof HTMLElement !== "undefined"
+        && target instanceof HTMLElement
+        && target.isContentEditable;
+};
+
+const outputBuildings = (state: ClientState): void => {
+    console.log("Generating building output");
+    for (const building of state.buildings.values()) {
+        if (building.type === 0) {
+            continue;
+        }
+        console.log(`${building.type},${building.tileX},${building.tileY}`);
+    }
+};
+
 const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean): void => {
     if (isShiftEvent(event)) {
         state.controls.shift = value;
         state.controls.shoot = value;
         return;
     }
-    const fromCode = KEY_TO_CONTROL[asLower(event.code)];
-    const fromKey = KEY_TO_CONTROL[asLower(event.key)];
+    if (isControlEvent(event)) {
+        state.controls.ctrl = value;
+        if (value && !event.repeat) {
+            state.local.pendingFlareBurst = true;
+        }
+        return;
+    }
+    const code = asLower(event.code);
+    const key = asLower(event.key);
+    if ((code === "keys" || key === "s") && value) {
+        outputBuildings(state);
+        return;
+    }
+    if (code === "keyb" || key === "b") {
+        // Legacy parity: plain B is bomb shortcut; keep Ctrl+B as a build modifier.
+        if (!value) {
+            state.controls.build = false;
+            return;
+        }
+        if (event.ctrlKey) {
+            state.controls.build = true;
+        }
+        return;
+    }
+    const fromCode = KEY_TO_CONTROL[code];
+    const fromKey = KEY_TO_CONTROL[key];
     const control = fromCode ?? fromKey;
     if (!control) {
         return;
@@ -63,6 +115,9 @@ const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: bo
 
 export const registerInputHandlers = (state: ClientState): (() => void) => {
     const onKeyDown = (event: KeyboardEvent): void => {
+        if (isInteractiveTarget(event)) {
+            return;
+        }
         setControlFromEvent(state, event, true);
     };
 

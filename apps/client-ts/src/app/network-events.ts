@@ -252,12 +252,33 @@ const handlers: {
         state.chat.rateLimitedUntil = payload.retryAt;
     },
     "city.finance": (state, payload) => {
-        state.cityFinance.set(payload.cityId, {
+        const canBuildStates = new Map<number, number>();
+        for (const entry of payload.canBuildStates ?? []) {
+            if (!Number.isFinite(entry.type) || !Number.isFinite(entry.state)) {
+                continue;
+            }
+            canBuildStates.set(entry.type, entry.state);
+        }
+        const nextFinance = {
             cash: payload.cash,
             income: payload.income,
             score: payload.score,
             researchLevel: payload.researchLevel
-        });
+        } as {
+            cash: number;
+            income: number;
+            score: number;
+            researchLevel: number;
+            isOrbable?: boolean;
+            canBuildStates?: Map<number, number>;
+        };
+        if (typeof payload.isOrbable === "boolean") {
+            nextFinance.isOrbable = payload.isOrbable;
+        }
+        if (canBuildStates.size > 0) {
+            nextFinance.canBuildStates = canBuildStates;
+        }
+        state.cityFinance.set(payload.cityId, nextFinance);
     },
     "research.update": (state, payload) => {
         if (payload.active) {
@@ -341,7 +362,7 @@ const handlers: {
         state.identity.userId = payload.userId;
     },
     "defense.spawn": (state, payload) => {
-        state.defenses.set(payload.id, {
+        const nextDefense = {
             id: payload.id,
             cityId: payload.cityId,
             type: payload.type,
@@ -349,7 +370,20 @@ const handlers: {
             tileY: payload.tileY,
             health: payload.health,
             maxHealth: payload.maxHealth
-        });
+        } as {
+            id: string;
+            cityId: number;
+            type: number;
+            tileX: number;
+            tileY: number;
+            health: number;
+            maxHealth: number;
+            orientation?: number;
+        };
+        if (typeof payload.orientation === "number" && Number.isFinite(payload.orientation)) {
+            nextDefense.orientation = payload.orientation;
+        }
+        state.defenses.set(payload.id, nextDefense);
     },
     "defense.update": (state, payload) => {
         const existing = state.defenses.get(payload.id);
@@ -358,6 +392,9 @@ const handlers: {
         }
         existing.health = payload.health;
         existing.maxHealth = payload.maxHealth;
+        if (typeof payload.orientation === "number" && Number.isFinite(payload.orientation)) {
+            existing.orientation = payload.orientation;
+        }
     },
     "defense.remove": (state, payload) => {
         state.defenses.delete(payload.id);

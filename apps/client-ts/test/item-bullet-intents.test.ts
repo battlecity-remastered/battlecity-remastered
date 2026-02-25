@@ -17,6 +17,25 @@ test("shoot control emits bullet.fire.request intent", () => {
     assert.ok(types.includes("bullet.fire.request"));
 });
 
+test("ctrl flare burst emits three rear spread flare shots", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.local.direction = 0;
+    state.local.x = 128;
+    state.local.y = 128;
+    state.local.pendingFlareBurst = true;
+    state.inventory.set(6, 1);
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    const shots = plan.intents.filter((intent) => intent.type === "bullet.fire.request");
+    assert.equal(shots.length, 3);
+    assert.deepEqual(shots.map((shot) => shot.payload.type), [3, 3, 3]);
+    assert.deepEqual(shots.map((shot) => shot.payload.direction), [12, 8, 4]);
+    assert.ok(Math.abs(shots[0]!.payload.position.x - 152) < 0.001);
+    assert.ok(Math.abs(shots[0]!.payload.position.y - 165.45) < 0.001);
+});
+
 test("bullet.fire.request uses muzzle position and bullet heading mapped from tank direction", () => {
     const state = createClientState();
     state.local.id = "local";
@@ -78,6 +97,18 @@ test("collect/use controls emit item lifecycle intents", () => {
     const pickupIntent = plan.intents.find((intent) => intent.type === "icon.pickup.request");
     assert.ok(pickupIntent);
     assert.equal(pickupIntent.payload.itemType, 4);
+});
+
+test("cloak control emits item.use.request with cloak item type", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.controls.useCloak = true;
+
+    const plan = buildTickPlan(state, Date.now() + 10_000, 100);
+    const use = plan.intents.find((intent) => intent.type === "item.use.request");
+    assert.ok(use);
+    assert.equal(use.payload.itemType, 0);
 });
 
 test("collectFactory defaults pickup requests to laser when no inventory item is selected", () => {
@@ -148,6 +179,8 @@ test("shift+use emits hazard.deploy.request for selected hazard inventory item",
     const state = createClientState();
     state.local.id = "local";
     state.local.city = 2;
+    state.local.x = 128;
+    state.local.y = 128;
     state.controls.useItem = true;
     state.controls.shift = true;
     state.ui.selectedInventoryItemType = 3;
@@ -168,13 +201,15 @@ test("ctrl+b emits building.place.request using pointer tile instead of orb drop
     const state = createClientState();
     state.local.id = "local";
     state.local.city = 2;
+    state.local.x = 128;
+    state.local.y = 128;
     state.controls.build = true;
     state.controls.ctrl = true;
     state.pointer.inside = true;
     state.pointer.surfaceWidth = 640;
     state.pointer.surfaceHeight = 480;
-    state.pointer.x = 239;
-    state.pointer.y = 212;
+    state.pointer.x = 212;
+    state.pointer.y = 192;
 
     const plan = buildTickPlan(state, Date.now() + 10_000, 100);
     const buildingIntent = plan.intents.find((intent) => intent.type === "building.place.request");
@@ -193,13 +228,15 @@ test("ctrl+b uses selected build menu type for building.place.request", () => {
     const state = createClientState();
     state.local.id = "local";
     state.local.city = 2;
+    state.local.x = 128;
+    state.local.y = 128;
     state.controls.build = true;
     state.controls.ctrl = true;
     state.pointer.inside = true;
     state.pointer.surfaceWidth = 640;
     state.pointer.surfaceHeight = 480;
-    state.pointer.x = 239;
-    state.pointer.y = 212;
+    state.pointer.x = 212;
+    state.pointer.y = 192;
     state.ui.selectedBuildType = 300;
 
     const plan = buildTickPlan(state, Date.now() + 10_000, 100);
@@ -212,13 +249,15 @@ test("ctrl+b emits building.place.request even when placement is terrain-blocked
     const state = createClientState();
     state.local.id = "local";
     state.local.city = 2;
+    state.local.x = 128;
+    state.local.y = 128;
     state.controls.build = true;
     state.controls.ctrl = true;
     state.pointer.inside = true;
     state.pointer.surfaceWidth = 640;
     state.pointer.surfaceHeight = 480;
-    state.pointer.x = 239;
-    state.pointer.y = 212;
+    state.pointer.x = 212;
+    state.pointer.y = 192;
     state.world.blockingTiles.add("1,0");
 
     const plan = buildTickPlan(state, Date.now() + 10_000, 100);
@@ -255,13 +294,15 @@ test("ctrl+demolish emits building.demolish.request for pointer tile building", 
     const state = createClientState();
     state.local.id = "local";
     state.local.city = 1;
+    state.local.x = 128;
+    state.local.y = 128;
     state.controls.ctrl = true;
     state.controls.demolish = true;
     state.pointer.inside = true;
     state.pointer.surfaceWidth = 640;
     state.pointer.surfaceHeight = 480;
-    state.pointer.x = 259;
-    state.pointer.y = 312;
+    state.pointer.x = 210;
+    state.pointer.y = 260;
     state.buildings.set("b1", {
         id: "b1",
         ownerId: "other",

@@ -14,10 +14,12 @@ export type LocalState = {
     lastFactoryCollectAt: number;
     lastHazardAt: number;
     lastItemUseAt: number;
+    lastFlareBurstAt: number;
     lastOrbAt: number;
     lastBuildAt: number;
     lastDemolishAt: number;
     lastLobbyLeaveAt: number;
+    pendingFlareBurst: boolean;
 };
 
 export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
@@ -60,6 +62,8 @@ export type ClientState = {
         income: number;
         score: number;
         researchLevel: number;
+        isOrbable?: boolean;
+        canBuildStates?: Map<number, number>;
     }>;
     research: Map<number, {
         active?: {
@@ -109,6 +113,7 @@ export type ClientState = {
         tileY: number;
         health: number;
         maxHealth: number;
+        orientation?: number;
     }>;
     scoreProfile: {
         userId: string | null;
@@ -186,6 +191,7 @@ export type ClientState = {
         leaveLobby: boolean;
         research: boolean;
         collectFactory: boolean;
+        useCloak: boolean;
     };
     world: {
         blockingTiles: Set<string>;
@@ -248,10 +254,12 @@ const createLocalDefaults = (): LocalState => ({
     lastFactoryCollectAt: 0,
     lastHazardAt: 0,
     lastItemUseAt: 0,
+    lastFlareBurstAt: 0,
     lastOrbAt: 0,
     lastBuildAt: 0,
     lastDemolishAt: 0,
-    lastLobbyLeaveAt: 0
+    lastLobbyLeaveAt: 0,
+    pendingFlareBurst: false
 });
 
 const createUiDefaults = (): ClientState["ui"] => ({
@@ -342,7 +350,8 @@ export const createClientState = (): ClientState => {
             useItem: false,
             leaveLobby: false,
             research: false,
-            collectFactory: false
+            collectFactory: false,
+            useCloak: false
         },
         world: {
             blockingTiles: new Set<string>(),

@@ -38,10 +38,11 @@ import {
 import { resolveViewportFromState } from "../gameplay/world-viewport.js";
 import {
     PANEL,
+    ITEM_TYPE_BOMB,
+    ITEM_TYPE_ORB,
     TILE
 } from "./parity/constants.js";
-import { resolveCitySpawn } from "../world/city-spawn.js";
-import { formatNearestOrbableCityLine, resolveNearestOrbableCity } from "./orb-target.js";
+import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
 
 const TANK_SIZE = 22;
 
@@ -112,6 +113,39 @@ const formatCash = (value: number): string => {
     } catch {
         return `${amount}`;
     }
+};
+
+const ORB_PANEL_FRAME_COUNT = 3;
+const ORB_PANEL_FRAME_INTERVAL_MS = 200;
+
+const resolvePanelItemFrameRect = (
+    itemType: number,
+    nowMs: number,
+    bombArmed: boolean
+): { x: number; y: number; width: number; height: number } => {
+    if (itemType === ITEM_TYPE_ORB) {
+        const frame = Math.floor((nowMs % (ORB_PANEL_FRAME_COUNT * ORB_PANEL_FRAME_INTERVAL_MS)) / ORB_PANEL_FRAME_INTERVAL_MS);
+        return {
+            x: 250,
+            y: 41 + (Math.max(0, Math.min(ORB_PANEL_FRAME_COUNT - 1, frame)) * 48),
+            width: 32,
+            height: 32
+        };
+    }
+    if (itemType === ITEM_TYPE_BOMB && bombArmed) {
+        return {
+            x: 152,
+            y: 89,
+            width: 32,
+            height: 32
+        };
+    }
+    return {
+        x: itemType * 32,
+        y: 0,
+        width: 32,
+        height: 32
+    };
 };
 
 const resolveTankTexture = (
@@ -201,7 +235,8 @@ type SceneLayers = {
     panelInventoryIcons: Map<number, Sprite>;
     panelInventoryCountTexts: Map<number, Text>;
     panelRadar: Graphics;
-    panelMessageText: Text;
+    panelMessageHeading: Text;
+    panelMessageBody: Text;
     panelCashText: Text;
     dirty: ReturnType<typeof createDirtyFlagTracker>;
 };
@@ -275,12 +310,29 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         panelInventoryCountTexts.set(slot.itemType, countText);
     }
     const panelRadar = new Graphics();
-    const panelMessageText = new Text({
+    const panelMessageHeading = new Text({
         text: "",
         style: {
-            fontFamily: "monospace",
-            fontSize: 11,
-            fill: 0xe9f2ff
+            fontFamily: "Arial",
+            fontSize: 14,
+            fontWeight: "700",
+            fill: 0xf4d03f,
+            stroke: {
+                color: 0x000000,
+                width: 2
+            }
+        }
+    });
+    const panelMessageBody = new Text({
+        text: "",
+        style: {
+            fontFamily: "Arial",
+            fontSize: 12,
+            fill: 0xfdfefe,
+            stroke: {
+                color: 0x000000,
+                width: 2
+            }
         }
     });
     const panelCashText = new Text({
@@ -306,7 +358,8 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         app.stage.addChild(countText);
     }
     app.stage.addChild(panelRadar);
-    app.stage.addChild(panelMessageText);
+    app.stage.addChild(panelMessageHeading);
+    app.stage.addChild(panelMessageBody);
     app.stage.addChild(panelCashText);
 
     return {
@@ -340,7 +393,8 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         panelInventoryIcons,
         panelInventoryCountTexts,
         panelRadar,
-        panelMessageText,
+        panelMessageHeading,
+        panelMessageBody,
         panelCashText,
         dirty: createDirtyFlagTracker()
     };
@@ -426,7 +480,8 @@ const resolveDefenseTexture = (textures: LegacyTextures, defenseType: number): T
 
 const resolveDefenseHeadTexture = (textures: LegacyTextures, defenseType: number, orientation: number): Texture | null => {
     const row = Math.max(0, Math.min(2, defenseType - 9));
-    const frame = Math.max(0, Math.min(15, orientation % 16));
+    const heading = ((Math.floor(orientation) % 32) + 32) % 32;
+    const frame = Math.max(0, Math.min(15, Math.floor(heading / 2)));
     return getFrameTexture(textures.turretHead, `defense-head:${row}:${frame}`, frame * 48, row * 48, 48, 48);
 };
 
@@ -545,7 +600,10 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
         if (!sprite || !(sprite instanceof Sprite)) {
             continue;
         }
-        const orientation = Math.floor((Date.now() / 100) % 16);
+        const fallback = Math.floor((Date.now() / 100) % 32);
+        const orientation = typeof defense.orientation === "number" && Number.isFinite(defense.orientation)
+            ? defense.orientation
+            : fallback;
         const frame = resolveDefenseHeadTexture(layers.textures, defense.type, orientation);
         if (frame) {
             sprite.texture = frame;
@@ -589,61 +647,55 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderHud = (state: ClientState, layers: SceneLayers): void => {
-    const nextLine = formatNearestOrbableCityLine(resolveNearestOrbableCity(state));
     layers.hudPanel.visible = false;
     layers.hudPanel.clear();
-    if (nextLine.length === 0) {
-        if (!layers.hud.visible && layers.hud.text.length === 0) {
-            return;
-        }
+    if (layers.hud.visible || layers.hud.text.length > 0) {
         layers.hud.visible = false;
         layers.hud.text = "";
-        layers.dirty.markDirty("hud");
-        return;
-    }
-    layers.hud.visible = true;
-    if (layers.dirty.shouldRender("hud", nextLine)) {
-        layers.hud.text = nextLine;
     }
 };
 
-const resolvePanelDetailLines = (state: ClientState): string[] => {
+const resolvePanelMessage = (state: ClientState): { heading: string; lines: string[] } => {
     const cityId = state.local.city;
     if (state.ui.panelView === "staff") {
         const assignment = state.lobby.assignments.find((entry) => entry.city === cityId);
-        return [
-            `Mayor: ${assignment?.mayorId ?? "-"}`,
-            `Recruits: ${assignment?.recruitCount ?? 0}`,
-            `Remote: ${state.remotePlayers.size}`
-        ];
+        return {
+            heading: "Staff",
+            lines: [
+                `Mayor:   ${assignment?.mayorId ?? "(unknown)"}`,
+                `Recruits: ${assignment?.recruitCount ?? 0}`,
+                `Players: ${state.remotePlayers.size + (state.local.id ? 1 : 0)}`
+            ]
+        };
     }
     if (state.ui.panelView === "city") {
         const buildings = Array.from(state.buildings.values()).filter((entry) => entry.cityId === cityId).length;
         const defenses = Array.from(state.defenses.values()).filter((entry) => entry.cityId === cityId).length;
         const hazards = Array.from(state.hazards.values()).filter((entry) => entry.cityId === cityId).length;
-        return [
-            `Buildings: ${buildings}`,
-            `Defenses: ${defenses}`,
-            `Hazards: ${hazards}`
-        ];
+        return {
+            heading: getCityDisplayName(cityId),
+            lines: [
+                `Buildings: ${buildings}`,
+                `Defenses: ${defenses}`,
+                `Hazards: ${hazards}`
+            ]
+        };
     }
     if (state.ui.panelView === "points") {
         const lastPromotion = state.events.promotions.at(-1);
-        return [
-            `Score: ${state.scoreProfile.score}`,
-            `Rank: ${state.scoreProfile.rank ?? "-"}`,
-            `Last promo: ${lastPromotion?.rank ?? "-"}`
-        ];
+        return {
+            heading: "Points",
+            lines: [
+                `Score: ${state.scoreProfile.score}`,
+                `Rank: ${state.scoreProfile.rank ?? "-"}`,
+                `Last promo: ${lastPromotion?.rank ?? "-"}`
+            ]
+        };
     }
-    const finance = state.cityFinance.get(cityId);
-    const cash = finance?.cash ?? 0;
-    const income = finance?.income ?? 0;
-    return [
-        `HP ${state.local.health}/${state.local.maxHealth}`,
-        `Cash ${formatCash(cash)}  Inc ${income}`,
-        `Items ${state.inventory.get(0) ?? 0}`,
-        `Research ${state.research.get(cityId)?.completed.length ?? 0}`
-    ];
+    return {
+        heading: "Intel",
+        lines: ["Right-click a city building to inspect."]
+    };
 };
 
 const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
@@ -663,7 +715,8 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
         countText.visible = false;
     }
     layers.panelRadar.position.set(panelX + RADAR_BOUNDS.offsetX, RADAR_BOUNDS.offsetY);
-    layers.panelMessageText.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y);
+    layers.panelMessageHeading.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y);
+    layers.panelMessageBody.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y + PANEL_MESSAGE.lineSpacing);
     layers.panelCashText.position.set(panelX + PANEL_FINANCE.cashText.x, PANEL_FINANCE.cashText.y);
     layers.panelBackground.clear();
 
@@ -715,6 +768,8 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     layers.panelCashText.style.fill = income < 0 ? 0xe74c3c : 0x2ecc71;
     layers.panelCashText.text = formatCash(cash);
 
+    const nowMs = Date.now();
+
     const healthMask = resolveHealthMaskRect(state.local.health, state.local.maxHealth);
     layers.panelBackground
         .rect(PANEL_HEALTH.x, PANEL_HEALTH.y, PANEL_HEALTH.width, PANEL_HEALTH.height)
@@ -731,11 +786,22 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             continue;
         }
         const iconSprite = layers.panelInventoryIcons.get(slot.itemType);
-        const iconFrame = getFrameTexture(layers.textures.items, `panel-item:${slot.itemType}`, slot.itemType * 32, 0, 32, 32);
+        const bombArmed = slot.itemType === ITEM_TYPE_BOMB
+            && state.ui.selectedInventoryItemType === ITEM_TYPE_BOMB
+            && state.ui.bombArmed;
+        const rect = resolvePanelItemFrameRect(slot.itemType, nowMs, bombArmed);
+        const iconFrame = getFrameTexture(
+            layers.textures.items,
+            `panel-item:${slot.itemType}:${rect.x}:${rect.y}`,
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
+        );
         if (iconSprite && iconFrame) {
             iconSprite.texture = iconFrame;
             iconSprite.alpha = 0.95;
-            iconSprite.position.set(panelX + slot.x, slot.y);
+            iconSprite.position.set(panelX + slot.x + (slot.itemType === ITEM_TYPE_ORB ? 2 : 0), slot.y);
             iconSprite.width = 32;
             iconSprite.height = 32;
             iconSprite.visible = true;
@@ -781,14 +847,11 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             .stroke({ color: 0xbfd7f5, width: 1, alpha: 0.92 });
     }
 
-    const detailLines = resolvePanelDetailLines(state);
-    layers.panelMessageText.text = [
-        `City ${state.local.city} ${resolveLocalRole(state)}`,
-        `HP ${state.local.health}/${state.local.maxHealth}`,
-        ...detailLines,
-        "",
-        `Income ${income >= 0 ? "+" : ""}${income}`
-    ].join("\n");
+    const panelMessage = resolvePanelMessage(state);
+    layers.panelMessageHeading.text = panelMessage.heading;
+    layers.panelMessageHeading.visible = panelMessage.heading.length > 0;
+    layers.panelMessageBody.text = panelMessage.lines.join("\n");
+    layers.panelMessageBody.visible = panelMessage.lines.length > 0;
 
     layers.panelRadar.clear();
     const radarSelfColor = 0x48ff62;

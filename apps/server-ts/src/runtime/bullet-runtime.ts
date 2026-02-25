@@ -17,6 +17,8 @@ import {
 } from "./types.js";
 import { asCombatPlayers, removePlayer } from "./player-runtime.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
+import { restoreFactoryStock } from "../domain/factories/FactoryService.js";
+import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
 
 const PLAYER_SPRITE_HALF = 24;
 const MAX_CLIENT_SHOT_OFFSET = 96;
@@ -174,6 +176,7 @@ const handlePlayerHit = (
     for (const ownedBulletId of removedBulletIds) {
         handleOutOfBounds(emitter, ownedBulletId);
     }
+    detonateActiveBombsOwnedBy(state, emitter, result.playerId);
     return true;
 };
 
@@ -218,6 +221,7 @@ const handleBuildingHit = (
             id: defense.id,
             reason: "destroyed"
         });
+        emitter.emit("factory.stock", restoreFactoryStock(state, defense.cityId, defense.type));
         return;
     }
 
@@ -244,15 +248,17 @@ const handleHazardHit = (
         hitHazardId: result.hazardId
     });
 
-    if (!state.hazards.has(result.hazardId)) {
+    const hazard = state.hazards.get(result.hazardId);
+    if (!hazard) {
         return;
     }
 
-    state.hazards.delete(result.hazardId);
+    state.hazards.delete(hazard.id);
     emitter.emit("hazard.remove", {
-        id: result.hazardId,
+        id: hazard.id,
         reason: "cleared"
     });
+    emitter.emit("factory.stock", restoreFactoryStock(state, hazard.cityId, hazard.type));
 };
 
 const resolveBulletStep = (

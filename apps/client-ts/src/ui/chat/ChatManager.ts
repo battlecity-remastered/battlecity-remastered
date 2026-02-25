@@ -454,7 +454,7 @@ export const createChatManager = (
 
     const showAllMessages = (): void => {
         const nodes = logElement.querySelectorAll(".battlecity-chat__message");
-        for (const node of nodes) {
+        for (const node of Array.from(nodes)) {
             if (node instanceof HTMLElement) {
                 node.style.display = "flex";
             }
@@ -467,7 +467,7 @@ export const createChatManager = (
         const nodes = logElement.querySelectorAll(".battlecity-chat__message");
         let hasVisible = false;
 
-        for (const node of nodes) {
+        for (const node of Array.from(nodes)) {
             if (!(node instanceof HTMLElement)) {
                 continue;
             }

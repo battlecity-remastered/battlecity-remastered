@@ -4,6 +4,8 @@ export type RuntimePlayer = PlayerState & {
     city: number;
     health: number;
     maxHealth: number;
+    frozenUntil?: number;
+    frozenBy?: string;
     isBot?: boolean;
     botType?: "defender" | "rogue";
 };
@@ -23,6 +25,8 @@ export type RuntimeDefense = {
     tileY: number;
     health: number;
     maxHealth: number;
+    orientation?: number;
+    nextShotAt?: number;
 };
 
 export type RuntimeCity = {

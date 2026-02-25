@@ -103,6 +103,21 @@ export const collectFactoryStock = (
     return { ok: true, value: toPayload(cityId, itemType, next) };
 };
 
+export const restoreFactoryStock = (
+    state: RuntimeState,
+    cityId: number,
+    itemType: number,
+    amount = 1
+): KnownEventPayloadByType["factory.stock"] => {
+    const cityStock = ensureCityStock(state, cityId);
+    const current = cityStock.get(itemType) ?? 0;
+    const restore = Math.max(1, Math.floor(amount));
+    const next = current + restore;
+    cityStock.set(itemType, next);
+    state.factoryStock.set(cityId, cityStock);
+    return toPayload(cityId, itemType, next);
+};
+
 export const tickFactories = (
     state: RuntimeState,
     config: RuntimeConfig,

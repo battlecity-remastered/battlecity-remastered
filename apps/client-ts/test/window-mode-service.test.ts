@@ -7,15 +7,15 @@ import {
 } from "../src/ui/window/WindowModeService.js";
 
 class MockEventSource {
-    private readonly listeners = new Map<string, Set<() => void>>();
+    private readonly listeners = new Map<string, Set<(event?: unknown) => void>>();
 
-    public addEventListener(type: string, listener: () => void): void {
+    public addEventListener(type: string, listener: (event?: unknown) => void): void {
         const bucket = this.listeners.get(type) ?? new Set();
         bucket.add(listener);
         this.listeners.set(type, bucket);
     }
 
-    public removeEventListener(type: string, listener: () => void): void {
+    public removeEventListener(type: string, listener: (event?: unknown) => void): void {
         const bucket = this.listeners.get(type);
         if (!bucket) {
             return;
@@ -23,13 +23,13 @@ class MockEventSource {
         bucket.delete(listener);
     }
 
-    public emit(type: string): void {
+    public emit(type: string, event?: unknown): void {
         const bucket = this.listeners.get(type);
         if (!bucket) {
             return;
         }
         for (const listener of bucket) {
-            listener();
+            listener(event);
         }
     }
 }
@@ -77,7 +77,7 @@ test("toggleFullscreen requests or exits based on state", async () => {
     assert.deepEqual(calls, ["request", "exit"]);
 });
 
-test("registerWindowModeHandlers binds resize only", () => {
+test("registerWindowModeHandlers binds resize updates", () => {
     const sizes: Array<{ width: number; height: number }> = [];
     const app = {
         renderer: {
@@ -97,5 +97,43 @@ test("registerWindowModeHandlers binds resize only", () => {
 
     assert.deepEqual(sizes, [{ width: 1280, height: 720 }]);
 
+    unregister();
+});
+
+test("registerWindowModeHandlers toggles fullscreen on F key", () => {
+    const app = {
+        renderer: {
+            resize: () => {}
+        }
+    };
+    const eventSource = new MockEventSource();
+    const requests: string[] = [];
+    const unregister = registerWindowModeHandlers(
+        app as never,
+        eventSource,
+        () => ({ width: 1280, height: 720 }),
+        {
+            fullscreenElement: null,
+            documentElement: {
+                requestFullscreen: async () => {
+                    requests.push("request");
+                }
+            },
+            exitFullscreen: async () => {
+                requests.push("exit");
+            }
+        }
+    );
+
+    eventSource.emit("keydown", {
+        key: "f",
+        ctrlKey: false,
+        altKey: false,
+        metaKey: false,
+        target: null,
+        preventDefault: () => {}
+    });
+
+    assert.deepEqual(requests, ["request"]);
     unregister();
 });

@@ -8,7 +8,7 @@ export const buildIntroLines = (state: ClientState): string[] => {
         "Objective: defend your city and destroy rival orbs",
         "Enter: Start",
         "T: Toggle tutorial",
-        "F1/F2/F3: Help/Map/Options",
+        "F1/F2: Help/Map  F3: Debug  M: Map",
         "F4: Build menu"
     ];
 };

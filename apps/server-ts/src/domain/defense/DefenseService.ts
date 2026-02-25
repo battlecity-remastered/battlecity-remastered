@@ -9,6 +9,7 @@ import {
     type RuntimeState
 } from "../../runtime/types.js";
 import { spendCityCash } from "../economy/CityEconomyService.js";
+import { consumeInventoryItem } from "../inventory/InventoryService.js";
 
 const TILE_SIZE = 48;
 const WORLD_TILE_MIN = 0;
@@ -112,7 +113,7 @@ const isTileBlocked = (state: RuntimeState, tileX: number, tileY: number): boole
 const asSpawnPayload = (
     defense: RuntimeDefense
 ): KnownEventPayloadByType["defense.spawn"] => {
-    return {
+    const base = {
         id: defense.id,
         cityId: defense.cityId,
         type: defense.type,
@@ -121,6 +122,10 @@ const asSpawnPayload = (
         health: defense.health,
         maxHealth: defense.maxHealth
     };
+    const orientation = typeof defense.orientation === "number" && Number.isFinite(defense.orientation)
+        ? defense.orientation
+        : undefined;
+    return orientation === undefined ? base : { ...base, orientation };
 };
 
 export const deployDefense = (
@@ -129,7 +134,7 @@ export const deployDefense = (
     payload: KnownEventPayloadByType["defense.deploy.request"],
     config: RuntimeConfig,
     nextSeq: () => number
-): CommandResult<KnownEventPayloadByType["defense.spawn"]> => {
+): CommandResult<DefenseDeployResult> => {
     const city = state.socketCities.get(socketId);
     if (city === undefined || city !== payload.cityId) {
         return rejectResult("city_mismatch");
@@ -143,8 +148,18 @@ export const deployDefense = (
         return rejectResult("defense_blocked");
     }
 
-    if (!spendCityCash(state, payload.cityId, config.defenseCost, config)) {
+    let inventoryUpdate: KnownEventPayloadByType["inventory.update"] | undefined;
+    let spentCash = false;
+    if (payload.fromInventory === true) {
+        const consumed = consumeInventoryItem(state, socketId, payload.type);
+        if (!consumed.ok) {
+            return rejectResult(consumed.reason);
+        }
+        inventoryUpdate = consumed.value;
+    } else if (!spendCityCash(state, payload.cityId, config.defenseCost, config)) {
         return rejectResult("insufficient_funds");
+    } else {
+        spentCash = true;
     }
 
     const maxHealth = DEFENSE_MAX_HEALTH[payload.type] ?? 20;
@@ -155,11 +170,27 @@ export const deployDefense = (
         tileX: payload.tileX,
         tileY: payload.tileY,
         health: maxHealth,
-        maxHealth
+        maxHealth,
+        orientation: 0,
+        nextShotAt: 0
     };
     state.defenses.set(defense.id, defense);
 
-    return okResult(asSpawnPayload(defense));
+    const result: DefenseDeployResult = {
+        spawn: asSpawnPayload(defense),
+        spentCash
+    };
+    if (inventoryUpdate) {
+        result.inventory = inventoryUpdate;
+    }
+
+    return okResult(result);
+};
+
+export type DefenseDeployResult = {
+    spawn: KnownEventPayloadByType["defense.spawn"];
+    inventory?: KnownEventPayloadByType["inventory.update"];
+    spentCash: boolean;
 };
 
 export const clearCityDefenses = (state: RuntimeState, cityId: number): string[] => {

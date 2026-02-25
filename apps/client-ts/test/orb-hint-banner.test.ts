@@ -1,49 +1,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createClientState } from "../src/app/state.js";
-import { buildOrbHintLines } from "../src/ui/orb/OrbHintBanner.js";
+import { buildOrbHintText } from "../src/ui/orb/OrbHintBanner.js";
 
-test("buildOrbHintLines returns warning text when local city is orbed", () => {
+test("buildOrbHintText returns empty string while not joined", () => {
     const state = createClientState();
-    state.local.city = 2;
-    state.events.lastOrbEvent = {
-        sourceCityId: 1,
-        targetCityId: 2,
-        by: "enemy",
-        awardedScore: 250,
-        at: 1_000
-    };
-
-    const lines = buildOrbHintLines(state, 1_200);
-    assert.ok(lines);
-    assert.equal(lines?.[0], "Warning: Your city was orbed");
+    assert.equal(buildOrbHintText(state), "");
 });
 
-test("buildOrbHintLines returns success text when local player performed orb", () => {
+test("buildOrbHintText returns fallback when no orbable city is known", () => {
     const state = createClientState();
     state.local.id = "p1";
-    state.local.city = 2;
-    state.events.lastOrbEvent = {
-        sourceCityId: 2,
-        targetCityId: 3,
-        by: "p1",
-        awardedScore: 300,
-        at: 1_000
-    };
-
-    const lines = buildOrbHintLines(state, 1_200);
-    assert.ok(lines);
-    assert.equal(lines?.[0], "Orb strike successful on city 3");
+    assert.equal(buildOrbHintText(state), "No orbable cities detected yet.");
 });
 
-test("buildOrbHintLines expires after ttl", () => {
+test("buildOrbHintText renders nearest orbable direction line", () => {
     const state = createClientState();
-    state.events.lastOrbEvent = {
-        sourceCityId: 1,
-        targetCityId: 2,
-        by: "enemy",
-        awardedScore: 250,
-        at: 1_000
-    };
-    assert.equal(buildOrbHintLines(state, 9_001), null);
+    state.local.id = "p1";
+    state.local.city = 0;
+    state.local.x = 480;
+    state.local.y = 480;
+
+    state.cityFinance.set(1, {
+        cash: 1,
+        income: 1,
+        score: 0,
+        researchLevel: 0,
+        isOrbable: true
+    });
+    state.buildings.set("enemy-cc-near", {
+        id: "enemy-cc-near",
+        ownerId: "enemy-1",
+        cityId: 1,
+        type: 0,
+        tileX: 14,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    const text = buildOrbHintText(state);
+    assert.equal(text, "Nearest orbable city: Iqaluit - East (~5 tiles)");
 });

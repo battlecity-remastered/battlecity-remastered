@@ -268,3 +268,33 @@ test("right click build toggle is ignored when local player is not mayor", () =>
 
     unregister();
 });
+
+test("clicking selected bomb inventory slot toggles armed state", () => {
+    const state = createClientState();
+    state.local.id = "mayor-bomb";
+    state.local.city = 1;
+    state.lobby.assignments = [{ city: 1, mayorId: "mayor-bomb", recruitCount: 0 }];
+    state.inventory.set(3, 2);
+
+    const surface = new MockSurface();
+    const windowSource = new MockEventSource();
+    const unregister = registerMouseInputHandlers(state, surface, windowSource);
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 488,
+        clientY: 323
+    } as MouseEvent as Event);
+    assert.equal(state.ui.selectedInventoryItemType, 3);
+    assert.equal(state.ui.bombArmed, false);
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 488,
+        clientY: 323
+    } as MouseEvent as Event);
+    assert.equal(state.ui.selectedInventoryItemType, 3);
+    assert.equal(state.ui.bombArmed, true);
+
+    unregister();
+});

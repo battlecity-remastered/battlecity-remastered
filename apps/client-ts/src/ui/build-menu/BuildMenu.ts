@@ -104,13 +104,31 @@ const toAnchorY = (state: ClientState, anchorY: number): number => {
 const setBuildMenuAnchor = (state: ClientState, anchor?: BuildMenuAnchor): void => {
     const fallbackX = Number.isFinite(state.pointer.x) ? state.pointer.x : state.ui.buildMenuAnchorX;
     const fallbackY = Number.isFinite(state.pointer.y) ? state.pointer.y : state.ui.buildMenuAnchorY;
-    const requestedX = Number.isFinite(anchor?.anchorX) ? anchor?.anchorX : fallbackX;
-    const requestedY = Number.isFinite(anchor?.anchorY) ? anchor?.anchorY : fallbackY;
+    const requestedX = typeof anchor?.anchorX === "number" && Number.isFinite(anchor.anchorX)
+        ? anchor.anchorX
+        : fallbackX;
+    const requestedY = typeof anchor?.anchorY === "number" && Number.isFinite(anchor.anchorY)
+        ? anchor.anchorY
+        : fallbackY;
     state.ui.buildMenuAnchorX = toAnchorX(state, requestedX);
     state.ui.buildMenuAnchorY = toAnchorY(state, requestedY);
 };
 
+const resolveAuthoritativeBuildStates = (state: ClientState): Map<number, number> | null => {
+    const cityFinance = state.cityFinance.get(state.local.city);
+    const states = cityFinance?.canBuildStates;
+    if (!states || states.size <= 0) {
+        return null;
+    }
+    return new Map(states);
+};
+
 const resolveBuildUnlockStates = (state: ClientState): Map<number, number> => {
+    const authoritative = resolveAuthoritativeBuildStates(state);
+    if (authoritative) {
+        return authoritative;
+    }
+
     const unlockStates = BUILD_TREE.reduce<Map<number, number>>((acc, entry) => {
         acc.set(entry.type, entry.initial);
         return acc;

@@ -166,7 +166,12 @@ export const CityFinance = Schema.Struct({
     cash: Schema.Number,
     income: Schema.Number,
     score: Schema.Number,
-    researchLevel: Schema.Number
+    researchLevel: Schema.Number,
+    isOrbable: Schema.optional(Schema.Boolean),
+    canBuildStates: Schema.optional(Schema.Array(Schema.Struct({
+        type: Schema.Number,
+        state: Schema.Number
+    })))
 });
 export const ResearchStartRequest = Schema.Struct({
     cityId: Schema.Number,
@@ -235,7 +240,8 @@ export const HazardRemove = Schema.Struct({
 });
 export const OrbDropRequest = Schema.Struct({
     sourceCityId: Schema.Number,
-    targetCityId: Schema.Number
+    targetCityId: Schema.Number,
+    position: Schema.optional(Vec2)
 });
 export const CityOrbed = Schema.Struct({
     sourceCityId: Schema.Number,
@@ -258,7 +264,8 @@ export const DefenseDeployRequest = Schema.Struct({
     cityId: Schema.Number,
     type: Schema.Number,
     tileX: Schema.Number,
-    tileY: Schema.Number
+    tileY: Schema.Number,
+    fromInventory: Schema.optional(Schema.Boolean)
 });
 export const DefenseSpawn = Schema.Struct({
     id: Schema.String,
@@ -267,12 +274,14 @@ export const DefenseSpawn = Schema.Struct({
     tileX: Schema.Number,
     tileY: Schema.Number,
     health: Schema.Number,
-    maxHealth: Schema.Number
+    maxHealth: Schema.Number,
+    orientation: Schema.optional(Schema.Number)
 });
 export const DefenseUpdate = Schema.Struct({
     id: Schema.String,
     health: Schema.Number,
-    maxHealth: Schema.Number
+    maxHealth: Schema.Number,
+    orientation: Schema.optional(Schema.Number)
 });
 export const DefenseRemove = Schema.Struct({
     id: Schema.String,

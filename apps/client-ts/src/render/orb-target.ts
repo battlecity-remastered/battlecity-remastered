@@ -7,24 +7,50 @@ export type NearestOrbableCity = {
     cityId: number;
     cityName: string;
     distanceTiles: number;
-    direction: "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW" | "HERE";
+    direction: string;
 };
 
-const resolveDirection = (dx: number, dy: number): NearestOrbableCity["direction"] => {
-    const threshold = TILE / 3;
-    const vertical = dy <= -threshold ? "N" : (dy >= threshold ? "S" : "");
-    const horizontal = dx <= -threshold ? "W" : (dx >= threshold ? "E" : "");
-    const direction = `${vertical}${horizontal}`;
-    if (direction.length === 0) {
-        return "HERE";
+const resolveDirectionLabel = (dx: number, dy: number): string => {
+    const threshold = TILE;
+    let horizontal = "";
+    let vertical = "";
+    if (Math.abs(dx) > threshold) {
+        horizontal = dx > 0 ? "east" : "west";
     }
-    return direction as NearestOrbableCity["direction"];
+    if (Math.abs(dy) > threshold) {
+        vertical = dy > 0 ? "south" : "north";
+    }
+    if (horizontal && vertical) {
+        return `${vertical}-${horizontal}`;
+    }
+    if (vertical) {
+        return vertical;
+    }
+    if (horizontal) {
+        return horizontal;
+    }
+    return "nearby";
+};
+
+const formatDirectionLabel = (label: string): string => {
+    if (!label) {
+        return "Nearby";
+    }
+    return label
+        .split("-")
+        .map((part) => {
+            if (!part) {
+                return part;
+            }
+            return `${part.charAt(0).toUpperCase()}${part.slice(1)}`;
+        })
+        .join("-");
 };
 
 const resolveBuildingCenter = (tileX: number, tileY: number): { x: number; y: number } => {
     return {
         x: (tileX + 1.5) * TILE,
-        y: (tileY + 1.5) * TILE
+        y: (tileY + 1) * TILE
     };
 };
 
@@ -43,6 +69,9 @@ export const resolveNearestOrbableCity = (state: ClientState): NearestOrbableCit
             continue;
         }
         if (!isCommandCenterType(building.type)) {
+            continue;
+        }
+        if (state.cityFinance.get(building.cityId)?.isOrbable !== true) {
             continue;
         }
         const center = resolveBuildingCenter(building.tileX, building.tileY);
@@ -67,13 +96,14 @@ export const resolveNearestOrbableCity = (state: ClientState): NearestOrbableCit
         cityId: nearest.cityId,
         cityName: getCityDisplayName(nearest.cityId),
         distanceTiles: Math.max(0, Math.round(Math.sqrt(nearest.distanceSquared) / TILE)),
-        direction: resolveDirection(nearest.dx, nearest.dy)
+        direction: formatDirectionLabel(resolveDirectionLabel(nearest.dx, nearest.dy))
     };
 };
 
 export const formatNearestOrbableCityLine = (target: NearestOrbableCity | null): string => {
     if (!target) {
-        return "";
+        return "No orbable cities detected yet.";
     }
-    return `Nearest orbable city: ${target.cityName} (C${target.cityId}) ${target.direction} ${target.distanceTiles}t`;
+    const distanceLabel = target.distanceTiles > 1 ? ` (~${target.distanceTiles} tiles)` : "";
+    return `Nearest orbable city: ${target.cityName} - ${target.direction}${distanceLabel}`;
 };

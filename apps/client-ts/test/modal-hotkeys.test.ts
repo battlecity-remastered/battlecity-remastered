@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createClientState } from "../src/app/state.js";
 import { applyModalToggle } from "../src/ui/modals/ModalHotkeys.js";
 
-test("applyModalToggle toggles F1/F2/F3 modal visibility with exclusivity", () => {
+test("applyModalToggle toggles help/map and maps F3 to debug", () => {
     const state = createClientState();
 
     assert.equal(applyModalToggle(state, "F1"), true);
@@ -16,10 +16,12 @@ test("applyModalToggle toggles F1/F2/F3 modal visibility with exclusivity", () =
     assert.equal(state.ui.showMapModal, true);
     assert.equal(state.ui.showOptionsModal, false);
 
-    assert.equal(applyModalToggle(state, "F3"), true);
-    assert.equal(state.ui.showHelpModal, false);
+    assert.equal(applyModalToggle(state, "m"), true);
     assert.equal(state.ui.showMapModal, false);
-    assert.equal(state.ui.showOptionsModal, true);
+
+    assert.equal(applyModalToggle(state, "F3"), true);
+    assert.equal(state.ui.showBotDebug, true);
+    assert.equal(state.ui.showOptionsModal, false);
 });
 
 test("applyModalToggle routes option actions only while options modal is visible", () => {

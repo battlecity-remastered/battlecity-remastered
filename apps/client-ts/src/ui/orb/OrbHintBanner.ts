@@ -1,36 +1,12 @@
 import type { ClientState } from "../../app/state.js";
 import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
+import { formatNearestOrbableCityLine, resolveNearestOrbableCity } from "../../render/orb-target.js";
 
-const ORB_HINT_TTL_MS = 7000;
-
-export const buildOrbHintLines = (
-    state: ClientState,
-    nowMs: number
-): string[] | null => {
-    const event = state.events.lastOrbEvent;
-    if (!event) {
-        return null;
+export const buildOrbHintText = (state: ClientState): string => {
+    if (state.local.id === null) {
+        return "";
     }
-    if ((nowMs - event.at) > ORB_HINT_TTL_MS) {
-        return null;
-    }
-    const localCity = state.local.city;
-    if (event.targetCityId === localCity) {
-        return [
-            "Warning: Your city was orbed",
-            `Attacker city: ${event.sourceCityId} | by: ${event.by}`
-        ];
-    }
-    if (event.by === state.local.id) {
-        return [
-            `Orb strike successful on city ${event.targetCityId}`,
-            `Awarded score: +${event.awardedScore}`
-        ];
-    }
-    return [
-        `City ${event.targetCityId} was orbed`,
-        `Source city: ${event.sourceCityId}`
-    ];
+    return formatNearestOrbableCityLine(resolveNearestOrbableCity(state));
 };
 
 type OrbHintBanner = {
@@ -49,32 +25,32 @@ export const createOrbHintBanner = (
         };
     }
 
-    const panel = document.createElement("pre");
+    const panel = document.createElement("div");
     panel.setAttribute("data-ui", "orb-hint");
     panel.style.position = "fixed";
-    panel.style.left = "50%";
-    panel.style.top = "24px";
-    panel.style.transform = "translateX(-50%)";
-    panel.style.padding = "8px 12px";
+    panel.style.top = "8px";
+    panel.style.left = "8px";
+    panel.style.padding = "10px 14px";
+    panel.style.borderRadius = "12px";
     panel.style.margin = "0";
-    panel.style.background = "rgba(35, 16, 16, 0.84)";
-    panel.style.backgroundImage = "url('/assets/imgInterface.png')";
-    panel.style.backgroundSize = "cover";
-    panel.style.border = "1px solid rgba(255, 168, 140, 0.88)";
-    panel.style.color = "#ffe3d6";
-    panel.style.font = "12px/1.35 monospace";
-    panel.style.zIndex = "125";
+    panel.style.background = "rgba(10, 18, 52, 0.82)";
+    panel.style.border = "1px solid rgba(123, 152, 255, 0.35)";
+    panel.style.boxShadow = "0 18px 36px rgba(0, 0, 0, 0.45)";
+    panel.style.fontFamily = "\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif";
+    panel.style.fontSize = "14px";
+    panel.style.color = "#f0f6ff";
+    panel.style.letterSpacing = "0.3px";
+    panel.style.maxWidth = "320px";
+    panel.style.zIndex = "1000";
     panel.style.pointerEvents = "none";
-    panel.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.42)";
     root.appendChild(panel);
 
     const dirty = createDirtyFlagTracker();
     return {
         render: () => {
-            const lines = buildOrbHintLines(state, Date.now());
-            panel.style.display = lines && !state.ui.showIntroModal ? "block" : "none";
+            const text = buildOrbHintText(state);
+            panel.style.display = text && !state.ui.showIntroModal ? "block" : "none";
             panel.style.opacity = String(state.ui.overlaysOpacity);
-            const text = lines?.join("\n") ?? "";
             const signature = `${panel.style.display}|${panel.style.opacity}|${text}`;
             if (dirty.shouldRender("orb-hint", signature)) {
                 panel.textContent = text;

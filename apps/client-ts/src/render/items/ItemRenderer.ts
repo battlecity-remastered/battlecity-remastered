@@ -19,8 +19,13 @@ const hazardColor = (type: number): number => {
     return 0xffa95e;
 };
 
-const isHiddenEnemyMine = (state: ClientState, hazard: { cityId: number; type: number }): boolean => {
-    return hazard.type === ITEM_TYPE_MINE && hazard.cityId !== state.local.city;
+const isHiddenEnemyMine = (
+    state: ClientState,
+    hazard: { cityId: number; type: number; armed?: boolean; }
+): boolean => {
+    return hazard.type === ITEM_TYPE_MINE
+        && hazard.cityId !== state.local.city
+        && hazard.armed !== false;
 };
 
 export const renderHazardItems = (

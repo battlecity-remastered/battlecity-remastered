@@ -64,7 +64,7 @@ export const collectNotificationEvents = (
 export const buildNotificationLines = (items: ReadonlyArray<NotificationItem>): string[] => {
     const lines = [
         "Notifications",
-        "Menu: F1 Help  F2 Map  F3 Options  F4 Build"
+        "Menu: F1 Help  F2/M Map  F3 Debug  F4 Build"
     ];
     if (items.length === 0) {
         return [...lines, "No notifications"];

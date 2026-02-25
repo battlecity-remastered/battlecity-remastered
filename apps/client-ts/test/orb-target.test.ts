@@ -53,11 +53,25 @@ test("resolveNearestOrbableCity picks closest enemy command center and reports d
         maxHealth: 120,
         population: 10
     });
+    state.cityFinance.set(1, {
+        cash: 1,
+        income: 1,
+        score: 0,
+        researchLevel: 0,
+        isOrbable: true
+    });
+    state.cityFinance.set(2, {
+        cash: 1,
+        income: 1,
+        score: 0,
+        researchLevel: 0,
+        isOrbable: true
+    });
 
     const nearest = resolveNearestOrbableCity(state);
     assert.ok(nearest);
     assert.equal(nearest.cityId, 1);
-    assert.equal(nearest.direction, "E");
+    assert.equal(nearest.direction, "East");
     assert.equal(nearest.distanceTiles, 5);
 });
 
@@ -84,9 +98,9 @@ test("formatNearestOrbableCityLine renders legacy-friendly top-left hint", () =>
     const line = formatNearestOrbableCityLine({
         cityId: 3,
         cityName: "Jumarity",
-        direction: "NW",
+        direction: "North-West",
         distanceTiles: 12
     });
-    assert.equal(line, "Nearest orbable city: Jumarity (C3) NW 12t");
-    assert.equal(formatNearestOrbableCityLine(null), "");
+    assert.equal(line, "Nearest orbable city: Jumarity - North-West (~12 tiles)");
+    assert.equal(formatNearestOrbableCityLine(null), "No orbable cities detected yet.");
 });

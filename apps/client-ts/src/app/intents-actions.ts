@@ -3,11 +3,15 @@ import type { ClientState } from "./state.js";
 import { resolvePointerWorldTile } from "../gameplay/world-viewport.js";
 import { resolveBuildPlacementTile } from "../ui/build-menu/GhostPlacement.js";
 import {
-    BUILDING_FOOTPRINT_TILES,
     ITEM_TYPE_BOMB,
+    BUILDING_FOOTPRINT_TILES,
+    ITEM_TYPE_CLOAK,
     ITEM_TYPE_DFG,
+    ITEM_TYPE_FLARE,
     ITEM_TYPE_LASER,
+    ITEM_TYPE_MEDKIT,
     ITEM_TYPE_MINE,
+    ITEM_TYPE_ROCKET,
     TILE
 } from "../render/parity/constants.js";
 
@@ -16,6 +20,16 @@ const FACTORY_DROP_OFFSET_X = 56;
 const FACTORY_DROP_OFFSET_Y = 102;
 const FACTORY_PICKUP_RANGE = 24;
 const HAZARD_DROP_TYPES = new Set([ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG]);
+const MAP_DROP_PICKUP_TYPES = new Set([
+    ITEM_TYPE_CLOAK,
+    ITEM_TYPE_ROCKET,
+    ITEM_TYPE_MEDKIT,
+    ITEM_TYPE_BOMB,
+    ITEM_TYPE_MINE,
+    ITEM_TYPE_FLARE,
+    ITEM_TYPE_DFG,
+    ITEM_TYPE_LASER
+]);
 
 type EnvelopeType = EventEnvelope["type"];
 export type Intent<TType extends EnvelopeType = EnvelopeType> = {
@@ -78,7 +92,7 @@ const resolveFactoryPickupItemType = (state: ClientState): number | null => {
 
     let nearestHazardPickup: { itemType: number; distanceSq: number } | null = null;
     for (const hazard of state.hazards.values()) {
-        if (hazard.cityId !== cityId || !HAZARD_DROP_TYPES.has(hazard.type)) {
+        if (hazard.cityId !== cityId || !MAP_DROP_PICKUP_TYPES.has(hazard.type)) {
             continue;
         }
         const dx = hazard.x - state.local.x;
@@ -169,21 +183,6 @@ const appendItemUseIntent = (state: ClientState, nowMs: number, intents: Intent[
     }
     state.local.lastItemUseAt = nowMs;
     const selectedItemType = state.ui.selectedInventoryItemType ?? 0;
-    if (selectedItemType === ITEM_TYPE_BOMB && state.ui.bombArmed) {
-        intents.push({
-            type: "hazard.deploy.request",
-            payload: {
-                cityId: state.local.city,
-                type: ITEM_TYPE_BOMB,
-                position: { x: state.local.x, y: state.local.y },
-                armed: true,
-                radius: 120,
-                damage: 40,
-                fuseMs: 1000
-            }
-        });
-        return;
-    }
     intents.push({ type: "item.use.request", payload: { itemType: selectedItemType } });
 };
 
@@ -205,6 +204,14 @@ const appendInventoryDropIntent = (state: ClientState, nowMs: number, intents: I
             armed: selectedItemType === ITEM_TYPE_BOMB ? state.ui.bombArmed : true
         }
     });
+};
+
+const appendCloakUseIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
+    if (!state.controls.useCloak || !hasCooldownElapsed(nowMs, state.local.lastItemUseAt)) {
+        return;
+    }
+    state.local.lastItemUseAt = nowMs;
+    intents.push({ type: "item.use.request", payload: { itemType: ITEM_TYPE_CLOAK } });
 };
 
 const appendDefenseDeployIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {
@@ -289,6 +296,7 @@ export const appendActionIntents = (state: ClientState, nowMs: number, intents: 
     appendBuildingDemolishIntent(state, nowMs, intents);
     appendResearchIntent(state, nowMs, intents);
     appendFactoryCollectIntent(state, nowMs, intents);
+    appendCloakUseIntent(state, nowMs, intents);
     appendItemUseIntent(state, nowMs, intents);
     appendInventoryDropIntent(state, nowMs, intents);
     appendDefenseDeployIntent(state, nowMs, intents);
