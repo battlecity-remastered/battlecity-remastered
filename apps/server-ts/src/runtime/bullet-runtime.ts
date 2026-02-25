@@ -15,10 +15,11 @@ import {
     type RuntimeConfig,
     type RuntimeState
 } from "./types.js";
-import { asCombatPlayers, removePlayer } from "./player-runtime.js";
+import { asCombatPlayers } from "./player-runtime.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 import { restoreFactoryStock } from "../domain/factories/FactoryService.js";
 import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
+import { eliminatePlayer } from "./player-elimination.js";
 
 const PLAYER_SPRITE_HALF = 24;
 const MAX_CLIENT_SHOT_OFFSET = 96;
@@ -117,6 +118,7 @@ export const createBulletFromRequest = (
 type TickContext = {
     state: RuntimeState;
     emitter: RuntimeEmitter;
+    config: RuntimeConfig;
 };
 
 const handleOutOfBounds = (emitter: RuntimeEmitter, bulletId: string): void => {
@@ -168,15 +170,10 @@ const handlePlayerHit = (
         return false;
     }
 
-    emitter.emit("player.dead", {
-        id: result.playerId,
+    eliminatePlayer(state, emitter, context.config, result.playerId, {
         by: bullet.ownerId
     });
-    const removedBulletIds = removePlayer(state, result.playerId);
-    for (const ownedBulletId of removedBulletIds) {
-        handleOutOfBounds(emitter, ownedBulletId);
-    }
-    detonateActiveBombsOwnedBy(state, emitter, result.playerId);
+    detonateActiveBombsOwnedBy(state, emitter, context.config, result.playerId);
     return true;
 };
 
@@ -298,7 +295,7 @@ const resolveBulletStep = (
 };
 
 export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter: RuntimeEmitter): void => {
-    const context: TickContext = { state, emitter };
+    const context: TickContext = { state, emitter, config };
     let snapshotDirty = false;
     const combatTargets = [
         ...state.buildings.values(),

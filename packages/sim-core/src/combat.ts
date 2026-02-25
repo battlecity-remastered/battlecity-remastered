@@ -38,6 +38,7 @@ const TILE_SIZE = 48;
 const PLAYER_HIT_RADIUS = 24;
 const BUILDING_HIT_RADIUS = 28;
 const BULLET_SIZE = 4;
+const TERRAIN_SAMPLE_STEP_PX = 8;
 
 const sq = (value: number): number => value * value;
 const distanceSquared = (ax: number, ay: number, bx: number, by: number): number => {
@@ -128,6 +129,7 @@ const resolveHazardHit = (
 };
 
 const resolveTerrainHit = (
+    previousBullet: BulletState,
     nextBullet: BulletState,
     bulletId: string,
     isBlockedTile?: (tileX: number, tileY: number) => boolean
@@ -136,21 +138,31 @@ const resolveTerrainHit = (
         return undefined;
     }
 
-    const corners = [
-        { x: nextBullet.x, y: nextBullet.y },
-        { x: nextBullet.x + (BULLET_SIZE - 1), y: nextBullet.y },
-        { x: nextBullet.x, y: nextBullet.y + (BULLET_SIZE - 1) },
-        { x: nextBullet.x + (BULLET_SIZE - 1), y: nextBullet.y + (BULLET_SIZE - 1) }
-    ];
+    const dx = nextBullet.x - previousBullet.x;
+    const dy = nextBullet.y - previousBullet.y;
+    const travelDistance = Math.hypot(dx, dy);
+    const steps = Math.max(1, Math.ceil(travelDistance / TERRAIN_SAMPLE_STEP_PX));
 
-    for (const corner of corners) {
-        const tileX = Math.floor(corner.x / TILE_SIZE);
-        const tileY = Math.floor(corner.y / TILE_SIZE);
-        if (isBlockedTile(tileX, tileY)) {
-            return {
-                kind: "hit_terrain",
-                bulletId
-            };
+    for (let step = 0; step <= steps; step += 1) {
+        const t = step / steps;
+        const sampleX = previousBullet.x + (dx * t);
+        const sampleY = previousBullet.y + (dy * t);
+        const corners = [
+            { x: sampleX, y: sampleY },
+            { x: sampleX + (BULLET_SIZE - 1), y: sampleY },
+            { x: sampleX, y: sampleY + (BULLET_SIZE - 1) },
+            { x: sampleX + (BULLET_SIZE - 1), y: sampleY + (BULLET_SIZE - 1) }
+        ];
+
+        for (const corner of corners) {
+            const tileX = Math.floor(corner.x / TILE_SIZE);
+            const tileY = Math.floor(corner.y / TILE_SIZE);
+            if (isBlockedTile(tileX, tileY)) {
+                return {
+                    kind: "hit_terrain",
+                    bulletId
+                };
+            }
         }
     }
 
@@ -180,7 +192,7 @@ export const stepBulletAndResolve = (
         return { kind: "out_of_bounds", bulletId: bullet.id };
     }
 
-    const terrainHit = resolveTerrainHit(nextBullet, bullet.id, isBlockedTile);
+    const terrainHit = resolveTerrainHit(bullet, nextBullet, bullet.id, isBlockedTile);
     if (terrainHit) {
         return terrainHit;
     }

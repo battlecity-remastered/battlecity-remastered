@@ -5,6 +5,10 @@ import { collectFactoryStock } from "../factories/FactoryService.js";
 import { addInventoryItem, resolveInventoryCap } from "../inventory/InventoryService.js";
 
 const HAZARD_PICKUP_RANGE = 24;
+const FACTORY_PICKUP_RANGE = 24;
+const TILE = 48;
+const FACTORY_DROP_OFFSET_X = 56;
+const FACTORY_DROP_OFFSET_Y = 102;
 const PICKUP_HAZARD_TYPES = new Set([0, 1, 2, 3, 4, 6, 7, 12]);
 
 export type IconPickupResult = {
@@ -61,6 +65,36 @@ const pickupNearbyHazard = (
     return nearest.id;
 };
 
+const hasNearbyFactoryDrop = (
+    state: RuntimeState,
+    socketId: string,
+    cityId: number,
+    itemType: number
+): boolean => {
+    const player = state.players.get(socketId);
+    if (!player) {
+        return false;
+    }
+
+    for (const building of state.buildings.values()) {
+        if (building.cityId !== cityId) {
+            continue;
+        }
+        if (Math.floor(building.type / 100) !== 1 || (building.type % 100) !== itemType) {
+            continue;
+        }
+        const iconX = (building.tileX * TILE) + FACTORY_DROP_OFFSET_X;
+        const iconY = (building.tileY * TILE) + FACTORY_DROP_OFFSET_Y;
+        const dx = iconX - player.x;
+        const dy = iconY - player.y;
+        if (Math.abs(dx) <= FACTORY_PICKUP_RANGE && Math.abs(dy) <= FACTORY_PICKUP_RANGE) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 export const pickupIcon = (
     state: RuntimeState,
     socketId: string,
@@ -75,45 +109,61 @@ export const pickupIcon = (
     if (availableSpace <= 0) {
         return rejectResult("inventory_empty");
     }
-    const amount = Math.min(requestedAmount, availableSpace);
 
-    const stock = collectFactoryStock(state, payload.cityId, payload.itemType, amount);
-    let removedHazardId: string | undefined;
-    let stockPayload: KnownEventPayloadByType["factory.stock"];
-    if (!stock.ok) {
-        const pickedHazardId = pickupNearbyHazard(state, socketId, payload);
-        if (!pickedHazardId) {
-            return stock;
-        }
-        removedHazardId = pickedHazardId;
-        stockPayload = resolveStockPayload(state, payload.cityId, payload.itemType);
-    } else {
-        stockPayload = stock.value;
+    // Always consume nearby dropped hazards first so one dropped icon can only be collected once.
+    const pickedHazardId = pickupNearbyHazard(state, socketId, payload);
+    if (pickedHazardId) {
+        const hazardPickupAmount = Math.min(1, availableSpace);
+        return {
+            ok: true,
+            value: {
+                stock: resolveStockPayload(state, payload.cityId, payload.itemType),
+                inventory: addInventoryItem(
+                    state,
+                    socketId,
+                    payload.itemType,
+                    hazardPickupAmount,
+                    config
+                ),
+                confirmed: {
+                    playerId: socketId,
+                    cityId: payload.cityId,
+                    itemType: payload.itemType,
+                    amount: hazardPickupAmount
+                },
+                removedHazardId: pickedHazardId
+            }
+        };
     }
 
-    const inventory = addInventoryItem(
-        state,
-        socketId,
-        payload.itemType,
-        amount,
-        config
-    );
-    const result: IconPickupResult = {
-        stock: stockPayload,
-        inventory,
-        confirmed: {
-            playerId: socketId,
-            cityId: payload.cityId,
-            itemType: payload.itemType,
-            amount
-        }
-    };
-    if (removedHazardId) {
-        result.removedHazardId = removedHazardId;
+    // Factory stock pickups must occur near the matching factory icon.
+    if (!hasNearbyFactoryDrop(state, socketId, payload.cityId, payload.itemType)) {
+        return rejectResult("factory_empty");
+    }
+
+    const amount = Math.min(requestedAmount, availableSpace);
+    const stock = collectFactoryStock(state, payload.cityId, payload.itemType, amount);
+    if (!stock.ok) {
+        return stock;
     }
 
     return {
         ok: true,
-        value: result
+        value: {
+            stock: stock.value,
+            inventory: addInventoryItem(
+                state,
+                socketId,
+                payload.itemType,
+                amount,
+                config
+            ),
+            confirmed: {
+                playerId: socketId,
+                cityId: payload.cityId,
+                itemType: payload.itemType,
+                amount
+            }
+        }
     };
 };

@@ -173,12 +173,10 @@ const makeDefaultPlayer = (
 export const upsertPlayerFromUpdate = (
     state: RuntimeState,
     socketId: string,
+    city: number,
     payload: KnownEventPayloadByType["player.update"],
     config: RuntimeConfig
 ): void => {
-    const city = state.socketCities.get(socketId) ?? payload.city ?? config.defaultCity;
-    state.socketCities.set(socketId, city);
-
     const current = state.players.get(socketId) ?? makeDefaultPlayer(socketId, city, payload, config);
     const nowMs = Date.now();
     const frozenUntil = Number.isFinite(current.frozenUntil) ? current.frozenUntil as number : 0;

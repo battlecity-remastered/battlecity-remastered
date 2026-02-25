@@ -97,3 +97,18 @@ test("bullet resolves against blocking terrain tiles", () => {
 
     assert.equal(result.kind, "hit_terrain");
 });
+
+test("bullet terrain collision checks swept path to prevent tunneling", () => {
+    const result = stepBulletAndResolve(
+        mkBullet({ speed: 1800 }),
+        100,
+        2000,
+        2000,
+        [],
+        [],
+        [],
+        (tileX, tileY) => tileX === 3 && tileY === 2
+    );
+
+    assert.equal(result.kind, "hit_terrain");
+});

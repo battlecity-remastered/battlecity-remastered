@@ -8,8 +8,8 @@ import {
     type RuntimeState
 } from "../../runtime/types.js";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
-import { removePlayer } from "../../runtime/player-runtime.js";
 import { emitPlayersSnapshot } from "../../runtime/snapshot.js";
+import { eliminatePlayer } from "../../runtime/player-elimination.js";
 import { distanceSquared } from "../shared/distance.js";
 import { consumeInventoryItem } from "../inventory/InventoryService.js";
 import { unregisterBuildingPopulation } from "../population/PopulationService.js";
@@ -89,6 +89,7 @@ const shouldDamagePlayer = (
 const applyHazardDamage = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazard: RuntimeHazard,
     playerId: string,
     amount: number
@@ -109,18 +110,10 @@ const applyHazardDamage = (
         source: "hazard"
     });
     if (health === 0) {
-        emitter.emit("player.dead", {
-            id: playerId,
+        eliminatePlayer(state, emitter, config, playerId, {
             by: hazard.ownerId
         });
-        const removedBulletIds = removePlayer(state, playerId);
-        for (const removedBulletId of removedBulletIds) {
-            emitter.emit("bullet.resolved", {
-                id: removedBulletId,
-                reason: "out_of_bounds"
-            });
-        }
-        detonateActiveBombsOwnedBy(state, emitter, playerId);
+        detonateActiveBombsOwnedBy(state, emitter, config, playerId);
         return true;
     }
     return false;
@@ -163,6 +156,7 @@ const isWithinTileRadius = (
 const damagePlayersInBombRadius = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazard: RuntimeHazard,
     centerTileX: number,
     centerTileY: number
@@ -183,7 +177,7 @@ const damagePlayersInBombRadius = (
         )) {
             continue;
         }
-        snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
+        snapshotDirty = applyHazardDamage(state, emitter, config, hazard, playerId, hazard.damage) || snapshotDirty;
     }
     return snapshotDirty;
 };
@@ -278,13 +272,14 @@ const removeHazardsInBombRadius = (
 const detonateBomb = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazardId: string,
     hazard: RuntimeHazard
 ): boolean => {
     const centerTileX = toTileCenter(hazard.x);
     const centerTileY = toTileCenter(hazard.y);
 
-    const snapshotDirty = damagePlayersInBombRadius(state, emitter, hazard, centerTileX, centerTileY);
+    const snapshotDirty = damagePlayersInBombRadius(state, emitter, config, hazard, centerTileX, centerTileY);
     removeBuildingsInBombRadius(state, emitter, centerTileX, centerTileY);
     removeDefensesInBombRadius(state, emitter, centerTileX, centerTileY);
     removeHazardsInBombRadius(state, emitter, centerTileX, centerTileY);
@@ -328,6 +323,7 @@ const tickInactiveHazard = (
 const triggerProximityHazard = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazard: RuntimeHazard
 ): boolean => {
     if (hazard.type !== ITEM_TYPE_MINE && hazard.type !== ITEM_TYPE_DFG) {
@@ -344,7 +340,7 @@ const triggerProximityHazard = (
             continue;
         }
         if (hazard.type === ITEM_TYPE_MINE) {
-            snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
+            snapshotDirty = applyHazardDamage(state, emitter, config, hazard, playerId, hazard.damage) || snapshotDirty;
         } else {
             state.players.set(playerId, {
                 ...player,
@@ -365,6 +361,7 @@ const triggerProximityHazard = (
 const applyRadiusHazardDamage = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazard: RuntimeHazard
 ): boolean => {
     let snapshotDirty = false;
@@ -376,7 +373,7 @@ const applyRadiusHazardDamage = (
         if (distanceSquared({ x: player.x, y: player.y }, { x: hazard.x, y: hazard.y }) > radiusSq) {
             continue;
         }
-        snapshotDirty = applyHazardDamage(state, emitter, hazard, playerId, hazard.damage) || snapshotDirty;
+        snapshotDirty = applyHazardDamage(state, emitter, config, hazard, playerId, hazard.damage) || snapshotDirty;
     }
     return snapshotDirty;
 };
@@ -384,6 +381,7 @@ const applyRadiusHazardDamage = (
 const tickActiveTimedHazard = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     hazardId: string,
     hazard: RuntimeHazard,
     deltaMs: number
@@ -397,10 +395,10 @@ const tickActiveTimedHazard = (
     }
 
     if (hazard.type === ITEM_TYPE_BOMB) {
-        return detonateBomb(state, emitter, hazardId, hazard);
+        return detonateBomb(state, emitter, config, hazardId, hazard);
     }
 
-    const snapshotDirty = applyRadiusHazardDamage(state, emitter, hazard);
+    const snapshotDirty = applyRadiusHazardDamage(state, emitter, config, hazard);
     state.hazards.delete(hazardId);
     emitter.emit("hazard.remove", {
         id: hazardId,
@@ -412,6 +410,7 @@ const tickActiveTimedHazard = (
 export const detonateActiveBombsOwnedBy = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
+    config: RuntimeConfig,
     ownerId: string
 ): boolean => {
     let snapshotDirty = false;
@@ -419,7 +418,7 @@ export const detonateActiveBombsOwnedBy = (
         if (hazard.ownerId !== ownerId || hazard.type !== ITEM_TYPE_BOMB || !hazard.active || !hazard.armed) {
             continue;
         }
-        snapshotDirty = detonateBomb(state, emitter, hazardId, hazard) || snapshotDirty;
+        snapshotDirty = detonateBomb(state, emitter, config, hazardId, hazard) || snapshotDirty;
     }
     return snapshotDirty;
 };
@@ -506,6 +505,7 @@ export const deployHazard = (
 
 export const tickHazards = (
     state: RuntimeState,
+    config: RuntimeConfig,
     emitter: RuntimeEmitter,
     deltaMs: number
 ): void => {
@@ -515,13 +515,13 @@ export const tickHazards = (
             continue;
         }
 
-        const proximityDirty = triggerProximityHazard(state, emitter, hazard);
+        const proximityDirty = triggerProximityHazard(state, emitter, config, hazard);
         if (proximityDirty || (hazard.type === ITEM_TYPE_MINE || hazard.type === ITEM_TYPE_DFG)) {
             snapshotDirty = proximityDirty || snapshotDirty;
             continue;
         }
 
-        snapshotDirty = tickActiveTimedHazard(state, emitter, hazardId, hazard, deltaMs) || snapshotDirty;
+        snapshotDirty = tickActiveTimedHazard(state, emitter, config, hazardId, hazard, deltaMs) || snapshotDirty;
     }
     if (snapshotDirty) {
         emitPlayersSnapshot(state, emitter);

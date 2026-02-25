@@ -439,6 +439,88 @@ test("bullet tick resolves hits and emits health + death", () => {
     assert.ok(deadEvents.some((event) => (event.payload as { id: string }).id === "target"));
 });
 
+test("player death releases lobby assignment and blocks movement updates until rejoin", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+
+    runtime.handleRawEvent("attacker", makeEnvelope("player.update", 3, {
+        id: "attacker",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 512, y: 512 }
+    }));
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 4, {
+        id: "target",
+        city: 2,
+        direction: 16,
+        isMoving: false,
+        offset: { x: 600, y: 512 }
+    }));
+    grantInventoryItem(runtime, "target", ITEM_TYPE_LASER, 1);
+
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
+        ownerId: "attacker",
+        position: { x: 512, y: 512 },
+        direction: 0,
+        type: 2
+    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
+        ownerId: "attacker",
+        position: { x: 512, y: 512 },
+        direction: 0,
+        type: 2
+    }));
+    runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 7, {
+        ownerId: "attacker",
+        position: { x: 512, y: 512 },
+        direction: 0,
+        type: 2
+    }));
+
+    for (let i = 0; i < 20; i += 1) {
+        runtime.tickBullets();
+    }
+
+    assert.ok(broadcast.some((event) => {
+        return event.type === "player.dead" && (event.payload as { id: string }).id === "target";
+    }));
+    assert.ok(broadcast.some((event) => {
+        return event.type === "player.removed" && (event.payload as { id: string }).id === "target";
+    }));
+    assert.ok(broadcast.some((event) => {
+        return event.type === "lobby.released" && (event.payload as { id: string }).id === "target";
+    }));
+
+    const stateAfterDeath = runtime.getReadonlyState();
+    assert.equal(stateAfterDeath.players.has("target"), false);
+    assert.equal(stateAfterDeath.socketCities.has("target"), false);
+    assert.equal(stateAfterDeath.socketRoles.has("target"), false);
+    assert.equal(stateAfterDeath.playerInventory.has("target"), false);
+
+    const latestLobbySnapshot = broadcast
+        .filter((event) => event.type === "lobby.snapshot")
+        .at(-1);
+    assert.ok(latestLobbySnapshot);
+    const city2 = (latestLobbySnapshot.payload as Array<{ city: number; mayorId?: string; recruitCount: number }>)
+        .find((entry) => entry.city === 2);
+    assert.ok(city2);
+    assert.equal(city2?.mayorId, undefined);
+
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 8, {
+        id: "target",
+        city: 2,
+        direction: 0,
+        isMoving: true,
+        offset: { x: 610, y: 512 }
+    }));
+
+    assert.ok(rejected.some((entry) => entry.reason === "ResourceNotFound"));
+    assert.equal(runtime.getReadonlyState().players.has("target"), false);
+});
+
 test("building placement enforces assigned city", () => {
     const { runtime, broadcast, rejected } = makeHarness();
 
@@ -1287,6 +1369,83 @@ test("icon pickup can recover nearby friendly hazards and restore inventory", ()
     assert.equal(rejected.length, 0);
 });
 
+test("icon pickup consumes nearby dropped icon before touching factory stock", () => {
+    const { runtime, broadcast, rejected } = makeHarness();
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 240, y: 240 }
+    }));
+
+    // Simulate existing city stock of the same item type to guard against stock-first duplication.
+    runtime.getReadonlyState().factoryStock.set(1, new Map<number, number>([
+        [ITEM_TYPE_LASER, 3]
+    ]));
+
+    grantInventoryItem(runtime, "p1", ITEM_TYPE_LASER, 1);
+    runtime.handleRawEvent("p1", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 1,
+        type: ITEM_TYPE_LASER,
+        position: { x: 240, y: 240 }
+    }));
+
+    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 4, {
+        cityId: 1,
+        itemType: ITEM_TYPE_LASER,
+        amount: 1
+    }));
+
+    const stockAfterFirstPickup = runtime.getReadonlyState().factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(stockAfterFirstPickup, 3);
+    assert.equal(runtime.getReadonlyState().hazards.size, 0);
+
+    const removed = broadcast.find((event) => {
+        return event.type === "hazard.remove"
+            && (event.payload as { reason?: string }).reason === "cleared";
+    });
+    assert.ok(removed);
+
+    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 5, {
+        cityId: 1,
+        itemType: ITEM_TYPE_LASER,
+        amount: 1
+    }));
+
+    const inventoryCount = runtime.getReadonlyState().playerInventory.get("p1")?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(inventoryCount, 1);
+    assert.ok(rejected.some((entry) => entry.reason === "ResourceNotFound"));
+});
+
+test("icon pickup from dropped map icon grants only one item regardless of requested amount", () => {
+    const { runtime } = makeHarness();
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 240, y: 240 }
+    }));
+
+    grantInventoryItem(runtime, "p1", ITEM_TYPE_LASER, 1);
+    runtime.handleRawEvent("p1", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 1,
+        type: ITEM_TYPE_LASER,
+        position: { x: 240, y: 240 }
+    }));
+    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 4, {
+        cityId: 1,
+        itemType: ITEM_TYPE_LASER,
+        amount: 4
+    }));
+
+    const inventoryCount = runtime.getReadonlyState().playerInventory.get("p1")?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(inventoryCount, 1);
+});
+
 test("medkit use heals player and consumes inventory", () => {
     const { runtime, direct, broadcast, rejected } = makeHarness();
 
@@ -1669,6 +1828,34 @@ test("dropping non-hazard inventory item creates passive map icon without auto-d
 
 test("bullet collision resolves against blocking terrain tiles", () => {
     const { runtime, broadcast } = makeHarness();
+    runtime.getReadonlyState().blockingTiles.add("3,2");
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const hitTerrain = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_terrain";
+    });
+    assert.ok(hitTerrain);
+});
+
+test("high-speed bullets do not tunnel through blocked terrain tiles", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
     runtime.getReadonlyState().blockingTiles.add("3,2");
 
     runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
@@ -2386,4 +2573,30 @@ test("player:bot_damage legacy alias applies authoritative health updates", () =
         .at(-1);
     assert.ok(healthEvent);
     assert.equal((healthEvent.payload as { health: number }).health, 80);
+});
+
+test("player.bot_damage fatal damage evicts player from active city", () => {
+    const { runtime, broadcast } = makeHarness();
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 512, y: 512 }
+    }));
+
+    runtime.handleRawEvent("p1", makeEnvelope("player.bot_damage", 3, { amount: 40, shooterId: "defender_1_1" }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.bot_damage", 4, { amount: 40, shooterId: "defender_1_1" }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.bot_damage", 5, { amount: 40, shooterId: "defender_1_1" }));
+
+    assert.ok(broadcast.some((event) => {
+        return event.type === "player.dead" && (event.payload as { id: string }).id === "p1";
+    }));
+    assert.ok(broadcast.some((event) => {
+        return event.type === "lobby.released" && (event.payload as { id: string }).id === "p1";
+    }));
+    assert.equal(runtime.getReadonlyState().players.has("p1"), false);
+    assert.equal(runtime.getReadonlyState().socketCities.has("p1"), false);
 });

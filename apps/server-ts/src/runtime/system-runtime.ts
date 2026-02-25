@@ -20,7 +20,7 @@ export const tickRuntimeSystems = (
     tickCityEconomy(state, config, emitter, deltaMs);
     tickResearch(state, config, emitter, deltaMs);
     tickFactories(state, config, emitter, deltaMs);
-    tickHazards(state, emitter, deltaMs);
+    tickHazards(state, config, emitter, deltaMs);
     const populationUpdates = tickPopulation(state, config, deltaMs);
     for (const update of populationUpdates) {
         emitter.emit("population.update", update);

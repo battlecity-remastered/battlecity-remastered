@@ -45,6 +45,7 @@ import {
     TILE
 } from "./parity/constants.js";
 import { resolveDefenseDamageColumn } from "./parity/defense-damage.js";
+import { resolveVisibleDefenseIds } from "./parity/defense-visibility.js";
 import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
 
 const TANK_SIZE = 22;
@@ -684,10 +685,14 @@ const createDefenseEntity = (layers: SceneLayers, state: ClientState): Sprite | 
     return texture ? new Sprite(texture) : createFallbackDefenseEntity();
 };
 
-const syncDefenseSprites = (state: ClientState, layers: SceneLayers): void => {
-    syncEntityCache(layers.defenseSprites, layers.objectLayer, state.defenses.keys(), () => createDefenseEntity(layers, state));
-    for (const defense of state.defenses.values()) {
-        const sprite = layers.defenseSprites.get(defense.id);
+const syncDefenseSprites = (state: ClientState, layers: SceneLayers, visibleDefenseIds: string[]): void => {
+    syncEntityCache(layers.defenseSprites, layers.objectLayer, visibleDefenseIds, () => createDefenseEntity(layers, state));
+    for (const defenseId of visibleDefenseIds) {
+        const defense = state.defenses.get(defenseId);
+        const sprite = layers.defenseSprites.get(defenseId);
+        if (!defense) {
+            continue;
+        }
         if (!sprite) {
             continue;
         }
@@ -714,10 +719,14 @@ const resolveDefenseOrientation = (orientation: number | undefined, nowMs: numbe
     return fallback;
 };
 
-const syncDefenseHeadSprites = (state: ClientState, layers: SceneLayers, nowMs: number): void => {
-    syncEntityCache(layers.defenseHeadSprites, layers.objectLayer, state.defenses.keys(), () => new Sprite());
-    for (const defense of state.defenses.values()) {
-        const sprite = layers.defenseHeadSprites.get(defense.id);
+const syncDefenseHeadSprites = (state: ClientState, layers: SceneLayers, nowMs: number, visibleDefenseIds: string[]): void => {
+    syncEntityCache(layers.defenseHeadSprites, layers.objectLayer, visibleDefenseIds, () => new Sprite());
+    for (const defenseId of visibleDefenseIds) {
+        const defense = state.defenses.get(defenseId);
+        const sprite = layers.defenseHeadSprites.get(defenseId);
+        if (!defense) {
+            continue;
+        }
         if (!(sprite instanceof Sprite)) {
             continue;
         }
@@ -774,11 +783,12 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
     const nowMs = Date.now();
     const animationCounter = Math.floor(nowMs / 100);
     const researchStripBuildingIds = resolveResearchStripBuildingIds(state);
+    const visibleDefenseIds = resolveVisibleDefenseIds(state);
     syncResearchStripSprites(state, layers, researchStripBuildingIds);
     syncBuildingSprites(state, layers, animationCounter);
     syncBuildingOverlaySprites(state, layers, resolveOverlayBuildingIds(state));
-    syncDefenseSprites(state, layers);
-    syncDefenseHeadSprites(state, layers, nowMs);
+    syncDefenseSprites(state, layers, visibleDefenseIds);
+    syncDefenseHeadSprites(state, layers, nowMs, visibleDefenseIds);
     renderHazardItems(state, layers.objectLayer, layers.hazardSprites, layers.textures.items);
     syncBulletSprites(state, layers, nowMs);
 };

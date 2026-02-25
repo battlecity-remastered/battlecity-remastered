@@ -201,6 +201,11 @@ const handlers: HandlerMap = {
         }
     },
     "player.update": (socketId, payload, context) => {
+        const assignedCity = context.state.socketCities.get(socketId);
+        if (assignedCity === undefined) {
+            rejectWithContext(context, socketId, "player_not_joined", "player.update", payload);
+            return;
+        }
         const validation = validatePlayerUpdate(
             context.state.players.get(socketId),
             payload,
@@ -210,7 +215,7 @@ const handlers: HandlerMap = {
             rejectWithContext(context, socketId, validation.reason, "player.update", payload);
             return;
         }
-        upsertPlayerFromUpdate(context.state, socketId, payload, context.config);
+        upsertPlayerFromUpdate(context.state, socketId, assignedCity, payload, context.config);
         emitPlayersSnapshot(context.state, context.emitter);
     },
     "player.bot_damage": (socketId, payload, context) => {

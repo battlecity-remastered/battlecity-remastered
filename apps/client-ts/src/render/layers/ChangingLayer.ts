@@ -9,6 +9,7 @@ import {
     resolveSmokeFrame,
     resolveSmokePlacement
 } from "./changing-layer-helpers.js";
+import { isDefenseVisibleToLocalPlayer } from "../parity/defense-visibility.js";
 
 const TILE_SIZE = 48;
 
@@ -186,6 +187,9 @@ export const renderChangingLayer = (
     }
 
     for (const defense of state.defenses.values()) {
+        if (!isDefenseVisibleToLocalPlayer(state, defense)) {
+            continue;
+        }
         const ratio = Math.max(0, Math.min(1, defense.health / Math.max(1, defense.maxHealth)));
         const width = Math.floor(TILE_SIZE * ratio);
         sprite

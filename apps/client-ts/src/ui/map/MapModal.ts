@@ -1,6 +1,7 @@
 import type { ClientState } from "../../app/state.js";
 import { MAP_SIZE, loadMapData, type LoadedMap } from "../../world/map-loader.js";
 import { resolveCitySpawn } from "../../world/city-spawn.js";
+import { isDefenseVisibleToLocalPlayer } from "../../render/parity/defense-visibility.js";
 
 export const MAP_MODAL_TILE_SIZE = 2;
 export const MAP_MODAL_SIZE = MAP_SIZE * MAP_MODAL_TILE_SIZE;
@@ -80,6 +81,9 @@ export const collectMapModalMarkers = (state: ClientState): {
     }
 
     for (const defense of state.defenses.values()) {
+        if (!isDefenseVisibleToLocalPlayer(state, defense)) {
+            continue;
+        }
         const center = resolveFootprintCenterPixel(defense.tileX, defense.tileY, 1, 1);
         defenses.push({
             x: center.x,

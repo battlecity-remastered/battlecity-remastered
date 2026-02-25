@@ -1,13 +1,14 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { emitPlayersSnapshot } from "./snapshot.js";
-import { removePlayer } from "./player-runtime.js";
 import { rejectSocket } from "./rejections.js";
 import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
-import type { RuntimeState } from "./types.js";
+import type { RuntimeConfig, RuntimeState } from "./types.js";
 import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
+import { eliminatePlayer } from "./player-elimination.js";
 
 type BotDamageContext = {
     state: RuntimeState;
+    config: RuntimeConfig;
     emitter: RuntimeEmitter;
     broadcaster: Broadcaster;
 };
@@ -48,18 +49,16 @@ export const handlePlayerBotDamage = (
     });
 
     if (nextHealth <= 0) {
-        context.emitter.emit("player.dead", {
-            id: socketId,
-            by: payload.shooterId
-        });
-        const removedBulletIds = removePlayer(context.state, socketId);
-        for (const bulletId of removedBulletIds) {
-            context.emitter.emit("bullet.resolved", {
-                id: bulletId,
-                reason: "out_of_bounds"
-            });
-        }
-        detonateActiveBombsOwnedBy(context.state, context.emitter, socketId);
+        eliminatePlayer(
+            context.state,
+            context.emitter,
+            context.config,
+            socketId,
+            typeof payload.shooterId === "string" && payload.shooterId.length > 0
+                ? { by: payload.shooterId }
+                : {}
+        );
+        detonateActiveBombsOwnedBy(context.state, context.emitter, context.config, socketId);
     }
 
     emitPlayersSnapshot(context.state, context.emitter);
