@@ -1,3 +1,5 @@
+import { resolveCitySpawn } from "../world/city-spawn.js";
+
 export type LocalState = {
     id: string | null;
     city: number;
@@ -19,6 +21,8 @@ export type LocalState = {
 };
 
 export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
+const DEFAULT_LOBBY_CITY_ID = 0;
+const DEFAULT_LOBBY_SPAWN = resolveCitySpawn(DEFAULT_LOBBY_CITY_ID);
 
 export type RemotePlayer = {
     id: string;
@@ -232,10 +236,10 @@ export type ClientState = {
 
 const createLocalDefaults = (): LocalState => ({
     id: null,
-    city: 0,
+    city: DEFAULT_LOBBY_CITY_ID,
     direction: 0,
-    x: 128,
-    y: 128,
+    x: DEFAULT_LOBBY_SPAWN?.x ?? 128,
+    y: DEFAULT_LOBBY_SPAWN?.y ?? 128,
     speed: LEGACY_PLAYER_SPEED_PX_PER_SECOND,
     health: 100,
     maxHealth: 100,
