@@ -90,12 +90,27 @@ const resolveOrbDropPayload = (
     const centerX = position.x + (TILE / 2);
     const centerY = position.y + (TILE / 2);
     let best: { cityId: number; distanceSq: number } | null = null;
+    const hasCommandCenter = (cityId: number): boolean => {
+        for (const building of state.buildings.values()) {
+            if (building.cityId !== cityId) {
+                continue;
+            }
+            if (building.type === 0 || building.type === 200 || building.type === 201) {
+                return true;
+            }
+        }
+        return false;
+    };
 
     for (const spawn of listCitySpawns()) {
         if (spawn.cityId === state.local.city) {
             continue;
         }
-        if (state.cityFinance.get(spawn.cityId)?.isOrbable !== true) {
+        const orbableFlag = state.cityFinance.get(spawn.cityId)?.isOrbable;
+        if (orbableFlag === false) {
+            continue;
+        }
+        if (orbableFlag !== true && !hasCommandCenter(spawn.cityId)) {
             continue;
         }
         const rectX = spawn.tileX * TILE;

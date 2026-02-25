@@ -327,6 +327,9 @@ const handlers: {
         if (typeof payload.armed === "boolean") {
             Object.assign(nextHazard, { armed: payload.armed });
         }
+        if (typeof payload.active === "boolean") {
+            Object.assign(nextHazard, { active: payload.active });
+        }
         state.hazards.set(payload.id, nextHazard);
     },
     "hazard.remove": (state, payload) => {

@@ -71,7 +71,8 @@ export const resolveNearestOrbableCity = (state: ClientState): NearestOrbableCit
         if (!isCommandCenterType(building.type)) {
             continue;
         }
-        if (state.cityFinance.get(building.cityId)?.isOrbable !== true) {
+        const orbableFlag = state.cityFinance.get(building.cityId)?.isOrbable;
+        if (orbableFlag === false) {
             continue;
         }
         const center = resolveBuildingCenter(building.tileX, building.tileY);

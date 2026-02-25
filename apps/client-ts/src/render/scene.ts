@@ -7,7 +7,7 @@ import { renderHazardItems } from "./items/ItemRenderer.js";
 import { renderGroundLayer } from "./layers/GroundLayer.js";
 import { renderTileLayer } from "./layers/TileLayer.js";
 import { renderChangingLayer } from "./layers/ChangingLayer.js";
-import { resolveResearchStripPlacement } from "./layers/changing-layer-helpers.js";
+import { isCommandCenterType, resolveResearchStripPlacement } from "./layers/changing-layer-helpers.js";
 import { renderNameLabels } from "./labels/NameLabelRenderer.js";
 import { renderEffects } from "./effects/EffectsRenderer.js";
 import { renderBotDebugLayer } from "./debug/BotDebugLayer.js";
@@ -49,6 +49,9 @@ import { resolveVisibleDefenseIds } from "./parity/defense-visibility.js";
 import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
 
 const TANK_SIZE = 22;
+const COMMAND_CENTER_LABEL_OFFSET_Y = -32;
+const COMMAND_CENTER_LABEL_VIEW_THRESHOLD = 40 * TILE;
+const COMMAND_CENTER_LABEL_RESOLUTION = 2;
 
 type TankPalette = {
     tread: number;
@@ -58,6 +61,7 @@ type TankPalette = {
 };
 
 type RenderableEntity = Graphics | Sprite;
+type CacheEntity = Graphics | Sprite | Text;
 const RESEARCH_BUILDING_FAMILY = 4;
 
 const isResearchBuildingType = (buildingType: number): boolean => {
@@ -84,11 +88,11 @@ const makeTank = (palette: TankPalette): Graphics => {
     return tank;
 };
 
-const syncEntityCache = (
-    cache: Map<string, RenderableEntity>,
+const syncEntityCache = <T extends CacheEntity>(
+    cache: Map<string, T>,
     layer: Container,
     ids: Iterable<string>,
-    create: () => RenderableEntity
+    create: () => T
 ): void => {
     reconcileEntityCache(
         cache,
@@ -236,6 +240,8 @@ type SceneLayers = {
     changingSprite: Graphics;
     effectsSprite: Graphics;
     botDebugSprite: Graphics;
+    commandCenterLabelLayer: Container;
+    commandCenterLabels: Map<string, Text>;
     labelLayer: Container;
     labels: Map<string, Text>;
     hud: Text;
@@ -263,6 +269,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
     const changingSprite = new Graphics();
     const effectsSprite = new Graphics();
     const botDebugSprite = new Graphics();
+    const commandCenterLabelLayer = new Container();
 
     world.addChild(groundSprite);
     world.addChild(tileSprite);
@@ -270,6 +277,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
     world.addChild(changingSprite);
     world.addChild(effectsSprite);
     world.addChild(botDebugSprite);
+    world.addChild(commandCenterLabelLayer);
 
     const localTank = createTankSprite(textures, 0, 0);
     world.addChild(localTank);
@@ -399,6 +407,8 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         changingSprite,
         effectsSprite,
         botDebugSprite,
+        commandCenterLabelLayer,
+        commandCenterLabels: new Map<string, Text>(),
         labelLayer,
         labels: new Map<string, Text>(),
         hud: hudElements.label,
@@ -594,6 +604,63 @@ const createFallbackBuildingEntity = (): Graphics => {
     const entity = new Graphics();
     entity.roundRect(0, 0, TILE * 3, TILE * 3, 3).fill(0x8e7a56);
     return entity;
+};
+
+const createCommandCenterLabel = (): Text => {
+    const label = new Text({
+        text: "",
+        style: {
+            fontFamily: "Arial",
+            fontSize: 14,
+            fontWeight: "bold",
+            fill: 0xf2f6ff,
+            align: "center",
+            stroke: {
+                color: 0x000000,
+                width: 4
+            },
+            lineHeight: 16,
+            wordWrap: true,
+            wordWrapWidth: 120
+        }
+    });
+    label.anchor.set(0.5);
+    label.resolution = COMMAND_CENTER_LABEL_RESOLUTION;
+    return label;
+};
+
+const resolveCommandCenterBuildingIds = (state: ClientState): string[] => {
+    const ids: string[] = [];
+    for (const building of state.buildings.values()) {
+        if (isCommandCenterType(building.type)) {
+            ids.push(building.id);
+        }
+    }
+    return ids;
+};
+
+const syncCommandCenterLabels = (state: ClientState, layers: SceneLayers): void => {
+    const commandCenterIds = resolveCommandCenterBuildingIds(state);
+    syncEntityCache(layers.commandCenterLabels, layers.commandCenterLabelLayer, commandCenterIds, createCommandCenterLabel);
+    for (const buildingId of commandCenterIds) {
+        const building = state.buildings.get(buildingId);
+        const label = layers.commandCenterLabels.get(buildingId);
+        if (!building || !label) {
+            continue;
+        }
+        const cityName = getCityDisplayName(building.cityId);
+        if (label.text !== cityName) {
+            label.text = cityName;
+        }
+        const centerX = (building.tileX + 1.5) * TILE;
+        const centerY = (building.tileY + 1.5) * TILE;
+        const visible = Math.abs(centerX - state.local.x) <= COMMAND_CENTER_LABEL_VIEW_THRESHOLD
+            && Math.abs(centerY - state.local.y) <= COMMAND_CENTER_LABEL_VIEW_THRESHOLD;
+        label.visible = visible;
+        if (visible) {
+            label.position.set(centerX, centerY + COMMAND_CENTER_LABEL_OFFSET_Y);
+        }
+    }
 };
 
 const createBuildingEntity = (layers: SceneLayers, state: ClientState): Sprite | Graphics => {
@@ -1171,6 +1238,7 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.textures.blackNumbers,
         layers.textures.items
     );
+    syncCommandCenterLabels(state, layers);
     renderGhostPlacement(state, layers);
     renderNameLabels(state, layers.labelLayer, layers.localTank, layers.remoteTanks, layers.labels);
     renderEffects(

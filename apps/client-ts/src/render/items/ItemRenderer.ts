@@ -6,6 +6,7 @@ import {
     ITEM_TYPE_BOMB,
     ITEM_TYPE_MINE
 } from "../parity/constants.js";
+import { isHiddenEnemyProximityHazard } from "./hazard-visibility.js";
 import {
     resolveHazardFrameRect,
     resolveHazardOffset,
@@ -19,15 +20,6 @@ const hazardColor = (type: number): number => {
     return 0xffa95e;
 };
 
-const isHiddenEnemyMine = (
-    state: ClientState,
-    hazard: { cityId: number; type: number; armed?: boolean; }
-): boolean => {
-    return hazard.type === ITEM_TYPE_MINE
-        && hazard.cityId !== state.local.city
-        && hazard.armed !== false;
-};
-
 export const renderHazardItems = (
     state: ClientState,
     layer: Container,
@@ -35,7 +27,7 @@ export const renderHazardItems = (
     itemTexture: Texture | null = null
 ): void => {
     const visibleHazardIds = [...state.hazards.values()]
-        .filter((hazard) => !isHiddenEnemyMine(state, hazard))
+        .filter((hazard) => !isHiddenEnemyProximityHazard(state.local.city, hazard))
         .sort((left, right) => {
             const leftKey = resolveHazardSortKey(left.type);
             const rightKey = resolveHazardSortKey(right.type);

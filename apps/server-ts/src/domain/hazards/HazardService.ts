@@ -138,7 +138,8 @@ const triggerHazardReveal = (
         type: hazard.type,
         position: { x: hazard.x, y: hazard.y },
         radius: hazard.radius,
-        armed: false
+        armed: false,
+        active: false
     });
 };
 
@@ -497,7 +498,8 @@ export const deployHazard = (
             type: hazard.type,
             position: { x: hazard.x, y: hazard.y },
             radius: hazard.radius,
-            armed: hazard.armed
+            armed: hazard.armed,
+            active: hazard.active
         },
         inventory: consumed.value
     });

@@ -207,8 +207,7 @@ const appendItemUseIntent = (state: ClientState, nowMs: number, intents: Intent[
         return;
     }
     state.local.lastItemUseAt = nowMs;
-    const selectedItemType = state.ui.selectedInventoryItemType ?? 0;
-    intents.push({ type: "item.use.request", payload: { itemType: selectedItemType } });
+    intents.push({ type: "item.use.request", payload: { itemType: ITEM_TYPE_MEDKIT } });
 };
 
 const appendInventoryDropIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {

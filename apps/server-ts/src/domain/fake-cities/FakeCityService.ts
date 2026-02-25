@@ -4,7 +4,8 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBuilding, RuntimeConfig, RuntimeDefense, RuntimeFakeCityState, RuntimeHazard, RuntimeState } from "../../runtime/types.js";
 import { registerBuildingPopulation, unregisterBuildingPopulation } from "../population/PopulationService.js";
-import { getOrCreateCity } from "../economy/CityEconomyService.js";
+import { buildCityFinancePayload, getOrCreateCity } from "../economy/CityEconomyService.js";
+import { loadCityLayoutsFromDirectory, type RelativeLayoutEntry } from "../map/CityLayoutService.js";
 
 type FakeCityLayoutEntry = {
     type?: number;
@@ -40,12 +41,32 @@ type FakeCityConfig = {
 };
 
 type CitySpawn = {
+    name?: string;
     tileX?: number;
     tileY?: number;
 };
 
 const config = fakeCityConfigJson as FakeCityConfig;
 const CITY_SPAWNS = citySpawnsJson as Record<string, CitySpawn>;
+const CURATED_CITY_LAYOUTS = loadCityLayoutsFromDirectory();
+const CURATED_LAYOUTS_BY_CITY = (() => {
+    const grouped = new Map<string, RelativeLayoutEntry[][]>();
+    for (const [key, layout] of CURATED_CITY_LAYOUTS.entries()) {
+        if (!Array.isArray(layout) || layout.length === 0) {
+            continue;
+        }
+        const separatorIndex = key.indexOf("/");
+        const cityFolder = separatorIndex >= 0 ? key.slice(0, separatorIndex) : key;
+        const normalized = cityFolder.trim().toLowerCase();
+        if (normalized.length === 0) {
+            continue;
+        }
+        const bucket = grouped.get(normalized) ?? [];
+        bucket.push(layout);
+        grouped.set(normalized, bucket);
+    }
+    return grouped;
+})();
 
 const MAP_TILES = 512;
 const COMMAND_CENTER_WIDTH_TILES = 3;
@@ -112,6 +133,42 @@ const resolveBlueprintSize = (type: number | null): { width: number; height: num
         };
     }
     return { width: 3, height: 3 };
+};
+
+const pickCuratedLayoutForCity = (cityName: string | undefined): FakeCityLayoutEntry[] | null => {
+    if (typeof cityName !== "string" || cityName.trim().length === 0) {
+        return null;
+    }
+    const options = CURATED_LAYOUTS_BY_CITY.get(cityName.trim().toLowerCase());
+    if (!options || options.length === 0) {
+        return null;
+    }
+    const selected = options[Math.floor(Math.random() * options.length)];
+    if (!selected || selected.length === 0) {
+        return null;
+    }
+    return selected.map((entry) => ({
+        type: entry.type,
+        dx: entry.dx,
+        dy: entry.dy
+    }));
+};
+
+const ensureBaseCommandCenter = (layout: FakeCityLayoutEntry[]): FakeCityLayoutEntry[] => {
+    if (!Array.isArray(layout) || layout.length === 0) {
+        return layout;
+    }
+    if (layout.some((entry) => asFiniteNumber(entry.type, Number.NaN) === 0)) {
+        return layout;
+    }
+    return [
+        {
+            type: 0,
+            dx: 0,
+            dy: 0
+        },
+        ...layout
+    ];
 };
 
 const getConfiguredCities = (): FakeCityConfigEntry[] => {
@@ -603,7 +660,8 @@ const spawnFakeCityHazard = (
         type: hazard.type,
         position: { x: hazard.x, y: hazard.y },
         radius: hazard.radius,
-        armed: true
+        armed: true,
+        active: true
     });
 };
 
@@ -730,9 +788,12 @@ const spawnFakeCity = (
     const baseTileX = Math.floor(asFiniteNumber(entry.baseTileX, asFiniteNumber(spawn?.tileX, 0)));
     const baseTileY = Math.floor(asFiniteNumber(entry.baseTileY, asFiniteNumber(spawn?.tileY, 0)));
 
-    const layout = (Array.isArray(entry.layout) && entry.layout.length > 0)
-        ? entry.layout
-        : (Array.isArray(config.layout) ? config.layout : []);
+    const curatedLayout = pickCuratedLayoutForCity(spawn?.name);
+    const layout = ensureBaseCommandCenter((Array.isArray(curatedLayout) && curatedLayout.length > 0)
+        ? curatedLayout
+        : ((Array.isArray(entry.layout) && entry.layout.length > 0)
+            ? entry.layout
+            : (Array.isArray(config.layout) ? config.layout : [])));
     if (!layout.length) {
         return false;
     }
@@ -828,6 +889,7 @@ const spawnFakeCity = (
         baseTileX,
         baseTileY
     });
+    emitter.emit("city.finance", buildCityFinancePayload(state, cityId, runtimeConfig));
 
     return true;
 };
@@ -835,7 +897,8 @@ const spawnFakeCity = (
 const despawnFakeCity = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
-    cityId: number
+    cityId: number,
+    runtimeConfig: RuntimeConfig
 ): boolean => {
     const existing = state.fakeCities.get(cityId);
     if (!existing || !existing.active) {
@@ -853,6 +916,7 @@ const despawnFakeCity = (
         defenseIds: [],
         hazardIds: []
     });
+    emitter.emit("city.finance", buildCityFinancePayload(state, cityId, runtimeConfig));
 
     return true;
 };
@@ -901,7 +965,12 @@ const spawnFakeCities = (
     return createdIds;
 };
 
-const removeFakeCities = (state: RuntimeState, emitter: RuntimeEmitter, count: number): number => {
+const removeFakeCities = (
+    state: RuntimeState,
+    runtimeConfig: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    count: number
+): number => {
     if (count <= 0) {
         return 0;
     }
@@ -915,7 +984,7 @@ const removeFakeCities = (state: RuntimeState, emitter: RuntimeEmitter, count: n
         if (removed >= count) {
             break;
         }
-        if (despawnFakeCity(state, emitter, cityId)) {
+        if (despawnFakeCity(state, emitter, cityId, runtimeConfig)) {
             removed += 1;
         }
     }
@@ -1126,7 +1195,7 @@ export const tickFakeCityLifecycle = (
     }
     if (desired < activeCount) {
         const activeIds = resolveCitiesToDeactivate(state, activeCount, desired);
-        const removed = removeFakeCities(state, emitter, activeCount - desired);
+        const removed = removeFakeCities(state, runtimeConfig, emitter, activeCount - desired);
         appendRemovedCityIds(deactivated, activeIds, removed);
     }
 

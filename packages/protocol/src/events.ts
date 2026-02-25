@@ -232,7 +232,8 @@ export const HazardSpawn = Schema.Struct({
     type: Schema.Number,
     position: Vec2,
     radius: Schema.Number,
-    armed: Schema.optional(Schema.Boolean)
+    armed: Schema.optional(Schema.Boolean),
+    active: Schema.optional(Schema.Boolean)
 });
 export const HazardRemove = Schema.Struct({
     id: Schema.String,

@@ -217,6 +217,25 @@ test("inventory.update applies only to local player", () => {
     assert.equal(state.inventory.get(0), 3);
 });
 
+test("hazard.spawn stores armed/active flags for proximity-visibility parity", () => {
+    const state = createClientState();
+
+    applyServerEvent(state, makeKnownEnvelope("hazard.spawn", 1, {
+        id: "hazard_active",
+        cityId: 17,
+        type: 7,
+        position: { x: 480, y: 528 },
+        radius: 48,
+        armed: true,
+        active: true
+    }));
+
+    const spawned = state.hazards.get("hazard_active");
+    assert.ok(spawned);
+    assert.equal(spawned?.armed, true);
+    assert.equal(spawned?.active, true);
+});
+
 test("score.profile updates local profile only", () => {
     const state = createClientState();
     state.local.id = "local";

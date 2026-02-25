@@ -2,7 +2,8 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { rejectResult, type CommandResult, type RuntimeState } from "../../runtime/types.js";
 import { consumeInventoryItem } from "../inventory/InventoryService.js";
 
-const MEDKIT_ITEM_TYPE = 0;
+const CLOAK_ITEM_TYPE = 0;
+const MEDKIT_ITEM_TYPE = 2;
 const MEDKIT_HEAL_AMOUNT = 35;
 
 export type ItemUseResult = {
@@ -15,7 +16,7 @@ export const useItem = (
     socketId: string,
     payload: KnownEventPayloadByType["item.use.request"]
 ): CommandResult<ItemUseResult> => {
-    if (payload.itemType !== MEDKIT_ITEM_TYPE) {
+    if (payload.itemType !== MEDKIT_ITEM_TYPE && payload.itemType !== CLOAK_ITEM_TYPE) {
         return rejectResult("hazard_invalid");
     }
 
@@ -29,7 +30,9 @@ export const useItem = (
         return consumed;
     }
 
-    const health = Math.min(player.maxHealth, player.health + MEDKIT_HEAL_AMOUNT);
+    const health = payload.itemType === MEDKIT_ITEM_TYPE
+        ? Math.min(player.maxHealth, player.health + MEDKIT_HEAL_AMOUNT)
+        : player.health;
     state.players.set(socketId, {
         ...player,
         health
@@ -42,7 +45,7 @@ export const useItem = (
                 id: socketId,
                 health,
                 maxHealth: player.maxHealth,
-                source: "medkit"
+                source: payload.itemType === MEDKIT_ITEM_TYPE ? "medkit" : "cloak"
             },
             inventory: consumed.value
         }

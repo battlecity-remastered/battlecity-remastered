@@ -61,6 +61,14 @@ const rejectWithContext = (
 
 const emitJoinWorldHydration = (context: DispatchContext, socketId: string): void => {
     const { state, config, emitter } = context;
+    const cityIds = new Set<number>();
+    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
+        cityIds.add(cityId);
+    }
+    for (const cityId of state.cities.keys()) {
+        cityIds.add(cityId);
+    }
+    const sortedCityIds = [...cityIds].sort((left, right) => left - right);
 
     // Hydrate full world entities so late-join clients can render the same authoritative state.
     for (const bullet of state.bullets.values()) {
@@ -110,7 +118,8 @@ const emitJoinWorldHydration = (context: DispatchContext, socketId: string): voi
                 y: hazard.y
             },
             radius: hazard.radius,
-            armed: hazard.armed
+            armed: hazard.armed,
+            active: hazard.active
         });
     }
 
@@ -131,7 +140,7 @@ const emitJoinWorldHydration = (context: DispatchContext, socketId: string): voi
         emitter.emitTo(socketId, "defense.spawn", defensePayload);
     }
 
-    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
+    for (const cityId of sortedCityIds) {
         getOrCreateCity(state, cityId, config);
         emitter.emitTo(socketId, "city.finance", buildCityFinancePayload(state, cityId, config));
         const research = state.research.get(cityId);

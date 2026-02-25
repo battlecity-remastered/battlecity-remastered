@@ -82,6 +82,7 @@ export type ClientState = {
         y: number;
         radius: number;
         armed?: boolean;
+        active?: boolean;
     }>;
     bullets: Map<string, {
         id: string;

@@ -97,6 +97,9 @@ test("collect/use controls emit item lifecycle intents", () => {
     const pickupIntent = plan.intents.find((intent) => intent.type === "icon.pickup.request");
     assert.ok(pickupIntent);
     assert.equal(pickupIntent.payload.itemType, 4);
+    const useIntent = plan.intents.find((intent) => intent.type === "item.use.request");
+    assert.ok(useIntent);
+    assert.equal(useIntent.payload.itemType, 2);
 });
 
 test("cloak control emits item.use.request with cloak item type", () => {

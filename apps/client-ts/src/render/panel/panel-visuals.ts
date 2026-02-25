@@ -150,7 +150,9 @@ export const resolveHomeArrowFrame = (
     toX: number,
     toY: number
 ): number => {
-    const angle = Math.atan2(toY - fromY, toX - fromX);
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = Math.atan2(-dy, dx);
     const bucket = Math.round(angle / (Math.PI / 4));
     return ((bucket % HOME_ARROW.frameCount) + HOME_ARROW.frameCount) % HOME_ARROW.frameCount;
 };

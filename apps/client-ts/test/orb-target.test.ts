@@ -94,6 +94,28 @@ test("resolveNearestOrbableCity returns null when no enemy command center exists
     assert.equal(resolveNearestOrbableCity(state), null);
 });
 
+test("resolveNearestOrbableCity falls back to command center presence when finance hydration is missing", () => {
+    const state = createClientState();
+    state.local.city = 0;
+    state.local.x = 480;
+    state.local.y = 480;
+    state.buildings.set("enemy-cc", {
+        id: "enemy-cc",
+        ownerId: "enemy",
+        cityId: 17,
+        type: 0,
+        tileX: 14,
+        tileY: 9,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    const nearest = resolveNearestOrbableCity(state);
+    assert.ok(nearest);
+    assert.equal(nearest.cityId, 17);
+});
+
 test("formatNearestOrbableCityLine renders legacy-friendly top-left hint", () => {
     const line = formatNearestOrbableCityLine({
         cityId: 3,

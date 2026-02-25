@@ -59,7 +59,7 @@ test("inventory slot matrix and home-arrow frame quantization are stable", () =>
     assert.deepEqual(PANEL_INVENTORY_SLOTS[12], { itemType: 0, x: 7, y: 372 });
 
     assert.equal(resolveHomeArrowFrame(0, 0, 1, 0), 0);
-    assert.equal(resolveHomeArrowFrame(0, 0, 0, 1), 2);
+    assert.equal(resolveHomeArrowFrame(0, 0, 0, 1), 6);
     assert.equal(resolveHomeArrowFrame(0, 0, -1, 0), 4);
-    assert.equal(resolveHomeArrowFrame(0, 0, 0, -1), 6);
+    assert.equal(resolveHomeArrowFrame(0, 0, 0, -1), 2);
 });

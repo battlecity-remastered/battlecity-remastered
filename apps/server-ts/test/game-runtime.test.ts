@@ -200,7 +200,8 @@ test("late join hydrates existing world entities and economy state", () => {
         if (event.type !== "hazard.spawn") {
             return false;
         }
-        return (event.payload as { id: string }).id === "hz_seed";
+        const payload = event.payload as { id: string; active?: boolean };
+        return payload.id === "hz_seed" && payload.active === true;
     }));
     assert.ok(directToJoiner.some((event) => {
         if (event.type !== "defense.spawn") {
@@ -252,6 +253,49 @@ test("late join hydrates existing world entities and economy state", () => {
         const payload = event.payload as Array<{ id: string }>;
         return payload.some((entry) => entry.id === "s1");
     }));
+});
+
+test("join hydration includes fake-city finance payloads outside configured cityCount", () => {
+    const { runtime, direct } = makeHarness({
+        cityCount: 8
+    }, {}, {
+        fakeCityIds: [17]
+    });
+    const state = runtime.getReadonlyState();
+    state.cities.set(17, {
+        cityId: 17,
+        cash: 777,
+        income: 33,
+        score: 12,
+        researchLevel: 1,
+        orbCount: 1
+    });
+    state.buildings.set("fake-cc-17", {
+        id: "fake-cc-17",
+        ownerId: "fake_city_17",
+        cityId: 17,
+        type: 0,
+        tileX: 220,
+        tileY: 180,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    runtime.handleRawEvent("joiner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+
+    const directToJoiner = direct
+        .filter((entry) => entry.socketId === "joiner")
+        .map((entry) => entry.event);
+    const fakeFinance = directToJoiner.find((event) => {
+        if (event.type !== "city.finance") {
+            return false;
+        }
+        return (event.payload as { cityId: number }).cityId === 17;
+    });
+    assert.ok(fakeFinance);
+    assert.equal((fakeFinance.payload as { cash: number }).cash, 777);
+    assert.equal((fakeFinance.payload as { isOrbable?: boolean }).isOrbable, true);
 });
 
 test("player.update throttle supports reverse movement", () => {
@@ -377,7 +421,10 @@ test("invalid event payload is rejected", () => {
 });
 
 test("bullet tick resolves hits and emits health + death", () => {
-    const { runtime, broadcast } = makeHarness();
+    const { runtime, broadcast } = makeHarness({}, {}, {
+        blockingTiles: new Set<string>(),
+        buildBlockingTiles: new Set<string>()
+    });
 
     runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
     runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
@@ -399,7 +446,7 @@ test("bullet tick resolves hits and emits health + death", () => {
 
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
@@ -414,19 +461,19 @@ test("bullet tick resolves hits and emits health + death", () => {
     // 3 heavy bullets should drop 100 health to 0.
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 7, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 8, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
@@ -463,19 +510,19 @@ test("player death releases lobby assignment and blocks movement updates until r
 
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 7, {
         ownerId: "attacker",
-        position: { x: 512, y: 512 },
+        position: { x: 536, y: 536 },
         direction: 0,
         type: 2
     }));
@@ -1470,9 +1517,9 @@ test("medkit use heals player and consumes inventory", () => {
     runtime.tickBullets();
     runtime.tickBullets();
 
-    grantInventoryItem(runtime, "target", 0, 1);
+    grantInventoryItem(runtime, "target", 2, 1);
     runtime.handleRawEvent("target", makeEnvelope("item.use.request", 6, {
-        itemType: 0
+        itemType: 2
     }));
 
     const healthEvents = broadcast.filter((event) => event.type === "player.health");
@@ -1480,49 +1527,129 @@ test("medkit use heals player and consumes inventory", () => {
     const inv = direct.filter((entry) => entry.socketId === "target" && entry.event.type === "inventory.update").at(-1);
     assert.ok(inv);
     const items = (inv.event.payload as { items: Array<{ itemType: number; count: number }> }).items;
+    assert.equal(items.some((item) => item.itemType === 2), false);
+    assert.equal(rejected.length, 0);
+});
+
+test("cloak use consumes cloak inventory without medkit healing", () => {
+    const { runtime, direct, broadcast, rejected } = makeHarness();
+
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 2, {
+        id: "target",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 220, y: 220 }
+    }));
+    const player = runtime.getReadonlyState().players.get("target");
+    assert.ok(player);
+    runtime.getReadonlyState().players.set("target", {
+        ...player,
+        health: 50
+    });
+    grantInventoryItem(runtime, "target", 0, 1);
+    runtime.handleRawEvent("target", makeEnvelope("item.use.request", 3, {
+        itemType: 0
+    }));
+
+    const cloakEvent = broadcast.find((event) => {
+        if (event.type !== "player.health") {
+            return false;
+        }
+        const payload = event.payload as { id?: string; source?: string; health?: number };
+        return payload.id === "target" && payload.source === "cloak" && payload.health === 50;
+    });
+    assert.ok(cloakEvent);
+    const inventory = direct
+        .filter((entry) => entry.socketId === "target" && entry.event.type === "inventory.update")
+        .at(-1);
+    assert.ok(inventory);
+    const items = (inventory.event.payload as { items: Array<{ itemType: number; count: number }> }).items;
     assert.equal(items.some((item) => item.itemType === 0), false);
     assert.equal(rejected.length, 0);
 });
 
-test("hospital building does not passively heal players", () => {
+test("hospital repair strip heals players standing inside the bay", () => {
     const { runtime, broadcast } = makeHarness();
+    const hospitalTileX = 12;
+    const hospitalTileY = 12;
 
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 3 }));
     runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 3 }));
-    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 3, { desiredCity: 4 }));
     runtime.handleRawEvent("owner", makeEnvelope("building.place.request", 3, {
         ownerId: "owner",
         cityId: 3,
-        type: 300,
-        tileX: 12,
-        tileY: 12
+        type: 200,
+        tileX: hospitalTileX,
+        tileY: hospitalTileY
     }));
     runtime.handleRawEvent("target", makeEnvelope("player.update", 4, {
         id: "target",
         city: 3,
         direction: 0,
         isMoving: false,
-        offset: { x: 220, y: 220 }
+        offset: { x: hospitalTileX * TILE_SIZE, y: (hospitalTileY + 2) * TILE_SIZE }
     }));
-    grantInventoryItem(runtime, "enemy", ITEM_TYPE_BOMB, 1);
-    runtime.handleRawEvent("enemy", makeEnvelope("hazard.deploy.request", 5, {
-        cityId: 4,
-        type: ITEM_TYPE_BOMB,
-        position: { x: 220, y: 220 },
-        radius: 120,
-        damage: 20,
-        fuseMs: 100
+
+    const targetBefore = runtime.getReadonlyState().players.get("target");
+    assert.ok(targetBefore);
+    runtime.getReadonlyState().players.set("target", {
+        ...targetBefore,
+        health: 80
+    });
+
+    runtime.tickBullets();
+
+    const hospitalHealth = broadcast.find((event) => {
+        if (event.type !== "player.health") {
+            return false;
+        }
+        const payload = event.payload as { id?: string; source?: string };
+        return payload.id === "target" && payload.source === "hospital";
+    });
+    assert.ok(hospitalHealth);
+    const targetAfter = runtime.getReadonlyState().players.get("target");
+    assert.ok(targetAfter);
+    assert.equal(targetAfter?.health, 82);
+});
+
+test("hospital healing does not apply outside the repair strip", () => {
+    const { runtime, broadcast } = makeHarness();
+    const hospitalTileX = 12;
+    const hospitalTileY = 12;
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 3 }));
+    runtime.handleRawEvent("target", makeEnvelope("lobby.join.request", 2, { desiredCity: 3 }));
+    runtime.handleRawEvent("owner", makeEnvelope("building.place.request", 3, {
+        ownerId: "owner",
+        cityId: 3,
+        type: 200,
+        tileX: hospitalTileX,
+        tileY: hospitalTileY
     }));
-    runtime.tickBullets();
-    runtime.tickBullets();
-    runtime.tickBullets();
+    runtime.handleRawEvent("target", makeEnvelope("player.update", 4, {
+        id: "target",
+        city: 3,
+        direction: 0,
+        isMoving: false,
+        offset: { x: (hospitalTileX - 1) * TILE_SIZE, y: (hospitalTileY + 2) * TILE_SIZE }
+    }));
+
+    const targetBefore = runtime.getReadonlyState().players.get("target");
+    assert.ok(targetBefore);
+    runtime.getReadonlyState().players.set("target", {
+        ...targetBefore,
+        health: 80
+    });
+
     runtime.tickBullets();
 
     const healthEvents = broadcast.filter((event) => event.type === "player.health");
     assert.equal(healthEvents.some((event) => (event.payload as { source?: string }).source === "hospital"), false);
-    const target = runtime.getReadonlyState().players.get("target");
-    assert.ok(target);
-    assert.equal(target?.health, 80);
+    const targetAfter = runtime.getReadonlyState().players.get("target");
+    assert.ok(targetAfter);
+    assert.equal(targetAfter?.health, 80);
 });
 
 test("hazard deploy detonates and damages nearby players", () => {
@@ -1617,6 +1744,14 @@ test("dfg hazards freeze enemy players and expire after reveal window", () => {
     assert.ok(dfgHazard);
     assert.equal(dfgHazard?.armed, false);
     assert.equal(dfgHazard?.active, false);
+    const revealSpawn = broadcast.find((event) => {
+        if (event.type !== "hazard.spawn") {
+            return false;
+        }
+        const payload = event.payload as { id?: string; active?: boolean };
+        return payload.id === dfgHazard?.id && payload.active === false;
+    });
+    assert.ok(revealSpawn);
 
     for (let i = 0; i < 8; i += 1) {
         runtime.tickBullets();
@@ -1882,6 +2017,89 @@ test("high-speed bullets do not tunnel through blocked terrain tiles", () => {
     assert.ok(hitTerrain);
 });
 
+test("high-speed bullets do not tunnel through building footprints", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+    runtime.getReadonlyState().buildings.set("target_building", {
+        id: "target_building",
+        ownerId: "enemy",
+        cityId: 2,
+        type: 300,
+        tileX: 3,
+        tileY: 2,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const hitBuilding = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_building";
+    });
+    assert.ok(hitBuilding);
+    const building = runtime.getReadonlyState().buildings.get("target_building");
+    assert.equal(building?.health, 100);
+});
+
+test("high-speed bullets do not tunnel through hazard hitboxes", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+    runtime.getReadonlyState().hazards.set("target_hazard", {
+        id: "target_hazard",
+        ownerId: "enemy",
+        cityId: 2,
+        type: ITEM_TYPE_MINE,
+        x: 3 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        radius: 96,
+        damage: 20,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const hitHazard = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_hazard";
+    });
+    assert.ok(hitHazard);
+    assert.equal(runtime.getReadonlyState().hazards.has("target_hazard"), false);
+});
+
 test("orb drop emits city.orbed and score.promotion", () => {
     const { runtime, broadcast } = makeHarness();
 
@@ -2057,6 +2275,9 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
     const { runtime, broadcast } = makeHarness({
         botTickMs: 100,
         fakeCityPlayerThreshold: 999
+    }, {}, {
+        blockingTiles: new Set<string>(),
+        buildBlockingTiles: new Set<string>()
     });
 
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
@@ -2075,7 +2296,7 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
         offset: { x: 560, y: 480 }
     }));
 
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 12; i += 1) {
         runtime.tickBullets();
     }
 
@@ -2100,6 +2321,15 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
         return payload.ownerId === defenseId && payload.direction === 0;
     });
     assert.ok(defensiveShot);
+
+    const enemyHit = broadcast.find((event) => {
+        if (event.type !== "player.health") {
+            return false;
+        }
+        const payload = event.payload as { id: string; source?: string };
+        return payload.id === "enemy" && payload.source === "bullet";
+    });
+    assert.ok(enemyHit);
 });
 
 test("deployed turret does not fire at same-city players", () => {
@@ -2428,6 +2658,9 @@ test("fake city activates under low population and spawns defender bots", () => 
 
     const state = runtime.getReadonlyState();
     assert.equal(state.fakeCities.get(17)?.active, true);
+    const fakeCityBuildings = Array.from(state.buildings.values()).filter((building) => building.cityId === 17);
+    // Legacy parity: city 17 (Annaba) uses curated .city layouts (36 buildings) rather than generic template fallback.
+    assert.ok(fakeCityBuildings.length >= 35);
     assert.ok(Array.from(state.players.values()).some((player) => player.isBot && player.botType === "defender"));
     assert.ok(broadcast.some((event) => event.type === "players.snapshot"));
 });

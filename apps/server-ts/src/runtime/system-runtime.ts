@@ -9,6 +9,7 @@ import { tickFakeCityLifecycle } from "../domain/fake-cities/FakeCityService.js"
 import { tickDefenderBots } from "../domain/bots/DefenderBotService.js";
 import { tickRogueBots } from "../domain/bots/RogueBotService.js";
 import { tickDefenseTurrets } from "../domain/defense/DefenseTurretService.js";
+import { tickHospitalHealing } from "../domain/health/HealingService.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 
 export const tickRuntimeSystems = (
@@ -21,6 +22,7 @@ export const tickRuntimeSystems = (
     tickResearch(state, config, emitter, deltaMs);
     tickFactories(state, config, emitter, deltaMs);
     tickHazards(state, config, emitter, deltaMs);
+    tickHospitalHealing(state, config, emitter);
     const populationUpdates = tickPopulation(state, config, deltaMs);
     for (const update of populationUpdates) {
         emitter.emit("population.update", update);

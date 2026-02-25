@@ -96,7 +96,17 @@ export const tickCityEconomy = (
     }
     state.economyTickAccumulatorMs = 0;
 
+    const cityIds = new Set<number>();
     for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
+        cityIds.add(cityId);
+        ensureCity(state, cityId, config);
+    }
+    for (const cityId of state.cities.keys()) {
+        cityIds.add(cityId);
+    }
+    const sortedCityIds = [...cityIds].sort((left, right) => left - right);
+
+    for (const cityId of sortedCityIds) {
         const city = ensureCity(state, cityId, config);
         const cityBuildings = Array.from(state.buildings.values()).filter((building) => building.cityId === cityId).length;
         city.income = config.cityBaseIncome + (cityBuildings * 2);

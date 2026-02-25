@@ -341,6 +341,67 @@ test("inventory hotkeys support O for front-strip orb drop payload", () => {
     });
 });
 
+test("inventory hotkeys support O for command centers without finance hydration", () => {
+    const state = createClientState();
+    state.local.id = "p1";
+    state.local.city = 0;
+    state.local.x = 95 * 48;
+    state.local.y = (31 + 2) * 48;
+    state.inventory.set(ITEM_TYPE_ORB, 1);
+    state.buildings.set("enemy-cc", {
+        id: "enemy-cc",
+        ownerId: "enemy",
+        cityId: 1,
+        type: 0,
+        tileX: 95,
+        tileY: 31,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+    onInventoryUpdate(state);
+
+    const sent: Array<{ type: string; payload: unknown; }> = [];
+    const send: EventSender = (type, payload): void => {
+        sent.push({ type: String(type), payload });
+    };
+    const mockWindow = new MockWindow();
+    const previousWindow = globalThis.window;
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: mockWindow
+    });
+
+    let prevented = false;
+    const unregister = registerInventoryHotkeys(state, send);
+    mockWindow.emit("keydown", {
+        key: "o",
+        preventDefault: () => {
+            prevented = true;
+        }
+    } as KeyboardEvent as Event);
+
+    unregister();
+    Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        writable: true,
+        value: previousWindow
+    });
+
+    assert.equal(prevented, true);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.type, "orb.drop.request");
+    assert.deepEqual(sent[0]?.payload, {
+        sourceCityId: 0,
+        targetCityId: 1,
+        position: {
+            x: 95 * 48,
+            y: (31 + 2) * 48
+        }
+    });
+});
+
 test("inventory hotkeys ignore Shift+O", () => {
     const state = createClientState();
     state.local.id = "p1";

@@ -6,6 +6,7 @@ import {
     resolveHazardOffset,
     resolveHazardSortKey
 } from "../src/render/items/item-parity-helpers.js";
+import { isHiddenEnemyProximityHazard } from "../src/render/items/hazard-visibility.js";
 
 test("hazard frame rectangles match mine/bomb/orb parity", () => {
     assert.deepEqual(resolveHazardFrameRect(4, 0, false), { x: 128, y: 0, width: 32, height: 32 });
@@ -23,4 +24,24 @@ test("hazard offsets and ordering match parity contract", () => {
 
 test("bullet frame rect uses animated 8x8 row/column mapping", () => {
     assert.deepEqual(resolveBulletFrameRect(3, 2), { x: 24, y: 16, width: 8, height: 8 });
+});
+
+test("enemy DFG visibility follows active-state parity", () => {
+    assert.equal(isHiddenEnemyProximityHazard(1, {
+        cityId: 2,
+        type: 7,
+        active: true,
+        armed: false
+    }), true);
+    assert.equal(isHiddenEnemyProximityHazard(1, {
+        cityId: 2,
+        type: 7,
+        active: false,
+        armed: true
+    }), false);
+    assert.equal(isHiddenEnemyProximityHazard(1, {
+        cityId: 1,
+        type: 7,
+        active: true
+    }), false);
 });

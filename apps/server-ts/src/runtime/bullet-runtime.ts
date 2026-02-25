@@ -3,6 +3,7 @@ import {
     stepBulletAndResolve,
     type BulletStepResult,
     type BulletState,
+    type CombatPlayerState,
     type CombatBuildingState,
     type CombatHazardState
 } from "@battlecity/sim-core";
@@ -15,7 +16,6 @@ import {
     type RuntimeConfig,
     type RuntimeState
 } from "./types.js";
-import { asCombatPlayers } from "./player-runtime.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 import { restoreFactoryStock } from "../domain/factories/FactoryService.js";
 import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
@@ -29,6 +29,10 @@ const BULLET_TYPE_FLARE = 3;
 const ITEM_TYPE_ROCKET = 1;
 const ITEM_TYPE_FLARE = 6;
 const ITEM_TYPE_LASER = 12;
+const TILE_SIZE = 48;
+const BUILDING_FOOTPRINT_TILES = 3;
+const REDUCED_BLOCKING_HEIGHT_TILES = 2;
+const BULLET_SWEEP_STEP_PX = 8;
 
 const resolveRequiredItemTypeForBullet = (bulletType: number): number | null => {
     if (bulletType === BULLET_TYPE_LASER) {
@@ -258,6 +262,116 @@ const handleHazardHit = (
     emitter.emit("factory.stock", restoreFactoryStock(state, hazard.cityId, hazard.type));
 };
 
+const resolveBlockingHeightTiles = (buildingType: number): number => {
+    const family = Math.max(0, Math.floor(buildingType / 100));
+    return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
+};
+
+const collectCombatTargets = (state: RuntimeState): CombatBuildingState[] => {
+    const targets: CombatBuildingState[] = [];
+    for (const building of state.buildings.values()) {
+        const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
+        for (let dx = 0; dx < BUILDING_FOOTPRINT_TILES; dx += 1) {
+            for (let dy = 0; dy < blockingHeightTiles; dy += 1) {
+                targets.push({
+                    id: building.id,
+                    cityId: building.cityId,
+                    tileX: building.tileX + dx,
+                    tileY: building.tileY + dy,
+                    health: building.health,
+                    maxHealth: building.maxHealth
+                });
+            }
+        }
+    }
+    for (const defense of state.defenses.values()) {
+        targets.push({
+            id: defense.id,
+            cityId: defense.cityId,
+            tileX: defense.tileX,
+            tileY: defense.tileY,
+            health: defense.health,
+            maxHealth: defense.maxHealth
+        });
+    }
+    return targets;
+};
+
+const collectCombatHazards = (
+    state: RuntimeState,
+    tileSize: number
+): CombatHazardState[] => {
+    const halfTile = tileSize / 2;
+    return [...state.hazards.values()].map((hazard) => ({
+        id: hazard.id,
+        x: hazard.x + halfTile,
+        y: hazard.y + halfTile,
+        radius: tileSize
+    }));
+};
+
+const collectCombatPlayers = (
+    state: RuntimeState,
+    tileSize: number
+): CombatPlayerState[] => {
+    const halfTile = tileSize / 2;
+    return [...state.players.values()].map((player) => ({
+        id: player.id,
+        city: player.city,
+        x: player.x + halfTile,
+        y: player.y + halfTile,
+        health: player.health,
+        maxHealth: player.maxHealth
+    }));
+};
+
+const resolveBulletSweepSteps = (bullet: BulletState, tickMs: number): number => {
+    if (!Number.isFinite(tickMs) || tickMs <= 0) {
+        return 1;
+    }
+    const speed = Number.isFinite(bullet.speed) ? Math.max(0, bullet.speed) : 0;
+    const travelDistance = speed * (tickMs / 1000);
+    if (!Number.isFinite(travelDistance) || travelDistance <= 0) {
+        return 1;
+    }
+    return Math.max(1, Math.ceil(travelDistance / BULLET_SWEEP_STEP_PX));
+};
+
+const stepBulletWithSweep = (
+    bullet: BulletState,
+    tickMs: number,
+    mapMaxX: number,
+    mapMaxY: number,
+    players: Iterable<CombatPlayerState>,
+    buildings: Iterable<CombatBuildingState>,
+    hazards: Iterable<CombatHazardState>,
+    isBlockedTile: (tileX: number, tileY: number) => boolean
+): BulletStepResult => {
+    const steps = resolveBulletSweepSteps(bullet, tickMs);
+    const stepMs = tickMs / steps;
+    let current = bullet;
+    for (let step = 0; step < steps; step += 1) {
+        const result = stepBulletAndResolve(
+            current,
+            stepMs,
+            mapMaxX,
+            mapMaxY,
+            players,
+            buildings,
+            hazards,
+            isBlockedTile
+        );
+        if (result.kind !== "none") {
+            return result;
+        }
+        current = result.bullet;
+    }
+    return {
+        kind: "none",
+        bullet: current
+    };
+};
+
 const resolveBulletStep = (
     context: TickContext,
     bullet: BulletState,
@@ -297,28 +411,21 @@ const resolveBulletStep = (
 export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter: RuntimeEmitter): void => {
     const context: TickContext = { state, emitter, config };
     let snapshotDirty = false;
-    const combatTargets = [
-        ...state.buildings.values(),
-        ...state.defenses.values()
-    ] as CombatBuildingState[];
-    const combatHazards = [...state.hazards.values()].map((hazard) => ({
-        id: hazard.id,
-        x: hazard.x,
-        y: hazard.y,
-        radius: hazard.radius
-    })) as CombatHazardState[];
     const blockedTileSet = state.blockingTiles;
     const isBlockedTile = (tileX: number, tileY: number): boolean => {
         return blockedTileSet.has(`${tileX},${tileY}`);
     };
 
     for (const [bulletId, bullet] of state.bullets.entries()) {
-        const result = stepBulletAndResolve(
+        const combatPlayers = collectCombatPlayers(state, config.tileSize || TILE_SIZE);
+        const combatTargets = collectCombatTargets(state);
+        const combatHazards = collectCombatHazards(state, config.tileSize || TILE_SIZE);
+        const result = stepBulletWithSweep(
             bullet,
             config.bulletTickMs,
             config.mapMax,
             config.mapMax,
-            asCombatPlayers(state),
+            combatPlayers,
             combatTargets,
             combatHazards,
             isBlockedTile

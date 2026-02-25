@@ -4,6 +4,7 @@ export type RuntimePlayer = PlayerState & {
     city: number;
     health: number;
     maxHealth: number;
+    lastHospitalHealAt?: number;
     frozenUntil?: number;
     frozenBy?: string;
     isBot?: boolean;
@@ -145,6 +146,7 @@ export type RuntimeConfig = {
     inventoryPerItemCap: number;
     hospitalBuildingType: number;
     hospitalHealPerTick: number;
+    hospitalHealIntervalMs: number;
     defenseCost: number;
     tileSize: number;
     populationTickMs: number;
@@ -220,8 +222,9 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     orbScoreAward: 250,
     chatHistoryLimit: 50,
     inventoryPerItemCap: 5,
-    hospitalBuildingType: 300,
+    hospitalBuildingType: 200,
     hospitalHealPerTick: 2,
+    hospitalHealIntervalMs: 150,
     defenseCost: 75,
     tileSize: 48,
     populationTickMs: 250,
