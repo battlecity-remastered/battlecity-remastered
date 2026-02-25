@@ -1,6 +1,22 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 
+const LEGACY_ITEM_CAPS: Readonly<Record<number, number>> = {
+    0: 4, // cloak
+    1: 4, // rocket
+    2: 5, // medkit
+    3: 20, // bomb
+    4: 10, // mine
+    5: 1, // orb
+    6: 4, // flare
+    7: 5, // dfg
+    8: 20, // wall
+    9: 10, // turret
+    10: 5, // sleeper
+    11: 5, // plasma
+    12: 4 // laser
+};
+
 const ensureInventory = (state: RuntimeState, playerId: string): Map<number, number> => {
     const existing = state.playerInventory.get(playerId);
     if (existing) {
@@ -22,6 +38,17 @@ const toPayload = (state: RuntimeState, playerId: string): KnownEventPayloadByTy
     };
 };
 
+export const resolveInventoryCap = (
+    itemType: number,
+    config: RuntimeConfig
+): number => {
+    const legacyCap = LEGACY_ITEM_CAPS[itemType];
+    if (typeof legacyCap === "number" && Number.isFinite(legacyCap)) {
+        return Math.max(0, Math.floor(legacyCap));
+    }
+    return Math.max(0, Math.floor(config.inventoryPerItemCap));
+};
+
 export const addInventoryItem = (
     state: RuntimeState,
     playerId: string,
@@ -31,8 +58,13 @@ export const addInventoryItem = (
 ): KnownEventPayloadByType["inventory.update"] => {
     const inventory = ensureInventory(state, playerId);
     const current = inventory.get(itemType) ?? 0;
-    const next = Math.min(config.inventoryPerItemCap, current + Math.max(1, Math.floor(amount)));
-    inventory.set(itemType, next);
+    const cap = resolveInventoryCap(itemType, config);
+    const next = Math.min(cap, current + Math.max(1, Math.floor(amount)));
+    if (next > 0) {
+        inventory.set(itemType, next);
+    } else {
+        inventory.delete(itemType);
+    }
     state.playerInventory.set(playerId, inventory);
     return toPayload(state, playerId);
 };

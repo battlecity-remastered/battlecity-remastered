@@ -38,6 +38,11 @@ export type RuntimeFakeCityState = {
     cityId: number;
     active: boolean;
     cooldownUntil: number;
+    buildingIds: string[];
+    defenseIds: string[];
+    hazardIds: string[];
+    baseTileX?: number;
+    baseTileY?: number;
 };
 
 export type RuntimeBotController = {
@@ -59,6 +64,7 @@ export type RuntimeResearchState = {
 
 export type RuntimeHazard = {
     id: string;
+    ownerId: string;
     cityId: number;
     type: number;
     x: number;
@@ -66,6 +72,8 @@ export type RuntimeHazard = {
     radius: number;
     damage: number;
     remainingMs: number;
+    armed: boolean;
+    active: boolean;
 };
 
 export type RuntimeChatMessage = {
@@ -93,8 +101,12 @@ export type RuntimeState = {
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
     blockingTiles: Set<string>;
+    buildBlockingTiles: Set<string>;
     fakeCities: Map<number, RuntimeFakeCityState>;
     botControllers: Map<string, RuntimeBotController>;
+    fakeCityEvaluationAt: number;
+    defenderSpawnCheckAt: number;
+    rogueSpawnCheckAt: number;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
     populationTickAccumulatorMs: number;
@@ -177,6 +189,8 @@ export const rejectResult = (reason: RuntimeRejectReason): CommandResult<never> 
     return { ok: false, reason };
 };
 
+export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
+
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
     cityCount: 8,
@@ -185,10 +199,10 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     serverStepMs: 33,
     bulletTickMs: 100,
     defaultBuildingHealth: 120,
-    playerSpeed: 300,
+    playerSpeed: LEGACY_PLAYER_SPEED_PX_PER_SECOND,
     bulletSpeed: 900,
     maxPlayerUpdateDistancePerTick: 80,
-    cityStartingCash: 200,
+    cityStartingCash: 95_000_000,
     cityBaseIncome: 15,
     researchCost: 100,
     researchDurationMs: 3000,
@@ -220,6 +234,7 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
 type RuntimeStateInit = {
     blockingTiles?: Set<string>;
+    buildBlockingTiles?: Set<string>;
     fakeCityIds?: number[];
 };
 
@@ -229,7 +244,10 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         fakeCities.set(cityId, {
             cityId,
             active: false,
-            cooldownUntil: 0
+            cooldownUntil: 0,
+            buildingIds: [],
+            defenseIds: [],
+            hazardIds: []
         });
     }
 
@@ -249,8 +267,12 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         chatHistory: [],
         chatRateLimit: new Map(),
         blockingTiles: init.blockingTiles ?? new Set(),
+        buildBlockingTiles: init.buildBlockingTiles ?? init.blockingTiles ?? new Set(),
         fakeCities,
         botControllers: new Map(),
+        fakeCityEvaluationAt: 0,
+        defenderSpawnCheckAt: 0,
+        rogueSpawnCheckAt: 0,
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
         populationTickAccumulatorMs: 0,

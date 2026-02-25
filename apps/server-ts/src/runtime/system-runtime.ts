@@ -33,7 +33,7 @@ export const tickRuntimeSystems = (
     }
     state.botTickAccumulatorMs = 0;
     const now = Date.now();
-    tickFakeCityLifecycle(state, config, now);
+    tickFakeCityLifecycle(state, config, emitter, now);
     const defenderDirty = tickDefenderBots(state, config, emitter, now, config.botTickMs);
     const rogueDirty = tickRogueBots(state, config, emitter, now, config.botTickMs);
     if (defenderDirty || rogueDirty) {

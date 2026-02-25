@@ -3,6 +3,8 @@ import { rejectSocket } from "./rejections.js";
 import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
 import type { CommandResult, RuntimeRejectReason, RuntimeState } from "./types.js";
 
+type CommandRejectMeta = Record<string, unknown>;
+
 export const emitScopedChatMessage = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
@@ -25,7 +27,8 @@ export const handleCommandResult = <T>(
     emitter: RuntimeEmitter,
     broadcaster: Broadcaster,
     result: CommandResult<T>,
-    onOk: (value: T) => void
+    onOk: (value: T) => void,
+    rejectMeta?: CommandRejectMeta
 ): void => {
     if (!result.ok) {
         if (result.reason === "lobby_full") {
@@ -33,7 +36,7 @@ export const handleCommandResult = <T>(
                 reason: result.reason
             });
         }
-        rejectSocket(broadcaster, socketId, result.reason as RuntimeRejectReason);
+        rejectSocket(broadcaster, socketId, result.reason as RuntimeRejectReason, rejectMeta);
         return;
     }
     onOk(result.value);

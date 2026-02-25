@@ -69,7 +69,7 @@ export const renderHazardItems = (
             const isMine = hazard.type === ITEM_TYPE_MINE;
             const isBomb = hazard.type === ITEM_TYPE_BOMB;
             const animation = Math.floor(Date.now() / 120) % 4;
-            const bombArmed = isBomb && state.ui.bombArmed && hazard.cityId === state.local.city;
+            const bombArmed = isBomb && hazard.armed === true;
             const rect = resolveHazardFrameRect(hazard.type, animation, bombArmed);
             const frame = getFrameTexture(
                 itemTexture,

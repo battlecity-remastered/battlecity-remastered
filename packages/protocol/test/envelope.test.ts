@@ -14,6 +14,7 @@ test("decodeTypedEnvelope validates known payload shapes", () => {
         city: 3,
         direction: 8,
         isMoving: true,
+        throttle: -1,
         offset: { x: 100, y: 200 }
     });
 
@@ -22,6 +23,7 @@ test("decodeTypedEnvelope validates known payload shapes", () => {
     if (decoded._tag === "Right") {
         assert.equal(decoded.right.type, "player.update");
         assert.equal((decoded.right.payload as { id: string }).id, "p1");
+        assert.equal((decoded.right.payload as { throttle?: number }).throttle, -1);
     }
 });
 
@@ -95,6 +97,7 @@ test("canonicalizeEventType maps known legacy aliases to canonical names", () =>
     assert.equal(canonicalizeEventType("inventory:update"), "inventory.update");
     assert.equal(canonicalizeEventType("population:update"), "population.update");
     assert.equal(canonicalizeEventType("player:bot_damage"), "player.bot_damage");
+    assert.equal(canonicalizeEventType("lobby:high_scores"), "lobby.high_scores");
     assert.equal(canonicalizeEventType("event:rejected"), "event.rejected");
     assert.equal(canonicalizeEventType("player.update"), "player.update");
 });
@@ -126,6 +129,44 @@ test("decodeKnownEnvelope validates defense.deploy.request payload", () => {
             tileX: 10,
             tileY: 10
         }
+    });
+
+    assert.equal(decoded._tag, "Right");
+});
+
+test("decodeKnownEnvelope validates hazard.deploy.request with optional armed state", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "hazard.deploy.request",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: {
+            cityId: 2,
+            type: 3,
+            position: {
+                x: 128,
+                y: 176
+            },
+            armed: false
+        }
+    });
+    assert.equal(decoded._tag, "Right");
+});
+
+test("decodeKnownEnvelope validates lobby.high_scores payload", () => {
+    const decoded = decodeKnownEnvelope({
+        type: "lobby.high_scores",
+        version: "1",
+        seq: 1,
+        ts: Date.now(),
+        payload: [{
+            userId: "u1",
+            name: "Pilot",
+            points: 10,
+            rankTitle: "recruit",
+            orbs: 1,
+            assists: 0
+        }]
     });
 
     assert.equal(decoded._tag, "Right");

@@ -6,16 +6,13 @@ import { isGhostTileBlocked, resolveGhostPlacement } from "../src/ui/build-menu/
 test("resolveGhostPlacement returns null when placement mode is inactive", () => {
     const state = createClientState();
     state.pointer.inside = true;
-    state.controls.ctrl = true;
-    state.controls.build = false;
+    state.ui.buildGhostMode = false;
     assert.equal(resolveGhostPlacement(state), null);
 });
 
 test("resolveGhostPlacement computes pointer tile and selected build type", () => {
     const state = createClientState();
-    state.ui.showBuildMenu = true;
-    state.controls.ctrl = true;
-    state.controls.build = true;
+    state.ui.buildGhostMode = true;
     state.pointer.inside = true;
     state.pointer.surfaceWidth = 640;
     state.pointer.surfaceHeight = 480;
@@ -25,8 +22,8 @@ test("resolveGhostPlacement computes pointer tile and selected build type", () =
 
     const ghost = resolveGhostPlacement(state);
     assert.ok(ghost);
-    assert.equal(ghost.tileX, 2);
-    assert.equal(ghost.tileY, 5);
+    assert.equal(ghost.tileX, 0);
+    assert.equal(ghost.tileY, 3);
     assert.equal(ghost.buildType, 300);
     assert.equal(ghost.blocked, false);
 });
@@ -60,4 +57,15 @@ test("isGhostTileBlocked returns true for building and defense occupancy", () =>
 
     state.world.blockingTiles.add("9,9");
     assert.equal(isGhostTileBlocked(state, 8, 8), true);
+});
+
+test("isGhostTileBlocked prefers build-blocking terrain set when available", () => {
+    const state = createClientState();
+    state.world.blockingTiles.add("10,10");
+    state.world.blockingTiles.add("10,11");
+    state.world.buildBlockingTiles.add("10,10");
+    state.world.buildBlockingTiles.add("10,11");
+    state.world.buildBlockingTiles.add("10,12");
+
+    assert.equal(isGhostTileBlocked(state, 10, 12), true);
 });

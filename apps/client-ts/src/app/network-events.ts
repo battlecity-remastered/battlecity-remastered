@@ -87,6 +87,10 @@ const handlers: {
         const spawn = resolveCitySpawn(payload.city);
         state.local.id = payload.id;
         state.local.city = payload.city;
+        state.ui.showBuildMenu = false;
+        state.ui.buildGhostMode = false;
+        state.ui.buildDemolishMode = false;
+        state.ui.pendingBuildPlacement = null;
         if (spawn) {
             state.local.x = spawn.x;
             state.local.y = spawn.y;
@@ -113,8 +117,35 @@ const handlers: {
             };
         });
     },
+    "lobby.high_scores": (state, payload) => {
+        state.lobby.highScores = payload.map((entry) => {
+            const highScore = {
+                userId: entry.userId,
+                name: entry.name,
+                points: entry.points,
+                rankTitle: entry.rankTitle
+            };
+            if (typeof entry.orbs === "number") {
+                Object.assign(highScore, { orbs: entry.orbs });
+            }
+            if (typeof entry.assists === "number") {
+                Object.assign(highScore, { assists: entry.assists });
+            }
+            if (typeof entry.updatedAt === "number") {
+                Object.assign(highScore, { updatedAt: entry.updatedAt });
+            }
+            return highScore;
+        });
+    },
     "lobby.released": (state, payload) => {
         state.lobby.lastReleasedPlayerId = payload.id;
+        if (payload.id === state.local.id) {
+            state.local.id = null;
+            state.ui.showBuildMenu = false;
+            state.ui.buildGhostMode = false;
+            state.ui.buildDemolishMode = false;
+            state.ui.pendingBuildPlacement = null;
+        }
     },
     "build.denied": (state, payload) => {
         state.events.lastBuildDeniedReason = payload.reason;
@@ -267,14 +298,18 @@ const handlers: {
         };
     },
     "hazard.spawn": (state, payload) => {
-        state.hazards.set(payload.id, {
+        const nextHazard = {
             id: payload.id,
             cityId: payload.cityId,
             type: payload.type,
             x: payload.position.x,
             y: payload.position.y,
             radius: payload.radius
-        });
+        };
+        if (typeof payload.armed === "boolean") {
+            Object.assign(nextHazard, { armed: payload.armed });
+        }
+        state.hazards.set(payload.id, nextHazard);
     },
     "hazard.remove": (state, payload) => {
         state.hazards.delete(payload.id);

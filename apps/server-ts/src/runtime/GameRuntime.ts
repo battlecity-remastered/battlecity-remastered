@@ -21,6 +21,7 @@ import { createRuntimeStateRef, readRuntimeState, type RuntimeStateRef } from ".
 import { tickRuntimeSystems } from "./system-runtime.js";
 import { rejectSocket } from "./rejections.js";
 import { releasePlayerInventory } from "../domain/inventory/InventoryService.js";
+import { lobbyHighScores } from "../domain/score/ScoreService.js";
 
 type RuntimeAdapterServices = {
     userStore?: UserStoreAdapter;
@@ -56,7 +57,10 @@ export class GameRuntime {
             const decoded = decodeKnownEnvelope(normalizeInboundEnvelopeType(raw));
             if (decoded._tag !== "Right") {
                 return Effect.sync(() => {
-                    rejectSocket(this.broadcaster, socketId, "invalid_envelope");
+                    rejectSocket(this.broadcaster, socketId, "invalid_envelope", {
+                        eventType: "runtime.raw_event",
+                        rawType: typeof raw
+                    });
                 });
             }
 
@@ -82,6 +86,9 @@ export class GameRuntime {
             if (released) {
                 this.emitter.emit("lobby.released", released);
                 this.emitter.emit("lobby.snapshot", buildLobbySnapshot(state, this.config));
+                if (this.services.userStore) {
+                    this.emitter.emit("lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore)));
+                }
             }
             const removedBulletIds = removePlayer(state, socketId);
             releasePlayerInventory(state, socketId);
@@ -93,6 +100,14 @@ export class GameRuntime {
             }
             emitPlayersSnapshot(state, this.emitter);
         });
+    }
+
+    public emitLobbyBootstrap(socketId: string): void {
+        const state = readRuntimeState(this.stateRef);
+        this.emitter.emitTo(socketId, "lobby.snapshot", buildLobbySnapshot(state, this.config));
+        if (this.services.userStore) {
+            this.emitter.emitTo(socketId, "lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore)));
+        }
     }
 
     public tickBullets(): void {

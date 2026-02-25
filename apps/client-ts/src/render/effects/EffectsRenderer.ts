@@ -1,6 +1,7 @@
 import { Graphics, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { resolveTankMuzzlePosition } from "../../gameplay/combat/shot-geometry.js";
 
 const MUZZLE_FLASH_MS = 120;
 const SHAKE_MS = 150;
@@ -21,18 +22,21 @@ export const renderEffects = (
 ): void => {
     sprite.clear();
     const shotAge = nowMs - state.local.lastShotAt;
+    const baseStageX = stage.position.x;
+    const baseStageY = stage.position.y;
 
     if (shotAge >= 0 && shotAge < MUZZLE_FLASH_MS) {
+        const muzzle = resolveTankMuzzlePosition(state.local.x, state.local.y, state.local.direction);
         const frame = muzzleFlashTexture
             ? getFrameTexture(muzzleFlashTexture, "muzzle:0", 0, 0, 12, 12)
             : null;
         if (frame) {
             sprite
-                .rect(state.local.x + 6, state.local.y - 6, 12, 12)
+                .rect(muzzle.x - 6, muzzle.y - 6, 12, 12)
                 .fill({ texture: frame, alpha: 0.9 });
         } else {
             sprite
-                .circle(state.local.x + 12, state.local.y, 7)
+                .circle(muzzle.x, muzzle.y, 7)
                 .fill({ color: 0xffd166, alpha: 0.85 });
         }
     }
@@ -90,12 +94,20 @@ export const renderEffects = (
         layer.addChild(sprite);
     }
 
-    if (shotAge >= 0 && shotAge < SHAKE_MS) {
+    const lastOrbEvent = state.events.lastOrbEvent;
+    const orbAge = lastOrbEvent ? nowMs - lastOrbEvent.at : Number.POSITIVE_INFINITY;
+    const shouldShakeForOrb =
+        !!lastOrbEvent &&
+        lastOrbEvent.targetCityId !== state.local.city &&
+        orbAge >= 0 &&
+        orbAge < SHAKE_MS;
+
+    if (shouldShakeForOrb) {
         stage.position.set(
-            Math.round((Math.random() - 0.5) * 4),
-            Math.round((Math.random() - 0.5) * 4)
+            baseStageX + Math.round((Math.random() - 0.5) * 4),
+            baseStageY + Math.round((Math.random() - 0.5) * 4)
         );
         return;
     }
-    stage.position.set(0, 0);
+    stage.position.set(baseStageX, baseStageY);
 };

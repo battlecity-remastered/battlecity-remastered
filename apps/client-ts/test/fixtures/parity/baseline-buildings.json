@@ -1,6 +1,6 @@
 {
   "baseFrame": { "x": 0, "yFormula": "baseType*144", "width": 144, "height": 144 },
-  "animation": { "animX": 144, "countX": 3, "divisor": 4 },
+  "animation": { "animX": 0, "countX": 3, "divisor": 4 },
   "overlays": {
     "research": { "offsetX": 14, "offsetY": 98 },
     "factory": { "offsetX": 56, "offsetY": 52 }

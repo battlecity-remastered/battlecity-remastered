@@ -102,6 +102,6 @@ export const buildHudLines = (state: ClientState): string[] => {
         ...base,
         `Hostiles ${rogue.hostilePlayers} nearest ${rogue.nearestDistance === null ? "-" : Math.round(rogue.nearestDistance)}  Defense damage ${defenders.damagedDefenses}/${defenders.defenseCount}`,
         ...events,
-        "W/Up move | A/D turn | Space fire | Ctrl+B build | Ctrl+X demolish | R research | C pickup | U use | Shift+U drop | B orb"
+        "W/Up forward | S/Down reverse | Left/Right turn | Shift/Space fire | Ctrl+B build | Ctrl+X demolish | R research | U pickup | H/C use | D drop | B orb"
     ];
 };

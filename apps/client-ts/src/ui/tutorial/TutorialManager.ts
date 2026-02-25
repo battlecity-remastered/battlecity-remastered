@@ -4,9 +4,9 @@ export const buildTutorialLines = (state: ClientState): string[] => {
     const canBuild = state.local.id ? "yes" : "no";
     return [
         "Tutorial",
-        "1. Join a city and move with W/A/D (or arrows).",
+        "1. Join a city and move with W/S + Left/Right arrows.",
         "2. Hold Ctrl+B to place a building at cursor tile.",
-        "3. Press C to collect factory stock, U to use medkit.",
+        "3. Press U to pick up factory drops, H/C to use selected item, D to drop.",
         "4. Press B to orb enemy city, Shift+B to deploy defense.",
         `Ready: ${canBuild}`,
         "Toggle: T"

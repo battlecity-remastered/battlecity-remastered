@@ -106,7 +106,8 @@ test("map modal canvas render draws terrain pixels and marker overlays", () => {
             [0, 1],
             [2, 3]
         ],
-        blockingTiles: new Set<string>()
+        blockingTiles: new Set<string>(),
+        buildBlockingTiles: new Set<string>()
     };
 
     const operations: string[] = [];

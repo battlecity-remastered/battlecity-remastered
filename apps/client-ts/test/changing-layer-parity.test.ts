@@ -10,17 +10,21 @@ import {
 } from "../src/render/layers/changing-layer-helpers.js";
 
 test("population frame parity uses row and max-pop family rules", () => {
+    assert.deepEqual(resolvePopulationFrame(0, 25), { row: 1, column: 3 });
     assert.deepEqual(resolvePopulationFrame(200, 25), { row: 1, column: 3 });
     assert.deepEqual(resolvePopulationFrame(100, 25), { row: 0, column: 3 });
+    assert.deepEqual(resolvePopulationFrame(300, 100), { row: 0, column: 6 });
     assert.deepEqual(resolvePopulationFrame(400, 100), { row: 0, column: 6 });
 });
 
 test("population offsets parity matches family matrix", () => {
+    assert.deepEqual(resolvePopulationOffset(0), { x: 96, y: 49 });
     assert.deepEqual(resolvePopulationOffset(200), { x: 96, y: 49 });
     assert.deepEqual(resolvePopulationOffset(100), { x: 96, y: 48 });
-    assert.deepEqual(resolvePopulationOffset(300), { x: 96, y: 48 });
+    assert.deepEqual(resolvePopulationOffset(300), { x: 96, y: 90 });
     assert.deepEqual(resolvePopulationOffset(400), { x: 96, y: 90 });
     assert.deepEqual(resolvePopulationOffset(201), { x: 96, y: 49 });
+    assert.deepEqual(resolvePopulationOffset(500), { x: 96, y: 48 });
 });
 
 test("research strip parity uses crop and placement formulas", () => {

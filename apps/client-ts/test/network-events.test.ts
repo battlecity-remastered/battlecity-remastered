@@ -22,7 +22,17 @@ test("lobby lifecycle events update lobby state", () => {
             recruitCount: 1
         }
     ]));
-    applyServerEvent(state, makeKnownEnvelope("lobby.released", 4, {
+    applyServerEvent(state, makeKnownEnvelope("lobby.high_scores", 4, [
+        {
+            userId: "u1",
+            name: "Pilot One",
+            points: 1500,
+            rankTitle: "captain",
+            orbs: 3,
+            assists: 7
+        }
+    ]));
+    applyServerEvent(state, makeKnownEnvelope("lobby.released", 5, {
         id: "p2",
         city: 2
     }));
@@ -34,7 +44,24 @@ test("lobby lifecycle events update lobby state", () => {
     assert.equal(state.lobby.deniedReason, "lobby_full");
     assert.equal(state.lobby.assignments.length, 1);
     assert.equal(state.lobby.assignments[0]?.mayorId, "p1");
+    assert.equal(state.lobby.highScores.length, 1);
+    assert.equal(state.lobby.highScores[0]?.name, "Pilot One");
     assert.equal(state.lobby.lastReleasedPlayerId, "p2");
+});
+
+test("lobby.released clears local assignment when self is released", () => {
+    const state = createClientState();
+    state.local.id = "p1";
+    state.ui.showBuildMenu = true;
+
+    applyServerEvent(state, makeKnownEnvelope("lobby.released", 1, {
+        id: "p1",
+        city: 2
+    }));
+
+    assert.equal(state.local.id, null);
+    assert.equal(state.ui.showBuildMenu, false);
+    assert.equal(state.lobby.lastReleasedPlayerId, "p1");
 });
 
 test("economy/research/factory/chat/orb events update client stores", () => {

@@ -82,6 +82,18 @@ export const getFrameTexture = (
     if (!texture || !texture.source) {
         return null;
     }
+    const textureWidth = Math.floor(texture.width);
+    const textureHeight = Math.floor(texture.height);
+    if (
+        x < 0
+        || y < 0
+        || width <= 0
+        || height <= 0
+        || (x + width) > textureWidth
+        || (y + height) > textureHeight
+    ) {
+        return null;
+    }
     const sourceId = texture.source.uid ?? 0;
     const key = `${sourceId}:${cacheKey}:${x}:${y}:${width}:${height}`;
     const cached = frameCache.get(key);

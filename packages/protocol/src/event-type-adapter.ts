@@ -6,6 +6,7 @@ const legacyToCanonicalType = {
     "lobby:assignment": "lobby.assignment",
     "lobby:denied": "lobby.denied",
     "lobby:released": "lobby.released",
+    "lobby:high_scores": "lobby.high_scores",
     "lobby:snapshot": "lobby.snapshot",
     "player:update": "player.update",
     "player:health": "player.health",

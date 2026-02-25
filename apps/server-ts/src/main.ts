@@ -34,6 +34,7 @@ app.get("/health", (_req: Request, res: Response) => {
 
 io.on("connection", (socket) => {
     Effect.runSync(logRuntime("info", "socket.connected", { socketId: socket.id }));
+    runtime.emitLobbyBootstrap(socket.id);
     socket.on("event", (raw: unknown) => {
         runtimeScope.onSocketEvent(socket.id, raw);
     });

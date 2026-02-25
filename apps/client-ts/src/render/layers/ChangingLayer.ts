@@ -1,4 +1,4 @@
-import { Graphics, type Container, type Texture } from "pixi.js";
+import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
 import {
@@ -14,6 +14,56 @@ import {
 
 const TILE_SIZE = 48;
 
+type OverlaySpriteDef = {
+    key: string;
+    texture: Texture;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    alpha: number;
+};
+
+type OverlayRuntime = {
+    container: Container;
+    sprites: Map<string, Sprite>;
+};
+
+const overlayRuntimeBySprite = new WeakMap<Graphics, OverlayRuntime>();
+
+const ensureOverlayRuntime = (layer: Container, sprite: Graphics): OverlayRuntime => {
+    const existing = overlayRuntimeBySprite.get(sprite);
+    if (existing) {
+        if (existing.container.destroyed) {
+            overlayRuntimeBySprite.delete(sprite);
+        } else {
+        if (existing.container.parent !== layer) {
+            const spriteIndex = layer.children.includes(sprite) ? layer.getChildIndex(sprite) : layer.children.length - 1;
+            const insertIndex = Math.max(0, Math.min(layer.children.length, spriteIndex + 1));
+            layer.addChildAt(existing.container, insertIndex);
+        } else if (layer.children.includes(sprite)) {
+            const spriteIndex = layer.getChildIndex(sprite);
+            const targetIndex = Math.max(0, Math.min(layer.children.length - 1, spriteIndex + 1));
+            if (layer.getChildIndex(existing.container) !== targetIndex) {
+                layer.setChildIndex(existing.container, targetIndex);
+            }
+        }
+        return existing;
+        }
+    }
+
+    const container = new Container();
+    const spriteIndex = layer.children.includes(sprite) ? layer.getChildIndex(sprite) : layer.children.length - 1;
+    const insertIndex = Math.max(0, Math.min(layer.children.length, spriteIndex + 1));
+    layer.addChildAt(container, insertIndex);
+    const created: OverlayRuntime = {
+        container,
+        sprites: new Map<string, Sprite>()
+    };
+    overlayRuntimeBySprite.set(sprite, created);
+    return created;
+};
+
 export const renderChangingLayer = (
     state: ClientState,
     layer: Container,
@@ -23,8 +73,14 @@ export const renderChangingLayer = (
     researchCompleteTexture: Texture | null = null,
     smokeTexture: Texture | null = null,
     blackNumbersTexture: Texture | null = null,
+    itemTexture: Texture | null = null,
     nowMs: number = Date.now()
 ): void => {
+    if (!layer.children.includes(sprite)) {
+        layer.addChild(sprite);
+    }
+    const overlayRuntime = ensureOverlayRuntime(layer, sprite);
+    const overlayDefs: OverlaySpriteDef[] = [];
     sprite.clear();
 
     for (const building of state.buildings.values()) {
@@ -41,9 +97,15 @@ export const renderChangingLayer = (
                     TILE_SIZE
                 );
                 if (populationFrame) {
-                    sprite
-                        .rect((building.tileX * TILE_SIZE) + offset.x, (building.tileY * TILE_SIZE) + offset.y, TILE_SIZE, TILE_SIZE)
-                        .fill({ texture: populationFrame, alpha: 0.88 });
+                    overlayDefs.push({
+                        key: `population:${building.id}`,
+                        texture: populationFrame,
+                        x: (building.tileX * TILE_SIZE) + offset.x,
+                        y: (building.tileY * TILE_SIZE) + offset.y,
+                        width: TILE_SIZE,
+                        height: TILE_SIZE,
+                        alpha: 0.88
+                    });
                 } else {
                     const ratio = Math.max(0, Math.min(1, frame.column / 6));
                     const width = Math.floor(TILE_SIZE * ratio);
@@ -67,9 +129,15 @@ export const renderChangingLayer = (
                     : null;
             if (researchFrame) {
                 const placement = resolveResearchStripPlacement(building.tileX, building.tileY);
-                sprite
-                    .rect(placement.x, placement.y, placement.width, placement.height)
-                    .fill({ texture: researchFrame, alpha: 0.9 });
+                overlayDefs.push({
+                    key: `research-strip:${building.id}`,
+                    texture: researchFrame,
+                    x: placement.x,
+                    y: placement.y,
+                    width: placement.width,
+                    height: placement.height,
+                    alpha: 0.9
+                });
             }
         }
         if (isFactoryType(building.type) && smokeTexture) {
@@ -77,31 +145,67 @@ export const renderChangingLayer = (
             const smoke = getFrameTexture(smokeTexture, `smoke:${smokeFrame}`, 0, smokeFrame * 60, 180, 60);
             if (smoke) {
                 const placement = resolveSmokePlacement(building.tileX, building.tileY);
-                sprite
-                    .rect(placement.x, placement.y, placement.width, placement.height)
-                    .fill({ texture: smoke, alpha: 0.6 });
+                overlayDefs.push({
+                    key: `factory-smoke:${building.id}`,
+                    texture: smoke,
+                    x: placement.x,
+                    y: placement.y,
+                    width: placement.width,
+                    height: placement.height,
+                    alpha: 0.6
+                });
             }
 
             if (blackNumbersTexture) {
                 const stock = state.factoryStock.get(building.cityId);
-                let total = 0;
-                if (stock) {
-                    for (const value of stock.values()) {
-                        total += value;
-                    }
-                }
-                const digits = resolveFactoryDigits(total);
+                const itemType = building.type % 100;
+                const itemCount = stock?.get(itemType) ?? 0;
+                const digits = resolveFactoryDigits(itemCount);
                 const tensFrame = getFrameTexture(blackNumbersTexture, `factory:tens:${digits.tens}`, digits.tens * 16, 0, 16, 16);
                 const onesFrame = getFrameTexture(blackNumbersTexture, `factory:ones:${digits.ones}`, digits.ones * 16, 0, 16, 16);
                 if (tensFrame) {
-                    sprite
-                        .rect((building.tileX * TILE_SIZE) + digits.tensOffset.x, (building.tileY * TILE_SIZE) + digits.tensOffset.y, 16, 16)
-                        .fill({ texture: tensFrame, alpha: 0.95 });
+                    overlayDefs.push({
+                        key: `factory-digits:tens:${building.id}`,
+                        texture: tensFrame,
+                        x: (building.tileX * TILE_SIZE) + digits.tensOffset.x,
+                        y: (building.tileY * TILE_SIZE) + digits.tensOffset.y,
+                        width: 16,
+                        height: 16,
+                        alpha: 0.95
+                    });
                 }
                 if (onesFrame) {
-                    sprite
-                        .rect((building.tileX * TILE_SIZE) + digits.onesOffset.x, (building.tileY * TILE_SIZE) + digits.onesOffset.y, 16, 16)
-                        .fill({ texture: onesFrame, alpha: 0.95 });
+                    overlayDefs.push({
+                        key: `factory-digits:ones:${building.id}`,
+                        texture: onesFrame,
+                        x: (building.tileX * TILE_SIZE) + digits.onesOffset.x,
+                        y: (building.tileY * TILE_SIZE) + digits.onesOffset.y,
+                        width: 16,
+                        height: 16,
+                        alpha: 0.95
+                    });
+                }
+
+                if (itemTexture && itemCount > 0) {
+                    const itemFrame = getFrameTexture(
+                        itemTexture,
+                        `factory-item:${itemType}`,
+                        itemType * 32,
+                        0,
+                        32,
+                        32
+                    );
+                    if (itemFrame) {
+                        overlayDefs.push({
+                            key: `factory-item:${building.id}`,
+                            texture: itemFrame,
+                            x: (building.tileX * TILE_SIZE) + 56,
+                            y: (building.tileY * TILE_SIZE) + 102,
+                            width: 32,
+                            height: 32,
+                            alpha: 0.95
+                        });
+                    }
                 }
             }
         }
@@ -115,7 +219,46 @@ export const renderChangingLayer = (
             .fill(0xffd68a);
     }
 
-    if (!layer.children.includes(sprite)) {
-        layer.addChild(sprite);
+    const nextKeys = new Set(overlayDefs.map((entry) => entry.key));
+    for (const [key, overlaySprite] of overlayRuntime.sprites.entries()) {
+        if (nextKeys.has(key)) {
+            continue;
+        }
+        if (overlaySprite.parent === overlayRuntime.container) {
+            overlayRuntime.container.removeChild(overlaySprite);
+        }
+        overlaySprite.destroy();
+        overlayRuntime.sprites.delete(key);
     }
+
+    let orderIndex = 0;
+    for (const overlay of overlayDefs) {
+        let overlaySprite = overlayRuntime.sprites.get(overlay.key);
+        if (!overlaySprite) {
+            overlaySprite = new Sprite();
+            overlayRuntime.sprites.set(overlay.key, overlaySprite);
+            overlayRuntime.container.addChild(overlaySprite);
+        } else if (overlaySprite.parent !== overlayRuntime.container) {
+            overlayRuntime.container.addChild(overlaySprite);
+        }
+        overlaySprite.texture = overlay.texture;
+        overlaySprite.position.set(overlay.x, overlay.y);
+        overlaySprite.width = overlay.width;
+        overlaySprite.height = overlay.height;
+        overlaySprite.alpha = overlay.alpha;
+        overlaySprite.visible = true;
+        if (
+            overlaySprite.parent === overlayRuntime.container
+            && orderIndex >= 0
+            && orderIndex < overlayRuntime.container.children.length
+        ) {
+            const currentIndex = overlayRuntime.container.getChildIndex(overlaySprite);
+            if (currentIndex !== orderIndex) {
+                overlayRuntime.container.setChildIndex(overlaySprite, orderIndex);
+            }
+        }
+        orderIndex += 1;
+    }
+    overlayRuntime.container.visible = overlayDefs.length > 0;
+
 };

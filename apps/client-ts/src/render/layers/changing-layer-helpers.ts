@@ -1,5 +1,4 @@
-const COMMAND_CENTER_TYPES = new Set([200, 201]);
-const FACTORY_TYPES = new Set([100, 101, 102]);
+const COMMAND_CENTER_TYPES = new Set([0, 200, 201]);
 const TILE = 48;
 
 const resolveBaseType = (buildingType: number): number => {
@@ -7,11 +6,11 @@ const resolveBaseType = (buildingType: number): number => {
 };
 
 export const isCommandCenterType = (buildingType: number): boolean => {
-    return COMMAND_CENTER_TYPES.has(buildingType);
+    return COMMAND_CENTER_TYPES.has(buildingType) || resolveBaseType(buildingType) === 0;
 };
 
 export const isFactoryType = (buildingType: number): boolean => {
-    return FACTORY_TYPES.has(buildingType);
+    return resolveBaseType(buildingType) === 1;
 };
 
 export const resolveSmokeFrame = (nowMs: number): number => {
@@ -20,7 +19,7 @@ export const resolveSmokeFrame = (nowMs: number): number => {
 
 export const resolvePopulationMax = (buildingType: number): number => {
     const baseType = resolveBaseType(buildingType);
-    return baseType === 4 ? 100 : 50;
+    return baseType === 3 ? 100 : 50;
 };
 
 export const resolvePopulationFrame = (buildingType: number, population: number): { row: number; column: number } => {
@@ -37,13 +36,13 @@ export const resolvePopulationOffset = (buildingType: number): { x: number; y: n
         return { x: 96, y: 49 };
     }
     const baseType = resolveBaseType(buildingType);
-    if (baseType === 1 || baseType === 3) {
+    if (baseType === 1 || baseType === 2) {
         return { x: 96, y: 48 };
     }
-    if (baseType === 2 || baseType === 4) {
+    if (baseType === 3 || baseType === 4) {
         return { x: 96, y: 90 };
     }
-    return { x: 96, y: 90 };
+    return { x: 96, y: 48 };
 };
 
 export const resolveResearchStripPlacement = (tileX: number, tileY: number): {

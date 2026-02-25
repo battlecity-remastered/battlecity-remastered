@@ -3,10 +3,12 @@ const MAP_SQUARE_LAVA = 1;
 const MAP_SQUARE_ROCK = 2;
 const MAP_SQUARE_BUILDING = 3;
 const COMMAND_CENTER_FOOTPRINT_TILES = 3;
+const COMMAND_CENTER_BLOCKING_HEIGHT_TILES = 2;
 
 export type LoadedMap = {
     map: number[][];
     blockingTiles: Set<string>;
+    buildBlockingTiles: Set<string>;
 };
 
 const buildEmptyMap = (): number[][] => {
@@ -47,6 +49,37 @@ const buildBlockingTiles = (map: number[][]): Set<string> => {
                 continue;
             }
             for (let dx = 0; dx < COMMAND_CENTER_FOOTPRINT_TILES; dx += 1) {
+                for (let dy = 0; dy < COMMAND_CENTER_BLOCKING_HEIGHT_TILES; dy += 1) {
+                    const tileX = x + dx;
+                    const tileY = y + dy;
+                    if (tileX < 0 || tileY < 0 || tileX >= MAP_SIZE || tileY >= MAP_SIZE) {
+                        continue;
+                    }
+                    blocking.add(`${tileX},${tileY}`);
+                }
+            }
+        }
+    }
+    return blocking;
+};
+
+const buildPlacementBlockingTiles = (map: number[][]): Set<string> => {
+    const blocking = new Set<string>();
+    for (let x = 0; x < map.length; x += 1) {
+        const column = map[x];
+        if (!column) {
+            continue;
+        }
+        for (let y = 0; y < column.length; y += 1) {
+            const value = column[y] ?? 0;
+            if (value === MAP_SQUARE_LAVA || value === MAP_SQUARE_ROCK) {
+                blocking.add(`${x},${y}`);
+                continue;
+            }
+            if (value !== MAP_SQUARE_BUILDING) {
+                continue;
+            }
+            for (let dx = 0; dx < COMMAND_CENTER_FOOTPRINT_TILES; dx += 1) {
                 for (let dy = 0; dy < COMMAND_CENTER_FOOTPRINT_TILES; dy += 1) {
                     const tileX = x + dx;
                     const tileY = y + dy;
@@ -65,7 +98,8 @@ export const decodeMapData = (bytes: Uint8Array): LoadedMap => {
     const map = decodeMapBuffer(bytes);
     return {
         map,
-        blockingTiles: buildBlockingTiles(map)
+        blockingTiles: buildBlockingTiles(map),
+        buildBlockingTiles: buildPlacementBlockingTiles(map)
     };
 };
 
@@ -73,7 +107,8 @@ export const loadMapData = async (path = "/assets/map.dat"): Promise<LoadedMap> 
     if (typeof fetch !== "function") {
         return {
             map: buildEmptyMap(),
-            blockingTiles: new Set<string>()
+            blockingTiles: new Set<string>(),
+            buildBlockingTiles: new Set<string>()
         };
     }
 
@@ -87,7 +122,8 @@ export const loadMapData = async (path = "/assets/map.dat"): Promise<LoadedMap> 
     } catch {
         return {
             map: buildEmptyMap(),
-            blockingTiles: new Set<string>()
+            blockingTiles: new Set<string>(),
+            buildBlockingTiles: new Set<string>()
         };
     }
 };

@@ -1,6 +1,7 @@
 import type { LoadedMap } from "../../world/map-loader.js";
 
 export const GROUND_TILE_SIZE = 128;
+export const GROUND_TEXTURE_SIZE = 144;
 export const GROUND_DRAW_MIN = -12;
 export const GROUND_DRAW_MAX = 11;
 

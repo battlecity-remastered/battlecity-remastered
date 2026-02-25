@@ -1,6 +1,8 @@
 import type { ClientState } from "../app/state.js";
 import { PANEL_WIDTH } from "../gameplay/world-viewport.js";
-import { PANEL_BUTTONS, type PanelButtonKey } from "../render/panel/panel-visuals.js";
+import { PANEL_BUTTONS, PANEL_INVENTORY_SLOTS, type PanelButtonKey } from "../render/panel/panel-visuals.js";
+import { applyBuildMenuHotkey, clearBuildInteractionModes } from "../ui/build-menu/BuildMenu.js";
+import { resolveBuildPlacementTile } from "../ui/build-menu/GhostPlacement.js";
 
 type Listener = (event: Event) => void;
 
@@ -65,10 +67,10 @@ const panelActionFromButtonKey = (key: PanelButtonKey): PanelAction => {
 };
 
 export const resolveCursorForState = (state: ClientState): string => {
-    if (state.controls.demolish) {
+    if (state.ui.buildDemolishMode || state.controls.demolish) {
         return "not-allowed";
     }
-    if (state.ui.showBuildMenu) {
+    if (state.ui.buildGhostMode) {
         return "crosshair";
     }
     if (state.ui.bombArmed) {
@@ -98,6 +100,40 @@ export const resolvePanelAction = (
         }
     }
     return null;
+};
+
+export const resolvePanelInventoryItemType = (
+    pointerX: number,
+    pointerY: number,
+    surfaceWidth: number,
+    inventory?: ReadonlyMap<number, number>
+): number | null => {
+    if (!Number.isFinite(pointerX) || !Number.isFinite(pointerY) || !Number.isFinite(surfaceWidth)) {
+        return null;
+    }
+    const panelStart = surfaceWidth - PANEL_WIDTH;
+    if (pointerX < panelStart) {
+        return null;
+    }
+    const panelX = pointerX - panelStart;
+    let fallbackMatch: number | null = null;
+    for (let index = PANEL_INVENTORY_SLOTS.length - 1; index >= 0; index -= 1) {
+        const slot = PANEL_INVENTORY_SLOTS[index];
+        if (!slot) {
+            continue;
+        }
+        const insideX = panelX >= slot.x && panelX < (slot.x + 32);
+        const insideY = pointerY >= slot.y && pointerY < (slot.y + 32);
+        if (insideX && insideY) {
+            if (fallbackMatch === null) {
+                fallbackMatch = slot.itemType;
+            }
+            if (inventory && (inventory.get(slot.itemType) ?? 0) > 0) {
+                return slot.itemType;
+            }
+        }
+    }
+    return fallbackMatch;
 };
 
 const togglePanelView = (
@@ -145,7 +181,11 @@ const applyPanelAction = (state: ClientState, action: PanelAction): void => {
         return;
     }
     if (action === "toggle_build") {
-        state.ui.showBuildMenu = !state.ui.showBuildMenu;
+        const surfaceWidth = state.pointer.surfaceWidth > 0 ? state.pointer.surfaceWidth : (typeof window !== "undefined" ? window.innerWidth : 1024);
+        applyBuildMenuHotkey(state, "F4", {
+            anchorX: Math.max(16, surfaceWidth - PANEL_WIDTH - 180),
+            anchorY: 344
+        });
         return;
     }
     state.controls.leaveLobby = true;
@@ -161,9 +201,6 @@ export const resolveControlForMouseButton = (
 ): keyof ClientState["controls"] | null => {
     if (button === 0) {
         return "shoot";
-    }
-    if (button === 2) {
-        return "useItem";
     }
     return null;
 };
@@ -227,6 +264,9 @@ const syncCursor = (state: ClientState, surface: PointerSurface): void => {
 const clearPointerControls = (state: ClientState): void => {
     state.controls.shoot = false;
     state.controls.useItem = false;
+    state.controls.build = false;
+    state.controls.demolish = false;
+    state.controls.ctrl = false;
 };
 
 export const registerMouseInputHandlers = (
@@ -242,6 +282,44 @@ export const registerMouseInputHandlers = (
         if (Number.isFinite(pointerEvent.clientX) && Number.isFinite(pointerEvent.clientY)) {
             applyPointerUpdate(state, surface, pointerEvent.clientX, pointerEvent.clientY);
         }
+        if (pointerEvent.button === 2) {
+            if (typeof pointerEvent.preventDefault === "function") {
+                pointerEvent.preventDefault();
+            }
+            state.ui.pendingBuildPlacement = null;
+            if (state.ui.buildGhostMode || state.ui.buildDemolishMode) {
+                clearBuildInteractionModes(state);
+                state.ui.showBuildMenu = false;
+            }
+            applyBuildMenuHotkey(state, "F4", {
+                anchorX: state.pointer.x,
+                anchorY: state.pointer.y
+            });
+            syncCursor(state, surface);
+            return;
+        }
+        if (pointerEvent.button === 0 && state.ui.buildGhostMode) {
+            const placementTile = resolveBuildPlacementTile(state);
+            state.ui.pendingBuildPlacement = placementTile
+                ? {
+                    tileX: placementTile.tileX,
+                    tileY: placementTile.tileY,
+                    type: state.ui.selectedBuildType
+                }
+                : null;
+            state.controls.shoot = false;
+            state.ui.buildGhostMode = false;
+            state.ui.showBuildMenu = false;
+            syncCursor(state, surface);
+            return;
+        }
+        if (pointerEvent.button === 0 && state.ui.buildDemolishMode) {
+            state.controls.demolish = true;
+            state.controls.ctrl = true;
+            state.controls.shoot = false;
+            syncCursor(state, surface);
+            return;
+        }
         const panelAction = pointerEvent.button === 0
             ? resolvePanelAction(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth)
             : null;
@@ -250,10 +328,19 @@ export const registerMouseInputHandlers = (
             syncCursor(state, surface);
             return;
         }
+        const panelInventoryItemType = pointerEvent.button === 0
+            ? resolvePanelInventoryItemType(state.pointer.x, state.pointer.y, state.pointer.surfaceWidth, state.inventory)
+            : null;
+        if (panelInventoryItemType !== null) {
+            if ((state.inventory.get(panelInventoryItemType) ?? 0) > 0) {
+                state.ui.selectedInventoryItemType = panelInventoryItemType;
+                state.ui.bombArmed = false;
+            }
+            syncCursor(state, surface);
+            return;
+        }
         if (pointerEvent.button === 0 && state.ui.showBuildMenu) {
-            state.controls.build = true;
-            state.controls.ctrl = true;
-            state.controls.shoot = false;
+            state.ui.showBuildMenu = false;
             syncCursor(state, surface);
             return;
         }
@@ -267,8 +354,14 @@ export const registerMouseInputHandlers = (
 
     const onMouseUp = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
-        if (pointerEvent.button === 0 && state.ui.showBuildMenu) {
+        if (pointerEvent.button === 0 && state.controls.build && state.controls.ctrl) {
             state.controls.build = false;
+            state.controls.ctrl = false;
+            syncCursor(state, surface);
+            return;
+        }
+        if (pointerEvent.button === 0 && state.controls.demolish && state.controls.ctrl) {
+            state.controls.demolish = false;
             state.controls.ctrl = false;
             syncCursor(state, surface);
             return;

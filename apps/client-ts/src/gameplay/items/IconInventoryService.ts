@@ -1,11 +1,17 @@
 import type { ClientState } from "../../app/state.js";
 import type { EventSender } from "../../network/events.js";
-import { ITEM_TYPE_BOMB } from "../../render/parity/constants.js";
+import {
+    ITEM_TYPE_BOMB,
+    ITEM_TYPE_DFG,
+    ITEM_TYPE_MINE
+} from "../../render/parity/constants.js";
 
 type InventoryEntry = {
     itemType: number;
     count: number;
 };
+
+const HAZARD_DROP_TYPES = new Set([ITEM_TYPE_BOMB, ITEM_TYPE_MINE, ITEM_TYPE_DFG]);
 
 const sortedInventoryEntries = (state: ClientState): InventoryEntry[] => {
     return [...state.inventory.entries()]
@@ -63,7 +69,7 @@ export const toggleBombArming = (state: ClientState): boolean => {
 const dropSelectedIcon = (state: ClientState, send: EventSender): boolean => {
     ensureSelectedItem(state);
     const selected = state.ui.selectedInventoryItemType;
-    if (selected === null) {
+    if (selected === null || !HAZARD_DROP_TYPES.has(selected)) {
         return false;
     }
     const count = state.inventory.get(selected) ?? 0;
@@ -71,14 +77,15 @@ const dropSelectedIcon = (state: ClientState, send: EventSender): boolean => {
         return false;
     }
 
-    send("icon:drop", {
-        itemType: selected,
+    send("hazard.deploy.request", {
         cityId: state.local.city,
-        x: state.local.x,
-        y: state.local.y
+        type: selected,
+        position: {
+            x: state.local.x,
+            y: state.local.y
+        },
+        armed: selected === ITEM_TYPE_BOMB ? state.ui.bombArmed : true
     });
-    state.inventory.set(selected, count - 1);
-    ensureSelectedItem(state);
     return true;
 };
 
@@ -114,6 +121,12 @@ export const registerInventoryHotkeys = (
         }
         if (event.key === "v" || event.key === "V") {
             if (toggleBombArming(state)) {
+                event.preventDefault();
+            }
+            return;
+        }
+        if (event.key === "d" || event.key === "D") {
+            if (dropSelectedIcon(state, send)) {
                 event.preventDefault();
             }
             return;

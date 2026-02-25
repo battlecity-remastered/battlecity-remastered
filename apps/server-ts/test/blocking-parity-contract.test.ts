@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { decodeMapData, MAP_SIZE as CLIENT_MAP_SIZE } from "../../client-ts/src/world/map-loader.js";
-import { buildBlockingTileSet, decodeMapBuffer, MAP_SIZE as SERVER_MAP_SIZE } from "../src/domain/map/MapService.js";
+import {
+    buildBlockingTileSet,
+    buildPlacementBlockingTileSet,
+    decodeMapBuffer,
+    MAP_SIZE as SERVER_MAP_SIZE
+} from "../src/domain/map/MapService.js";
 
 test("client and server produce equivalent blocking tiles for same map bytes", () => {
     assert.equal(CLIENT_MAP_SIZE, SERVER_MAP_SIZE);
@@ -20,9 +25,13 @@ test("client and server produce equivalent blocking tiles for same map bytes", (
     setTile(4, 5, 2);
     setTile(10, 10, 3);
 
-    const clientBlocking = decodeMapData(bytes).blockingTiles;
+    const clientDecoded = decodeMapData(bytes);
+    const clientBlocking = clientDecoded.blockingTiles;
+    const clientBuildBlocking = clientDecoded.buildBlockingTiles;
     const serverMap = decodeMapBuffer(bytes);
     const serverBlocking = buildBlockingTileSet(serverMap);
+    const serverBuildBlocking = buildPlacementBlockingTileSet(serverMap);
 
     assert.deepEqual([...serverBlocking].sort(), [...clientBlocking].sort());
+    assert.deepEqual([...serverBuildBlocking].sort(), [...clientBuildBlocking].sort());
 });

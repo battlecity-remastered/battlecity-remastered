@@ -1,8 +1,8 @@
 import type { KnownEventPayloadByType, KnownTypedEventEnvelope } from "@battlecity/protocol";
 import { Effect } from "effect";
-import { emitPlayersSnapshot } from "./snapshot.js";
+import { buildPlayersSnapshot, emitPlayersSnapshot } from "./snapshot.js";
 import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
-import type { RuntimeConfig, RuntimeState } from "./types.js";
+import type { RuntimeConfig, RuntimeRejectReason, RuntimeState } from "./types.js";
 import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { createBulletFromRequest } from "./bullet-runtime.js";
 import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
@@ -21,14 +21,146 @@ import { rejectSocket } from "./rejections.js";
 import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.js";
 import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
-import { awardOrbProfileScore, profileForSocket } from "../domain/score/ScoreService.js";
+import { awardOrbProfileScore, lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
 import { deployDefense } from "../domain/defense/DefenseService.js";
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
+import { logRuntime } from "../observability/RuntimeLogger.js";
 
 type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
+
+const emitLobbyHighScoreSnapshot = (
+    context: DispatchContext,
+    targetSocketId?: string
+): void => {
+    if (!context.userStore) {
+        return;
+    }
+    const payload = Effect.runSync(lobbyHighScores(context.userStore));
+    if (targetSocketId) {
+        context.emitter.emitTo(targetSocketId, "lobby.high_scores", payload);
+        return;
+    }
+    context.emitter.emit("lobby.high_scores", payload);
+};
+
+const rejectWithContext = (
+    context: DispatchContext,
+    socketId: string,
+    reason: RuntimeRejectReason,
+    eventType: keyof KnownEventPayloadByType,
+    payload: unknown
+): void => {
+    rejectSocket(context.broadcaster, socketId, reason, {
+        eventType,
+        payload
+    });
+};
+
+const emitJoinWorldHydration = (context: DispatchContext, socketId: string): void => {
+    const { state, config, emitter } = context;
+
+    // Hydrate full world entities so late-join clients can render the same authoritative state.
+    for (const bullet of state.bullets.values()) {
+        emitter.emitTo(socketId, "bullet.fired", {
+            id: bullet.id,
+            ownerId: bullet.ownerId,
+            city: bullet.city,
+            position: {
+                x: bullet.x,
+                y: bullet.y
+            },
+            direction: bullet.direction,
+            type: bullet.type
+        });
+    }
+
+    for (const building of state.buildings.values()) {
+        emitter.emitTo(socketId, "building.placed", {
+            id: building.id,
+            ownerId: building.ownerId,
+            cityId: building.cityId,
+            type: building.type,
+            tileX: building.tileX,
+            tileY: building.tileY,
+            health: building.health,
+            maxHealth: building.maxHealth
+        });
+        emitter.emitTo(socketId, "population.update", {
+            id: building.id,
+            cityId: building.cityId,
+            type: building.type,
+            tileX: building.tileX,
+            tileY: building.tileY,
+            population: building.population,
+            attachedHouseId: building.attachedHouseId,
+            removed: false
+        });
+    }
+
+    for (const hazard of state.hazards.values()) {
+        emitter.emitTo(socketId, "hazard.spawn", {
+            id: hazard.id,
+            cityId: hazard.cityId,
+            type: hazard.type,
+            position: {
+                x: hazard.x,
+                y: hazard.y
+            },
+            radius: hazard.radius,
+            armed: hazard.armed
+        });
+    }
+
+    for (const defense of state.defenses.values()) {
+        emitter.emitTo(socketId, "defense.spawn", {
+            id: defense.id,
+            cityId: defense.cityId,
+            type: defense.type,
+            tileX: defense.tileX,
+            tileY: defense.tileY,
+            health: defense.health,
+            maxHealth: defense.maxHealth
+        });
+    }
+
+    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
+        const city = getOrCreateCity(state, cityId, config);
+        emitter.emitTo(socketId, "city.finance", {
+            cityId,
+            cash: city.cash,
+            income: city.income,
+            score: city.score,
+            researchLevel: city.researchLevel
+        });
+        const research = state.research.get(cityId);
+        emitter.emitTo(socketId, "research.update", {
+            cityId,
+            active: research?.active
+                ? {
+                    researchType: research.active.researchType,
+                    remainingMs: research.active.remainingMs
+                }
+                : undefined,
+            completed: [...(research?.completed ?? [])]
+        });
+        const stock = state.factoryStock.get(cityId);
+        if (!stock) {
+            continue;
+        }
+        for (const [itemType, itemStock] of stock.entries()) {
+            emitter.emitTo(socketId, "factory.stock", {
+                cityId,
+                itemType,
+                stock: itemStock
+            });
+        }
+    }
+
+    emitter.emitTo(socketId, "players.snapshot", buildPlayersSnapshot(state));
+};
 
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
@@ -39,11 +171,16 @@ const handlers: HandlerMap = {
             payload.desiredCity,
             context.config
         ), (assignment) => {
+            if (context.userStore) {
+                Effect.runSync(context.userStore.getOrCreate(userId, payload.callsign));
+            }
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
+            emitLobbyHighScoreSnapshot(context);
             context.emitter.emitTo(socketId, "chat.history", getChatHistoryForSocket(context.state, socketId));
             context.emitter.emitTo(socketId, "inventory.update", emitInventoryState(context.state, socketId));
             getOrCreateCity(context.state, assignment.city, context.config);
+            emitJoinWorldHydration(context, socketId);
             emitCityFinance(context.state, assignment.city, context.config, context.emitter);
             emitResearchState(context.state, assignment.city, context.emitter);
             emitPlayersSnapshot(context.state, context.emitter);
@@ -51,6 +188,9 @@ const handlers: HandlerMap = {
                 const profile = Effect.runSync(profileForSocket(context.userStore, socketId, userId));
                 context.emitter.emitTo(socketId, "score.profile", profile);
             }
+        }, {
+            eventType: "lobby.join.request",
+            payload
         });
     },
     "lobby.leave.request": (socketId, _payload, context) => {
@@ -58,6 +198,7 @@ const handlers: HandlerMap = {
         if (released) {
             context.emitter.emit("lobby.released", released);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
+            emitLobbyHighScoreSnapshot(context);
         }
     },
     "player.update": (socketId, payload, context) => {
@@ -67,7 +208,7 @@ const handlers: HandlerMap = {
             context.config
         );
         if (!validation.ok) {
-            rejectSocket(context.broadcaster, socketId, validation.reason);
+            rejectWithContext(context, socketId, validation.reason, "player.update", payload);
             return;
         }
         upsertPlayerFromUpdate(context.state, socketId, payload, context.config);
@@ -100,10 +241,20 @@ const handlers: HandlerMap = {
                     direction: bullet.direction,
                     type: bullet.type
                 });
+            },
+            {
+                eventType: "bullet.fire.request",
+                payload
             }
         );
     },
     "building.place.request": (socketId, payload, context) => {
+        Effect.runSync(logRuntime("debug", "build.request", {
+            socketId,
+            payload,
+            assignedCity: context.state.socketCities.get(socketId),
+            role: context.state.socketRoles.get(socketId)
+        }));
         const result = placeBuildingFromRequest(
             context.state,
             socketId,
@@ -119,9 +270,20 @@ const handlers: HandlerMap = {
                 tileX: payload.tileX,
                 tileY: payload.tileY
             });
-            rejectSocket(context.broadcaster, socketId, result.reason);
+            Effect.runSync(logRuntime("debug", "build.denied", {
+                socketId,
+                reason: result.reason,
+                payload,
+                assignedCity: context.state.socketCities.get(socketId),
+                role: context.state.socketRoles.get(socketId)
+            }));
+            rejectWithContext(context, socketId, result.reason, "building.place.request", payload);
             return;
         }
+        Effect.runSync(logRuntime("debug", "build.accepted", {
+            socketId,
+            building: result.value.building
+        }));
         context.emitter.emit("building.placed", result.value.building);
         for (const update of result.value.populationUpdates) {
             context.emitter.emit("population.update", update);
@@ -134,7 +296,7 @@ const handlers: HandlerMap = {
                 id: payload.id,
                 reason: result.reason
             });
-            rejectSocket(context.broadcaster, socketId, result.reason);
+            rejectWithContext(context, socketId, result.reason, "building.demolish.request", payload);
             return;
         }
         context.emitter.emit("building.demolished", {
@@ -154,7 +316,7 @@ const handlers: HandlerMap = {
                     retryAt: Date.now() + 1000
                 });
             }
-            rejectSocket(context.broadcaster, socketId, result.reason);
+            rejectWithContext(context, socketId, result.reason, "chat.message.request", payload);
             return;
         }
         if (result.value.message) {
@@ -164,7 +326,7 @@ const handlers: HandlerMap = {
     "research.start.request": (socketId, payload, context) => {
         const city = context.state.socketCities.get(socketId);
         if (city === undefined || city !== payload.cityId) {
-            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            rejectWithContext(context, socketId, "city_mismatch", "research.start.request", payload);
             return;
         }
         handleCommandResult(socketId, context.emitter, context.broadcaster, startResearch(
@@ -175,12 +337,15 @@ const handlers: HandlerMap = {
         ), (research) => {
             context.emitter.emit("research.update", research);
             emitCityFinance(context.state, payload.cityId, context.config, context.emitter);
+        }, {
+            eventType: "research.start.request",
+            payload
         });
     },
     "factory.collect.request": (socketId, payload, context) => {
         const city = context.state.socketCities.get(socketId);
         if (city === undefined || city !== payload.cityId) {
-            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            rejectWithContext(context, socketId, "city_mismatch", "factory.collect.request", payload);
             return;
         }
         handleCommandResult(socketId, context.emitter, context.broadcaster, collectFactoryStock(
@@ -197,12 +362,15 @@ const handlers: HandlerMap = {
                 payload.amount ?? 1,
                 context.config
             ));
+        }, {
+            eventType: "factory.collect.request",
+            payload
         });
     },
     "icon.pickup.request": (socketId, payload, context) => {
         const city = context.state.socketCities.get(socketId);
         if (city === undefined || city !== payload.cityId) {
-            rejectSocket(context.broadcaster, socketId, "city_mismatch");
+            rejectWithContext(context, socketId, "city_mismatch", "icon.pickup.request", payload);
             return;
         }
         handleCommandResult(socketId, context.emitter, context.broadcaster, pickupIcon(
@@ -210,32 +378,51 @@ const handlers: HandlerMap = {
             socketId,
             payload,
             context.config
-        ), ({ stock, inventory, confirmed }) => {
+        ), ({ stock, inventory, confirmed, removedHazardId }) => {
             context.emitter.emit("factory.stock", stock);
             context.emitter.emitTo(socketId, "inventory.update", inventory);
             context.emitter.emitTo(socketId, "icon.pickup.confirmed", confirmed);
+            if (removedHazardId) {
+                context.emitter.emit("hazard.remove", {
+                    id: removedHazardId,
+                    reason: "cleared"
+                });
+            }
+        }, {
+            eventType: "icon.pickup.request",
+            payload
         });
     },
     "item.use.request": (socketId, payload, context) => {
         handleCommandResult(socketId, context.emitter, context.broadcaster, useItem(context.state, socketId, payload), (result) => {
             context.emitter.emit("player.health", result.health);
             context.emitter.emitTo(socketId, "inventory.update", result.inventory);
+        }, {
+            eventType: "item.use.request",
+            payload
         });
     },
     "hazard.deploy.request": (socketId, payload, context) => {
         const city = context.state.socketCities.get(socketId);
         if (city === undefined) {
-            rejectSocket(context.broadcaster, socketId, "player_not_joined");
+            rejectWithContext(context, socketId, "player_not_joined", "hazard.deploy.request", payload);
             return;
         }
         handleCommandResult(socketId, context.emitter, context.broadcaster, deployHazard(
             context.state,
+            socketId,
             city,
             payload,
             context.nextSeq,
             context.config
-        ), (hazard) => {
-            context.emitter.emit("hazard.spawn", hazard);
+        ), (result) => {
+            context.emitter.emit("hazard.spawn", result.hazard);
+            if (result.inventory) {
+                context.emitter.emitTo(socketId, "inventory.update", result.inventory);
+            }
+        }, {
+            eventType: "hazard.deploy.request",
+            payload
         });
     },
     "orb.drop.request": (socketId, payload, context) => {
@@ -278,11 +465,15 @@ const handlers: HandlerMap = {
                     context.config.orbScoreAward
                 ));
                 context.emitter.emitTo(socketId, "score.profile", profile);
+                emitLobbyHighScoreSnapshot(context);
             }
             if (context.notifyOrbVictory) {
                 const userId = resolveSocketUserId(context.state, socketId);
                 Effect.runFork(context.notifyOrbVictory(userId, payload.sourceCityId, payload.targetCityId));
             }
+        }, {
+            eventType: "orb.drop.request",
+            payload
         });
     },
     "defense.deploy.request": (socketId, payload, context) => {
@@ -295,6 +486,9 @@ const handlers: HandlerMap = {
         ), (spawned) => {
             context.emitter.emit("defense.spawn", spawned);
             emitCityFinance(context.state, payload.cityId, context.config, context.emitter);
+        }, {
+            eventType: "defense.deploy.request",
+            payload
         });
     }
 };

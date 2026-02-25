@@ -1,15 +1,18 @@
 import { Graphics, Sprite, Text, type Container } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
+import { getCityDisplayName } from "../../world/city-spawn.js";
 import { reconcileEntityCache } from "../entity-cache.js";
 
 type RenderEntity = Graphics | Sprite;
+const DEFAULT_ENTITY_SIZE = 48;
+const LABEL_CLEARANCE = 8;
 
 const resolveRank = (state: ClientState): string => {
     return state.scoreProfile.rank ?? "Private";
 };
 
 const buildLabel = (rank: string, name: string, city: number): string => {
-    return `${rank} ${name}\nCity ${city}`;
+    return `${rank} ${name}\n${getCityDisplayName(city)}`;
 };
 
 const resolveCallsign = (state: ClientState, id: string | null): string => {
@@ -23,12 +26,33 @@ const createLabel = (): Text => {
     return new Text({
         text: "",
         style: {
-            fontFamily: "monospace",
-            fontSize: 11,
+            fontFamily: "Arial",
+            fontSize: 12,
+            fontWeight: "700",
             fill: 0xffffff,
-            align: "center"
+            align: "center",
+            stroke: {
+                color: 0x101010,
+                width: 3,
+                join: "round"
+            }
         }
     });
+};
+
+const resolveLabelPosition = (tank: RenderEntity): { x: number; y: number } => {
+    const width = Number.isFinite(tank.width) && tank.width > 0 ? tank.width : DEFAULT_ENTITY_SIZE;
+    const height = Number.isFinite(tank.height) && tank.height > 0 ? tank.height : DEFAULT_ENTITY_SIZE;
+    if (tank instanceof Sprite) {
+        return {
+            x: tank.x + (width * (0.5 - tank.anchor.x)),
+            y: tank.y - (height * tank.anchor.y) - LABEL_CLEARANCE
+        };
+    }
+    return {
+        x: tank.x + (width / 2),
+        y: tank.y - LABEL_CLEARANCE
+    };
 };
 
 export const renderNameLabels = (
@@ -58,7 +82,8 @@ export const renderNameLabels = (
     if (localLabel) {
         const text = buildLabel(resolveRank(state), resolveCallsign(state, state.local.id), state.local.city);
         localLabel.text = text;
-        localLabel.position.set(localTank.x, localTank.y - 14);
+        const localPos = resolveLabelPosition(localTank);
+        localLabel.position.set(localPos.x, localPos.y);
     }
 
     for (const remote of state.remotePlayers.values()) {
@@ -69,6 +94,7 @@ export const renderNameLabels = (
         }
         const text = buildLabel(remote.health !== undefined && remote.health <= 0 ? "KIA" : "Unit", resolveCallsign(state, remote.id), remote.city);
         label.text = text;
-        label.position.set(tank.x, tank.y - 14);
+        const remotePos = resolveLabelPosition(tank);
+        label.position.set(remotePos.x, remotePos.y);
     }
 };

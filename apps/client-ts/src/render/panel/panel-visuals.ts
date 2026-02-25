@@ -32,6 +32,8 @@ export type PanelVisualState = {
     showHelpModal: boolean;
     showOptionsModal: boolean;
     showBuildMenu: boolean;
+    buildGhostMode: boolean;
+    buildDemolishMode: boolean;
 };
 
 export const isPanelButtonActive = (
@@ -45,7 +47,7 @@ export const isPanelButtonActive = (
         || (index === 3 && state.panelView === "points")
         || (index === 4 && state.showOptionsModal)
         || (index === 5 && state.showHelpModal)
-        || (index === 6 && state.showBuildMenu)
+        || (index === 6 && (state.showBuildMenu || state.buildGhostMode || state.buildDemolishMode))
     );
 };
 
@@ -65,7 +67,9 @@ export const resolveRadarColor = (kind: RadarEntityKind): number => {
 };
 
 export const PANEL_TOP_Y = 0;
+export const PANEL_TOP_HEIGHT = 430;
 export const PANEL_BOTTOM_Y = 430;
+export const PANEL_BOTTOM_HEIGHT = 170;
 
 export const PANEL_FINANCE = {
     moneyBox: { x: 2, y: 224 },

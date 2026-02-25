@@ -6,7 +6,7 @@ import { applyTutorialToggle, buildTutorialLines } from "../src/ui/tutorial/Tuto
 
 test("intro actions close intro and toggle tutorial", () => {
     const state = createClientState();
-    assert.equal(state.ui.showIntroModal, true);
+    state.ui.showIntroModal = true;
     assert.equal(applyIntroAction(state, "Enter"), true);
     assert.equal(state.ui.showIntroModal, false);
 

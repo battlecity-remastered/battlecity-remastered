@@ -7,7 +7,7 @@ test("buildHudLines omits diagnostic/debug lines by default", () => {
     const state = createClientState();
     const lines = buildHudLines(state);
     assert.equal(lines.some((line) => line.includes("Hostiles ")), false);
-    assert.equal(lines.some((line) => line.includes("W/Up move")), false);
+    assert.equal(lines.some((line) => line.includes("Shift/Space fire")), false);
 });
 
 test("buildHudLines includes diagnostic/debug lines when bot debug is enabled", () => {
@@ -15,5 +15,5 @@ test("buildHudLines includes diagnostic/debug lines when bot debug is enabled", 
     state.ui.showBotDebug = true;
     const lines = buildHudLines(state);
     assert.equal(lines.some((line) => line.includes("Hostiles ")), true);
-    assert.equal(lines.some((line) => line.includes("W/Up move")), true);
+    assert.equal(lines.some((line) => line.includes("Shift/Space fire")), true);
 });

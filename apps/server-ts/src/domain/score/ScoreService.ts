@@ -33,3 +33,19 @@ export const awardOrbProfileScore = (
     });
 };
 
+export const lobbyHighScores = (
+    userStore: UserStoreAdapter,
+    limit = 20
+): Effect.Effect<KnownEventPayloadByType["lobby.high_scores"]> => {
+    return Effect.map(userStore.listTop(limit), (profiles) => {
+        return profiles.map((profile) => ({
+            userId: profile.id,
+            name: profile.name,
+            points: profile.score,
+            rankTitle: profile.rank,
+            orbs: profile.orbs,
+            assists: profile.assists,
+            updatedAt: profile.updatedAt
+        }));
+    });
+};

@@ -77,7 +77,7 @@ test("toggleFullscreen requests or exits based on state", async () => {
     assert.deepEqual(calls, ["request", "exit"]);
 });
 
-test("registerWindowModeHandlers binds resize and fullscreen toggles", async () => {
+test("registerWindowModeHandlers binds resize only", () => {
     const sizes: Array<{ width: number; height: number }> = [];
     const app = {
         renderer: {
@@ -87,30 +87,15 @@ test("registerWindowModeHandlers binds resize and fullscreen toggles", async () 
         }
     };
     const eventSource = new MockEventSource();
-    const fullscreenCalls: string[] = [];
     const unregister = registerWindowModeHandlers(
         app as never,
         eventSource,
-        () => ({ width: 1280, height: 720 }),
-        {
-            fullscreenElement: null,
-            documentElement: {
-                requestFullscreen: async () => {
-                    fullscreenCalls.push("request");
-                }
-            },
-            exitFullscreen: async () => {
-                fullscreenCalls.push("exit");
-            }
-        }
+        () => ({ width: 1280, height: 720 })
     );
 
     eventSource.emit("resize");
-    eventSource.emit("dblclick");
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     assert.deepEqual(sizes, [{ width: 1280, height: 720 }]);
-    assert.deepEqual(fullscreenCalls, ["request"]);
 
     unregister();
 });

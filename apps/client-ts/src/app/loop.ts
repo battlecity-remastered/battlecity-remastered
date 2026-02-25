@@ -21,7 +21,7 @@ export const startGameLoop = (state: ClientState, send: EventSender): LoopRuntim
 
         const plan = buildTickPlan(state, now, dtMs);
         if (plan.isMoving && state.local.id) {
-            moveLocalPlayer(state, plan.direction, dtMs);
+            moveLocalPlayer(state, plan.direction, plan.throttle, dtMs);
         }
         stepClientBullets(state, dtMs);
 

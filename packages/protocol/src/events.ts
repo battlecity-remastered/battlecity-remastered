@@ -27,11 +27,22 @@ export const LobbySnapshotEntry = Schema.Struct({
     recruitCount: Schema.Number
 });
 export const LobbySnapshot = Schema.Array(LobbySnapshotEntry);
+export const LobbyHighScoreEntry = Schema.Struct({
+    userId: Schema.String,
+    name: Schema.String,
+    points: Schema.Number,
+    rankTitle: Schema.String,
+    orbs: Schema.optional(Schema.Number),
+    assists: Schema.optional(Schema.Number),
+    updatedAt: Schema.optional(Schema.Number)
+});
+export const LobbyHighScores = Schema.Array(LobbyHighScoreEntry);
 export const PlayerUpdate = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
     direction: Schema.Number,
     isMoving: Schema.Boolean,
+    throttle: Schema.optional(Schema.Number),
     offset: Vec2
 });
 export const PlayersSnapshotEntry = Schema.Struct({
@@ -205,6 +216,7 @@ export const HazardDeployRequest = Schema.Struct({
     cityId: Schema.Number,
     type: Schema.Number,
     position: Vec2,
+    armed: Schema.optional(Schema.Boolean),
     radius: Schema.optional(Schema.Number),
     damage: Schema.optional(Schema.Number),
     fuseMs: Schema.optional(Schema.Number)
@@ -214,7 +226,8 @@ export const HazardSpawn = Schema.Struct({
     cityId: Schema.Number,
     type: Schema.Number,
     position: Vec2,
-    radius: Schema.Number
+    radius: Schema.Number,
+    armed: Schema.optional(Schema.Boolean)
 });
 export const HazardRemove = Schema.Struct({
     id: Schema.String,
@@ -271,6 +284,7 @@ export const EventPayloadSchemas = {
     "lobby.denied": LobbyDenied,
     "lobby.released": LobbyReleased,
     "lobby.snapshot": LobbySnapshot,
+    "lobby.high_scores": LobbyHighScores,
     "player.update": PlayerUpdate,
     "player.health": PlayerHealthUpdate,
     "player.bot_damage": PlayerBotDamage,

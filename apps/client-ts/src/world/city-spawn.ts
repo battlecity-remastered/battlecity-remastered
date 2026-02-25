@@ -121,6 +121,17 @@ export const resolveCitySpawn = (cityId: number): CitySpawn | null => {
     return entry ? toSpawn(entry) : null;
 };
 
+export const getCityDisplayName = (cityId: number): string => {
+    const spawn = resolveCitySpawn(cityId);
+    if (spawn?.name) {
+        return spawn.name;
+    }
+    if (Number.isFinite(cityId)) {
+        return `City ${Math.max(1, Math.floor(cityId) + 1)}`;
+    }
+    return "City";
+};
+
 export const listCitySpawns = (): ReadonlyArray<CitySpawn> => {
     return LEGACY_CITY_SPAWNS.map((entry) => toSpawn(entry));
 };

@@ -1,10 +1,14 @@
-import { advancePlayer } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
-import { resolveSpawnPosition } from "../spawn/SpawnService.js";
-import { headingToTarget, nearestHumanPlayer, resolveCityCenter } from "./BotShared.js";
+import { headingToTarget, moveBotByHeading, nearestHumanPlayer, normalizeBotHeading, resolveCityCenter } from "./BotShared.js";
 
 const DEFENDER_TYPE: RuntimeBotController["botType"] = "defender";
+const MAX_DEFENDERS_PER_CITY = 4;
+const MAX_TOTAL_DEFENDERS = 16;
+const SPAWN_CHECK_INTERVAL_MS = 3000;
+const SHOOT_RANGE_TILES = 16;
+const MUZZLE_OFFSET_PX = 30;
+const BOT_HALF = 24;
 
 const countDefendersForCity = (state: RuntimeState, cityId: number): number => {
     let count = 0;
@@ -16,6 +20,57 @@ const countDefendersForCity = (state: RuntimeState, cityId: number): number => {
     return count;
 };
 
+const countTotalDefenders = (state: RuntimeState): number => {
+    let count = 0;
+    for (const bot of state.botControllers.values()) {
+        if (bot.botType === DEFENDER_TYPE) {
+            count += 1;
+        }
+    }
+    return count;
+};
+
+const removeDefender = (state: RuntimeState, botId: string): void => {
+    state.botControllers.delete(botId);
+    state.players.delete(botId);
+};
+
+const removeDefendersForCity = (state: RuntimeState, cityId: number): boolean => {
+    let removed = false;
+    for (const [botId, controller] of state.botControllers.entries()) {
+        if (controller.botType !== DEFENDER_TYPE || controller.homeCityId !== cityId) {
+            continue;
+        }
+        removeDefender(state, botId);
+        removed = true;
+    }
+    return removed;
+};
+
+const cityHasNearbyHuman = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    cityId: number,
+    engagementRadius: number
+): boolean => {
+    const center = resolveCityCenter(cityId, config);
+    const radiusSq = engagementRadius * engagementRadius;
+    for (const player of state.players.values()) {
+        if (player.isBot) {
+            continue;
+        }
+        const playerCenterX = player.x + BOT_HALF;
+        const playerCenterY = player.y + BOT_HALF;
+        const dx = center.x - playerCenterX;
+        const dy = center.y - playerCenterY;
+        const distanceSq = (dx * dx) + (dy * dy);
+        if (distanceSq <= radiusSq) {
+            return true;
+        }
+    }
+    return false;
+};
+
 const createDefender = (
     state: RuntimeState,
     config: RuntimeConfig,
@@ -25,21 +80,18 @@ const createDefender = (
     state.seq += 1;
     const id = `defender_${cityId}_${state.seq}`;
     const center = resolveCityCenter(cityId, config);
-    const angle = (state.seq % 16) * (Math.PI / 8);
-    const radius = config.tileSize * 4;
-    const position = resolveSpawnPosition(
-        state,
-        cityId,
-        center.x + (Math.cos(angle) * radius),
-        center.y + (Math.sin(angle) * radius),
-        config
-    );
+    const angle = Math.random() * (Math.PI * 2);
+    const spawnRadius = config.tileSize * 10;
+    const spawnX = center.x + (Math.cos(angle) * spawnRadius) - BOT_HALF;
+    const spawnY = center.y + (Math.sin(angle) * spawnRadius) - BOT_HALF;
+    const safeSpawn = moveBotByHeading(state, config, spawnX, spawnY, 0, 0, 0);
+
     const player: RuntimePlayer = {
         id,
         city: cityId,
-        x: position.x,
-        y: position.y,
-        direction: 0,
+        x: safeSpawn.x,
+        y: safeSpawn.y,
+        direction: Math.floor(Math.random() * 32),
         speed: config.botMoveSpeed,
         health: 100,
         maxHealth: 100,
@@ -58,22 +110,44 @@ const createDefender = (
     return player;
 };
 
-const spawnDefendersForActiveCities = (
+const evaluateDefenderPopulation = (
     state: RuntimeState,
     config: RuntimeConfig,
     now: number
 ): boolean => {
+    if (now < state.defenderSpawnCheckAt) {
+        return false;
+    }
+    state.defenderSpawnCheckAt = now + SPAWN_CHECK_INTERVAL_MS;
+
     let dirty = false;
+    const engagementRadius = Math.max(config.botDetectionRadius, config.tileSize * 40);
+    const maxPerCity = Math.max(0, Math.min(MAX_DEFENDERS_PER_CITY, config.fakeCityDefendersPerCity));
+
     for (const fakeCity of state.fakeCities.values()) {
         if (!fakeCity.active) {
+            dirty = removeDefendersForCity(state, fakeCity.cityId) || dirty;
             continue;
         }
-        const present = countDefendersForCity(state, fakeCity.cityId);
-        for (let index = present; index < config.fakeCityDefendersPerCity; index += 1) {
+
+        if (!cityHasNearbyHuman(state, config, fakeCity.cityId, engagementRadius)) {
+            dirty = removeDefendersForCity(state, fakeCity.cityId) || dirty;
+            continue;
+        }
+
+        const cityDefenderCount = countDefendersForCity(state, fakeCity.cityId);
+        if (cityDefenderCount >= maxPerCity || countTotalDefenders(state) >= MAX_TOTAL_DEFENDERS) {
+            continue;
+        }
+
+        let canSpawn = Math.min(maxPerCity - cityDefenderCount, MAX_TOTAL_DEFENDERS - countTotalDefenders(state));
+        while (canSpawn > 0) {
             createDefender(state, config, now, fakeCity.cityId);
+            canSpawn -= 1;
             dirty = true;
         }
     }
+
     return dirty;
 };
 
@@ -89,6 +163,24 @@ const fireAtTarget = (
     if (now < controller.nextShotAt) {
         return;
     }
+
+    const botCenterX = bot.x + BOT_HALF;
+    const botCenterY = bot.y + BOT_HALF;
+    const targetCenterX = target.x + BOT_HALF;
+    const targetCenterY = target.y + BOT_HALF;
+    const dx = targetCenterX - botCenterX;
+    const dy = targetCenterY - botCenterY;
+    const rangeSq = (dx * dx) + (dy * dy);
+    const maxRange = config.tileSize * SHOOT_RANGE_TILES;
+    if (rangeSq > (maxRange * maxRange)) {
+        return;
+    }
+
+    const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
+    const radians = (-normalizeBotHeading(direction) / 16) * Math.PI;
+    const muzzleX = botCenterX + (Math.sin(radians) * -MUZZLE_OFFSET_PX);
+    const muzzleY = botCenterY + (Math.cos(radians) * -MUZZLE_OFFSET_PX);
+
     controller.nextShotAt = now + config.botShootIntervalMs;
     state.seq += 1;
     const bulletId = `bullet_${state.seq}`;
@@ -96,9 +188,9 @@ const fireAtTarget = (
         id: bulletId,
         ownerId: bot.id,
         city: bot.city,
-        x: bot.x,
-        y: bot.y,
-        direction: headingToTarget(bot.x, bot.y, target.x, target.y, bot.direction),
+        x: muzzleX,
+        y: muzzleY,
+        direction,
         speed: config.bulletSpeed,
         type: 0
     });
@@ -106,8 +198,8 @@ const fireAtTarget = (
         id: bulletId,
         ownerId: bot.id,
         city: bot.city,
-        position: { x: bot.x, y: bot.y },
-        direction: state.bullets.get(bulletId)!.direction,
+        position: { x: muzzleX, y: muzzleY },
+        direction,
         type: 0
     });
 };
@@ -119,46 +211,62 @@ export const tickDefenderBots = (
     now: number,
     deltaMs: number
 ): boolean => {
-    let dirty = spawnDefendersForActiveCities(state, config, now);
+    let dirty = evaluateDefenderPopulation(state, config, now);
+    const detectionRadius = Math.max(config.botDetectionRadius, config.tileSize * 22);
+
     for (const [botId, controller] of state.botControllers.entries()) {
         if (controller.botType !== DEFENDER_TYPE) {
             continue;
         }
+
         const bot = state.players.get(botId);
         if (!bot || !bot.isBot || bot.health <= 0) {
-            state.botControllers.delete(botId);
-            state.players.delete(botId);
+            removeDefender(state, botId);
             dirty = true;
             continue;
         }
+
         const fakeCity = state.fakeCities.get(controller.homeCityId);
         if (!fakeCity?.active) {
-            state.botControllers.delete(botId);
-            state.players.delete(botId);
+            removeDefender(state, botId);
             dirty = true;
             continue;
         }
-        const fallback = resolveCityCenter(controller.homeCityId, config);
-        const nearest = nearestHumanPlayer(state, bot.x, bot.y, config.botDetectionRadius);
+
+        const fallbackCenter = resolveCityCenter(controller.homeCityId, config);
+        const fallback = {
+            x: fallbackCenter.x - BOT_HALF,
+            y: fallbackCenter.y - BOT_HALF
+        };
+        const nearest = nearestHumanPlayer(state, bot.x, bot.y, detectionRadius);
         const target = nearest ?? fallback;
-        const direction = headingToTarget(bot.x, bot.y, target.x, target.y, bot.direction);
-        const moved = advancePlayer(
-            {
-                ...bot,
-                direction
-            },
-            deltaMs,
-            config.mapMax,
-            config.mapMax
+
+        const direction = headingToTarget(
+            bot.x + BOT_HALF,
+            bot.y + BOT_HALF,
+            target.x + BOT_HALF,
+            target.y + BOT_HALF,
+            bot.direction
         );
-        const safe = resolveSpawnPosition(state, bot.city, moved.x, moved.y, config);
-        state.players.set(botId, {
+
+        const moved = moveBotByHeading(
+            state,
+            config,
+            bot.x,
+            bot.y,
+            direction,
+            config.botMoveSpeed,
+            deltaMs
+        );
+
+        const updatedBot: RuntimePlayer = {
             ...bot,
             direction,
-            x: safe.x,
-            y: safe.y
-        });
-        fireAtTarget(state, emitter, config, state.players.get(botId)!, controller, target, now);
+            x: moved.x,
+            y: moved.y
+        };
+        state.players.set(botId, updatedBot);
+        fireAtTarget(state, emitter, config, updatedBot, controller, target, now);
         dirty = true;
     }
 

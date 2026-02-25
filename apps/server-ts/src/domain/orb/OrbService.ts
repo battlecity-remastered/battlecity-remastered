@@ -2,18 +2,10 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { okResult, rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 import { addCityScore, getOrCreateCity } from "../economy/CityEconomyService.js";
 import { clearCityDefenses } from "../defense/DefenseService.js";
+import { resolveRankTitle } from "../score/RankService.js";
 
 const resolveRank = (score: number): string => {
-    if (score >= 2000) {
-        return "commander";
-    }
-    if (score >= 1000) {
-        return "captain";
-    }
-    if (score >= 500) {
-        return "lieutenant";
-    }
-    return "recruit";
+    return resolveRankTitle(score);
 };
 
 export type OrbDropResult = {

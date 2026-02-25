@@ -18,7 +18,7 @@ const buildMapFixture = (mask: number): LoadedMap => {
     map[1]![2] = downSame ? tileValue : 0;
     map[1]![0] = upSame ? tileValue : 0;
 
-    return { map, blockingTiles: new Set<string>() };
+    return { map, blockingTiles: new Set<string>(), buildBlockingTiles: new Set<string>() };
 };
 
 test("terrain adjacency bitmask frame offset matches all 16 parity cases", () => {

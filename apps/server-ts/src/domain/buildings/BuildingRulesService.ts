@@ -1,5 +1,7 @@
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 
+const BUILDING_FOOTPRINT_TILES = 3;
+
 const FACTORY_RESEARCH_REQUIREMENT: Readonly<Record<number, number>> = {
     100: 400,
     101: 401,
@@ -35,7 +37,97 @@ const hasResearchRequirementSatisfied = (
     }
 
     const completed = state.research.get(cityId)?.completed ?? [];
-    return completed.includes(requiredResearch);
+    if (completed.includes(requiredResearch)) {
+        return true;
+    }
+
+    for (const building of state.buildings.values()) {
+        if (building.cityId === cityId && building.type === requiredResearch) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const overlapsFootprint = (
+    leftA: number,
+    topA: number,
+    leftB: number,
+    topB: number
+): boolean => {
+    return leftA < (leftB + BUILDING_FOOTPRINT_TILES)
+        && (leftA + BUILDING_FOOTPRINT_TILES) > leftB
+        && topA < (topB + BUILDING_FOOTPRINT_TILES)
+        && (topA + BUILDING_FOOTPRINT_TILES) > topB;
+};
+
+const footprintContains = (
+    originX: number,
+    originY: number,
+    tileX: number,
+    tileY: number
+): boolean => {
+    return tileX >= originX
+        && tileX < (originX + BUILDING_FOOTPRINT_TILES)
+        && tileY >= originY
+        && tileY < (originY + BUILDING_FOOTPRINT_TILES);
+};
+
+const isOutOfBounds = (
+    tileX: number,
+    tileY: number,
+    config: RuntimeConfig
+): boolean => {
+    const mapSizeTiles = Math.max(1, Math.floor(config.mapMax / config.tileSize));
+    const maxTile = mapSizeTiles - 1;
+    return tileX < 0
+        || tileY < 0
+        || (tileX + BUILDING_FOOTPRINT_TILES - 1) > maxTile
+        || (tileY + BUILDING_FOOTPRINT_TILES - 1) > maxTile;
+};
+
+const hasBlockingTerrainFootprint = (
+    state: RuntimeState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    const blockingTiles = state.buildBlockingTiles.size > 0
+        ? state.buildBlockingTiles
+        : state.blockingTiles;
+    for (let dx = 0; dx < BUILDING_FOOTPRINT_TILES; dx += 1) {
+        for (let dy = 0; dy < BUILDING_FOOTPRINT_TILES; dy += 1) {
+            if (blockingTiles.has(`${tileX + dx},${tileY + dy}`)) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+
+const hasBlockingBuildingFootprint = (
+    state: RuntimeState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    for (const building of state.buildings.values()) {
+        if (overlapsFootprint(tileX, tileY, building.tileX, building.tileY)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const hasBlockingDefenseFootprint = (
+    state: RuntimeState,
+    tileX: number,
+    tileY: number
+): boolean => {
+    for (const defense of state.defenses.values()) {
+        if (footprintContains(tileX, tileY, defense.tileX, defense.tileY)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 export const canBuildInCity = (
@@ -45,16 +137,22 @@ export const canBuildInCity = (
     tileY: number,
     config: RuntimeConfig
 ): "ok" | "collision" | "too_far" => {
+    if (isOutOfBounds(tileX, tileY, config)) {
+        return "collision";
+    }
+    if (hasBlockingTerrainFootprint(state, tileX, tileY)) {
+        return "collision";
+    }
+    if (hasBlockingBuildingFootprint(state, tileX, tileY)) {
+        return "collision";
+    }
+    if (hasBlockingDefenseFootprint(state, tileX, tileY)) {
+        return "collision";
+    }
+
     const cityBuildings = Array.from(state.buildings.values()).filter((building) => {
         return building.cityId === cityId;
     });
-
-    const collided = cityBuildings.some((building) => {
-        return building.tileX === tileX && building.tileY === tileY;
-    });
-    if (collided) {
-        return "collision";
-    }
 
     if (cityBuildings.length === 0) {
         return "ok";
@@ -76,4 +174,3 @@ export const validateBuildResearch = (
 ): boolean => {
     return hasResearchRequirementSatisfied(state, cityId, buildingType);
 };
-

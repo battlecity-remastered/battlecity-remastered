@@ -1,7 +1,8 @@
 import type { ClientState } from "../../app/state.js";
-import { resolvePointerWorldTile } from "../../gameplay/world-viewport.js";
+import { TILE_SIZE, resolvePointerWorldPosition } from "../../gameplay/world-viewport.js";
 
-const BUILDING_FOOTPRINT_TILES = 3;
+export const BUILDING_FOOTPRINT_TILES = 3;
+const HALF_FOOTPRINT_PIXELS = (BUILDING_FOOTPRINT_TILES * TILE_SIZE) / 2;
 
 export type GhostPlacement = {
     tileX: number;
@@ -34,6 +35,9 @@ const hasBlockingTerrainFootprint = (
     tileX: number,
     tileY: number
 ): boolean => {
+    const blockingTiles = state.world.buildBlockingTiles.size > 0
+        ? state.world.buildBlockingTiles
+        : state.world.blockingTiles;
     const maxTile = state.world.mapSize - 1;
     for (let dx = 0; dx < BUILDING_FOOTPRINT_TILES; dx += 1) {
         for (let dy = 0; dy < BUILDING_FOOTPRINT_TILES; dy += 1) {
@@ -42,7 +46,7 @@ const hasBlockingTerrainFootprint = (
             if (tx < 0 || ty < 0 || tx > maxTile || ty > maxTile) {
                 return true;
             }
-            if (state.world.blockingTiles.has(`${tx},${ty}`)) {
+            if (blockingTiles.has(`${tx},${ty}`)) {
                 return true;
             }
         }
@@ -86,23 +90,31 @@ export const isGhostTileBlocked = (
         || hasBlockingDefenseFootprint(state, tileX, tileY);
 };
 
-export const resolveGhostPlacement = (state: ClientState): GhostPlacement | null => {
-    if (!state.ui.showBuildMenu) {
+export const resolveBuildPlacementTile = (state: ClientState): { tileX: number; tileY: number; } | null => {
+    const pointerWorld = resolvePointerWorldPosition(state);
+    if (!pointerWorld.insideWorld) {
         return null;
     }
-    if (!state.controls.ctrl || !state.controls.build || state.controls.shift) {
-        return null;
-    }
-    const worldTile = resolvePointerWorldTile(state);
-    if (!worldTile) {
-        return null;
-    }
-    const tileX = worldTile.tileX;
-    const tileY = worldTile.tileY;
+    const topLeftX = pointerWorld.x - HALF_FOOTPRINT_PIXELS;
+    const topLeftY = pointerWorld.y - HALF_FOOTPRINT_PIXELS;
     return {
-        tileX,
-        tileY,
-        blocked: isGhostTileBlocked(state, tileX, tileY),
+        tileX: Math.floor(topLeftX / TILE_SIZE),
+        tileY: Math.floor(topLeftY / TILE_SIZE)
+    };
+};
+
+export const resolveGhostPlacement = (state: ClientState): GhostPlacement | null => {
+    if (!state.ui.buildGhostMode) {
+        return null;
+    }
+    const placementTile = resolveBuildPlacementTile(state);
+    if (!placementTile) {
+        return null;
+    }
+    return {
+        tileX: placementTile.tileX,
+        tileY: placementTile.tileY,
+        blocked: isGhostTileBlocked(state, placementTile.tileX, placementTile.tileY),
         buildType: state.ui.selectedBuildType
     };
 };

@@ -1,5 +1,5 @@
 export const BUILDING_BASE_FRAME_SIZE = 144;
-export const BUILDING_ANIM_START_X = 144;
+export const BUILDING_ANIM_START_X = 0;
 export const BUILDING_ANIM_COUNT_X = 3;
 export const BUILDING_ANIM_DIVISOR = 4;
 
@@ -24,13 +24,43 @@ export const resolveBuildingAnimationFrameX = (frameCounter: number): number => 
     return BUILDING_ANIM_START_X + (animFrame * BUILDING_BASE_FRAME_SIZE);
 };
 
+const resolveOverlayIconIndex = (buildingType: number): number | null => {
+    const baseType = resolveBuildingBaseType(buildingType);
+    if (baseType === 1) {
+        const factorySubtype = buildingType - 100;
+        if (factorySubtype >= 0 && factorySubtype <= 12) {
+            return factorySubtype;
+        }
+        return null;
+    }
+    if (baseType === 4) {
+        if (buildingType === 413 || buildingType === 408) {
+            return 8;
+        }
+        const researchSubtype = buildingType - 400;
+        if (researchSubtype >= 0 && researchSubtype <= 12) {
+            return researchSubtype;
+        }
+        return null;
+    }
+    return null;
+};
+
 export const resolveBuildingOverlay = (buildingType: number): { iconIndex: number; offset: { x: number; y: number } } | null => {
     const baseType = resolveBuildingBaseType(buildingType);
     if (baseType === 1) {
-        return { iconIndex: 1, offset: FACTORY_OVERLAY_OFFSET };
+        const iconIndex = resolveOverlayIconIndex(buildingType);
+        if (iconIndex === null) {
+            return null;
+        }
+        return { iconIndex, offset: FACTORY_OVERLAY_OFFSET };
     }
-    if (baseType === 2) {
-        return { iconIndex: 2, offset: RESEARCH_OVERLAY_OFFSET };
+    if (baseType === 4) {
+        const iconIndex = resolveOverlayIconIndex(buildingType);
+        if (iconIndex === null) {
+            return null;
+        }
+        return { iconIndex, offset: RESEARCH_OVERLAY_OFFSET };
     }
     return null;
 };

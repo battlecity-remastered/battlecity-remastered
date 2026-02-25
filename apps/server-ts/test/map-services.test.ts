@@ -5,8 +5,10 @@ import path from "node:path";
 import test from "node:test";
 import {
     buildBlockingTileSet,
+    buildPlacementBlockingTileSet,
     decodeMapBuffer,
     loadBlockingTiles,
+    loadPlacementBlockingTiles,
     MAP_SIZE
 } from "../src/domain/map/MapService.js";
 import {
@@ -31,13 +33,28 @@ test("decodeMapBuffer matches legacy axis-flipped indexing", () => {
     assert.equal(map[targetTileX]?.[targetTileY], 3);
 });
 
-test("buildBlockingTileSet includes lava/rock and expands command-center anchors", () => {
+test("buildBlockingTileSet includes lava/rock and expands command-center anchors to 3x2", () => {
     const map = Array.from({ length: MAP_SIZE }, () => new Array<number>(MAP_SIZE).fill(0));
     map[3]![4] = 1;
     map[8]![9] = 2;
     map[13]![14] = 3;
 
     const blocking = buildBlockingTileSet(map);
+    assert.equal(blocking.has("3,4"), true);
+    assert.equal(blocking.has("8,9"), true);
+    assert.equal(blocking.has("13,14"), true);
+    assert.equal(blocking.has("15,15"), true);
+    assert.equal(blocking.has("13,16"), false);
+    assert.equal(blocking.has("16,16"), false);
+});
+
+test("buildPlacementBlockingTileSet includes lava/rock and expands command-center anchors to 3x3", () => {
+    const map = Array.from({ length: MAP_SIZE }, () => new Array<number>(MAP_SIZE).fill(0));
+    map[3]![4] = 1;
+    map[8]![9] = 2;
+    map[13]![14] = 3;
+
+    const blocking = buildPlacementBlockingTileSet(map);
     assert.equal(blocking.has("3,4"), true);
     assert.equal(blocking.has("8,9"), true);
     assert.equal(blocking.has("13,14"), true);
@@ -61,6 +78,24 @@ test("loadBlockingTiles reads map bytes from file", () => {
 
     const blocking = loadBlockingTiles(mapPath);
     assert.equal(blocking.has("4,7"), true);
+});
+
+test("loadPlacementBlockingTiles reads map bytes from file", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "battlecity-map-build-"));
+    const mapPath = path.join(tempDir, "map.dat");
+    const bytes = Buffer.alloc(MAP_SIZE * MAP_SIZE, 0);
+
+    const targetTileX = 6;
+    const targetTileY = 8;
+    const sourceX = (MAP_SIZE - 1) - targetTileY;
+    const sourceY = (MAP_SIZE - 1) - targetTileX;
+    const sourceIndex = sourceX + (sourceY * MAP_SIZE);
+    bytes[sourceIndex] = 3;
+
+    fs.writeFileSync(mapPath, bytes);
+
+    const blocking = loadPlacementBlockingTiles(mapPath);
+    assert.equal(blocking.has("6,10"), true);
 });
 
 test("convertBuildingType maps legacy ids to remastered ids", () => {

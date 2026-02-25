@@ -1,8 +1,7 @@
-import { Application, Container, Graphics, Sprite, type Texture, Text } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Texture, Text } from "pixi.js";
 import type { ClientState } from "../app/state.js";
 import { reconcileEntityCache } from "./entity-cache.js";
 import { resolveGhostPlacement } from "../ui/build-menu/GhostPlacement.js";
-import { buildHudLines } from "./hud-lines.js";
 import { createDirtyFlagTracker } from "./dirty-flags.js";
 import { renderHazardItems } from "./items/ItemRenderer.js";
 import { renderGroundLayer } from "./layers/GroundLayer.js";
@@ -27,13 +26,14 @@ import {
     PANEL_INVENTORY_SLOTS,
     PANEL_MESSAGE,
     PANEL_TOP_Y,
+    PANEL_TOP_HEIGHT,
     PANEL_BOTTOM_Y,
+    PANEL_BOTTOM_HEIGHT,
     PANEL_BUTTONS,
     projectRadarPoint,
     RADAR_BOUNDS,
     resolveHealthMaskRect,
-    resolveHomeArrowFrame,
-    resolveRadarColor
+    resolveHomeArrowFrame
 } from "./panel/panel-visuals.js";
 import { resolveViewportFromState } from "../gameplay/world-viewport.js";
 import {
@@ -41,6 +41,7 @@ import {
     TILE
 } from "./parity/constants.js";
 import { resolveCitySpawn } from "../world/city-spawn.js";
+import { formatNearestOrbableCityLine, resolveNearestOrbableCity } from "./orb-target.js";
 
 const TANK_SIZE = 22;
 
@@ -104,6 +105,15 @@ const resolveRemoteRole = (state: ClientState, remoteId: string): "mayor" | "rec
     return assignment ? "mayor" : "recruit";
 };
 
+const formatCash = (value: number): string => {
+    const amount = Number.isFinite(value) ? Math.floor(value) : 0;
+    try {
+        return amount.toLocaleString("en-US");
+    } catch {
+        return `${amount}`;
+    }
+};
+
 const resolveTankTexture = (
     textures: LegacyTextures,
     row: number,
@@ -138,6 +148,7 @@ const attachCanvasToRoot = (app: Application): void => {
 const createHud = (app: Application): { label: Text; panel: Graphics } => {
     const panel = new Graphics();
     panel.position.set(12, 10);
+    panel.visible = false;
     app.stage.addChild(panel);
 
     const hud = new Text({
@@ -145,10 +156,16 @@ const createHud = (app: Application): { label: Text; panel: Graphics } => {
         style: {
             fontFamily: "monospace",
             fontSize: 13,
-            fill: 0xd8ead8
+            fill: 0xd8ead8,
+            stroke: {
+                color: 0x101010,
+                width: 3,
+                join: "round"
+            }
         }
     });
     hud.position.set(20, 18);
+    hud.visible = false;
     app.stage.addChild(hud);
     return { label: hud, panel };
 };
@@ -166,7 +183,9 @@ type SceneLayers = {
     defenseHeadSprites: Map<string, RenderableEntity>;
     hazardSprites: Map<string, RenderableEntity>;
     bulletSprites: Map<string, RenderableEntity>;
-    ghostPlacementSprite: Graphics;
+    ghostPlacementLayer: Container;
+    ghostPlacementFill: Sprite;
+    ghostPlacementOverlay: Graphics;
     groundSprite: Graphics;
     tileSprite: Graphics;
     changingSprite: Graphics;
@@ -177,6 +196,10 @@ type SceneLayers = {
     hud: Text;
     hudPanel: Graphics;
     panelBackground: Graphics;
+    panelHomeArrow: Sprite;
+    panelInventorySelection: Sprite;
+    panelInventoryIcons: Map<number, Sprite>;
+    panelInventoryCountTexts: Map<number, Text>;
     panelRadar: Graphics;
     panelMessageText: Text;
     panelCashText: Text;
@@ -210,12 +233,47 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
     const labelLayer = new Container();
     world.addChild(labelLayer);
 
-    const ghostPlacementSprite = new Graphics();
-    ghostPlacementSprite.visible = false;
-    objectLayer.addChild(ghostPlacementSprite);
+    const ghostPlacementLayer = new Container();
+    const ghostPlacementFill = new Sprite(Texture.EMPTY);
+    ghostPlacementFill.visible = false;
+    const ghostPlacementOverlay = new Graphics();
+    ghostPlacementLayer.visible = false;
+    ghostPlacementLayer.addChild(ghostPlacementFill);
+    ghostPlacementLayer.addChild(ghostPlacementOverlay);
+    objectLayer.addChild(ghostPlacementLayer);
 
     const hudElements = createHud(app);
     const panelBackground = new Graphics();
+    const panelHomeArrow = new Sprite();
+    panelHomeArrow.visible = false;
+    const panelInventorySelection = new Sprite(Texture.EMPTY);
+    panelInventorySelection.visible = false;
+    const panelInventoryIcons = new Map<number, Sprite>();
+    const panelInventoryCountTexts = new Map<number, Text>();
+    for (const slot of PANEL_INVENTORY_SLOTS) {
+        if (panelInventoryIcons.has(slot.itemType)) {
+            continue;
+        }
+        const iconSprite = new Sprite(Texture.EMPTY);
+        iconSprite.visible = false;
+        panelInventoryIcons.set(slot.itemType, iconSprite);
+
+        const countText = new Text({
+            text: "",
+            style: {
+                fontFamily: "Arial",
+                fontSize: 12,
+                fontWeight: "700",
+                fill: 0xffffff,
+                stroke: {
+                    color: 0x000000,
+                    width: 3
+                }
+            }
+        });
+        countText.visible = false;
+        panelInventoryCountTexts.set(slot.itemType, countText);
+    }
     const panelRadar = new Graphics();
     const panelMessageText = new Text({
         text: "",
@@ -231,10 +289,22 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
             fontFamily: "Arial",
             fontSize: 13,
             fontWeight: "700",
-            fill: 0xffffff
+            fill: 0x2ecc71,
+            stroke: {
+                color: 0x000000,
+                width: 1
+            }
         }
     });
     app.stage.addChild(panelBackground);
+    app.stage.addChild(panelHomeArrow);
+    app.stage.addChild(panelInventorySelection);
+    for (const iconSprite of panelInventoryIcons.values()) {
+        app.stage.addChild(iconSprite);
+    }
+    for (const countText of panelInventoryCountTexts.values()) {
+        app.stage.addChild(countText);
+    }
     app.stage.addChild(panelRadar);
     app.stage.addChild(panelMessageText);
     app.stage.addChild(panelCashText);
@@ -252,7 +322,9 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         defenseHeadSprites: new Map<string, RenderableEntity>(),
         hazardSprites: new Map<string, RenderableEntity>(),
         bulletSprites: new Map<string, RenderableEntity>(),
-        ghostPlacementSprite,
+        ghostPlacementLayer,
+        ghostPlacementFill,
+        ghostPlacementOverlay,
         groundSprite,
         tileSprite,
         changingSprite,
@@ -263,6 +335,10 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         hud: hudElements.label,
         hudPanel: hudElements.panel,
         panelBackground,
+        panelHomeArrow,
+        panelInventorySelection,
+        panelInventoryIcons,
+        panelInventoryCountTexts,
         panelRadar,
         panelMessageText,
         panelCashText,
@@ -286,20 +362,44 @@ const updateTankEntityTexture = (
     entity.texture = texture;
 };
 
-const renderGhostPlacement = (state: ClientState, sprite: Graphics): void => {
+const renderGhostPlacement = (state: ClientState, layers: SceneLayers): void => {
+    const layer = layers.ghostPlacementLayer;
+    const fill = layers.ghostPlacementFill;
+    const overlay = layers.ghostPlacementOverlay;
     const ghostPlacement = resolveGhostPlacement(state);
     if (!ghostPlacement) {
-        sprite.visible = false;
+        layer.visible = false;
+        fill.visible = false;
+        overlay.clear();
         return;
     }
 
-    sprite.visible = true;
-    sprite.clear();
-    sprite
+    layer.visible = true;
+    overlay.clear();
+    const baseFrame = resolveBuildingBaseFrame(ghostPlacement.buildType);
+    const texture = getFrameTexture(
+        layers.textures.buildings,
+        `ghost:${ghostPlacement.buildType}`,
+        baseFrame.x,
+        baseFrame.y,
+        baseFrame.width,
+        baseFrame.height
+    );
+    if (texture) {
+        fill.texture = texture;
+        fill.visible = true;
+        fill.alpha = 0.52;
+        fill.position.set(0, 0);
+        fill.width = TILE * 3;
+        fill.height = TILE * 3;
+    } else {
+        fill.visible = false;
+    }
+    overlay
         .rect(0, 0, TILE * 3, TILE * 3)
-        .fill({ color: ghostPlacement.blocked ? 0xff5a6f : 0x4ae18f, alpha: 0.3 })
+        .fill({ color: ghostPlacement.blocked ? 0xff5a6f : 0x4ae18f, alpha: texture ? 0.16 : 0.3 })
         .stroke({ color: ghostPlacement.blocked ? 0xffa7b1 : 0xc2ffd6, alpha: 0.9, width: 2 });
-    sprite.position.set(ghostPlacement.tileX * TILE, ghostPlacement.tileY * TILE);
+    layer.position.set(ghostPlacement.tileX * TILE, ghostPlacement.tileY * TILE);
 };
 
 const resolveBuildingTexture = (
@@ -362,7 +462,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
                 const frame = resolveBuildingTexture(
                     layers.textures,
                     building.type,
-                    building.health < building.maxHealth ? animationCounter : null
+                    animationCounter
                 );
                 if (frame) {
                     sprite.texture = frame;
@@ -489,21 +589,21 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderHud = (state: ClientState, layers: SceneLayers): void => {
-    const { hud, hudPanel, dirty } = layers;
-    hud.visible = state.ui.showHud;
-    hudPanel.visible = state.ui.showHud;
-    if (!state.ui.showHud) {
-        dirty.markDirty("hud");
+    const nextLine = formatNearestOrbableCityLine(resolveNearestOrbableCity(state));
+    layers.hudPanel.visible = false;
+    layers.hudPanel.clear();
+    if (nextLine.length === 0) {
+        if (!layers.hud.visible && layers.hud.text.length === 0) {
+            return;
+        }
+        layers.hud.visible = false;
+        layers.hud.text = "";
+        layers.dirty.markDirty("hud");
         return;
     }
-    const next = buildHudLines(state).join("\n");
-    if (dirty.shouldRender("hud", next)) {
-        hud.text = next;
-        hudPanel.clear();
-        hudPanel
-            .roundRect(0, 0, hud.width + 16, hud.height + 16, 4)
-            .fill({ color: 0x0a1110, alpha: 0.62 })
-            .stroke({ color: 0x5f8362, width: 1, alpha: 0.9 });
+    layers.hud.visible = true;
+    if (layers.dirty.shouldRender("hud", nextLine)) {
+        layers.hud.text = nextLine;
     }
 };
 
@@ -540,7 +640,7 @@ const resolvePanelDetailLines = (state: ClientState): string[] => {
     const income = finance?.income ?? 0;
     return [
         `HP ${state.local.health}/${state.local.maxHealth}`,
-        `Cash ${cash}  Inc ${income}`,
+        `Cash ${formatCash(cash)}  Inc ${income}`,
         `Items ${state.inventory.get(0) ?? 0}`,
         `Research ${state.research.get(cityId)?.completed.length ?? 0}`
     ];
@@ -549,30 +649,48 @@ const resolvePanelDetailLines = (state: ClientState): string[] => {
 const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     const viewport = resolveViewportFromState(state);
     const panelX = viewport.panelStartX;
+    const panelVisualHeight = Math.min(viewport.surfaceHeight, PANEL_TOP_HEIGHT + PANEL_BOTTOM_HEIGHT);
     layers.panelBackground.position.set(panelX, PANEL_TOP_Y);
+    layers.panelHomeArrow.position.set(panelX + HOME_ARROW.x, HOME_ARROW.y);
+    layers.panelHomeArrow.width = HOME_ARROW.frameWidth;
+    layers.panelHomeArrow.height = HOME_ARROW.frameHeight;
+    layers.panelHomeArrow.visible = false;
+    layers.panelInventorySelection.visible = false;
+    for (const iconSprite of layers.panelInventoryIcons.values()) {
+        iconSprite.visible = false;
+    }
+    for (const countText of layers.panelInventoryCountTexts.values()) {
+        countText.visible = false;
+    }
     layers.panelRadar.position.set(panelX + RADAR_BOUNDS.offsetX, RADAR_BOUNDS.offsetY);
     layers.panelMessageText.position.set(panelX + PANEL_MESSAGE.x, PANEL_MESSAGE.y);
     layers.panelCashText.position.set(panelX + PANEL_FINANCE.cashText.x, PANEL_FINANCE.cashText.y);
     layers.panelBackground.clear();
 
+    layers.panelBackground
+        .rect(0, 0, PANEL, panelVisualHeight)
+        .fill({ color: 0x111827, alpha: 0.85 });
+
     if (layers.textures.interfaceTop) {
-        layers.panelBackground
-            .rect(0, 0, PANEL, viewport.surfaceHeight)
-            .fill({ texture: layers.textures.interfaceTop, alpha: 0.92 });
-    } else {
-        layers.panelBackground
-            .rect(0, 0, PANEL, viewport.surfaceHeight)
-            .fill({ color: 0x111827, alpha: 0.85 });
+        const topHeight = Math.max(0, Math.min(PANEL_TOP_HEIGHT, panelVisualHeight));
+        if (topHeight > 0) {
+            layers.panelBackground
+                .rect(0, 0, PANEL, topHeight)
+                .fill({ texture: layers.textures.interfaceTop, alpha: 0.92 });
+        }
     }
 
     layers.panelBackground
-        .rect(0, 0, PANEL, viewport.surfaceHeight)
+        .rect(0, 0, PANEL, panelVisualHeight)
         .stroke({ color: 0x4d5f7a, width: 1, alpha: 0.85 });
 
-    if (layers.textures.interfaceBottom) {
-        layers.panelBackground
-            .rect(0, PANEL_BOTTOM_Y, PANEL, 128)
-            .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
+    if (layers.textures.interfaceBottom && panelVisualHeight > PANEL_BOTTOM_Y) {
+        const bottomHeight = Math.max(0, Math.min(PANEL_BOTTOM_HEIGHT, panelVisualHeight - PANEL_BOTTOM_Y));
+        if (bottomHeight > 0) {
+            layers.panelBackground
+                .rect(0, PANEL_BOTTOM_Y, PANEL, bottomHeight)
+                .fill({ texture: layers.textures.interfaceBottom, alpha: 0.9 });
+        }
     }
 
     const finance = state.cityFinance.get(state.local.city);
@@ -580,17 +698,22 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     const cash = finance?.cash ?? 0;
 
     if (layers.textures.moneyBox) {
+        const moneyBoxWidth = Math.max(1, Math.floor(layers.textures.moneyBox.width));
+        const moneyBoxHeight = Math.max(1, Math.floor(layers.textures.moneyBox.height));
         layers.panelBackground
-            .rect(PANEL_FINANCE.moneyBox.x, PANEL_FINANCE.moneyBox.y, 64, 18)
+            .rect(PANEL_FINANCE.moneyBox.x, PANEL_FINANCE.moneyBox.y, moneyBoxWidth, moneyBoxHeight)
             .fill({ texture: layers.textures.moneyBox });
     }
     const incomeTexture = income >= 0 ? layers.textures.moneyUp : layers.textures.moneyDown;
     if (incomeTexture) {
+        const incomeWidth = Math.max(1, Math.floor(incomeTexture.width));
+        const incomeHeight = Math.max(1, Math.floor(incomeTexture.height));
         layers.panelBackground
-            .rect(PANEL_FINANCE.incomeIcon.x, PANEL_FINANCE.incomeIcon.y, 16, 16)
+            .rect(PANEL_FINANCE.incomeIcon.x, PANEL_FINANCE.incomeIcon.y, incomeWidth, incomeHeight)
             .fill({ texture: incomeTexture });
     }
-    layers.panelCashText.text = `${cash}`;
+    layers.panelCashText.style.fill = income < 0 ? 0xe74c3c : 0x2ecc71;
+    layers.panelCashText.text = formatCash(cash);
 
     const healthMask = resolveHealthMaskRect(state.local.health, state.local.maxHealth);
     layers.panelBackground
@@ -603,28 +726,35 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     }
 
     for (const slot of PANEL_INVENTORY_SLOTS) {
+        const count = state.inventory.get(slot.itemType) ?? 0;
+        if (count <= 0) {
+            continue;
+        }
+        const iconSprite = layers.panelInventoryIcons.get(slot.itemType);
         const iconFrame = getFrameTexture(layers.textures.items, `panel-item:${slot.itemType}`, slot.itemType * 32, 0, 32, 32);
-        if (iconFrame) {
-            layers.panelBackground
-                .rect(slot.x, slot.y, 32, 32)
-                .fill({ texture: iconFrame, alpha: 0.95 });
+        if (iconSprite && iconFrame) {
+            iconSprite.texture = iconFrame;
+            iconSprite.alpha = 0.95;
+            iconSprite.position.set(panelX + slot.x, slot.y);
+            iconSprite.width = 32;
+            iconSprite.height = 32;
+            iconSprite.visible = true;
         }
         if (layers.textures.inventorySelection && state.ui.selectedInventoryItemType === slot.itemType) {
-            layers.panelBackground
-                .rect(slot.x, slot.y, 32, 32)
-                .fill({ texture: layers.textures.inventorySelection, alpha: 0.95 });
+            layers.panelInventorySelection.texture = layers.textures.inventorySelection;
+            layers.panelInventorySelection.alpha = 0.95;
+            layers.panelInventorySelection.position.set(panelX + slot.x, slot.y);
+            layers.panelInventorySelection.width = 32;
+            layers.panelInventorySelection.height = 32;
+            layers.panelInventorySelection.visible = true;
         }
-        const count = state.inventory.get(slot.itemType) ?? 0;
-        if (layers.textures.blackNumbers) {
-            const tens = Math.floor(Math.min(99, Math.max(0, count)) / 10);
-            const ones = Math.floor(Math.min(99, Math.max(0, count)) % 10);
-            const tensTexture = getFrameTexture(layers.textures.blackNumbers, `panel-count-t:${slot.itemType}:${tens}`, tens * 16, 0, 16, 16);
-            const onesTexture = getFrameTexture(layers.textures.blackNumbers, `panel-count-o:${slot.itemType}:${ones}`, ones * 16, 0, 16, 16);
-            if (tensTexture) {
-                layers.panelBackground.rect(slot.x + 22, slot.y + 12, 16, 16).fill({ texture: tensTexture, alpha: 0.95 });
-            }
-            if (onesTexture) {
-                layers.panelBackground.rect(slot.x + 30, slot.y + 12, 16, 16).fill({ texture: onesTexture, alpha: 0.95 });
+        const countValue = Math.max(0, Math.floor(count));
+        if (countValue > 1) {
+            const countText = layers.panelInventoryCountTexts.get(slot.itemType);
+            if (countText) {
+                countText.text = `${countValue}`;
+                countText.position.set(panelX + slot.x + 22, slot.y + 12);
+                countText.visible = true;
             }
         }
     }
@@ -661,38 +791,33 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
     ].join("\n");
 
     layers.panelRadar.clear();
-    layers.panelRadar
-        .rect(0, 0, RADAR_BOUNDS.width, RADAR_BOUNDS.height)
-        .fill({ color: 0x081018, alpha: 0.78 })
-        .stroke({ color: 0x94b4d6, width: 1, alpha: 0.85 });
+    const radarSelfColor = 0x48ff62;
+    const radarEnemyColor = 0xff4040;
+    const radarBlobRadius = 2;
 
-    const radarMarkTexture = (kind: "self" | "ally" | "enemy" | "building", dead: boolean): Texture | null => {
-        if (dead) {
-            return getFrameTexture(layers.textures.miniMapColors, "radar-dead", 15 * 2, 0, 2, 2);
-        }
-        const column = kind === "building" ? 0 : kind === "self" ? 1 : kind === "enemy" ? 2 : 3;
-        return getFrameTexture(layers.textures.radarColors, `radar-kind:${kind}`, column * 2, 0, 2, 2);
-    };
-
-    const mark = (x: number, y: number, kind: "self" | "ally" | "enemy" | "building", dead = false): void => {
+    const markEnemy = (x: number, y: number): void => {
         const point = projectRadarPoint(panelX, state.local.x, state.local.y, x, y);
         if (!point) {
             return;
         }
-        const texture = radarMarkTexture(kind, dead);
-        if (texture) {
-            layers.panelRadar.rect(point.x, point.y, 2, 2).fill({ texture, alpha: 0.95 });
-            return;
-        }
-        layers.panelRadar.rect(point.x, point.y, 2, 2).fill(resolveRadarColor(kind));
+        layers.panelRadar
+            .circle(point.x, point.y, radarBlobRadius)
+            .fill(radarEnemyColor);
     };
-    for (const building of state.buildings.values()) {
-        mark(building.tileX * TILE, building.tileY * TILE, "building");
-    }
+
     for (const remote of state.remotePlayers.values()) {
-        mark(remote.x, remote.y, remote.city === state.local.city ? "ally" : "enemy", (remote.health ?? 1) <= 0);
+        if (remote.city === state.local.city) {
+            continue;
+        }
+        if ((remote.health ?? 1) <= 0) {
+            continue;
+        }
+        markEnemy(remote.x, remote.y);
     }
-    mark(state.local.x, state.local.y, "self");
+
+    layers.panelRadar
+        .circle(RADAR_BOUNDS.width / 2, RADAR_BOUNDS.height / 2, radarBlobRadius)
+        .fill(radarSelfColor);
 
     const spawn = resolveCitySpawn(state.local.city);
     if (spawn && layers.textures.arrows) {
@@ -708,9 +833,9 @@ const renderSidePanel = (state: ClientState, layers: SceneLayers): void => {
             HOME_ARROW.frameHeight
         );
         if (frame) {
-            layers.panelBackground
-                .rect(HOME_ARROW.x, HOME_ARROW.y, HOME_ARROW.frameWidth, HOME_ARROW.frameHeight)
-                .fill({ texture: frame, alpha: 0.95 });
+            layers.panelHomeArrow.texture = frame;
+            layers.panelHomeArrow.alpha = 0.95;
+            layers.panelHomeArrow.visible = true;
         }
     }
 };
@@ -759,9 +884,10 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.textures.research,
         layers.textures.researchComplete,
         layers.textures.smoke,
-        layers.textures.blackNumbers
+        layers.textures.blackNumbers,
+        layers.textures.items
     );
-    renderGhostPlacement(state, layers.ghostPlacementSprite);
+    renderGhostPlacement(state, layers);
     renderNameLabels(state, layers.labelLayer, layers.localTank, layers.remoteTanks, layers.labels);
     renderEffects(
         state,
@@ -797,6 +923,7 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     const layers = createSceneLayers(app, textures);
     const mapData = await loadMapData();
     state.world.blockingTiles = mapData.blockingTiles;
+    state.world.buildBlockingTiles = mapData.buildBlockingTiles;
     state.world.mapSize = mapData.map.length;
 
     return {

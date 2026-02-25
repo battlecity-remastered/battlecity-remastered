@@ -18,6 +18,68 @@ import {
 import { asCombatPlayers, removePlayer } from "./player-runtime.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 
+const PLAYER_SPRITE_HALF = 24;
+const MAX_CLIENT_SHOT_OFFSET = 96;
+const BULLET_TYPE_LASER = 0;
+const BULLET_TYPE_ROCKET = 1;
+const BULLET_TYPE_FLARE = 3;
+const ITEM_TYPE_ROCKET = 1;
+const ITEM_TYPE_FLARE = 6;
+const ITEM_TYPE_LASER = 12;
+
+const resolveRequiredItemTypeForBullet = (bulletType: number): number | null => {
+    if (bulletType === BULLET_TYPE_LASER) {
+        return ITEM_TYPE_LASER;
+    }
+    if (bulletType === BULLET_TYPE_ROCKET) {
+        return ITEM_TYPE_ROCKET;
+    }
+    if (bulletType === BULLET_TYPE_FLARE) {
+        return ITEM_TYPE_FLARE;
+    }
+    return null;
+};
+
+const hasRequiredInventoryForBullet = (
+    state: RuntimeState,
+    socketId: string,
+    bulletType: number
+): boolean => {
+    const requiredItemType = resolveRequiredItemTypeForBullet(bulletType);
+    if (requiredItemType === null) {
+        return true;
+    }
+    const inventory = state.playerInventory.get(socketId);
+    const count = inventory?.get(requiredItemType) ?? 0;
+    return count > 0;
+};
+
+const resolveSpawnFromPlayer = (
+    playerX: number,
+    playerY: number,
+    requested: KnownEventPayloadByType["bullet.fire.request"]["position"]
+): { x: number; y: number } => {
+    const centerX = playerX + PLAYER_SPRITE_HALF;
+    const centerY = playerY + PLAYER_SPRITE_HALF;
+    const requestedX = requested?.x;
+    const requestedY = requested?.y;
+
+    if (Number.isFinite(requestedX) && Number.isFinite(requestedY)) {
+        const distance = Math.hypot(requestedX - centerX, requestedY - centerY);
+        if (distance <= MAX_CLIENT_SHOT_OFFSET) {
+            return {
+                x: requestedX,
+                y: requestedY
+            };
+        }
+    }
+
+    return {
+        x: centerX,
+        y: centerY
+    };
+};
+
 export const createBulletFromRequest = (
     state: RuntimeState,
     socketId: string,
@@ -29,16 +91,21 @@ export const createBulletFromRequest = (
     if (!player) {
         return rejectResult("player_not_joined");
     }
+    const bulletType = Number.isFinite(payload.type) ? Math.floor(payload.type) : BULLET_TYPE_LASER;
+    if (!hasRequiredInventoryForBullet(state, socketId, bulletType)) {
+        return rejectResult("inventory_empty");
+    }
+    const spawn = resolveSpawnFromPlayer(player.x, player.y, payload.position);
 
     const bullet: BulletState = {
         id: `bullet_${nextSeq()}`,
         ownerId: socketId,
         city: player.city,
-        x: player.x,
-        y: player.y,
+        x: spawn.x,
+        y: spawn.y,
         direction: normalizeHeading32(payload.direction),
         speed: config.bulletSpeed,
-        type: payload.type
+        type: bulletType
     };
 
     state.bullets.set(bullet.id, bullet);

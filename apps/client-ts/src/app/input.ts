@@ -6,32 +6,55 @@ type ControlKey = keyof ClientState["controls"];
 
 const KEY_TO_CONTROL: Record<string, ControlKey> = {
     w: "moveForward",
+    keyw: "moveForward",
     arrowup: "moveForward",
-    s: "moveForward",
-    arrowdown: "moveForward",
+    up: "moveForward",
+    s: "moveBackward",
+    keys: "moveBackward",
+    arrowdown: "moveBackward",
+    down: "moveBackward",
     a: "turnLeft",
+    keya: "turnLeft",
     arrowleft: "turnLeft",
-    d: "turnRight",
+    left: "turnLeft",
     arrowright: "turnRight",
-    e: "turnRight",
+    right: "turnRight",
     " ": "shoot",
     space: "shoot",
     spacebar: "shoot",
+    shiftleft: "shift",
+    shiftright: "shift",
     shift: "shift",
     control: "ctrl",
     b: "build",
     o: "build",
     x: "demolish",
     delete: "demolish",
-    u: "useItem",
+    u: "collectFactory",
     h: "useItem",
     l: "leaveLobby",
     r: "research",
-    c: "collectFactory"
+    c: "useItem"
 };
 
-const setControlFromKey = (state: ClientState, key: string, value: boolean): void => {
-    const control = KEY_TO_CONTROL[asLower(key)];
+const isShiftEvent = (event: KeyboardEvent): boolean => {
+    const key = asLower(event.key);
+    if (key === "shift") {
+        return true;
+    }
+    const code = asLower(event.code);
+    return code === "shiftleft" || code === "shiftright";
+};
+
+const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean): void => {
+    if (isShiftEvent(event)) {
+        state.controls.shift = value;
+        state.controls.shoot = value;
+        return;
+    }
+    const fromCode = KEY_TO_CONTROL[asLower(event.code)];
+    const fromKey = KEY_TO_CONTROL[asLower(event.key)];
+    const control = fromCode ?? fromKey;
     if (!control) {
         return;
     }
@@ -40,11 +63,11 @@ const setControlFromKey = (state: ClientState, key: string, value: boolean): voi
 
 export const registerInputHandlers = (state: ClientState): (() => void) => {
     const onKeyDown = (event: KeyboardEvent): void => {
-        setControlFromKey(state, event.key, true);
+        setControlFromEvent(state, event, true);
     };
 
     const onKeyUp = (event: KeyboardEvent): void => {
-        setControlFromKey(state, event.key, false);
+        setControlFromEvent(state, event, false);
     };
 
     window.addEventListener("keydown", onKeyDown);

@@ -4,6 +4,7 @@ import {
     GROUND_DRAW_MAX,
     GROUND_DRAW_MIN,
     GROUND_TILE_SIZE,
+    GROUND_TEXTURE_SIZE,
     resolveGroundOrigin
 } from "./terrain-parity-helpers.js";
 
@@ -22,12 +23,12 @@ export const renderGroundLayer = (
             const y = origin.y + (ty * GROUND_TILE_SIZE);
             if (texture) {
                 sprite
-                    .rect(x, y, GROUND_TILE_SIZE, GROUND_TILE_SIZE)
+                    .rect(x, y, GROUND_TEXTURE_SIZE, GROUND_TEXTURE_SIZE)
                     .fill({ texture });
             } else {
                 const alternate = (tx + ty) % 3 === 0;
                 sprite
-                    .rect(x, y, GROUND_TILE_SIZE, GROUND_TILE_SIZE)
+                    .rect(x, y, GROUND_TEXTURE_SIZE, GROUND_TEXTURE_SIZE)
                     .fill(alternate ? 0x1a2e27 : 0x20362d);
             }
         }

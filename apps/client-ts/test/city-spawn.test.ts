@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { listCitySpawns, resolveCitySpawn } from "../src/world/city-spawn.js";
+import { getCityDisplayName, listCitySpawns, resolveCitySpawn } from "../src/world/city-spawn.js";
 
 test("resolveCitySpawn returns legacy spawn coordinates for runtime cities", () => {
     const city0 = resolveCitySpawn(0);
@@ -44,4 +44,10 @@ test("city spawn table covers full 0..63 and preserves final-row x shift", () =>
 
     const finalRow = spawns.slice(56, 64).map((spawn) => spawn.tileX);
     assert.deepEqual(finalRow, [31, 94, 158, 222, 286, 350, 414, 478]);
+});
+
+test("getCityDisplayName resolves known and fallback city labels", () => {
+    assert.equal(getCityDisplayName(0), "Balkh");
+    assert.equal(getCityDisplayName(7), "Barentsburg");
+    assert.equal(getCityDisplayName(99), "City 100");
 });

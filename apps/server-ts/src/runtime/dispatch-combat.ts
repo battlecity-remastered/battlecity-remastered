@@ -18,13 +18,19 @@ export const handlePlayerBotDamage = (
 ): void => {
     const player = context.state.players.get(socketId);
     if (!player) {
-        rejectSocket(context.broadcaster, socketId, "player_not_joined");
+        rejectSocket(context.broadcaster, socketId, "player_not_joined", {
+            eventType: "player.bot_damage",
+            payload
+        });
         return;
     }
 
     const amount = Math.max(0, Math.min(40, Math.floor(payload.amount)));
     if (amount <= 0) {
-        rejectSocket(context.broadcaster, socketId, "invalid_player_update");
+        rejectSocket(context.broadcaster, socketId, "invalid_player_update", {
+            eventType: "player.bot_damage",
+            payload
+        });
         return;
     }
 

@@ -1,6 +1,4 @@
 import type { Application } from "pixi.js";
-import { Effect } from "effect";
-import { logClient } from "../../observability/ClientLogger.js";
 
 type EventSource = {
     addEventListener: (type: string, listener: () => void) => void;
@@ -41,7 +39,7 @@ export const registerWindowModeHandlers = (
             width: window.innerWidth,
             height: window.innerHeight
         }),
-    documentLike: DocumentLike | null = typeof document === "undefined"
+    _documentLike: DocumentLike | null = typeof document === "undefined"
         ? null
         : {
             fullscreenElement: document.fullscreenElement,
@@ -63,29 +61,9 @@ export const registerWindowModeHandlers = (
         syncRendererSize(app, viewport.width, viewport.height);
     };
 
-    const onToggleFullscreen = (): void => {
-        if (!documentLike) {
-            return;
-        }
-        const fullscreenElement = typeof document === "undefined"
-            ? documentLike.fullscreenElement
-            : document.fullscreenElement;
-        Effect.runFork(
-            Effect.tryPromise(() => toggleFullscreen({
-                fullscreenElement,
-                documentElement: documentLike.documentElement,
-                exitFullscreen: documentLike.exitFullscreen
-            })).pipe(
-                Effect.catchAll(() => logClient("window.fullscreen.toggle_failed"))
-            )
-        );
-    };
-
     eventSource.addEventListener("resize", onResize);
-    eventSource.addEventListener("dblclick", onToggleFullscreen);
 
     return () => {
         eventSource.removeEventListener("resize", onResize);
-        eventSource.removeEventListener("dblclick", onToggleFullscreen);
     };
 };

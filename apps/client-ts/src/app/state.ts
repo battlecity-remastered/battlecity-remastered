@@ -18,6 +18,8 @@ export type LocalState = {
     lastLobbyLeaveAt: number;
 };
 
+export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
+
 export type RemotePlayer = {
     id: string;
     city: number;
@@ -37,6 +39,15 @@ export type ClientState = {
             city: number;
             mayorId?: string;
             recruitCount: number;
+        }>;
+        highScores: Array<{
+            userId: string;
+            name: string;
+            points: number;
+            rankTitle: string;
+            orbs?: number;
+            assists?: number;
+            updatedAt?: number;
         }>;
         lastReleasedPlayerId: string | null;
     };
@@ -62,6 +73,7 @@ export type ClientState = {
         x: number;
         y: number;
         radius: number;
+        armed?: boolean;
     }>;
     bullets: Map<string, {
         id: string;
@@ -158,6 +170,7 @@ export type ClientState = {
     };
     controls: {
         moveForward: boolean;
+        moveBackward: boolean;
         turnLeft: boolean;
         turnRight: boolean;
         shoot: boolean;
@@ -172,6 +185,7 @@ export type ClientState = {
     };
     world: {
         blockingTiles: Set<string>;
+        buildBlockingTiles: Set<string>;
         mapSize: number;
     };
     pointer: {
@@ -187,6 +201,15 @@ export type ClientState = {
         showMapModal: boolean;
         showOptionsModal: boolean;
         showBuildMenu: boolean;
+        buildMenuAnchorX: number;
+        buildMenuAnchorY: number;
+        buildGhostMode: boolean;
+        buildDemolishMode: boolean;
+        pendingBuildPlacement: {
+            tileX: number;
+            tileY: number;
+            type: number;
+        } | null;
         showIntroModal: boolean;
         showTutorial: boolean;
         selectedBuildType: number;
@@ -213,7 +236,7 @@ const createLocalDefaults = (): LocalState => ({
     direction: 0,
     x: 128,
     y: 128,
-    speed: 300,
+    speed: LEGACY_PLAYER_SPEED_PX_PER_SECOND,
     health: 100,
     maxHealth: 100,
     lastShotAt: 0,
@@ -233,7 +256,12 @@ const createUiDefaults = (): ClientState["ui"] => ({
     showMapModal: false,
     showOptionsModal: false,
     showBuildMenu: false,
-    showIntroModal: true,
+    buildMenuAnchorX: 56,
+    buildMenuAnchorY: 56,
+    buildGhostMode: false,
+    buildDemolishMode: false,
+    pendingBuildPlacement: null,
+    showIntroModal: false,
     showTutorial: false,
     selectedBuildType: 300,
     selectedInventoryItemType: null,
@@ -258,6 +286,7 @@ export const createClientState = (): ClientState => {
         lobby: {
             deniedReason: null,
             assignments: [],
+            highScores: [],
             lastReleasedPlayerId: null
         },
         cityFinance: new Map(),
@@ -298,6 +327,7 @@ export const createClientState = (): ClientState => {
         },
         controls: {
             moveForward: false,
+            moveBackward: false,
             turnLeft: false,
             turnRight: false,
             shoot: false,
@@ -312,6 +342,7 @@ export const createClientState = (): ClientState => {
         },
         world: {
             blockingTiles: new Set<string>(),
+            buildBlockingTiles: new Set<string>(),
             mapSize: 512
         },
         pointer: {
@@ -344,6 +375,7 @@ export const updateFromSnapshot = (
             state.local.direction = player.direction;
             state.local.x = player.offset.x;
             state.local.y = player.offset.y;
+            state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
             if (typeof player.health === "number") {
                 state.local.health = player.health;
             }

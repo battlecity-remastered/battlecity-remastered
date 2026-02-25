@@ -1,0 +1,60 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { tickFactories } from "../src/domain/factories/FactoryService.js";
+import { createRuntimeState, DEFAULT_RUNTIME_CONFIG } from "../src/runtime/types.js";
+import type { RuntimeEmitter } from "../src/runtime/emitter.js";
+
+const ITEM_TYPE_LASER = 12;
+const LASER_FACTORY_TYPE = 112;
+
+const createEmitter = (events: Array<{ type: string; payload: unknown }>): RuntimeEmitter => {
+    return {
+        emit: (type, payload) => {
+            events.push({ type, payload });
+        },
+        emitTo: () => {
+            // Not used by factory tick path.
+        }
+    };
+};
+
+test("factory production cap counts city player-held inventory", () => {
+    const state = createRuntimeState();
+    state.buildings.set("factory_1", {
+        id: "factory_1",
+        ownerId: "p1",
+        cityId: 1,
+        type: LASER_FACTORY_TYPE,
+        tileX: 10,
+        tileY: 10,
+        health: 120,
+        maxHealth: 120,
+        population: 50
+    });
+    state.socketCities.set("p1", 1);
+    state.playerInventory.set("p1", new Map([[ITEM_TYPE_LASER, 3]]));
+
+    const events: Array<{ type: string; payload: unknown }> = [];
+    const emitter = createEmitter(events);
+    const config = {
+        ...DEFAULT_RUNTIME_CONFIG,
+        factoryProductionTickMs: 100,
+        factoryStockCap: 99
+    };
+
+    for (let i = 0; i < 20; i += 1) {
+        tickFactories(state, config, emitter, 100);
+    }
+
+    const stock = state.factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(stock, 1);
+
+    const laserStockEvents = events.filter((event) => {
+        if (event.type !== "factory.stock") {
+            return false;
+        }
+        const payload = event.payload as { cityId: number; itemType: number };
+        return payload.cityId === 1 && payload.itemType === ITEM_TYPE_LASER;
+    });
+    assert.equal(laserStockEvents.length, 1);
+});

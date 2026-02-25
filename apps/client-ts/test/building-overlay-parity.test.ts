@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
     BUILDING_ANIM_DIVISOR,
-    BUILDING_ANIM_START_X,
     FACTORY_OVERLAY_OFFSET,
     RESEARCH_OVERLAY_OFFSET,
     resolveBuildingAnimationFrameX,
@@ -18,15 +17,19 @@ test("building base frame uses parity row contract", () => {
 });
 
 test("building animation x follows parity strip cadence", () => {
-    assert.equal(resolveBuildingAnimationFrameX(0), BUILDING_ANIM_START_X);
-    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR), BUILDING_ANIM_START_X + 144);
-    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR * 2), BUILDING_ANIM_START_X + 288);
-    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR * 3), BUILDING_ANIM_START_X);
+    assert.equal(resolveBuildingAnimationFrameX(0), 0);
+    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR), 144);
+    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR * 2), 288);
+    assert.equal(resolveBuildingAnimationFrameX(BUILDING_ANIM_DIVISOR * 3), 0);
 });
 
 test("building overlays use parity offsets for factory and research", () => {
-    assert.deepEqual(resolveBuildingOverlay(100), { iconIndex: 1, offset: FACTORY_OVERLAY_OFFSET });
-    assert.deepEqual(resolveBuildingOverlay(200), { iconIndex: 2, offset: RESEARCH_OVERLAY_OFFSET });
+    assert.deepEqual(resolveBuildingOverlay(100), { iconIndex: 0, offset: FACTORY_OVERLAY_OFFSET });
+    assert.deepEqual(resolveBuildingOverlay(112), { iconIndex: 12, offset: FACTORY_OVERLAY_OFFSET });
+    assert.deepEqual(resolveBuildingOverlay(400), { iconIndex: 0, offset: RESEARCH_OVERLAY_OFFSET });
+    assert.deepEqual(resolveBuildingOverlay(412), { iconIndex: 12, offset: RESEARCH_OVERLAY_OFFSET });
+    assert.deepEqual(resolveBuildingOverlay(413), { iconIndex: 8, offset: RESEARCH_OVERLAY_OFFSET });
+    assert.equal(resolveBuildingOverlay(200), null);
     assert.equal(resolveBuildingOverlay(300), null);
 });
 

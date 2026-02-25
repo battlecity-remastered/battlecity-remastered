@@ -4,22 +4,29 @@ import type { ClientState } from "../../app/state.js";
 const TILE_SIZE = 48;
 const BUILDING_FOOTPRINT_TILES = 3;
 const MAP_COLLISION_RADIUS_TILES = 14;
+const PLAYER_SPRITE_HALF = TILE_SIZE / 2;
+
+const resolveBlockingHeightTiles = (buildingType: number): number => {
+    const family = Math.max(0, Math.floor(buildingType / 100));
+    return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
+};
 
 export const collectBlockingRects = (state: ClientState): BlockingRect[] => {
     const blocks: BlockingRect[] = [];
     for (const building of state.buildings.values()) {
+        const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
         blocks.push({
             x: building.tileX * TILE_SIZE,
             y: building.tileY * TILE_SIZE,
             width: TILE_SIZE * BUILDING_FOOTPRINT_TILES,
-            height: TILE_SIZE * BUILDING_FOOTPRINT_TILES
+            height: TILE_SIZE * blockingHeightTiles
         });
     }
     for (const defense of state.defenses.values()) {
         blocks.push(tileToRect(defense.tileX, defense.tileY, TILE_SIZE));
     }
-    const centerTileX = Math.floor(state.local.x / TILE_SIZE);
-    const centerTileY = Math.floor(state.local.y / TILE_SIZE);
+    const centerTileX = Math.floor((state.local.x + PLAYER_SPRITE_HALF) / TILE_SIZE);
+    const centerTileY = Math.floor((state.local.y + PLAYER_SPRITE_HALF) / TILE_SIZE);
     const minTileX = Math.max(0, centerTileX - MAP_COLLISION_RADIUS_TILES);
     const minTileY = Math.max(0, centerTileY - MAP_COLLISION_RADIUS_TILES);
     const maxTileX = Math.min(state.world.mapSize - 1, centerTileX + MAP_COLLISION_RADIUS_TILES);

@@ -9,6 +9,7 @@ const EXPECTED_APPLIED_EVENT_TYPES = [
     "lobby.assignment",
     "lobby.denied",
     "lobby.snapshot",
+    "lobby.high_scores",
     "lobby.released",
     "build.denied",
     "building.placed",

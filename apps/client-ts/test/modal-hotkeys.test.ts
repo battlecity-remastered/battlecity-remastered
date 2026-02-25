@@ -35,7 +35,7 @@ test("applyModalToggle routes option actions only while options modal is visible
 
 test("applyModalToggle handles intro and tutorial controls", () => {
     const state = createClientState();
-    assert.equal(state.ui.showIntroModal, true);
+    state.ui.showIntroModal = true;
     assert.equal(applyModalToggle(state, "Enter"), true);
     assert.equal(state.ui.showIntroModal, false);
 
