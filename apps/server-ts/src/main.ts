@@ -38,6 +38,11 @@ io.on("connection", (socket) => {
     socket.on("event", (raw: unknown) => {
         runtimeScope.onSocketEvent(socket.id, raw);
     });
+    socket.on("latency:ping", (_payload: unknown, ack?: (response: { serverTime: number; }) => void) => {
+        if (typeof ack === "function") {
+            ack({ serverTime: Date.now() });
+        }
+    });
 
     socket.on("disconnect", () => {
         Effect.runSync(logRuntime("info", "socket.disconnected", { socketId: socket.id }));

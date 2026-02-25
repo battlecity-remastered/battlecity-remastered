@@ -4,11 +4,11 @@ import type { RuntimeConfig, RuntimeDefense, RuntimeState } from "../../runtime/
 import { headingToTarget, legacyHeadingToBulletHeading } from "../bots/BotShared.js";
 
 const DEFENSE_HALF = 24;
-const IDLE_SPIN_STEP = 1;
-const TRACK_STEP = 2;
+const IDLE_SPIN_STEP = 0;
+const TRACK_STEP = 16;
 const AIM_TOLERANCE = 1;
 const MUZZLE_OFFSET_PX = 30;
-const TARGET_RANGE_TILES = 18;
+const TARGET_RANGE_PX = 400;
 
 const DEFENSE_TYPE_TURRET = 9;
 const DEFENSE_TYPE_SLEEPER = 10;
@@ -22,9 +22,9 @@ const BULLET_TYPE_BY_DEFENSE: Readonly<Record<number, number>> = {
 };
 
 const COOLDOWN_MS_BY_DEFENSE: Readonly<Record<number, number>> = {
-    [DEFENSE_TYPE_TURRET]: 850,
-    [DEFENSE_TYPE_SLEEPER]: 1200,
-    [DEFENSE_TYPE_PLASMA]: 600
+    [DEFENSE_TYPE_TURRET]: 400,
+    [DEFENSE_TYPE_SLEEPER]: 400,
+    [DEFENSE_TYPE_PLASMA]: 400
 };
 
 const shortestSignedDelta = (from: number, to: number): number => {
@@ -147,7 +147,7 @@ export const tickDefenseTurrets = (
     emitter: RuntimeEmitter,
     nowMs: number
 ): void => {
-    const maxDistancePx = Math.max(config.tileSize * TARGET_RANGE_TILES, config.botDetectionRadius);
+    const maxDistancePx = TARGET_RANGE_PX;
 
     for (const defense of state.defenses.values()) {
         if (!FIRING_DEFENSE_TYPES.has(defense.type) || defense.health <= 0) {

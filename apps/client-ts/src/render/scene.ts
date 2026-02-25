@@ -47,6 +47,7 @@ import {
 import { resolveDefenseDamageColumn } from "./parity/defense-damage.js";
 import { resolveVisibleDefenseIds } from "./parity/defense-visibility.js";
 import { resolveCitySpawn, getCityDisplayName } from "../world/city-spawn.js";
+import { recordDebugRenderTick } from "../app/debug-metrics.js";
 
 const TANK_SIZE = 22;
 const COMMAND_CENTER_LABEL_OFFSET_Y = -32;
@@ -863,6 +864,7 @@ const renderWorldObjects = (state: ClientState, layers: SceneLayers): void => {
 };
 
 const renderHud = (state: ClientState, layers: SceneLayers): void => {
+    recordDebugRenderTick(state);
     void formatNearestOrbableCityLine(resolveNearestOrbableCity(state));
     layers.hudPanel.visible = false;
     layers.hudPanel.clear();

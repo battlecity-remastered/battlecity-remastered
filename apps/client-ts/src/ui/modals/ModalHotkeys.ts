@@ -2,6 +2,7 @@ import type { ClientState } from "../../app/state.js";
 import { applyOptionsAction } from "../options/OptionsModal.js";
 import { applyIntroAction } from "../intro/IntroModal.js";
 import { applyTutorialToggle } from "../tutorial/TutorialManager.js";
+import { toggleDebugMode } from "../../app/debug-metrics.js";
 
 export const applyModalToggle = (state: ClientState, key: string): boolean => {
     const normalized = key.toLowerCase();
@@ -28,7 +29,7 @@ export const applyModalToggle = (state: ClientState, key: string): boolean => {
         return true;
     }
     if (key === "F3") {
-        state.ui.showBotDebug = !state.ui.showBotDebug;
+        toggleDebugMode(state);
         return true;
     }
     if (state.ui.showOptionsModal) {

@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { toggleDebugMode } from "../../app/debug-metrics.js";
 
 type OptionsActionHandler = (state: ClientState) => void;
 
@@ -40,7 +41,7 @@ const OPTIONS_ACTION_HANDLERS: Readonly<Record<string, OptionsActionHandler>> = 
     m: (state) => { state.ui.audioEnabled = !state.ui.audioEnabled; },
     t: (state) => { state.ui.showTutorial = !state.ui.showTutorial; },
     i: (state) => { state.ui.showIdentityPanel = !state.ui.showIdentityPanel; },
-    p: (state) => { state.ui.showBotDebug = !state.ui.showBotDebug; },
+    p: toggleDebugMode,
     g: (state) => {
         state.identity.provider = state.identity.provider === "local" ? "google" : "local";
         state.ui.showIdentityPanel = true;
@@ -79,7 +80,7 @@ export const buildOptionsLines = (state: ClientState): string[] => {
         `Tutorial: ${state.ui.showTutorial ? "on" : "off"} (press T)`,
         `Identity panel: ${state.ui.showIdentityPanel ? "on" : "off"} (press I/F6)`,
         `Identity provider: ${state.identity.provider} (press G)`,
-        `Bot debug: ${state.ui.showBotDebug ? "on" : "off"} (press P/F3)`,
+        `Debug mode: ${state.ui.showBotDebug ? "on" : "off"} (press P/F3)`,
         `Performance preset: ${state.ui.optionsPerformanceMode} (press K)`,
         `City import slot: C${state.ui.optionsCityImportCity} (press , or .)`,
         `City import mode: ${state.ui.optionsCityImportMode} (press V/Y)`,

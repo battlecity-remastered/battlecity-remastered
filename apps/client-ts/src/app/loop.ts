@@ -4,6 +4,7 @@ import type { EventSender } from "../network/events.js";
 import { buildTickPlan } from "./intents.js";
 import { moveLocalPlayer } from "../gameplay/player-movement.js";
 import { stepClientBullets } from "../gameplay/bullets/BulletClientService.js";
+import { recordDebugUpdateTick } from "./debug-metrics.js";
 
 const TICK_MS = 33;
 
@@ -16,6 +17,7 @@ export const startGameLoop = (state: ClientState, send: EventSender): LoopRuntim
 
     const timer = window.setInterval(() => {
         const now = Date.now();
+        recordDebugUpdateTick(state, now);
         const dtMs = Math.max(1, now - lastTickAt);
         lastTickAt = now;
 

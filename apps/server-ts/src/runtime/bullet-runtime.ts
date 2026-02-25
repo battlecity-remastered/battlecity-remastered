@@ -183,6 +183,7 @@ const handlePlayerHit = (
 
 const handleBuildingHit = (
     context: TickContext,
+    bullet: BulletState,
     bulletId: string,
     result: Extract<BulletStepResult, { kind: "hit_building" }>
 ): void => {
@@ -195,6 +196,13 @@ const handleBuildingHit = (
 
     const building = state.buildings.get(result.buildingId);
     if (building) {
+        const buildingPopulation = Number.isFinite(building.population) ? building.population : 0;
+        const isStructureDamageBullet = bullet.type === BULLET_TYPE_LASER || bullet.type === BULLET_TYPE_ROCKET;
+        const canDamageStructure = isStructureDamageBullet && buildingPopulation <= 0;
+        if (!canDamageStructure) {
+            return;
+        }
+
         if (result.isDemolished) {
             state.buildings.delete(building.id);
             emitter.emit("building.demolished", {
@@ -267,7 +275,10 @@ const resolveBlockingHeightTiles = (buildingType: number): number => {
     return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
 };
 
-const collectCombatTargets = (state: RuntimeState): CombatBuildingState[] => {
+const collectCombatTargets = (
+    state: RuntimeState,
+    friendlyCityId: number
+): CombatBuildingState[] => {
     const targets: CombatBuildingState[] = [];
     for (const building of state.buildings.values()) {
         const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
@@ -285,6 +296,9 @@ const collectCombatTargets = (state: RuntimeState): CombatBuildingState[] => {
         }
     }
     for (const defense of state.defenses.values()) {
+        if (defense.cityId === friendlyCityId) {
+            continue;
+        }
         targets.push({
             id: defense.id,
             cityId: defense.cityId,
@@ -400,7 +414,7 @@ const resolveBulletStep = (
     }
 
     if (result.kind === "hit_building") {
-        handleBuildingHit(context, bulletId, result);
+        handleBuildingHit(context, bullet, bulletId, result);
         return false;
     }
 
@@ -418,7 +432,7 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
 
     for (const [bulletId, bullet] of state.bullets.entries()) {
         const combatPlayers = collectCombatPlayers(state, config.tileSize || TILE_SIZE);
-        const combatTargets = collectCombatTargets(state);
+        const combatTargets = collectCombatTargets(state, bullet.city);
         const combatHazards = collectCombatHazards(state, config.tileSize || TILE_SIZE);
         const result = stepBulletWithSweep(
             bullet,

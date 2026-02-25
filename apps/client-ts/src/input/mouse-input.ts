@@ -234,11 +234,6 @@ const applyPanelAction = (state: ClientState, action: PanelAction): void => {
         return;
     }
     state.controls.leaveLobby = true;
-    if (typeof window !== "undefined" && typeof window.setTimeout === "function") {
-        window.setTimeout(() => {
-            state.controls.leaveLobby = false;
-        }, 0);
-    }
 };
 
 export const resolveControlForMouseButton = (

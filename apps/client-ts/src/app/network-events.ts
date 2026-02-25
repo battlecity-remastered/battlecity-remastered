@@ -7,6 +7,7 @@ import { updateFromSnapshot } from "./state.js";
 import { resolveBulletSpeed } from "../gameplay/bullets/BulletClientService.js";
 import { onInventoryUpdate } from "../gameplay/items/IconInventoryService.js";
 import { resolveCitySpawn } from "../world/city-spawn.js";
+import { recordDebugRejection } from "./debug-metrics.js";
 
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
@@ -417,6 +418,7 @@ const handlers: {
     "event.rejected": (state, payload) => {
         state.events.rejectionCount += 1;
         state.events.lastRejectedReason = payload.reason;
+        recordDebugRejection(state, payload.reason ?? null);
     }
 };
 

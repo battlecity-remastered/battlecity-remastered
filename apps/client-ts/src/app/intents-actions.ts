@@ -313,6 +313,7 @@ const appendLobbyLeaveIntent = (state: ClientState, nowMs: number, intents: Inte
     }
     state.local.lastLobbyLeaveAt = nowMs;
     intents.push({ type: "lobby.leave.request", payload: {} });
+    state.controls.leaveLobby = false;
 };
 
 const appendChatIntent = (state: ClientState, nowMs: number, intents: Intent[]): void => {

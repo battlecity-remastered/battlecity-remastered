@@ -252,6 +252,34 @@ test("registerMouseInputHandlers updates controls, pointer, and resize metrics",
     assert.equal(surface.style.cursor, "default");
 });
 
+test("clicking panel EXIT sets leaveLobby control for lobby request emission", () => {
+    const state = createClientState();
+    state.local.id = "mayor-1";
+    state.local.city = 2;
+    state.lobby.assignments = [{ city: 2, mayorId: "mayor-1", recruitCount: 1 }];
+
+    const surface = new MockSurface();
+    surface.rect = {
+        left: 0,
+        top: 0,
+        width: 800,
+        height: 700
+    };
+    const windowSource = new MockEventSource();
+    const unregister = registerMouseInputHandlers(state, surface, windowSource);
+
+    surface.emit("mousedown", {
+        button: 0,
+        clientX: 750,
+        clientY: 578
+    } as MouseEvent as Event);
+
+    assert.equal(state.controls.leaveLobby, true);
+    assert.equal(state.controls.shoot, false);
+
+    unregister();
+});
+
 test("right click build toggle is ignored when local player is not mayor", () => {
     const state = createClientState();
     state.local.id = "recruit-1";

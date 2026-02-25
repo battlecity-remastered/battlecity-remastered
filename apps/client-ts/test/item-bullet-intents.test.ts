@@ -408,6 +408,20 @@ test("buildTickPlan applies opposite turn direction for right and left controls"
     assert.equal(leftPlan.direction, 20);
 });
 
+test("lobby leave control emits request once and clears the control flag", () => {
+    const state = createClientState();
+    state.local.id = "local";
+    state.local.city = 2;
+    state.controls.leaveLobby = true;
+
+    const firstPlan = buildTickPlan(state, Date.now() + 10_000, 100);
+    assert.equal(firstPlan.intents.some((intent) => intent.type === "lobby.leave.request"), true);
+    assert.equal(state.controls.leaveLobby, false);
+
+    const secondPlan = buildTickPlan(state, Date.now() + 10_100, 100);
+    assert.equal(secondPlan.intents.some((intent) => intent.type === "lobby.leave.request"), false);
+});
+
 test("buildTickPlan supports clockwise turn progression at 33ms tick cadence", () => {
     const state = createClientState();
     state.local.id = "local";

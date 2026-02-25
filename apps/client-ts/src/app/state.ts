@@ -36,6 +36,45 @@ export type RemotePlayer = {
     maxHealth?: number;
 };
 
+export type DebugLatencyStats = {
+    samples: number[];
+    latest: number | null;
+    avg: number | null;
+    min: number | null;
+    max: number | null;
+    jitter: number | null;
+    updatedAt: number | null;
+};
+
+export type DebugSendStats = {
+    intervals: number[];
+    lastSentAt: number | null;
+    hz: number | null;
+    avgMs: number | null;
+    rejections: number;
+    lastRejection: string | null;
+    lastRejectionAt: number | null;
+};
+
+export type DebugLoopStats = {
+    lastUpdateAt: number | null;
+    lastRenderAt: number | null;
+    renderCount: number;
+    updateCount: number;
+    lastRenderDeltaMs: number | null;
+    updateHz: number | null;
+    renderHz: number | null;
+    mismatchEvents: number;
+};
+
+export type DebugState = {
+    socketConnected: boolean;
+    lastServerEventAt: number | null;
+    latency: DebugLatencyStats;
+    send: DebugSendStats;
+    loop: DebugLoopStats;
+};
+
 export type ClientState = {
     local: LocalState;
     remotePlayers: Map<string, RemotePlayer>;
@@ -206,6 +245,7 @@ export type ClientState = {
         surfaceWidth: number;
         surfaceHeight: number;
     };
+    debug: DebugState;
     ui: {
         showHud: boolean;
         showHelpModal: boolean;
@@ -230,6 +270,7 @@ export type ClientState = {
         audioEnabled: boolean;
         showIdentityPanel: boolean;
         showBotDebug: boolean;
+        showBotOverlay: boolean;
         panelView: "status" | "staff" | "city" | "points";
         lobbyView: "assignments" | "scores";
         lobbyCityFilter: number;
@@ -283,6 +324,7 @@ const createUiDefaults = (): ClientState["ui"] => ({
     audioEnabled: true,
     showIdentityPanel: false,
     showBotDebug: false,
+    showBotOverlay: false,
     panelView: "status",
     lobbyView: "assignments",
     lobbyCityFilter: -1,
@@ -291,6 +333,39 @@ const createUiDefaults = (): ClientState["ui"] => ({
     optionsCityImportApplying: false,
     optionsCityImportStatus: null,
     optionsPerformanceMode: "balanced"
+});
+
+const createDebugDefaults = (): DebugState => ({
+    socketConnected: false,
+    lastServerEventAt: null,
+    latency: {
+        samples: [],
+        latest: null,
+        avg: null,
+        min: null,
+        max: null,
+        jitter: null,
+        updatedAt: null
+    },
+    send: {
+        intervals: [],
+        lastSentAt: null,
+        hz: null,
+        avgMs: null,
+        rejections: 0,
+        lastRejection: null,
+        lastRejectionAt: null
+    },
+    loop: {
+        lastUpdateAt: null,
+        lastRenderAt: null,
+        renderCount: 0,
+        updateCount: 0,
+        lastRenderDeltaMs: null,
+        updateHz: null,
+        renderHz: null,
+        mismatchEvents: 0
+    }
 });
 export const createClientState = (): ClientState => {
     return {
@@ -366,6 +441,7 @@ export const createClientState = (): ClientState => {
             surfaceWidth: 0,
             surfaceHeight: 0
         },
+        debug: createDebugDefaults(),
         ui: createUiDefaults()
     };
 };

@@ -2083,6 +2083,87 @@ test("high-speed bullets do not tunnel through building footprints", () => {
     assert.equal(building?.health, 100);
 });
 
+test("building collision from non-laser/rocket bullets does not damage structure health", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    runtime.getReadonlyState().buildings.set("target_building", {
+        id: "target_building",
+        ownerId: "enemy",
+        cityId: 2,
+        type: 300,
+        tileX: 3,
+        tileY: 2,
+        health: 120,
+        maxHealth: 120,
+        population: 0
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 2
+    }));
+    runtime.tickBullets();
+
+    const hitBuilding = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_building";
+    });
+    assert.ok(hitBuilding);
+    const building = runtime.getReadonlyState().buildings.get("target_building");
+    assert.equal(building?.health, 120);
+});
+
+test("populated buildings ignore laser bullet structure damage", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+    runtime.getReadonlyState().buildings.set("target_building", {
+        id: "target_building",
+        ownerId: "enemy",
+        cityId: 2,
+        type: 300,
+        tileX: 3,
+        tileY: 2,
+        health: 120,
+        maxHealth: 120,
+        population: 25
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const hitBuilding = broadcast.find((event) => {
+        return event.type === "bullet.resolved"
+            && (event.payload as { reason?: string }).reason === "hit_building";
+    });
+    assert.ok(hitBuilding);
+    const building = runtime.getReadonlyState().buildings.get("target_building");
+    assert.equal(building?.health, 120);
+});
+
 test("high-speed bullets do not tunnel through hazard hitboxes", () => {
     const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
 
@@ -2357,6 +2438,48 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
     assert.ok(enemyHit);
 });
 
+test("deployed turret keeps legacy engagement range (400px)", () => {
+    const { runtime, broadcast } = makeHarness({
+        botTickMs: 100,
+        fakeCityPlayerThreshold: 999
+    }, {}, {
+        blockingTiles: new Set<string>(),
+        buildBlockingTiles: new Set<string>()
+    });
+
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("lobby.join.request", 2, { desiredCity: 2 }));
+    runtime.handleRawEvent("enemy", makeEnvelope("player.update", 3, {
+        id: "enemy",
+        city: 2,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 905, y: 480 }
+    }));
+    runtime.handleRawEvent("owner", makeEnvelope("defense.deploy.request", 4, {
+        cityId: 1,
+        type: 9,
+        tileX: 10,
+        tileY: 10
+    }));
+
+    for (let i = 0; i < 12; i += 1) {
+        runtime.tickBullets();
+    }
+
+    const defenseSpawn = broadcast.find((event) => event.type === "defense.spawn");
+    assert.ok(defenseSpawn);
+    const defenseId = (defenseSpawn.payload as { id: string }).id;
+    const defensiveShot = broadcast.find((event) => {
+        if (event.type !== "bullet.fired") {
+            return false;
+        }
+        const payload = event.payload as { ownerId: string };
+        return payload.ownerId === defenseId;
+    });
+    assert.equal(defensiveShot, undefined);
+});
+
 test("deployed turret does not fire at same-city players", () => {
     const { runtime, broadcast } = makeHarness({
         botTickMs: 100,
@@ -2498,6 +2621,61 @@ test("bullets can damage and remove defenses", () => {
     const latest = updates.at(-1);
     assert.ok(latest);
     assert.ok((latest.payload as { health: number }).health < 40);
+});
+
+test("friendly bullets ignore same-city defenses and can continue to enemy defenses", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+
+    const state = runtime.getReadonlyState();
+    state.defenses.set("ally_defense", {
+        id: "ally_defense",
+        cityId: 1,
+        type: 8,
+        tileX: 3,
+        tileY: 2,
+        health: 100,
+        maxHealth: 100
+    });
+    state.defenses.set("enemy_defense", {
+        id: "enemy_defense",
+        cityId: 2,
+        type: 8,
+        tileX: 4,
+        tileY: 2,
+        health: 100,
+        maxHealth: 100
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    const ally = state.defenses.get("ally_defense");
+    const enemy = state.defenses.get("enemy_defense");
+    assert.equal(ally?.health, 100);
+    assert.equal(enemy?.health, 80);
+    const hitEnemy = broadcast.find((event) => {
+        if (event.type !== "bullet.resolved") {
+            return false;
+        }
+        const payload = event.payload as { reason?: string; hitBuildingId?: string };
+        return payload.reason === "hit_building" && payload.hitBuildingId === "enemy_defense";
+    });
+    assert.ok(hitEnemy);
 });
 
 test("bullet destroying defense restores city stock for that defense type", () => {
