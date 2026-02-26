@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const FUNCTION_START_PATTERNS = [
     /function\s+\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g,
@@ -9,13 +10,52 @@ const FUNCTION_START_PATTERNS = [
 ];
 const DECISION_REGEX = /\b(if|else\s+if|for|while|switch|case|catch)\b|\?|&&|\|\|/g;
 const FILE_MAX_OVERRIDES = {};
+const SOURCE_ROOTS = [
+    "apps/client-ts/src",
+    "apps/server-ts/src",
+    "packages/protocol/src",
+    "packages/sim-core/src"
+];
 
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });
     if (result.status !== 0) {
+        if (result.error?.code === "ENOENT") {
+            throw new Error(`Command not found: ${cmd}`);
+        }
         throw new Error(result.stderr?.trim() || `Command failed: ${cmd} ${args.join(" ")}`);
     }
     return result.stdout;
+};
+
+const walkFiles = async (root, out) => {
+    const entries = await readdir(root, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = path.join(root, entry.name);
+        if (entry.isDirectory()) {
+            await walkFiles(fullPath, out);
+            continue;
+        }
+        if (entry.isFile() && fullPath.endsWith(".ts")) {
+            out.push(fullPath);
+        }
+    }
+};
+
+const collectSourceFiles = async () => {
+    try {
+        const filesRaw = run("rg", ["--files", ...SOURCE_ROOTS]);
+        return filesRaw.split("\n").filter(Boolean).filter((file) => file.endsWith(".ts"));
+    } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes("Command not found: rg")) {
+            throw error;
+        }
+        const files = [];
+        for (const root of SOURCE_ROOTS) {
+            await walkFiles(root, files);
+        }
+        return files;
+    }
 };
 
 const getFunctions = (text) => {
@@ -50,8 +90,7 @@ const getFunctions = (text) => {
     return functions;
 };
 
-const filesRaw = run("rg", ["--files", "apps/client-ts/src", "apps/server-ts/src", "packages/protocol/src", "packages/sim-core/src"]);
-const files = filesRaw.split("\n").filter(Boolean).filter((file) => file.endsWith(".ts"));
+const files = await collectSourceFiles();
 
 const reportRows = [];
 for (const file of files) {

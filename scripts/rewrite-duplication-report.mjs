@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const WINDOW_SIZE = 8;
 const MAX_ALLOWED_DUPLICATE_BLOCKS = 12;
@@ -8,13 +9,52 @@ const EXCLUDED_FILES = new Set([
     "apps/client-ts/src/world/city-import.ts",
     "apps/server-ts/src/domain/map/CityLayoutService.ts"
 ]);
+const SOURCE_ROOTS = [
+    "apps/client-ts/src",
+    "apps/server-ts/src",
+    "packages/protocol/src",
+    "packages/sim-core/src"
+];
 
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });
     if (result.status !== 0) {
+        if (result.error?.code === "ENOENT") {
+            throw new Error(`Command not found: ${cmd}`);
+        }
         throw new Error(result.stderr?.trim() || `Command failed: ${cmd} ${args.join(" ")}`);
     }
     return result.stdout;
+};
+
+const walkFiles = async (root, out) => {
+    const entries = await readdir(root, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = path.join(root, entry.name);
+        if (entry.isDirectory()) {
+            await walkFiles(fullPath, out);
+            continue;
+        }
+        if (entry.isFile() && fullPath.endsWith(".ts")) {
+            out.push(fullPath);
+        }
+    }
+};
+
+const collectSourceFiles = async () => {
+    try {
+        const filesRaw = run("rg", ["--files", ...SOURCE_ROOTS]);
+        return filesRaw.split("\n").filter(Boolean).filter((file) => file.endsWith(".ts"));
+    } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes("Command not found: rg")) {
+            throw error;
+        }
+        const files = [];
+        for (const root of SOURCE_ROOTS) {
+            await walkFiles(root, files);
+        }
+        return files;
+    }
 };
 
 const normalizeLine = (line) => {
@@ -24,10 +64,7 @@ const normalizeLine = (line) => {
         .trim();
 };
 
-const filesRaw = run("rg", ["--files", "apps/client-ts/src", "apps/server-ts/src", "packages/protocol/src", "packages/sim-core/src"]);
-const files = filesRaw
-    .split("\n")
-    .filter(Boolean)
+const files = (await collectSourceFiles())
     .filter((file) => file.endsWith(".ts"))
     .filter((file) => !EXCLUDED_FILES.has(file));
 

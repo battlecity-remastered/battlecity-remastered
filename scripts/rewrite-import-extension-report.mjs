@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const STRICT = process.argv.includes("--strict");
 const IMPORT_RE = /(?:import|export)\s+(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
@@ -16,9 +17,42 @@ const TARGETS = [
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });
     if (result.status !== 0) {
+        if (result.error?.code === "ENOENT") {
+            throw new Error(`Command not found: ${cmd}`);
+        }
         throw new Error(result.stderr?.trim() || `Command failed: ${cmd} ${args.join(" ")}`);
     }
     return result.stdout;
+};
+
+const walkFiles = async (root, out) => {
+    const entries = await readdir(root, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = path.join(root, entry.name);
+        if (entry.isDirectory()) {
+            await walkFiles(fullPath, out);
+            continue;
+        }
+        if (entry.isFile() && fullPath.endsWith(".ts")) {
+            out.push(fullPath);
+        }
+    }
+};
+
+const collectSourceFiles = async () => {
+    try {
+        const filesRaw = run("rg", ["--files", ...TARGETS]);
+        return filesRaw.split("\n").filter(Boolean).filter((file) => file.endsWith(".ts"));
+    } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes("Command not found: rg")) {
+            throw error;
+        }
+        const files = [];
+        for (const root of TARGETS) {
+            await walkFiles(root, files);
+        }
+        return files;
+    }
 };
 
 const extensionOf = (specifier) => {
@@ -33,11 +67,7 @@ const hasAllowedExtension = (specifier) => {
     return ALLOWED_SOURCE_EXTENSIONS.includes(extensionOf(specifier));
 };
 
-const filesRaw = run("rg", ["--files", ...TARGETS]);
-const files = filesRaw
-    .split("\n")
-    .filter(Boolean)
-    .filter((file) => file.endsWith(".ts"));
+const files = await collectSourceFiles();
 
 const violations = [];
 for (const file of files) {
