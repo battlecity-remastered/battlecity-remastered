@@ -17,7 +17,7 @@ type CitySpawn = {
 };
 
 const CITY_SPAWNS = citySpawns as Record<string, CitySpawn>;
-const BOT_RADIUS = 12;
+const BOT_RADIUS = 18;
 const BOT_SPRITE_SIZE = 48;
 const BOT_SPRITE_HALF = BOT_SPRITE_SIZE / 2;
 const BUILDING_FOOTPRINT_TILES = 3;
@@ -36,6 +36,7 @@ const toFinite = (value: unknown): number | null => {
 };
 
 const resolveBlockingHeightTiles = (buildingType: number): number => {
+    // Keep bot collision identical to player runtime rules.
     const family = Math.max(0, Math.floor(buildingType / 100));
     return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
 };

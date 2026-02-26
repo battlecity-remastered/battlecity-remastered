@@ -11,12 +11,13 @@ type PathOptions = {
 };
 
 const BOT_HALF = 24;
+const BOT_RADIUS = 18;
 const BUILDING_FOOTPRINT_TILES = 3;
-const REDUCED_BLOCKING_HEIGHT_TILES = 2;
 
 const resolveBlockingHeightTiles = (buildingType: number): number => {
+    // Match player runtime collision profile exactly.
     const family = Math.max(0, Math.floor(buildingType / 100));
-    return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
+    return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
 };
 
 const tileKey = (x: number, y: number): string => `${x},${y}`;
@@ -44,13 +45,59 @@ const inBounds = (tileX: number, tileY: number, maxTile: number): boolean => {
     return tileX >= 0 && tileY >= 0 && tileX <= maxTile && tileY <= maxTile;
 };
 
+const circleIntersectsRect = (
+    centerX: number,
+    centerY: number,
+    radius: number,
+    rectX: number,
+    rectY: number,
+    rectSize: number
+): boolean => {
+    const nearestX = Math.max(rectX, Math.min(centerX, rectX + rectSize));
+    const nearestY = Math.max(rectY, Math.min(centerY, rectY + rectSize));
+    const dx = centerX - nearestX;
+    const dy = centerY - nearestY;
+    return ((dx * dx) + (dy * dy)) <= (radius * radius);
+};
+
+const isTileBodyPassable = (
+    blocked: Set<string>,
+    tileX: number,
+    tileY: number,
+    tileSize: number,
+    maxTile: number
+): boolean => {
+    if (!inBounds(tileX, tileY, maxTile)) {
+        return false;
+    }
+    const centerX = (tileX * tileSize) + (tileSize / 2);
+    const centerY = (tileY * tileSize) + (tileSize / 2);
+    const clearanceTiles = Math.ceil(BOT_RADIUS / tileSize) + 1;
+
+    for (let dx = -clearanceTiles; dx <= clearanceTiles; dx += 1) {
+        for (let dy = -clearanceTiles; dy <= clearanceTiles; dy += 1) {
+            const checkX = tileX + dx;
+            const checkY = tileY + dy;
+            if (!inBounds(checkX, checkY, maxTile) || !blocked.has(tileKey(checkX, checkY))) {
+                continue;
+            }
+            if (circleIntersectsRect(centerX, centerY, BOT_RADIUS, checkX * tileSize, checkY * tileSize, tileSize)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
 const nearestPassableTile = (
     blocked: Set<string>,
     origin: TilePoint,
+    tileSize: number,
     maxTile: number,
     maxRadius: number
 ): TilePoint | null => {
-    if (inBounds(origin.x, origin.y, maxTile) && !blocked.has(tileKey(origin.x, origin.y))) {
+    if (isTileBodyPassable(blocked, origin.x, origin.y, tileSize, maxTile)) {
         return origin;
     }
 
@@ -63,10 +110,10 @@ const nearestPassableTile = (
         for (let tileX = minX; tileX <= maxX; tileX += 1) {
             const top = { x: tileX, y: minY };
             const bottom = { x: tileX, y: maxY };
-            if (inBounds(top.x, top.y, maxTile) && !blocked.has(tileKey(top.x, top.y))) {
+            if (isTileBodyPassable(blocked, top.x, top.y, tileSize, maxTile)) {
                 return top;
             }
-            if (inBounds(bottom.x, bottom.y, maxTile) && !blocked.has(tileKey(bottom.x, bottom.y))) {
+            if (isTileBodyPassable(blocked, bottom.x, bottom.y, tileSize, maxTile)) {
                 return bottom;
             }
         }
@@ -74,10 +121,10 @@ const nearestPassableTile = (
         for (let tileY = minY + 1; tileY < maxY; tileY += 1) {
             const left = { x: minX, y: tileY };
             const right = { x: maxX, y: tileY };
-            if (inBounds(left.x, left.y, maxTile) && !blocked.has(tileKey(left.x, left.y))) {
+            if (isTileBodyPassable(blocked, left.x, left.y, tileSize, maxTile)) {
                 return left;
             }
-            if (inBounds(right.x, right.y, maxTile) && !blocked.has(tileKey(right.x, right.y))) {
+            if (isTileBodyPassable(blocked, right.x, right.y, tileSize, maxTile)) {
                 return right;
             }
         }
@@ -164,8 +211,8 @@ export const findBotPath = (
     const maxTileY = Math.min(maxTile, Math.max(startTile.y, goalTile.y) + options.searchRadiusTiles);
 
     const blocked = buildBlockedSet(state, config, minTileX, maxTileX, minTileY, maxTileY);
-    const start = nearestPassableTile(blocked, startTile, maxTile, 6);
-    const goal = nearestPassableTile(blocked, goalTile, maxTile, 8);
+    const start = nearestPassableTile(blocked, startTile, config.tileSize, maxTile, 6);
+    const goal = nearestPassableTile(blocked, goalTile, config.tileSize, maxTile, 8);
     if (!start || !goal) {
         return null;
     }
@@ -245,7 +292,10 @@ export const findBotPath = (
                 continue;
             }
             const nextKey = tileKey(nextX, nextY);
-            if (blocked.has(nextKey) || closed.has(nextKey)) {
+            if (closed.has(nextKey)) {
+                continue;
+            }
+            if (!isTileBodyPassable(blocked, nextX, nextY, config.tileSize, maxTile)) {
                 continue;
             }
 

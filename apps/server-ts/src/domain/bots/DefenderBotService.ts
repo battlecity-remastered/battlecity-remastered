@@ -268,17 +268,24 @@ const maybeRebuildPath = (
     now: number,
     controller: RuntimeBotController,
     bot: RuntimePlayer,
-    target: { id?: string; x: number; y: number }
+    target: { id?: string; x: number; y: number },
+    fallbackTarget?: { x: number; y: number }
 ): void => {
     const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
     if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
         return;
     }
 
-    const path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
+    let path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
         searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
         maxNodes: PATH_MAX_NODES
     });
+    if (!path && fallbackTarget) {
+        path = findBotPath(state, config, bot.x, bot.y, fallbackTarget.x, fallbackTarget.y, {
+            searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
+            maxNodes: PATH_MAX_NODES
+        });
+    }
 
     if (path) {
         controller.path = path;
@@ -446,7 +453,15 @@ export const tickDefenderBots = (
             )
             : fallback;
 
-        maybeRebuildPath(state, config, now, controller, bot, movementTargetFallback);
+        maybeRebuildPath(
+            state,
+            config,
+            now,
+            controller,
+            bot,
+            movementTargetFallback,
+            attackTarget ? { x: attackTarget.x, y: attackTarget.y } : undefined
+        );
         maybeAdvanceWaypoint(controller, bot);
         const movementTarget = resolveMovementTarget(controller, movementTargetFallback);
 
