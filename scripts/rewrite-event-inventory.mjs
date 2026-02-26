@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const EVENT_REGEX = /\b(?:socket|io|this\.io|target|targetSocket|emitter)\.(?:on|emit)\(\s*['"]([^'"]+)['"]/g;
 const EVENT_TYPE_REGEX = /"([^"]+)"/g;
@@ -8,10 +9,50 @@ const EVENT_TYPE_REGEX = /"([^"]+)"/g;
 const run = (cmd, args) => {
     const result = spawnSync(cmd, args, { encoding: "utf8" });
     if (result.status !== 0) {
+        if (result.error?.code === "ENOENT") {
+            throw new Error(`Command not found: ${cmd}`);
+        }
         const stderr = result.stderr?.trim();
         throw new Error(stderr || `Command failed: ${cmd} ${args.join(" ")}`);
     }
     return result.stdout;
+};
+
+const SOURCE_ROOTS = [
+    "apps/client-ts/src",
+    "apps/server-ts/src",
+    "packages/protocol/src",
+    "packages/sim-core/src"
+];
+
+const walkFiles = async (root, out) => {
+    const entries = await readdir(root, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = path.join(root, entry.name);
+        if (entry.isDirectory()) {
+            await walkFiles(fullPath, out);
+            continue;
+        }
+        if (entry.isFile() && (fullPath.endsWith(".ts") || fullPath.endsWith(".js") || fullPath.endsWith(".mjs"))) {
+            out.push(fullPath);
+        }
+    }
+};
+
+const collectSourceFiles = async () => {
+    try {
+        const fileListRaw = run("rg", ["--files", ...SOURCE_ROOTS]);
+        return fileListRaw.split("\n").filter(Boolean);
+    } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes("Command not found: rg")) {
+            throw error;
+        }
+        const files = [];
+        for (const root of SOURCE_ROOTS) {
+            await walkFiles(root, files);
+        }
+        return files;
+    }
 };
 
 const collectSocketEvents = (text) => {
@@ -44,14 +85,7 @@ const collectProtocolEventTypes = (text) => {
     return events;
 };
 
-const fileListRaw = run("rg", [
-    "--files",
-    "apps/client-ts/src",
-    "apps/server-ts/src",
-    "packages/protocol/src",
-    "packages/sim-core/src"
-]);
-const files = fileListRaw.split("\n").filter(Boolean);
+const files = await collectSourceFiles();
 const legacyEvents = new Set();
 
 for (const file of files) {
