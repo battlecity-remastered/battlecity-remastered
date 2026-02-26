@@ -10,6 +10,7 @@ import {
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import { emitPlayersSnapshot } from "../../runtime/snapshot.js";
 import { eliminatePlayer } from "../../runtime/player-elimination.js";
+import { purgeFactoryOutputsForDestroyedBuilding } from "../../runtime/factory-destruction.js";
 import { distanceSquared } from "../shared/distance.js";
 import { consumeInventoryItem } from "../inventory/InventoryService.js";
 import { unregisterBuildingPopulation } from "../population/PopulationService.js";
@@ -58,7 +59,7 @@ const snapToTile = (value: number): number => {
 };
 
 const isFactoryType = (type: number): boolean => {
-    return Math.floor(type / 100) === 1;
+    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 1;
 };
 
 const isCommandCenter = (type: number): boolean => {
@@ -294,6 +295,7 @@ const removeBuildingsInBombRadius = (
         if (building.type === COMMAND_CENTER_BUILDING_TYPE) {
             continue;
         }
+        purgeFactoryOutputsForDestroyedBuilding(state, emitter, building);
         state.buildings.delete(buildingId);
         emitter.emit("building.demolished", {
             id: building.id,

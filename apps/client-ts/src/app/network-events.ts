@@ -211,6 +211,10 @@ const handlers: {
         setHealth(state, payload.id, payload.health, payload.maxHealth);
     },
     "player.dead": (state, payload) => {
+        state.events.lastPlayerDead = {
+            id: payload.id,
+            ...(typeof payload.by === "string" ? { by: payload.by } : {})
+        };
         setHealth(state, payload.id, 0, resolveMaxHealth(state, payload.id));
         const position = resolvePlayerPosition(state, payload.id);
         if (position) {
@@ -265,6 +269,7 @@ const handlers: {
     },
     "chat.rate_limit": (state, payload) => {
         state.chat.rateLimitedUntil = payload.retryAt;
+        state.chat.rateLimitedScope = payload.scope;
     },
     "city.finance": (state, payload) => {
         const canBuildStates = new Map<number, number>();
@@ -326,6 +331,8 @@ const handlers: {
         if (payload.playerId !== state.local.id) {
             return;
         }
+        state.ui.selectedInventoryItemType = payload.itemType;
+        state.ui.bombArmed = false;
         state.events.lastIconPickupConfirmed = {
             playerId: payload.playerId,
             cityId: payload.cityId,

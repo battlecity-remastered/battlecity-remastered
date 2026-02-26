@@ -6,6 +6,7 @@ import citySpawnsJson from "../data/citySpawns.json" with { type: "json" };
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
 import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../src/runtime/types.js";
+import { isBotTopLeftPositionValid } from "../src/domain/bots/BotShared.js";
 
 const ITEM_TYPE_LASER = 12;
 const ITEM_TYPE_BOMB = 3;
@@ -1902,6 +1903,145 @@ test("bomb detonation destroys nearby buildings and defenses but not command cen
     }));
 });
 
+test("bomb-destroyed factory purges city stock, inventory, and matching deployed hazards", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("ally", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+
+    runtime.getReadonlyState().buildings.set("bomb_factory", {
+        id: "bomb_factory",
+        ownerId: "owner",
+        cityId: 1,
+        type: 103,
+        tileX: 6,
+        tileY: 6,
+        health: 120,
+        maxHealth: 120,
+        population: 50
+    });
+    runtime.getReadonlyState().factoryStock.set(1, new Map<number, number>([
+        [ITEM_TYPE_BOMB, 5],
+        [ITEM_TYPE_MINE, 2]
+    ]));
+    runtime.getReadonlyState().hazards.set("city_bomb_hazard", {
+        id: "city_bomb_hazard",
+        ownerId: "owner",
+        cityId: 1,
+        type: ITEM_TYPE_BOMB,
+        x: 12 * TILE_SIZE,
+        y: 12 * TILE_SIZE,
+        radius: 96,
+        damage: 25,
+        remainingMs: Number.POSITIVE_INFINITY,
+        armed: false,
+        active: false
+    });
+    runtime.getReadonlyState().hazards.set("city_mine_hazard", {
+        id: "city_mine_hazard",
+        ownerId: "owner",
+        cityId: 1,
+        type: ITEM_TYPE_MINE,
+        x: 13 * TILE_SIZE,
+        y: 12 * TILE_SIZE,
+        radius: 48,
+        damage: 19,
+        remainingMs: Number.POSITIVE_INFINITY,
+        armed: false,
+        active: false
+    });
+
+    grantInventoryItem(runtime, "owner", ITEM_TYPE_BOMB, 2);
+    grantInventoryItem(runtime, "ally", ITEM_TYPE_BOMB, 3);
+    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
+        cityId: 1,
+        type: ITEM_TYPE_BOMB,
+        position: { x: 6 * TILE_SIZE, y: 8 * TILE_SIZE },
+        armed: true,
+        fuseMs: 100
+    }));
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const state = runtime.getReadonlyState();
+    assert.equal(state.buildings.has("bomb_factory"), false);
+    assert.equal(state.factoryStock.get(1)?.get(ITEM_TYPE_BOMB), 0);
+    assert.equal(state.hazards.has("city_bomb_hazard"), false);
+    assert.equal(state.hazards.has("city_mine_hazard"), true);
+    assert.equal(state.playerInventory.get("owner")?.get(ITEM_TYPE_BOMB) ?? 0, 0);
+    assert.equal(state.playerInventory.get("ally")?.get(ITEM_TYPE_BOMB) ?? 0, 0);
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "factory.stock") {
+            return false;
+        }
+        const payload = event.payload as { cityId: number; itemType: number; stock: number };
+        return payload.cityId === 1 && payload.itemType === ITEM_TYPE_BOMB && payload.stock === 0;
+    }));
+});
+
+test("demolishing a factory purges matching city defenses, stock, and inventory", () => {
+    const { runtime, broadcast } = makeHarness();
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("ally", makeEnvelope("lobby.join.request", 2, { desiredCity: 1 }));
+
+    runtime.getReadonlyState().buildings.set("wall_factory", {
+        id: "wall_factory",
+        ownerId: "owner",
+        cityId: 1,
+        type: 108,
+        tileX: 10,
+        tileY: 10,
+        health: 120,
+        maxHealth: 120,
+        population: 50
+    });
+    runtime.getReadonlyState().defenses.set("wall_defense", {
+        id: "wall_defense",
+        cityId: 1,
+        type: 8,
+        tileX: 11,
+        tileY: 11,
+        health: 40,
+        maxHealth: 40
+    });
+    runtime.getReadonlyState().defenses.set("turret_defense", {
+        id: "turret_defense",
+        cityId: 1,
+        type: 9,
+        tileX: 12,
+        tileY: 11,
+        health: 40,
+        maxHealth: 40
+    });
+    runtime.getReadonlyState().factoryStock.set(1, new Map<number, number>([
+        [8, 4],
+        [9, 2]
+    ]));
+    grantInventoryItem(runtime, "owner", 8, 1);
+    grantInventoryItem(runtime, "ally", 8, 3);
+
+    runtime.handleRawEvent("owner", makeEnvelope("building.demolish.request", 3, {
+        id: "wall_factory",
+        cityId: 1
+    }));
+
+    const state = runtime.getReadonlyState();
+    assert.equal(state.buildings.has("wall_factory"), false);
+    assert.equal(state.defenses.has("wall_defense"), false);
+    assert.equal(state.defenses.has("turret_defense"), true);
+    assert.equal(state.factoryStock.get(1)?.get(8), 0);
+    assert.equal(state.factoryStock.get(1)?.get(9), 2);
+    assert.equal(state.playerInventory.get("owner")?.get(8) ?? 0, 0);
+    assert.equal(state.playerInventory.get("ally")?.get(8) ?? 0, 0);
+    assert.ok(broadcast.some((event) => {
+        if (event.type !== "defense.remove") {
+            return false;
+        }
+        const payload = event.payload as { id: string; reason: string };
+        return payload.id === "wall_defense" && payload.reason === "factory_destroyed";
+    }));
+});
+
 test("active bombs detonate when the owner dies", () => {
     const { runtime, broadcast } = makeHarness();
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
@@ -2728,6 +2868,128 @@ test("friendly bullets ignore same-city defenses and can continue to enemy defen
     assert.ok(hitEnemy);
 });
 
+test("friendly bullets ignore same-city mine hazards and can continue to enemy hazards", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+
+    const state = runtime.getReadonlyState();
+    state.hazards.set("ally_mine", {
+        id: "ally_mine",
+        ownerId: "ally",
+        cityId: 1,
+        type: ITEM_TYPE_MINE,
+        x: 3 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        radius: 96,
+        damage: 20,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+    state.hazards.set("enemy_mine", {
+        id: "enemy_mine",
+        ownerId: "enemy",
+        cityId: 2,
+        type: ITEM_TYPE_MINE,
+        x: 4 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        radius: 96,
+        damage: 20,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    assert.equal(state.hazards.has("ally_mine"), true);
+    assert.equal(state.hazards.has("enemy_mine"), false);
+    const hitEnemy = broadcast.find((event) => {
+        if (event.type !== "bullet.resolved") {
+            return false;
+        }
+        const payload = event.payload as { reason?: string; hitHazardId?: string };
+        return payload.reason === "hit_hazard" && payload.hitHazardId === "enemy_mine";
+    });
+    assert.ok(hitEnemy);
+});
+
+test("friendly bullets ignore same-city dfg hazards and can continue to enemy hazards", () => {
+    const { runtime, broadcast } = makeHarness({ bulletSpeed: 1800 });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.handleRawEvent("shooter", makeEnvelope("player.update", 2, {
+        id: "shooter",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 100, y: 100 }
+    }));
+    grantInventoryItem(runtime, "shooter", ITEM_TYPE_LASER, 1);
+
+    const state = runtime.getReadonlyState();
+    state.hazards.set("ally_dfg", {
+        id: "ally_dfg",
+        ownerId: "ally",
+        cityId: 1,
+        type: ITEM_TYPE_DFG,
+        x: 3 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        radius: 96,
+        damage: 20,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+    state.hazards.set("enemy_dfg", {
+        id: "enemy_dfg",
+        ownerId: "enemy",
+        cityId: 2,
+        type: ITEM_TYPE_DFG,
+        x: 4 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        radius: 96,
+        damage: 20,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+
+    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
+        ownerId: "shooter",
+        position: { x: 100, y: 100 },
+        direction: 0,
+        type: 0
+    }));
+    runtime.tickBullets();
+
+    assert.equal(state.hazards.has("ally_dfg"), true);
+    assert.equal(state.hazards.has("enemy_dfg"), false);
+    const hitEnemy = broadcast.find((event) => {
+        if (event.type !== "bullet.resolved") {
+            return false;
+        }
+        const payload = event.payload as { reason?: string; hitHazardId?: string };
+        return payload.reason === "hit_hazard" && payload.hitHazardId === "enemy_dfg";
+    });
+    assert.ok(hitEnemy);
+});
+
 test("bullet destroying defense restores city stock for that defense type", () => {
     const { runtime, broadcast, rejected } = makeHarness();
 
@@ -3051,6 +3313,15 @@ test("rogue bots spawn against developed non-fake cities", () => {
     assert.ok(rogue);
     assert.equal(rogue?.health, 20);
     assert.equal(rogue?.maxHealth, 20);
+    const targetCitySpawn = CITY_SPAWNS["2"];
+    assert.ok(targetCitySpawn);
+    const centerX = ((Math.floor(targetCitySpawn?.tileX ?? 0) * TILE_SIZE) + (TILE_SIZE * 1.5));
+    const centerY = ((Math.floor(targetCitySpawn?.tileY ?? 0) * TILE_SIZE) + (TILE_SIZE * 1.5));
+    const rogueCenterX = (rogue?.x ?? 0) + 24;
+    const rogueCenterY = (rogue?.y ?? 0) + 24;
+    const distance = Math.hypot(rogueCenterX - centerX, rogueCenterY - centerY);
+    assert.ok(distance >= (TILE_SIZE * 22));
+    assert.equal(isBotTopLeftPositionValid(state, DEFAULT_RUNTIME_CONFIG, rogue?.x ?? 0, rogue?.y ?? 0), true);
 });
 
 test("mine hazards damage and can destroy rogue bots", () => {

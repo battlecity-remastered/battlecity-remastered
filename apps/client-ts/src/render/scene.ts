@@ -77,6 +77,9 @@ type CacheEntity = Graphics | Sprite | Text;
 const RESEARCH_BUILDING_FAMILY = 4;
 
 const isResearchBuildingType = (buildingType: number): boolean => {
+    if (!Number.isFinite(buildingType) || buildingType < 100) {
+        return false;
+    }
     return Math.floor(buildingType / 100) === RESEARCH_BUILDING_FAMILY;
 };
 
@@ -258,6 +261,7 @@ type SceneLayers = {
     changingSprite: Graphics;
     effectsSprite: Graphics;
     effectExplosionSprites: Map<string, Sprite>;
+    effectFloatingPointLabels: Map<string, Text>;
     botDebugSprite: Graphics;
     commandCenterLabelLayer: Container;
     commandCenterLabels: Map<string, Text>;
@@ -426,6 +430,7 @@ const createSceneLayers = (app: Application, textures: LegacyTextures): SceneLay
         changingSprite,
         effectsSprite,
         effectExplosionSprites: new Map<string, Sprite>(),
+        effectFloatingPointLabels: new Map<string, Text>(),
         botDebugSprite,
         commandCenterLabelLayer,
         commandCenterLabels: new Map<string, Text>(),
@@ -663,31 +668,45 @@ const createCommandCenterLabel = (): Text => {
     return label;
 };
 
-const resolveCommandCenterBuildingIds = (state: ClientState): string[] => {
-    const ids: string[] = [];
+const resolveCommandCenterCityIds = (state: ClientState): number[] => {
+    const cityIds = new Set<number>();
+    cityIds.add(state.local.city);
+    for (const assignment of state.lobby.assignments) {
+        cityIds.add(assignment.city);
+    }
+    for (const cityId of state.cityFinance.keys()) {
+        cityIds.add(cityId);
+    }
+    for (const remote of state.remotePlayers.values()) {
+        cityIds.add(remote.city);
+    }
     for (const building of state.buildings.values()) {
         if (isCommandCenterType(building.type)) {
-            ids.push(building.id);
+            cityIds.add(building.cityId);
         }
     }
-    return ids;
+    return [...cityIds].filter((cityId) => Number.isFinite(cityId));
 };
 
 const syncCommandCenterLabels = (state: ClientState, layers: SceneLayers): void => {
-    const commandCenterIds = resolveCommandCenterBuildingIds(state);
-    syncEntityCache(layers.commandCenterLabels, layers.commandCenterLabelLayer, commandCenterIds, createCommandCenterLabel);
-    for (const buildingId of commandCenterIds) {
-        const building = state.buildings.get(buildingId);
-        const label = layers.commandCenterLabels.get(buildingId);
-        if (!building || !label) {
+    const cityIds = resolveCommandCenterCityIds(state);
+    const labelKeys = cityIds.map((cityId) => `city:${cityId}`);
+    syncEntityCache(layers.commandCenterLabels, layers.commandCenterLabelLayer, labelKeys, createCommandCenterLabel);
+    for (const cityId of cityIds) {
+        const spawn = resolveCitySpawn(cityId);
+        if (!spawn) {
             continue;
         }
-        const cityName = getCityDisplayName(building.cityId);
+        const label = layers.commandCenterLabels.get(`city:${cityId}`);
+        if (!label) {
+            continue;
+        }
+        const cityName = getCityDisplayName(cityId);
         if (label.text !== cityName) {
             label.text = cityName;
         }
-        const centerX = (building.tileX + 1.5) * TILE;
-        const centerY = (building.tileY + 1.5) * TILE;
+        const centerX = (spawn.tileX + 1.5) * TILE;
+        const centerY = (spawn.tileY + 1.5) * TILE;
         const visible = Math.abs(centerX - state.local.x) <= COMMAND_CENTER_LABEL_VIEW_THRESHOLD
             && Math.abs(centerY - state.local.y) <= COMMAND_CENTER_LABEL_VIEW_THRESHOLD;
         label.visible = visible;
@@ -1367,6 +1386,7 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
         layers.world,
         layers.effectsSprite,
         layers.effectExplosionSprites,
+        layers.effectFloatingPointLabels,
         layers.textures.muzzleFlash,
         layers.textures.smallExplosion,
         layers.textures.largeExplosion

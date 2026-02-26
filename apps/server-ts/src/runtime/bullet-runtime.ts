@@ -20,6 +20,7 @@ import { emitPlayersSnapshot } from "./snapshot.js";
 import { restoreFactoryStock } from "../domain/factories/FactoryService.js";
 import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
 import { eliminatePlayer } from "./player-elimination.js";
+import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
 
 const PLAYER_SPRITE_HALF = 24;
 const MAX_CLIENT_SHOT_OFFSET = 96;
@@ -204,6 +205,7 @@ const handleBuildingHit = (
         }
 
         if (result.isDemolished) {
+            purgeFactoryOutputsForDestroyedBuilding(state, emitter, building);
             state.buildings.delete(building.id);
             emitter.emit("building.demolished", {
                 id: building.id,
@@ -271,8 +273,17 @@ const handleHazardHit = (
 };
 
 const resolveBlockingHeightTiles = (buildingType: number): number => {
-    const family = Math.max(0, Math.floor(buildingType / 100));
-    return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
+    if (!Number.isFinite(buildingType)) {
+        return BUILDING_FOOTPRINT_TILES;
+    }
+    if (buildingType === 0) {
+        return REDUCED_BLOCKING_HEIGHT_TILES;
+    }
+    if (buildingType >= 100) {
+        const family = Math.floor(buildingType / 100);
+        return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
+    }
+    return BUILDING_FOOTPRINT_TILES;
 };
 
 const collectCombatTargets = (
@@ -313,15 +324,18 @@ const collectCombatTargets = (
 
 const collectCombatHazards = (
     state: RuntimeState,
-    tileSize: number
+    tileSize: number,
+    friendlyCityId: number
 ): CombatHazardState[] => {
     const halfTile = tileSize / 2;
-    return [...state.hazards.values()].map((hazard) => ({
-        id: hazard.id,
-        x: hazard.x + halfTile,
-        y: hazard.y + halfTile,
-        radius: tileSize
-    }));
+    return [...state.hazards.values()]
+        .filter((hazard) => hazard.cityId !== friendlyCityId)
+        .map((hazard) => ({
+            id: hazard.id,
+            x: hazard.x + halfTile,
+            y: hazard.y + halfTile,
+            radius: tileSize
+        }));
 };
 
 const collectCombatPlayers = (
@@ -433,7 +447,7 @@ export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter:
     for (const [bulletId, bullet] of state.bullets.entries()) {
         const combatPlayers = collectCombatPlayers(state, config.tileSize || TILE_SIZE);
         const combatTargets = collectCombatTargets(state, bullet.city);
-        const combatHazards = collectCombatHazards(state, config.tileSize || TILE_SIZE);
+        const combatHazards = collectCombatHazards(state, config.tileSize || TILE_SIZE, bullet.city);
         const result = stepBulletWithSweep(
             bullet,
             config.bulletTickMs,

@@ -175,6 +175,7 @@ export type ClientState = {
             scope: "team" | "global";
         }>;
         rateLimitedUntil: number | null;
+        rateLimitedScope: "team" | "global" | null;
     };
     events: {
         lastOrbedCityId: number | null;
@@ -194,6 +195,10 @@ export type ClientState = {
         lastRejectedReason: string | null;
         lastBuildDeniedReason: string | null;
         lastDemolishDeniedReason: string | null;
+        lastPlayerDead: {
+            id: string;
+            by?: string;
+        } | null;
         lastIconPickupConfirmed: {
             playerId: string;
             cityId: number;
@@ -405,7 +410,8 @@ export const createClientState = (): ClientState => {
         },
         chat: {
             history: [],
-            rateLimitedUntil: null
+            rateLimitedUntil: null,
+            rateLimitedScope: null
         },
         events: {
             lastOrbedCityId: null,
@@ -415,6 +421,7 @@ export const createClientState = (): ClientState => {
             lastRejectedReason: null,
             lastBuildDeniedReason: null,
             lastDemolishDeniedReason: null,
+            lastPlayerDead: null,
             lastIconPickupConfirmed: null,
             effects: {
                 explosions: [],

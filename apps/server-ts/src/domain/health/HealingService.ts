@@ -55,16 +55,14 @@ const isHospitalBuildingType = (
     if (numericType === config.hospitalBuildingType) {
         return true;
     }
-
-    // Legacy parity: older maps/schema may store hospital as 301.
-    const expanded = (numericType >= 0 && numericType < 100)
-        ? numericType * 100
-        : numericType;
-    if (expanded === 301) {
+    if (numericType === 301) {
         return true;
     }
-    const family = Math.floor(expanded / 100);
-    return family === 2 && expanded >= 200 && expanded < 300;
+    if (numericType < 100) {
+        return false;
+    }
+    const family = Math.floor(numericType / 100);
+    return family === 2 && numericType >= 200 && numericType < 300;
 };
 
 const getHospitalDriveableRect = (tileX: number, tileY: number, tileSize: number): Rect => {

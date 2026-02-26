@@ -15,7 +15,7 @@ const resolveMapSizeTiles = (state: ClientState): number => {
 };
 
 const isFactoryType = (type: number): boolean => {
-    return Math.floor(type / 100) === 1;
+    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 1;
 };
 
 const isCommandCenter = (type: number): boolean => {

@@ -9,6 +9,16 @@ test("collectNotificationEvents appends notices for promotion, denials, and orb"
     state.events.lastBuildDeniedReason = "research_required";
     state.events.lastDemolishDeniedReason = "not_mayor";
     state.events.lastOrbedCityId = 2;
+    state.events.lastPlayerDead = { id: "enemy_1", by: "ally_7" };
+    state.events.lastRejectedReason = "rate_limited";
+    state.events.lastIconPickupConfirmed = {
+        playerId: "self",
+        cityId: 1,
+        itemType: 3,
+        amount: 1
+    };
+    state.chat.rateLimitedUntil = Date.now() + 2000;
+    state.chat.rateLimitedScope = "team";
 
     const queue: Array<{ id: string; text: string; createdAt: number; }> = [];
     const next = collectNotificationEvents(
@@ -17,32 +27,36 @@ test("collectNotificationEvents appends notices for promotion, denials, and orb"
             promotionCount: 0,
             lastBuildDeniedReason: null,
             lastDemolishDeniedReason: null,
-            lastOrbedCityId: null
+            lastOrbedCityId: null,
+            lastPlayerDeadSignature: null,
+            lastRejectedReason: null,
+            lastPickupSignature: null,
+            lastChatRateLimitSignature: null
         },
         queue
     );
 
-    assert.equal(queue.length, 4);
-    assert.ok(queue.some((entry) => entry.text.includes("Promotion: captain")));
-    assert.ok(queue.some((entry) => entry.text.includes("Build denied: research_required")));
-    assert.ok(queue.some((entry) => entry.text.includes("Demolish denied: not_mayor")));
-    assert.ok(queue.some((entry) => entry.text.includes("City 2 was orbed")));
+    assert.equal(queue.length, 8);
+    assert.ok(queue.some((entry) => entry.text.includes("Promotion: Promoted to captain (+100).")));
+    assert.ok(queue.some((entry) => entry.text.includes("Research Pending: Research must finish")));
+    assert.ok(queue.some((entry) => entry.text.includes("Demolition Restricted: Only mayors can order demolitions.")));
+    assert.ok(queue.some((entry) => entry.text.includes("City Orbed: ")));
+    assert.ok(queue.some((entry) => entry.text.includes("Elimination: enemy_1 killed by ally_7.")));
+    assert.ok(queue.some((entry) => entry.text.includes("Action Rate Limit: Please wait")));
+    assert.ok(queue.some((entry) => entry.text.includes("Chat Rate Limit: Team chat cooling down")));
+    assert.ok(queue.some((entry) => entry.text.includes("Item Pickup: Item 3 x1")));
     assert.equal(next.promotionCount, 1);
 });
 
 test("buildNotificationLines returns fallback when queue is empty", () => {
     assert.deepEqual(buildNotificationLines([]), [
-        "Notifications",
-        "Menu: F1 Help  F2/M Map  F3 Debug  F4 Build",
-        "No notifications"
+        "No recent events."
     ]);
 });
 
-test("buildNotificationLines prepends heading/menu affordance when queue has events", () => {
+test("buildNotificationLines returns event text rows when queue has events", () => {
     const lines = buildNotificationLines([
         { id: "1", text: "Build denied: research_required", createdAt: Date.now() }
     ]);
-    assert.equal(lines[0], "Notifications");
-    assert.equal(lines[1], "Menu: F1 Help  F2/M Map  F3 Debug  F4 Build");
-    assert.equal(lines[2], "Build denied: research_required");
+    assert.equal(lines[0], "Build denied: research_required");
 });

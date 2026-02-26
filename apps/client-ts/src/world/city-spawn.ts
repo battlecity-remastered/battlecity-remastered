@@ -116,12 +116,15 @@ export const resolveCitySpawn = (cityId: number): CitySpawn | null => {
     if (!Number.isFinite(cityId)) {
         return null;
     }
-    const normalized = Math.max(0, Math.floor(cityId));
+    const normalized = Math.floor(cityId);
     const entry = LEGACY_CITY_SPAWN_BY_ID.get(normalized);
     return entry ? toSpawn(entry) : null;
 };
 
 export const getCityDisplayName = (cityId: number): string => {
+    if (Number.isFinite(cityId) && cityId < 0) {
+        return "Rogues";
+    }
     const spawn = resolveCitySpawn(cityId);
     if (spawn?.name) {
         return spawn.name;

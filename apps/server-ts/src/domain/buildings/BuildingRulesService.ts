@@ -19,7 +19,7 @@ const FACTORY_RESEARCH_REQUIREMENT: Readonly<Record<number, number>> = {
 };
 
 const isFactoryType = (type: number): boolean => {
-    return Math.floor(type / 100) === 1;
+    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 1;
 };
 
 const hasResearchRequirementSatisfied = (

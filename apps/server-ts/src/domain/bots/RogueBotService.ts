@@ -2,6 +2,7 @@ import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
 import {
     headingToTarget,
+    isBotTopLeftPositionValid,
     legacyHeadingToBulletHeading,
     moveBotByHeading,
     nearestHumanPlayer,
@@ -20,7 +21,9 @@ const SHOOT_INTERVAL_MS = 1400;
 const SHOOT_RANGE_TILES = 12;
 const STANDOFF_FACTOR = 0.5;
 const MIN_TARGET_BUFFER_TILES = 1;
-const SPAWN_RADIUS_TILES = 18;
+const SPAWN_MIN_RADIUS_TILES = 24;
+const SPAWN_MAX_RADIUS_TILES = 40;
+const SPAWN_ANGLE_SAMPLES = 64;
 const MOVE_SPEED_MULTIPLIER = 0.85;
 const BOT_HALF = 24;
 const MUZZLE_OFFSET_PX = 30;
@@ -59,23 +62,73 @@ const chooseTargetCity = (state: RuntimeState, config: RuntimeConfig): number | 
         }
     }
 
+    const candidateCityIds = new Set<number>();
+    for (const cityId of state.cities.keys()) {
+        candidateCityIds.add(cityId);
+    }
+    for (const building of state.buildings.values()) {
+        candidateCityIds.add(building.cityId);
+    }
+
     let selected: number | null = null;
     let bestScore = -1;
-    for (const city of state.cities.values()) {
-        if (state.fakeCities.get(city.cityId)?.active) {
+    for (const cityId of candidateCityIds.values()) {
+        const city = state.cities.get(cityId);
+        if (state.fakeCities.get(cityId)?.active) {
             continue;
         }
-        if (countBuildingsForCity(state, city.cityId) < config.rogueBuildingThreshold) {
+        if (countBuildingsForCity(state, cityId) < config.rogueBuildingThreshold) {
             continue;
         }
-        if (city.score <= bestScore) {
+        const cityScore = city?.score ?? 0;
+        if (cityScore <= bestScore) {
             continue;
         }
-        selected = city.cityId;
-        bestScore = city.score;
+        selected = cityId;
+        bestScore = cityScore;
     }
 
     return selected;
+};
+
+const resolveRogueSpawn = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    targetCityId: number
+): { x: number; y: number } | null => {
+    const center = resolveCityCenter(targetCityId, config);
+    const minRadius = config.tileSize * SPAWN_MIN_RADIUS_TILES;
+    const maxRadius = Math.max(minRadius + config.tileSize, config.tileSize * SPAWN_MAX_RADIUS_TILES);
+    const minDistanceSq = minRadius * minRadius;
+    const baseAngle = Math.random() * (Math.PI * 2);
+    const minTopLeft = 0;
+    const maxTopLeft = config.mapMax - (BOT_HALF * 2);
+    const midRadius = (minRadius + maxRadius) * 0.5;
+    const radiusCandidates = [maxRadius, midRadius, minRadius];
+
+    for (let step = 0; step < SPAWN_ANGLE_SAMPLES; step += 1) {
+        const angle = baseAngle + ((Math.PI * 2 * step) / SPAWN_ANGLE_SAMPLES);
+        for (const radius of radiusCandidates) {
+            const candidateX = center.x + (Math.cos(angle) * radius) - BOT_HALF;
+            const candidateY = center.y + (Math.sin(angle) * radius) - BOT_HALF;
+            if (candidateX < minTopLeft || candidateY < minTopLeft || candidateX > maxTopLeft || candidateY > maxTopLeft) {
+                continue;
+            }
+            if (!isBotTopLeftPositionValid(state, config, candidateX, candidateY)) {
+                continue;
+            }
+            const safeCenterX = candidateX + BOT_HALF;
+            const safeCenterY = candidateY + BOT_HALF;
+            const dx = safeCenterX - center.x;
+            const dy = safeCenterY - center.y;
+            if ((dx * dx) + (dy * dy) < minDistanceSq) {
+                continue;
+            }
+            return { x: candidateX, y: candidateY };
+        }
+    }
+
+    return null;
 };
 
 const spawnRogue = (
@@ -83,21 +136,18 @@ const spawnRogue = (
     config: RuntimeConfig,
     now: number,
     targetCityId: number
-): void => {
+): boolean => {
+    const spawn = resolveRogueSpawn(state, config, targetCityId);
+    if (!spawn) {
+        return false;
+    }
     state.seq += 1;
     const id = `rogue_${targetCityId}_${state.seq}`;
-    const center = resolveCityCenter(targetCityId, config);
-    const angle = Math.random() * (Math.PI * 2);
-    const radius = config.tileSize * SPAWN_RADIUS_TILES;
-    const spawnX = center.x + (Math.cos(angle) * radius) - BOT_HALF;
-    const spawnY = center.y + (Math.sin(angle) * radius) - BOT_HALF;
-    const safeSpawn = moveBotByHeading(state, config, spawnX, spawnY, 0, 0, 0);
-
     const player: RuntimePlayer = {
         id,
         city: -1,
-        x: safeSpawn.x,
-        y: safeSpawn.y,
+        x: spawn.x,
+        y: spawn.y,
         direction: Math.floor(Math.random() * 32),
         speed: config.botMoveSpeed * MOVE_SPEED_MULTIPLIER,
         health: BOT_HEALTH,
@@ -116,6 +166,7 @@ const spawnRogue = (
         nextRetargetAt: now + 1200,
         nextShotAt: now + 900
     });
+    return true;
 };
 
 const ensureRoguePopulation = (
@@ -137,8 +188,7 @@ const ensureRoguePopulation = (
         return false;
     }
 
-    spawnRogue(state, config, now, targetCityId);
-    return true;
+    return spawnRogue(state, config, now, targetCityId);
 };
 
 const fireAtTarget = (

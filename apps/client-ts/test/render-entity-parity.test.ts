@@ -43,6 +43,14 @@ test("effects renderer shakes only for non-local orb events", () => {
     assert.doesNotMatch(effectsSource, /if \(shotAge >= 0 && shotAge < SHAKE_MS\) {/);
 });
 
+test("floating score popups render numeric amounts instead of placeholder boxes", () => {
+    const effectsSource = fs.readFileSync(effectsPath, "utf8");
+    assert.match(effectsSource, /new Text\(/);
+    assert.match(effectsSource, /formatFloatingPointsAmount\(points\.amount\)/);
+    assert.match(effectsSource, /label\.position\.set\(points\.x,\s*points\.y - 10 - yOffset\)/);
+    assert.doesNotMatch(effectsSource, /\.rect\(points\.x - 10,\s*points\.y - 20 - yOffset,\s*20,\s*10\)/);
+});
+
 test("building sprites always animate across bitmap columns", () => {
     const sceneSource = fs.readFileSync(scenePath, "utf8");
     assert.match(sceneSource, /resolveBuildingTexture\(\s*layers\.textures,\s*building\.type,\s*animationCounter\s*\)/);

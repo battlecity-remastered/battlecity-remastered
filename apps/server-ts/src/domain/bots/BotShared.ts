@@ -37,8 +37,17 @@ const toFinite = (value: unknown): number | null => {
 
 const resolveBlockingHeightTiles = (buildingType: number): number => {
     // Keep bot collision identical to player runtime rules.
-    const family = Math.max(0, Math.floor(buildingType / 100));
-    return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
+    if (!Number.isFinite(buildingType)) {
+        return BUILDING_FOOTPRINT_TILES;
+    }
+    if (buildingType === 0) {
+        return 2;
+    }
+    if (buildingType >= 100) {
+        const family = Math.floor(buildingType / 100);
+        return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
+    }
+    return BUILDING_FOOTPRINT_TILES;
 };
 
 const toCollisionPoint = (x: number, y: number): CollisionPoint => {
@@ -72,17 +81,24 @@ const collectBlockingRects = (
     const blocks: BlockingRect[] = [];
 
     for (const building of state.buildings.values()) {
-        const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
+        if (!Number.isFinite(building.tileX) || !Number.isFinite(building.tileY)) {
+            continue;
+        }
+        const buildingType = Number.isFinite(building.type) ? building.type : 0;
+        const blockingHeightTiles = resolveBlockingHeightTiles(buildingType);
         blocks.push({
-            x: building.tileX * config.tileSize,
-            y: building.tileY * config.tileSize,
+            x: Math.floor(building.tileX) * config.tileSize,
+            y: Math.floor(building.tileY) * config.tileSize,
             width: config.tileSize * BUILDING_FOOTPRINT_TILES,
             height: config.tileSize * blockingHeightTiles
         });
     }
 
     for (const defense of state.defenses.values()) {
-        blocks.push(tileToRect(defense.tileX, defense.tileY, config.tileSize));
+        if (!Number.isFinite(defense.tileX) || !Number.isFinite(defense.tileY)) {
+            continue;
+        }
+        blocks.push(tileToRect(Math.floor(defense.tileX), Math.floor(defense.tileY), config.tileSize));
     }
 
     const mapSize = Math.max(1, Math.floor(config.mapMax / config.tileSize));
@@ -244,6 +260,19 @@ export const moveBotByHeading = (
     const resolvedCenter = moveWithSlide(world, safeCenter, advancedCenter);
     const topLeft = fromCollisionPoint(resolvedCenter.x, resolvedCenter.y);
     return clampTopLeftToWorld(topLeft.x, topLeft.y, config.mapMax);
+};
+
+export const isBotTopLeftPositionValid = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    x: number,
+    y: number
+): boolean => {
+    const topLeft = clampTopLeftToWorld(x, y, config.mapMax);
+    const center = toCollisionPoint(topLeft.x, topLeft.y);
+    const world = buildCollisionWorld(state, config, center.x, center.y);
+    const clamped = clampToWorld(world, center, BOT_RADIUS);
+    return !collidesAt(world, clamped, BOT_RADIUS);
 };
 
 export const normalizeBotHeading = (direction: number): number => {

@@ -25,6 +25,7 @@ import { awardOrbProfileScore, lobbyHighScores, profileForSocket } from "../doma
 import { deployDefense } from "../domain/defense/DefenseService.js";
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
+import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
 import { logRuntime } from "../observability/RuntimeLogger.js";
 
 type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
@@ -317,6 +318,7 @@ const handlers: HandlerMap = {
             id: result.value.building.id,
             cityId: result.value.building.cityId
         });
+        purgeFactoryOutputsForDestroyedBuilding(context.state, context.emitter, result.value.building);
         for (const update of result.value.populationUpdates) {
             context.emitter.emit("population.update", update);
         }

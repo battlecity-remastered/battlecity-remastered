@@ -87,7 +87,7 @@ const resolveCityOutstandingItemCount = (state: RuntimeState, cityId: number, it
 };
 
 const isFactoryBuildingType = (type: number): boolean => {
-    return Math.floor(type / 100) === 1;
+    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 1;
 };
 
 const addActiveFactoryItemType = (
@@ -104,8 +104,11 @@ const resolveFactoryCap = (
     config: RuntimeConfig,
     buildingType: number
 ): number => {
-    const buildingLimit = FACTORY_ITEM_LIMITS[buildingType] ?? config.factoryStockCap;
-    return Math.max(0, Math.min(config.factoryStockCap, buildingLimit));
+    const buildingLimit = FACTORY_ITEM_LIMITS[buildingType];
+    if (typeof buildingLimit === "number" && Number.isFinite(buildingLimit)) {
+        return Math.max(0, Math.floor(buildingLimit));
+    }
+    return Math.max(0, Math.floor(config.factoryStockCap));
 };
 
 const tryProduceFactoryStock = (

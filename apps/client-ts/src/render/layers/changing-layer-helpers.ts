@@ -1,12 +1,25 @@
-const COMMAND_CENTER_TYPES = new Set([0, 200, 201]);
 const TILE = 48;
 
 const resolveBaseType = (buildingType: number): number => {
-    return Math.floor(buildingType / 100);
+    const numeric = Number(buildingType);
+    if (!Number.isFinite(numeric)) {
+        return -1;
+    }
+    if (numeric === 0) {
+        return 0;
+    }
+    if (numeric < 100) {
+        return -1;
+    }
+    return Math.floor(numeric / 100);
 };
 
 export const isCommandCenterType = (buildingType: number): boolean => {
-    return COMMAND_CENTER_TYPES.has(buildingType) || resolveBaseType(buildingType) === 0;
+    const numeric = Number(buildingType);
+    if (!Number.isFinite(numeric)) {
+        return false;
+    }
+    return numeric === 0;
 };
 
 export const isFactoryType = (buildingType: number): boolean => {

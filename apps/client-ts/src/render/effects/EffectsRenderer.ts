@@ -1,4 +1,4 @@
-import { Graphics, Sprite, type Container, type Texture } from "pixi.js";
+import { Graphics, Sprite, Text, type Container, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
 import { getFrameTexture } from "../LegacyTextureRegistry.js";
 import { resolveTankMuzzlePosition } from "../../gameplay/combat/shot-geometry.js";
@@ -176,6 +176,47 @@ const pruneStaleExplosionSprites = (
     }
 };
 
+const createFloatingPointsLabel = (): Text => {
+    return new Text({
+        text: "",
+        style: {
+            fontFamily: "Arial",
+            fontSize: 15,
+            fontWeight: "700",
+            fill: 0xffd166,
+            stroke: {
+                color: 0x2a1a00,
+                width: 3,
+                join: "round"
+            }
+        }
+    });
+};
+
+const removeFloatingPointsLabel = (
+    layer: Container,
+    floatingPointLabels: Map<string, Text>,
+    pointsId: string
+): void => {
+    const label = floatingPointLabels.get(pointsId);
+    if (!label) {
+        return;
+    }
+    if (label.parent === layer) {
+        layer.removeChild(label);
+    }
+    label.destroy();
+    floatingPointLabels.delete(pointsId);
+};
+
+const formatFloatingPointsAmount = (amount: number): string => {
+    if (!Number.isFinite(amount)) {
+        return "0";
+    }
+    const rounded = Math.round(amount * 100) / 100;
+    return Number.isInteger(rounded) ? `${rounded}` : rounded.toFixed(2).replace(/\.?0+$/, "");
+};
+
 const renderExplosions = (
     state: ClientState,
     nowMs: number,
@@ -226,8 +267,10 @@ const renderExplosions = (
 const renderFloatingPoints = (
     state: ClientState,
     nowMs: number,
-    sprite: Graphics
+    layer: Container,
+    floatingPointLabels: Map<string, Text>
 ): void => {
+    const activePointIds = new Set<string>();
     for (let i = state.events.effects.floatingPoints.length - 1; i >= 0; i -= 1) {
         const points = state.events.effects.floatingPoints[i];
         if (!points) {
@@ -236,15 +279,34 @@ const renderFloatingPoints = (
         const age = nowMs - points.createdAt;
         if (age >= FLOAT_POINTS_MS) {
             state.events.effects.floatingPoints.splice(i, 1);
+            removeFloatingPointsLabel(layer, floatingPointLabels, points.id);
             continue;
         }
+        activePointIds.add(points.id);
         const t = age / FLOAT_POINTS_MS;
         const yOffset = Math.floor(28 * t);
         const alpha = Math.max(0, 1 - t);
-        sprite
-            .rect(points.x - 10, points.y - 20 - yOffset, 20, 10)
-            .fill({ color: 0xffd166, alpha: 0.75 * alpha })
-            .stroke({ color: 0x2a1a00, width: 1, alpha: 0.8 * alpha });
+        let label = floatingPointLabels.get(points.id);
+        if (!label) {
+            label = createFloatingPointsLabel();
+            floatingPointLabels.set(points.id, label);
+        }
+        const text = formatFloatingPointsAmount(points.amount);
+        if (label.text !== text) {
+            label.text = text;
+        }
+        label.anchor.set(0.5, 1);
+        label.position.set(points.x, points.y - 10 - yOffset);
+        label.alpha = alpha;
+        if (label.parent !== layer) {
+            layer.addChild(label);
+        }
+    }
+    for (const pointsId of floatingPointLabels.keys()) {
+        if (activePointIds.has(pointsId)) {
+            continue;
+        }
+        removeFloatingPointsLabel(layer, floatingPointLabels, pointsId);
     }
 };
 
@@ -268,6 +330,7 @@ export const renderEffects = (
     layer: Container,
     sprite: Graphics,
     explosionSprites: Map<string, Sprite>,
+    floatingPointLabels: Map<string, Text>,
     muzzleFlashTexture: Texture | null = null,
     smallExplosionTexture: Texture | null = null,
     largeExplosionTexture: Texture | null = null
@@ -287,7 +350,7 @@ export const renderEffects = (
         smallExplosionTexture,
         largeExplosionTexture
     );
-    renderFloatingPoints(state, nowMs, sprite);
+    renderFloatingPoints(state, nowMs, layer, floatingPointLabels);
     const lastOrbEvent = state.events.lastOrbEvent;
     const orbAge = lastOrbEvent ? nowMs - lastOrbEvent.at : Number.POSITIVE_INFINITY;
     const shouldShakeForOrb = !!lastOrbEvent

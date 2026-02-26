@@ -29,6 +29,9 @@ const toPayload = (state: RuntimeState, cityId: number): KnownEventPayloadByType
 };
 
 const isResearchBuildingType = (type: number): boolean => {
+    if (!Number.isFinite(type) || type < 100) {
+        return false;
+    }
     return Math.floor(type / 100) === RESEARCH_BUILDING_FAMILY;
 };
 

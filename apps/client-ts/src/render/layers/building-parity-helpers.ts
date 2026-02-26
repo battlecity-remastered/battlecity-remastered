@@ -7,7 +7,17 @@ export const FACTORY_OVERLAY_OFFSET = { x: 56, y: 52 };
 export const RESEARCH_OVERLAY_OFFSET = { x: 14, y: 98 };
 
 export const resolveBuildingBaseType = (buildingType: number): number => {
-    return Math.max(0, Math.floor(buildingType / 100));
+    const numeric = Number(buildingType);
+    if (!Number.isFinite(numeric)) {
+        return -1;
+    }
+    if (numeric === 0) {
+        return 0;
+    }
+    if (numeric < 100) {
+        return -1;
+    }
+    return Math.floor(numeric / 100);
 };
 
 export const resolveBuildingBaseFrame = (buildingType: number): { x: number; y: number; width: number; height: number } => {

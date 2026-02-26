@@ -12,6 +12,10 @@ const resolveRank = (state: ClientState): string => {
     return state.scoreProfile.rank ?? "Private";
 };
 
+const isRogue = (id: string | null, city: number): boolean => {
+    return city < 0 || (typeof id === "string" && id.startsWith("rogue_"));
+};
+
 const buildLabel = (rank: string, name: string, city: number): string => {
     return `${rank} ${name}\n${getCityDisplayName(city)}`;
 };
@@ -19,6 +23,9 @@ const buildLabel = (rank: string, name: string, city: number): string => {
 const resolveCallsign = (state: ClientState, id: string | null): string => {
     if (id === state.local.id) {
         return state.identity.callsign;
+    }
+    if (typeof id === "string" && id.startsWith("rogue_")) {
+        return "Rogue";
     }
     return id ?? "Unit";
 };
@@ -118,7 +125,10 @@ export const renderNameLabels = (
         if (!label || !tank) {
             continue;
         }
-        const text = buildLabel(remote.health !== undefined && remote.health <= 0 ? "KIA" : "Unit", resolveCallsign(state, remote.id), remote.city);
+        const rogue = isRogue(remote.id, remote.city);
+        const text = rogue
+            ? (remote.health !== undefined && remote.health <= 0 ? "KIA Rogue" : "Rogue")
+            : buildLabel(remote.health !== undefined && remote.health <= 0 ? "KIA" : "Unit", resolveCallsign(state, remote.id), remote.city);
         setTextIfChanged(label, text);
         label.alpha = resolveHealthAlpha(state, remote.city, remote.health, remote.maxHealth);
         const remotePos = resolveLabelPosition(tank);

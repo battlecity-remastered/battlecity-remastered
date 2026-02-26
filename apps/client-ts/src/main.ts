@@ -20,6 +20,7 @@ import { createIdentityManager, registerIdentityHotkeys } from "./ui/identity/Id
 import { registerInventoryHotkeys } from "./gameplay/items/IconInventoryService.js";
 import { createOrbHintBanner } from "./ui/orb/OrbHintBanner.js";
 import { createDebugHud } from "./ui/debug/DebugHud.js";
+import { createNotificationManager } from "./ui/notifications/NotificationManager.js";
 
 const state = createClientState();
 const unregisterInput = registerInputHandlers(state);
@@ -38,6 +39,7 @@ const music = createMusicManager(state);
 const identityUi = createIdentityManager(state);
 const orbHintUi = createOrbHintBanner(state);
 const debugHud = createDebugHud(state);
+const notificationsUi = createNotificationManager(state);
 const unregisterMouse = registerMouseInputHandlers(state, scene.app.canvas);
 const unregisterWindowMode = registerWindowModeHandlers(scene.app);
 const unregisterModalHotkeys = registerModalHotkeys(state);
@@ -72,6 +74,7 @@ scene.app.ticker.add(() => {
     runTickSegment("identity.render", identityUi.render);
     runTickSegment("orbHint.render", orbHintUi.render);
     runTickSegment("debugHud.render", debugHud.render);
+    runTickSegment("notifications.render", notificationsUi.render);
     runTickSegment("audio.tick", audio.tick);
     runTickSegment("music.tick", music.tick);
 });
@@ -96,6 +99,7 @@ window.addEventListener("beforeunload", () => {
     identityUi.dispose();
     orbHintUi.dispose();
     debugHud.dispose();
+    notificationsUi.dispose();
     audio.dispose();
     music.dispose();
     network.stop();

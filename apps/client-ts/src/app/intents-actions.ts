@@ -119,7 +119,7 @@ const resolveNearestFactoryPickupItemType = (
 ): number | null => {
     let nearest: { itemType: number; distanceSq: number } | null = null;
     for (const building of state.buildings.values()) {
-        if (building.cityId !== cityId || Math.floor(building.type / 100) !== 1) {
+        if (building.cityId !== cityId || building.type < 100 || Math.floor(building.type / 100) !== 1) {
             continue;
         }
         const itemType = building.type % 100;

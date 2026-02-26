@@ -80,7 +80,7 @@ const hasNearbyFactoryDrop = (
         if (building.cityId !== cityId) {
             continue;
         }
-        if (Math.floor(building.type / 100) !== 1 || (building.type % 100) !== itemType) {
+        if (building.type < 100 || Math.floor(building.type / 100) !== 1 || (building.type % 100) !== itemType) {
             continue;
         }
         const iconX = (building.tileX * TILE) + FACTORY_DROP_OFFSET_X;

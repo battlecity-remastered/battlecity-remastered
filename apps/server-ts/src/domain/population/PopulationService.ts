@@ -6,7 +6,7 @@ const POPULATION_MAX_NON_HOUSE = 50;
 const POPULATION_INCREMENT = 5;
 
 const isHouseType = (type: number): boolean => {
-    return Math.floor(type / 100) === 3;
+    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 3;
 };
 
 const isPopulationProducer = (building: RuntimeBuilding): boolean => {

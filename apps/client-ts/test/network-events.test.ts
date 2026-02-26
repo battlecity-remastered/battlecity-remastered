@@ -261,6 +261,8 @@ test("score.profile updates local profile only", () => {
 test("bullet lifecycle and icon pickup confirmation apply to local state", () => {
     const state = createClientState();
     state.local.id = "local";
+    state.ui.selectedInventoryItemType = 3;
+    state.ui.bombArmed = true;
 
     applyServerEvent(state, makeKnownEnvelope("bullet.fired", 1, {
         id: "bullet_1",
@@ -281,6 +283,8 @@ test("bullet lifecycle and icon pickup confirmation apply to local state", () =>
     assert.equal(state.bullets.get("bullet_1")?.x, 320);
     assert.equal(state.bullets.get("bullet_1")?.speed, 720);
     assert.equal(state.events.lastIconPickupConfirmed?.itemType, 0);
+    assert.equal(state.ui.selectedInventoryItemType, 0);
+    assert.equal(state.ui.bombArmed, false);
 
     applyServerEvent(state, makeKnownEnvelope("bullet.resolved", 3, {
         id: "bullet_1",

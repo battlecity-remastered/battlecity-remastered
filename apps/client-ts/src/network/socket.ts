@@ -1,5 +1,6 @@
 import { io, type Socket } from "socket.io-client";
 import {
+    type KnownEventPayloadByType,
     makeEnvelope,
 } from "@battlecity/protocol";
 import { Effect } from "effect";
@@ -15,7 +16,15 @@ import {
     recordDebugSocketState
 } from "../app/debug-metrics.js";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:8121";
+const resolveServerUrl = (): string => {
+    const env = (import.meta as ImportMeta & { env?: Record<string, unknown>; }).env;
+    const configured = env?.VITE_SERVER_URL;
+    return typeof configured === "string" && configured.length > 0
+        ? configured
+        : "http://localhost:8121";
+};
+
+const SERVER_URL = resolveServerUrl();
 const MANUAL_PING_INTERVAL_MS = 4000;
 
 export type SocketRuntime = {
@@ -24,11 +33,58 @@ export type SocketRuntime = {
     stop: () => void;
 };
 
+export const clearClientWorldForReconnect = (state: ClientState): void => {
+    state.local.id = null;
+    state.local.health = 100;
+    state.local.maxHealth = 100;
+
+    state.remotePlayers.clear();
+    state.cityFinance.clear();
+    state.research.clear();
+    state.factoryStock.clear();
+    state.inventory.clear();
+    state.hazards.clear();
+    state.bullets.clear();
+    state.buildings.clear();
+    state.defenses.clear();
+    state.chat.rateLimitedUntil = null;
+    state.chat.rateLimitedScope = null;
+
+    state.events.lastOrbedCityId = null;
+    state.events.lastOrbEvent = null;
+    state.events.lastBuildDeniedReason = null;
+    state.events.lastDemolishDeniedReason = null;
+    state.events.lastIconPickupConfirmed = null;
+    state.events.effects.explosions = [];
+    state.events.effects.floatingPoints = [];
+
+    state.ui.selectedInventoryItemType = null;
+    state.ui.bombArmed = false;
+    state.ui.showBuildMenu = false;
+    state.ui.buildGhostMode = false;
+    state.ui.buildDemolishMode = false;
+    state.ui.pendingBuildPlacement = null;
+};
+
+export const buildReconnectJoinPayload = (
+    state: ClientState,
+    desiredCity: number
+): KnownEventPayloadByType["lobby.join.request"] => {
+    return {
+        desiredCity,
+        callsign: state.identity.callsign,
+        ...(typeof state.identity.userId === "string" && state.identity.userId.length > 0
+            ? { userId: state.identity.userId }
+            : {})
+    };
+};
+
 export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     let seq = 0;
     let pingIntervalId: number | null = null;
     let pingListenersAttached = false;
     let lastEnginePingAt: number | null = null;
+    let reconnectDesiredCity: number | null = null;
 
     const nextSeq = (): number => {
         seq += 1;
@@ -112,11 +168,19 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
         recordDebugSocketState(state, true);
         attachPingListeners();
         runManualPing();
+        if (reconnectDesiredCity !== null) {
+            send("lobby.join.request", buildReconnectJoinPayload(state, reconnectDesiredCity));
+            reconnectDesiredCity = null;
+        }
         Effect.runSync(logClient("socket.connected", {
             socketId: socket.id
         }));
     });
     socket.on("disconnect", (reason) => {
+        if (state.local.id !== null) {
+            reconnectDesiredCity = state.local.city;
+            clearClientWorldForReconnect(state);
+        }
         recordDebugSocketState(state, false);
         Effect.runSync(logClient("socket.disconnected", {
             socketId: socket.id,

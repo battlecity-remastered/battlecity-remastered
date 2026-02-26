@@ -20,8 +20,17 @@ const BUILDING_FOOTPRINT_TILES = 3;
 const MAP_COLLISION_RADIUS_TILES = 14;
 
 const resolveBlockingHeightTiles = (buildingType: number): number => {
-    const family = Math.max(0, Math.floor(buildingType / 100));
-    return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
+    if (!Number.isFinite(buildingType)) {
+        return BUILDING_FOOTPRINT_TILES;
+    }
+    if (buildingType === 0) {
+        return 2;
+    }
+    if (buildingType >= 100) {
+        const family = Math.floor(buildingType / 100);
+        return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
+    }
+    return BUILDING_FOOTPRINT_TILES;
 };
 
 const toCollisionPoint = (x: number, y: number): CollisionPoint => {
