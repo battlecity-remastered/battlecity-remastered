@@ -8,7 +8,7 @@ import {
     normalizeBotHeading,
     resolveCityCenter
 } from "./BotShared.js";
-import { findBotPath } from "./BotPathingService.js";
+import { createBotPathContext, findBotPath, type BotPathContext } from "./BotPathingService.js";
 
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
@@ -225,7 +225,8 @@ const maybeRebuildPath = (
     controller: RuntimeBotController,
     bot: RuntimePlayer,
     target: { id?: string; x: number; y: number },
-    fallbackTarget?: { x: number; y: number }
+    fallbackTarget?: { x: number; y: number },
+    pathContext?: BotPathContext
 ): void => {
     const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
     if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
@@ -234,12 +235,14 @@ const maybeRebuildPath = (
 
     let path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
         searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-        maxNodes: PATH_MAX_NODES
+        maxNodes: PATH_MAX_NODES,
+        context: pathContext
     });
     if (!path && fallbackTarget) {
         path = findBotPath(state, config, bot.x, bot.y, fallbackTarget.x, fallbackTarget.y, {
             searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-            maxNodes: PATH_MAX_NODES
+            maxNodes: PATH_MAX_NODES,
+            context: pathContext
         });
     }
 
@@ -307,6 +310,7 @@ export const tickRogueBots = (
     deltaMs: number
 ): boolean => {
     let dirty = ensureRoguePopulation(state, config, now);
+    const pathContext = createBotPathContext();
 
     for (const [botId, controller] of state.botControllers.entries()) {
         if (controller.botType !== ROGUE_TYPE) {
@@ -356,7 +360,8 @@ export const tickRogueBots = (
             controller,
             bot,
             movementTargetFallback,
-            nearest ? { x: nearest.x, y: nearest.y } : undefined
+            nearest ? { x: nearest.x, y: nearest.y } : undefined,
+            pathContext
         );
         maybeAdvanceWaypoint(controller, bot);
         const movementTarget = resolveMovementTarget(controller, movementTargetFallback);

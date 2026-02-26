@@ -8,6 +8,117 @@ type TilePoint = {
 type PathOptions = {
     searchRadiusTiles: number;
     maxNodes: number;
+    context?: BotPathContext | undefined;
+};
+
+export type BotPathContext = {
+    blockedSetCache: Map<string, Set<string>>;
+    stats: {
+        blockedSetBuilds: number;
+    };
+};
+
+export class BinaryMinHeap<T extends object> {
+    private readonly items: T[] = [];
+    private readonly indexByItem = new Map<T, number>();
+    private readonly compare: (left: T, right: T) => number;
+
+    public constructor(compare: (left: T, right: T) => number) {
+        this.compare = compare;
+    }
+
+    public get size(): number {
+        return this.items.length;
+    }
+
+    public push(item: T): void {
+        const index = this.items.length;
+        this.items.push(item);
+        this.indexByItem.set(item, index);
+        this.bubbleUp(index);
+    }
+
+    public pop(): T | undefined {
+        if (this.items.length === 0) {
+            return undefined;
+        }
+        const min = this.items[0];
+        if (!min) {
+            return undefined;
+        }
+        const tail = this.items.pop();
+        this.indexByItem.delete(min);
+
+        if (tail && this.items.length > 0) {
+            this.items[0] = tail;
+            this.indexByItem.set(tail, 0);
+            this.bubbleDown(0);
+        }
+
+        return min;
+    }
+
+    public update(item: T): void {
+        const index = this.indexByItem.get(item);
+        if (index === undefined) {
+            return;
+        }
+        this.bubbleUp(index);
+        this.bubbleDown(index);
+    }
+
+    private bubbleUp(startIndex: number): void {
+        let index = startIndex;
+        while (index > 0) {
+            const parent = Math.floor((index - 1) / 2);
+            if (this.compare(this.items[index] as T, this.items[parent] as T) >= 0) {
+                break;
+            }
+            this.swap(index, parent);
+            index = parent;
+        }
+    }
+
+    private bubbleDown(startIndex: number): void {
+        let index = startIndex;
+        const size = this.items.length;
+
+        while (true) {
+            const left = (index * 2) + 1;
+            const right = left + 1;
+            let smallest = index;
+
+            if (left < size && this.compare(this.items[left] as T, this.items[smallest] as T) < 0) {
+                smallest = left;
+            }
+            if (right < size && this.compare(this.items[right] as T, this.items[smallest] as T) < 0) {
+                smallest = right;
+            }
+            if (smallest === index) {
+                break;
+            }
+            this.swap(index, smallest);
+            index = smallest;
+        }
+    }
+
+    private swap(leftIndex: number, rightIndex: number): void {
+        const left = this.items[leftIndex] as T;
+        const right = this.items[rightIndex] as T;
+        this.items[leftIndex] = right;
+        this.items[rightIndex] = left;
+        this.indexByItem.set(right, leftIndex);
+        this.indexByItem.set(left, rightIndex);
+    }
+}
+
+export const createBotPathContext = (): BotPathContext => {
+    return {
+        blockedSetCache: new Map<string, Set<string>>(),
+        stats: {
+            blockedSetBuilds: 0
+        }
+    };
 };
 
 const BOT_HALF = 24;
@@ -184,6 +295,29 @@ const buildBlockedSet = (
     return blocked;
 };
 
+const resolveBlockedSet = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    minTileX: number,
+    maxTileX: number,
+    minTileY: number,
+    maxTileY: number,
+    context?: BotPathContext
+): Set<string> => {
+    if (!context) {
+        return buildBlockedSet(state, config, minTileX, maxTileX, minTileY, maxTileY);
+    }
+    const key = `${minTileX}:${maxTileX}:${minTileY}:${maxTileY}`;
+    const cached = context.blockedSetCache.get(key);
+    if (cached) {
+        return cached;
+    }
+    const blocked = buildBlockedSet(state, config, minTileX, maxTileX, minTileY, maxTileY);
+    context.blockedSetCache.set(key, blocked);
+    context.stats.blockedSetBuilds += 1;
+    return blocked;
+};
+
 export const findBotPath = (
     state: RuntimeState,
     config: RuntimeConfig,
@@ -210,7 +344,15 @@ export const findBotPath = (
     const minTileY = Math.max(0, Math.min(startTile.y, goalTile.y) - options.searchRadiusTiles);
     const maxTileY = Math.min(maxTile, Math.max(startTile.y, goalTile.y) + options.searchRadiusTiles);
 
-    const blocked = buildBlockedSet(state, config, minTileX, maxTileX, minTileY, maxTileY);
+    const blocked = resolveBlockedSet(
+        state,
+        config,
+        minTileX,
+        maxTileX,
+        minTileY,
+        maxTileY,
+        options.context
+    );
     const start = nearestPassableTile(blocked, startTile, config.tileSize, maxTile, 6);
     const goal = nearestPassableTile(blocked, goalTile, config.tileSize, maxTile, 8);
     if (!start || !goal) {
@@ -233,7 +375,13 @@ export const findBotPath = (
         parent?: string;
     };
 
-    const open = new Map<string, Node>();
+    const open = new BinaryMinHeap<Node>((left, right) => {
+        if (left.f !== right.f) {
+            return left.f - right.f;
+        }
+        return right.g - left.g;
+    });
+    const openByKey = new Map<string, Node>();
     const closed = new Set<string>();
     const allNodes = new Map<string, Node>();
     const startNode: Node = {
@@ -243,7 +391,8 @@ export const findBotPath = (
         g: 0,
         f: octileHeuristic(start.x, start.y, goal.x, goal.y)
     };
-    open.set(startKey, startNode);
+    open.push(startNode);
+    openByKey.set(startKey, startNode);
     allNodes.set(startKey, startNode);
 
     const neighbors: Array<{ dx: number; dy: number; step: number }> = [
@@ -261,17 +410,12 @@ export const findBotPath = (
     while (open.size > 0 && explored < options.maxNodes) {
         explored += 1;
 
-        let current: Node | undefined;
-        for (const candidate of open.values()) {
-            if (!current || candidate.f < current.f || (candidate.f === current.f && candidate.g > current.g)) {
-                current = candidate;
-            }
-        }
+        const current = open.pop();
         if (!current) {
             break;
         }
 
-        open.delete(current.key);
+        openByKey.delete(current.key);
         closed.add(current.key);
         if (current.key === goalKey) {
             const path: Array<{ x: number; y: number }> = [];
@@ -309,10 +453,19 @@ export const findBotPath = (
             }
 
             const tentativeG = current.g + neighbor.step;
-            const existing = open.get(nextKey);
+            const existing = openByKey.get(nextKey);
             if (existing && tentativeG >= existing.g) {
                 continue;
             }
+
+            if (existing) {
+                existing.g = tentativeG;
+                existing.f = tentativeG + octileHeuristic(nextX, nextY, goal.x, goal.y);
+                existing.parent = current.key;
+                open.update(existing);
+                continue;
+            }
+
             const nextNode: Node = {
                 x: nextX,
                 y: nextY,
@@ -321,7 +474,8 @@ export const findBotPath = (
                 f: tentativeG + octileHeuristic(nextX, nextY, goal.x, goal.y),
                 parent: current.key
             };
-            open.set(nextKey, nextNode);
+            open.push(nextNode);
+            openByKey.set(nextKey, nextNode);
             allNodes.set(nextKey, nextNode);
         }
     }

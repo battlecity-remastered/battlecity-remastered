@@ -8,7 +8,7 @@ import {
     normalizeBotHeading,
     resolveCityCenter
 } from "./BotShared.js";
-import { findBotPath } from "./BotPathingService.js";
+import { createBotPathContext, findBotPath, type BotPathContext } from "./BotPathingService.js";
 
 const DEFENDER_TYPE: RuntimeBotController["botType"] = "defender";
 const MAX_DEFENDERS_PER_CITY = 4;
@@ -269,7 +269,8 @@ const maybeRebuildPath = (
     controller: RuntimeBotController,
     bot: RuntimePlayer,
     target: { id?: string; x: number; y: number },
-    fallbackTarget?: { x: number; y: number }
+    fallbackTarget?: { x: number; y: number },
+    pathContext?: BotPathContext
 ): void => {
     const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
     if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
@@ -278,12 +279,14 @@ const maybeRebuildPath = (
 
     let path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
         searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-        maxNodes: PATH_MAX_NODES
+        maxNodes: PATH_MAX_NODES,
+        context: pathContext
     });
     if (!path && fallbackTarget) {
         path = findBotPath(state, config, bot.x, bot.y, fallbackTarget.x, fallbackTarget.y, {
             searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-            maxNodes: PATH_MAX_NODES
+            maxNodes: PATH_MAX_NODES,
+            context: pathContext
         });
     }
 
@@ -418,6 +421,7 @@ export const tickDefenderBots = (
 ): boolean => {
     let dirty = evaluateDefenderPopulation(state, config, now);
     const detectionRadius = Math.max(config.botDetectionRadius, config.tileSize * 22);
+    const pathContext = createBotPathContext();
 
     for (const [botId, controller] of state.botControllers.entries()) {
         if (controller.botType !== DEFENDER_TYPE) {
@@ -460,7 +464,8 @@ export const tickDefenderBots = (
             controller,
             bot,
             movementTargetFallback,
-            attackTarget ? { x: attackTarget.x, y: attackTarget.y } : undefined
+            attackTarget ? { x: attackTarget.x, y: attackTarget.y } : undefined,
+            pathContext
         );
         maybeAdvanceWaypoint(controller, bot);
         const movementTarget = resolveMovementTarget(controller, movementTargetFallback);
