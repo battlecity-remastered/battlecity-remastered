@@ -58,3 +58,41 @@ test("factory production cap counts city player-held inventory", () => {
     });
     assert.equal(laserStockEvents.length, 1);
 });
+
+test("factory production uses per-building cadence after successful production", () => {
+    const state = createRuntimeState();
+    state.buildings.set("factory_1", {
+        id: "factory_1",
+        ownerId: "p1",
+        cityId: 1,
+        type: LASER_FACTORY_TYPE,
+        tileX: 10,
+        tileY: 10,
+        health: 120,
+        maxHealth: 120,
+        population: 50
+    });
+
+    const events: Array<{ type: string; payload: unknown }> = [];
+    const emitter = createEmitter(events);
+    const config = {
+        ...DEFAULT_RUNTIME_CONFIG,
+        factoryProductionTickMs: 7000,
+        factoryStockCap: 99
+    };
+
+    // First eligible tick produces immediately (legacy parity behavior).
+    tickFactories(state, config, emitter, 100);
+    let stock = state.factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(stock, 1);
+
+    // Not enough elapsed time for the next production.
+    tickFactories(state, config, emitter, 6999);
+    stock = state.factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(stock, 1);
+
+    // Crossing the cadence boundary allows the next production.
+    tickFactories(state, config, emitter, 1);
+    stock = state.factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
+    assert.equal(stock, 2);
+});

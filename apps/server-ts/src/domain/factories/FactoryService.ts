@@ -3,6 +3,7 @@ import { rejectResult, type CommandResult, type RuntimeBuilding, type RuntimeCon
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 
 const POPULATION_MAX_NON_HOUSE = 50;
+const DEFAULT_PRODUCTION_RETRY_MS = 1000;
 const FACTORY_ITEM_LIMITS: Readonly<Record<number, number>> = {
     100: 4,
     101: 4,
@@ -134,6 +135,7 @@ const processFactoryBuilding = (
     config: RuntimeConfig,
     emitter: RuntimeEmitter,
     activeFactoryItemTypes: Map<number, Set<number>>,
+    nowMs: number,
     building: RuntimeBuilding
 ): void => {
     if (!isFactoryBuildingType(building.type)) {
@@ -142,10 +144,26 @@ const processFactoryBuilding = (
     const cityId = building.cityId;
     const itemType = building.type % 100;
     addActiveFactoryItemType(activeFactoryItemTypes, cityId, itemType);
+    const nextAt = state.factoryProductionNextAtMs.get(building.id) ?? 0;
+    if (nowMs < nextAt) {
+        return;
+    }
     if (building.population < POPULATION_MAX_NON_HOUSE) {
         return;
     }
+    const cityStock = ensureCityStock(state, cityId);
+    const current = cityStock.get(itemType) ?? 0;
+    const cap = resolveFactoryCap(config, building.type);
+    const outstanding = resolveCityOutstandingItemCount(state, cityId, itemType);
+    if (outstanding >= cap) {
+        return;
+    }
     tryProduceFactoryStock(state, config, emitter, cityId, building.type, itemType);
+    const produced = (state.factoryStock.get(cityId)?.get(itemType) ?? current) > current;
+    state.factoryProductionNextAtMs.set(
+        building.id,
+        nowMs + (produced ? config.factoryProductionTickMs : DEFAULT_PRODUCTION_RETRY_MS)
+    );
 };
 
 const clearInactiveFactoryStock = (
@@ -205,15 +223,20 @@ export const tickFactories = (
     deltaMs: number
 ): void => {
     state.factoryTickAccumulatorMs += deltaMs;
-    if (state.factoryTickAccumulatorMs < config.factoryProductionTickMs) {
-        return;
-    }
-    state.factoryTickAccumulatorMs = 0;
+    const nowMs = state.factoryTickAccumulatorMs;
 
     const activeFactoryItemTypes = new Map<number, Set<number>>();
+    const activeBuildingIds = new Set<string>();
 
     for (const building of state.buildings.values()) {
-        processFactoryBuilding(state, config, emitter, activeFactoryItemTypes, building);
+        activeBuildingIds.add(building.id);
+        processFactoryBuilding(state, config, emitter, activeFactoryItemTypes, nowMs, building);
+    }
+
+    for (const buildingId of state.factoryProductionNextAtMs.keys()) {
+        if (!activeBuildingIds.has(buildingId)) {
+            state.factoryProductionNextAtMs.delete(buildingId);
+        }
     }
 
     clearInactiveFactoryStock(state, emitter, activeFactoryItemTypes);

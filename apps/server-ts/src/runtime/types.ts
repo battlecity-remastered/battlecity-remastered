@@ -114,6 +114,7 @@ export type RuntimeState = {
     rogueSpawnCheckAt: number;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
+    factoryProductionNextAtMs: Map<string, number>;
     populationTickAccumulatorMs: number;
     botTickAccumulatorMs: number;
     seq: number;
@@ -214,7 +215,7 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     researchDurationMs: 3000,
     buildingCost: 150,
     maxBuildingChainDistanceTiles: 20,
-    factoryProductionTickMs: 1000,
+    factoryProductionTickMs: 7000,
     factoryStockCap: 8,
     hazardDefaultFuseMs: 2000,
     hazardDefaultRadius: 96,
@@ -282,6 +283,7 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         rogueSpawnCheckAt: 0,
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
+        factoryProductionNextAtMs: new Map<string, number>(),
         populationTickAccumulatorMs: 0,
         botTickAccumulatorMs: 0,
         seq: 0
