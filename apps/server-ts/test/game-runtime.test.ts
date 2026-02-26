@@ -1072,7 +1072,7 @@ test("lobby join emits player leaderboard snapshot", () => {
     assert.ok(latest);
     const scores = latest.payload as Array<{ userId: string; name: string; points: number; rankTitle: string }>;
     assert.equal(scores.length, 1);
-    assert.equal(scores[0]?.userId, "u1");
+    assert.equal(scores[0]?.userId, "guest:p1");
     assert.equal(scores[0]?.name, "Pilot One");
     assert.equal(scores[0]?.points, 0);
     assert.equal(scores[0]?.rankTitle, "Private");
@@ -2321,7 +2321,7 @@ test("lobby join hydrates score profile for bound user id", () => {
 
     const profile = direct.find((entry) => entry.socketId === "p1" && entry.event.type === "score.profile");
     assert.ok(profile);
-    assert.equal((profile.event.payload as { userId: string }).userId, "google:user-1");
+    assert.equal((profile.event.payload as { userId: string }).userId, "guest:p1");
     assert.equal((profile.event.payload as { score: number }).score, 0);
 });
 
@@ -2833,7 +2833,7 @@ test("orb drop invokes notifier adapter with authoritative payload", async () =>
     });
 
     assert.equal(notifications.length, 1);
-    assert.equal(notifications[0]?.playerId, "u-attacker");
+    assert.equal(notifications[0]?.playerId, "guest:attacker");
     assert.equal(notifications[0]?.sourceCityId, 1);
     assert.equal(notifications[0]?.targetCityId, 2);
 });

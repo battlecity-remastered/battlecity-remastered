@@ -24,7 +24,9 @@ export type RuntimeDomainError =
 
 const staticErrorByReason: Partial<Record<RuntimeRejectReason, RuntimeDomainError>> = {
     invalid_envelope: { _tag: "InvalidEnvelope" },
+    replay_detected: { _tag: "InvalidEnvelope" },
     lobby_full: { _tag: "LobbyFull" },
+    rate_limited: { _tag: "ChatRateLimited" },
     insufficient_funds: { _tag: "InsufficientFunds" },
     research_active: { _tag: "ResearchConflict" },
     research_unavailable: { _tag: "ResearchConflict" },

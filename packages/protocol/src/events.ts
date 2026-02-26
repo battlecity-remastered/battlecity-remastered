@@ -6,7 +6,8 @@ export const Vec2 = Schema.Struct({
 export const LobbyJoinRequest = Schema.Struct({
     desiredCity: Schema.optional(Schema.Number),
     callsign: Schema.optional(Schema.String),
-    userId: Schema.optional(Schema.String)
+    userId: Schema.optional(Schema.String),
+    authToken: Schema.optional(Schema.String)
 });
 export const LobbyLeaveRequest = Schema.Struct({});
 export const LobbyAssignment = Schema.Struct({

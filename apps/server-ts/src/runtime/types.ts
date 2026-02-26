@@ -164,6 +164,8 @@ export type RuntimeConfig = {
 
 export type RuntimeRejectReason =
     | "invalid_envelope"
+    | "replay_detected"
+    | "rate_limited"
     | "player_not_joined"
     | "city_mismatch"
     | "building_not_found"
