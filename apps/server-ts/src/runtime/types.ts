@@ -53,8 +53,13 @@ export type RuntimeFakeCityState = {
 export type RuntimeBotController = {
     id: string;
     botType: "defender" | "rogue";
+    botRole?: "mayor" | "shooter" | "bomb_defuser" | "miner";
     homeCityId: number;
     targetCityId: number;
+    targetPlayerId?: string;
+    path?: Array<{ x: number; y: number }>;
+    pathIndex?: number;
+    nextPathAt?: number;
     nextRetargetAt: number;
     nextShotAt: number;
 };

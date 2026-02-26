@@ -8,11 +8,18 @@ import {
     normalizeBotHeading,
     resolveCityCenter
 } from "./BotShared.js";
+import { findBotPath } from "./BotPathingService.js";
 
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
+const PATHFIND_INTERVAL_MS = 1200;
+const PATH_SEARCH_RADIUS_TILES = 120;
+const PATH_MAX_NODES = 8000;
+const WAYPOINT_REACHED_DISTANCE_PX = 24;
 const SHOOT_INTERVAL_MS = 1400;
 const SHOOT_RANGE_TILES = 12;
+const STANDOFF_FACTOR = 0.5;
+const MIN_TARGET_BUFFER_TILES = 1;
 const SPAWN_RADIUS_TILES = 18;
 const MOVE_SPEED_MULTIPLIER = 0.85;
 const BOT_HALF = 24;
@@ -104,6 +111,8 @@ const spawnRogue = (
         botType: ROGUE_TYPE,
         homeCityId: -1,
         targetCityId,
+        pathIndex: 0,
+        nextPathAt: now,
         nextRetargetAt: now + 1200,
         nextShotAt: now + 900
     });
@@ -186,6 +195,103 @@ const fireAtTarget = (
     });
 };
 
+const maybeAdvanceWaypoint = (controller: RuntimeBotController, bot: RuntimePlayer): void => {
+    const path = controller.path;
+    if (!path || path.length === 0) {
+        controller.pathIndex = 0;
+        return;
+    }
+
+    const index = controller.pathIndex ?? 0;
+    const waypoint = path[index];
+    if (!waypoint) {
+        controller.pathIndex = path.length;
+        return;
+    }
+
+    const dx = waypoint.x - bot.x;
+    const dy = waypoint.y - bot.y;
+    if ((dx * dx) + (dy * dy) > (WAYPOINT_REACHED_DISTANCE_PX * WAYPOINT_REACHED_DISTANCE_PX)) {
+        return;
+    }
+
+    controller.pathIndex = index + 1;
+};
+
+const maybeRebuildPath = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    now: number,
+    controller: RuntimeBotController,
+    bot: RuntimePlayer,
+    target: { id?: string; x: number; y: number }
+): void => {
+    const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
+    if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
+        return;
+    }
+
+    const path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
+        searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
+        maxNodes: PATH_MAX_NODES
+    });
+
+    if (path) {
+        controller.path = path;
+    } else {
+        delete controller.path;
+    }
+    controller.pathIndex = 0;
+    controller.nextPathAt = now + PATHFIND_INTERVAL_MS;
+    if (target.id) {
+        controller.targetPlayerId = target.id;
+    } else {
+        delete controller.targetPlayerId;
+    }
+};
+
+const computeStandOffTarget = (
+    config: RuntimeConfig,
+    bot: RuntimePlayer,
+    target: { x: number; y: number }
+): { x: number; y: number } => {
+    const botCenterX = bot.x + BOT_HALF;
+    const botCenterY = bot.y + BOT_HALF;
+    const targetCenterX = target.x + BOT_HALF;
+    const targetCenterY = target.y + BOT_HALF;
+    const dx = targetCenterX - botCenterX;
+    const dy = targetCenterY - botCenterY;
+    const distance = Math.hypot(dx, dy);
+    if (!Number.isFinite(distance) || distance < 1e-3) {
+        return { x: target.x, y: target.y };
+    }
+
+    const shootRangePx = config.tileSize * SHOOT_RANGE_TILES;
+    const desiredStandOffPx = shootRangePx * STANDOFF_FACTOR;
+    const minBufferPx = config.tileSize * MIN_TARGET_BUFFER_TILES;
+    const keepBackPx = Math.max(minBufferPx, Math.min(shootRangePx * 0.95, desiredStandOffPx));
+    const ratio = Math.max(0, (distance - keepBackPx) / distance);
+    const goalCenterX = botCenterX + (dx * ratio);
+    const goalCenterY = botCenterY + (dy * ratio);
+
+    return {
+        x: goalCenterX - BOT_HALF,
+        y: goalCenterY - BOT_HALF
+    };
+};
+
+const resolveMovementTarget = (
+    controller: RuntimeBotController,
+    fallback: { x: number; y: number }
+): { x: number; y: number } => {
+    const path = controller.path;
+    const index = controller.pathIndex ?? 0;
+    if (!path || index >= path.length) {
+        return fallback;
+    }
+    return path[index] ?? fallback;
+};
+
 export const tickRogueBots = (
     state: RuntimeState,
     config: RuntimeConfig,
@@ -228,7 +334,17 @@ export const tickRogueBots = (
             Math.max(config.botDetectionRadius, config.tileSize * 18),
             controller.targetCityId
         );
-        const movementTarget = nearest ?? fallbackTarget;
+
+        const attackTarget = nearest
+            ? { id: nearest.id, x: nearest.x, y: nearest.y }
+            : { x: fallbackTarget.x, y: fallbackTarget.y };
+        const movementTargetFallback = nearest
+            ? computeStandOffTarget(config, bot, attackTarget)
+            : attackTarget;
+
+        maybeRebuildPath(state, config, now, controller, bot, movementTargetFallback);
+        maybeAdvanceWaypoint(controller, bot);
+        const movementTarget = resolveMovementTarget(controller, movementTargetFallback);
 
         const direction = headingToTarget(
             bot.x + BOT_HALF,
@@ -256,7 +372,7 @@ export const tickRogueBots = (
         };
         state.players.set(botId, updatedBot);
 
-        fireAtTarget(state, emitter, config, updatedBot, controller, nearest ?? fallbackTarget, now);
+        fireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now);
         dirty = true;
     }
 

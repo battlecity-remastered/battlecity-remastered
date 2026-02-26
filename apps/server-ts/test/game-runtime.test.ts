@@ -2918,6 +2918,82 @@ test("fake city activates under low population and spawns defender bots", () => 
     assert.ok(broadcast.some((event) => event.type === "players.snapshot"));
 });
 
+test("fake city defender spawns rotate legacy bot roles", () => {
+    const { runtime } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        fakeCityDefendersPerCity: 4,
+        fakeCityPlayerThreshold: 10
+    }, {}, {
+        fakeCityIds: [17]
+    });
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 17,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 4600, y: 7600 }
+    }));
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const roles = Array.from(runtime.getReadonlyState().botControllers.values())
+        .filter((controller) => controller.botType === "defender")
+        .map((controller) => controller.botRole);
+
+    assert.ok(roles.includes("mayor"));
+    assert.ok(roles.includes("shooter"));
+    assert.ok(roles.includes("bomb_defuser"));
+    assert.ok(roles.includes("miner"));
+});
+
+test("bomb_defuser defenders prioritize active enemy bombs over players", () => {
+    const { runtime } = makeHarness({
+        cityCount: 50,
+        botTickMs: 50,
+        fakeCityDefendersPerCity: 4,
+        fakeCityPlayerThreshold: 10
+    }, {}, {
+        fakeCityIds: [17]
+    });
+
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
+        id: "p1",
+        city: 17,
+        direction: 0,
+        isMoving: false,
+        offset: { x: 4600, y: 7600 }
+    }));
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    runtime.getReadonlyState().hazards.set("bomb_role_test", {
+        id: "bomb_role_test",
+        ownerId: "enemy",
+        cityId: 1,
+        type: 3,
+        x: 4608,
+        y: 7608,
+        radius: 96,
+        damage: 25,
+        remainingMs: 5000,
+        armed: true,
+        active: true
+    });
+
+    runtime.tickBullets();
+    runtime.tickBullets();
+
+    const bombDefuser = Array.from(runtime.getReadonlyState().botControllers.values())
+        .find((controller) => controller.botType === "defender" && controller.botRole === "bomb_defuser");
+
+    assert.ok(bombDefuser);
+    assert.equal(bombDefuser?.targetPlayerId, "bomb_role_test");
+});
+
 test("orbing a fake city applies cooldown and removes its defender bots", () => {
     const { runtime } = makeHarness({
         cityCount: 50,
