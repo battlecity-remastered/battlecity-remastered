@@ -2038,7 +2038,7 @@ test("demolishing a factory purges matching city defenses, stock, and inventory"
             return false;
         }
         const payload = event.payload as { id: string; reason: string };
-        return payload.id === "wall_defense" && payload.reason === "factory_destroyed";
+        return payload.id === "wall_defense" && payload.reason === "cleared";
     }));
 });
 

@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { isCommandCenterType, isFactoryType, resolveSmokeFrame } from "../src/render/layers/changing-layer-helpers.js";
 
-test("isCommandCenterType matches legacy command center ids", () => {
+test("isCommandCenterType matches canonical command center id", () => {
     assert.equal(isCommandCenterType(0), true);
-    assert.equal(isCommandCenterType(200), true);
-    assert.equal(isCommandCenterType(201), true);
+    assert.equal(isCommandCenterType(200), false);
+    assert.equal(isCommandCenterType(201), false);
     assert.equal(isCommandCenterType(109), false);
 });
 
