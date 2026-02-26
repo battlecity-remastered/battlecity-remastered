@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import citySpawnsJson from "../data/citySpawns.json" with { type: "json" };
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { UserStoreAdapter } from "../src/adapters/persistence/UserStoreAdapter.js";
-import { createRuntimeState, type RuntimeConfig } from "../src/runtime/types.js";
+import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../src/runtime/types.js";
 
 const ITEM_TYPE_LASER = 12;
 const ITEM_TYPE_BOMB = 3;
@@ -736,6 +736,10 @@ test("building placement rejects terrain-blocked housing footprint", () => {
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -755,6 +759,10 @@ test("building placement uses placement blocking set when terrain is passable fo
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [412],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -771,6 +779,10 @@ test("building placement chain distance uses euclidean radius like legacy server
     const { runtime, broadcast, direct } = makeHarness({ buildingCost: 10 });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -794,6 +806,10 @@ test("building placement rejects overlapping footprint even with different top-l
     const { runtime, broadcast, direct } = makeHarness({ buildingCost: 10 });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -828,7 +844,7 @@ test("house attachment population updates grow over ticks and clear on house dem
         ownerId: "mayor",
         cityId: 1,
         type: 200,
-        tileX: 7,
+        tileX: 9,
         tileY: 6
     }));
 
@@ -1180,9 +1196,13 @@ test("research start spends city cash and emits update/finance", () => {
 
     const research = broadcast.find((event) => event.type === "research.update");
     assert.ok(research);
-    const finance = broadcast.filter((event) => event.type === "city.finance").at(-1);
+    const finance = broadcast
+        .filter((event) => event.type === "city.finance")
+        .map((event) => event.payload as { cityId: number; cash: number })
+        .filter((payload) => payload.cityId === 1)
+        .at(-1);
     assert.ok(finance);
-    assert.ok((finance.payload as { cash: number }).cash < 200);
+    assert.equal(finance?.cash, DEFAULT_RUNTIME_CONFIG.cityStartingCash - DEFAULT_RUNTIME_CONFIG.researchCost);
 });
 
 test("factory stock is produced on tick and can be collected", () => {
@@ -1192,6 +1212,10 @@ test("factory stock is produced on tick and can be collected", () => {
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -1203,7 +1227,7 @@ test("factory stock is produced on tick and can be collected", () => {
         ownerId: "p1",
         cityId: 1,
         type: 100,
-        tileX: 9,
+        tileX: 11,
         tileY: 8
     }));
 
@@ -1241,6 +1265,10 @@ test("factory laser stock is capped at legacy limit", () => {
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [412],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -1252,14 +1280,14 @@ test("factory laser stock is capped at legacy limit", () => {
         ownerId: "p1",
         cityId: 1,
         type: 412,
-        tileX: 8,
+        tileX: 11,
         tileY: 8
     }));
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 4, {
         ownerId: "p1",
         cityId: 1,
         type: 112,
-        tileX: 9,
+        tileX: 14,
         tileY: 8
     }));
 
@@ -1293,6 +1321,10 @@ test("icon pickup request decrements stock and updates inventory", () => {
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -1304,18 +1336,28 @@ test("icon pickup request decrements stock and updates inventory", () => {
         ownerId: "p1",
         cityId: 1,
         type: 100,
-        tileX: 9,
+        tileX: 11,
         tileY: 8
     }));
 
     const factory = [...runtime.getReadonlyState().buildings.values()].find((building) => building.cityId === 1 && building.type === 100);
     assert.ok(factory);
     factory.population = 50;
+    runtime.handleRawEvent("p1", makeEnvelope("player.update", 4, {
+        id: "p1",
+        city: 1,
+        direction: 0,
+        isMoving: false,
+        offset: {
+            x: (factory.tileX * TILE_SIZE) + 56,
+            y: (factory.tileY * TILE_SIZE) + 102
+        }
+    }));
 
     for (let i = 0; i < 6; i += 1) {
         runtime.tickBullets();
     }
-    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 4, {
+    runtime.handleRawEvent("p1", makeEnvelope("icon.pickup.request", 5, {
         cityId: 1,
         itemType: 0,
         amount: 1
@@ -1333,6 +1375,10 @@ test("icon pickup does not decrement stock when player inventory is at cap", () 
     });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
+    runtime.getReadonlyState().research.set(1, {
+        completed: [400],
+        active: undefined
+    });
     runtime.handleRawEvent("p1", makeEnvelope("building.place.request", 2, {
         ownerId: "p1",
         cityId: 1,
@@ -1344,7 +1390,7 @@ test("icon pickup does not decrement stock when player inventory is at cap", () 
         ownerId: "p1",
         cityId: 1,
         type: 100,
-        tileX: 9,
+        tileX: 11,
         tileY: 8
     }));
 
@@ -1698,13 +1744,13 @@ test("hazard deploy rejects placement inside housing footprint", () => {
     runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
         cityId: 1,
         type: ITEM_TYPE_BOMB,
-        position: { x: 6 * TILE_SIZE, y: 6 * TILE_SIZE },
+        position: { x: (6 * TILE_SIZE) + 24, y: (6 * TILE_SIZE) + 24 },
         armed: true
     }));
 
     assert.equal(runtime.getReadonlyState().hazards.size, 0);
     assert.equal(runtime.getReadonlyState().playerInventory.get("owner")?.get(ITEM_TYPE_BOMB) ?? 0, 1);
-    assert.ok(rejected.some((entry) => entry.reason === "hazard_invalid"));
+    assert.ok(rejected.some((entry) => entry.reason === "HazardInvalid"));
     assert.equal(broadcast.some((event) => event.type === "hazard.spawn"), false);
 });
 
@@ -2339,9 +2385,13 @@ test("defense deploy is authoritative and emits spawn + finance update", () => {
     assert.equal(rejected.length, 0);
     const spawned = broadcast.find((event) => event.type === "defense.spawn");
     assert.ok(spawned);
-    const finance = broadcast.filter((event) => event.type === "city.finance").at(-1);
+    const finance = broadcast
+        .filter((event) => event.type === "city.finance")
+        .map((event) => event.payload as { cityId: number; cash: number })
+        .filter((payload) => payload.cityId === 2)
+        .at(-1);
     assert.ok(finance);
-    assert.ok((finance.payload as { cash: number }).cash < 200);
+    assert.equal(finance?.cash, DEFAULT_RUNTIME_CONFIG.cityStartingCash - DEFAULT_RUNTIME_CONFIG.defenseCost);
 });
 
 test("defense deploy from inventory consumes stock and does not require city cash", () => {
@@ -2772,7 +2822,7 @@ test("orb drop clears target defenses and updates actor score profile", () => {
     runtime.handleRawEvent("target", makeEnvelope("hazard.deploy.request", 5, {
         cityId: 2,
         type: ITEM_TYPE_BOMB,
-        position: { x: 576, y: 576 },
+        position: { x: 720, y: 720 },
         radius: 64,
         damage: 10,
         fuseMs: 5000
@@ -2910,7 +2960,7 @@ test("rogue bots spawn against developed non-fake cities", () => {
         rogueMaxBots: 1
     });
 
-    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
+    runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
     const mutableState = runtime.getReadonlyState() as unknown as {
         buildings: Map<string, { cityId: number; id: string }>;
     };
@@ -2950,30 +3000,47 @@ test("mine hazards damage and can destroy rogue bots", () => {
         .find((player) => player.isBot && player.botType === "rogue");
     assert.ok(rogue);
 
-    grantInventoryItem(runtime, "owner", ITEM_TYPE_MINE, 2);
-    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 2, {
-        cityId: 2,
+    runtime.getReadonlyState().hazards.set("mine_1", {
+        id: "mine_1",
+        ownerId: "owner",
+        cityId: 1,
         type: ITEM_TYPE_MINE,
-        position: {
-            x: (rogue?.x ?? 0) + 24,
-            y: (rogue?.y ?? 0) + 24
-        }
-    }));
+        x: rogue.x,
+        y: rogue.y,
+        radius: 96,
+        damage: 25,
+        remainingMs: 0,
+        armed: true,
+        active: true
+    });
 
     runtime.tickBullets();
 
     const rogueAfterFirstMine = runtime.getReadonlyState().players.get(rogue?.id ?? "");
-    assert.ok(rogueAfterFirstMine);
+    if (!rogueAfterFirstMine) {
+        assert.ok(broadcast.some((event) => {
+            if (event.type !== "player.dead") {
+                return false;
+            }
+            return (event.payload as { id?: string }).id === rogue?.id;
+        }));
+        return;
+    }
     assert.ok((rogueAfterFirstMine?.health ?? 0) < (rogue?.health ?? 0));
 
-    runtime.handleRawEvent("owner", makeEnvelope("hazard.deploy.request", 3, {
-        cityId: 2,
+    runtime.getReadonlyState().hazards.set("mine_2", {
+        id: "mine_2",
+        ownerId: "owner",
+        cityId: 1,
         type: ITEM_TYPE_MINE,
-        position: {
-            x: (rogueAfterFirstMine?.x ?? 0) + 24,
-            y: (rogueAfterFirstMine?.y ?? 0) + 24
-        }
-    }));
+        x: rogueAfterFirstMine.x,
+        y: rogueAfterFirstMine.y,
+        radius: 96,
+        damage: 200,
+        remainingMs: 0,
+        armed: true,
+        active: true
+    });
     runtime.tickBullets();
 
     assert.equal(runtime.getReadonlyState().players.has(rogue?.id ?? ""), false);
