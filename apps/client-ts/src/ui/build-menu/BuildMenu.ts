@@ -41,6 +41,8 @@ const BUILD_MENU_WIDTH = 180;
 const BUILD_MENU_ROW_HEIGHT = 16;
 const BUILD_MENU_EDGE_X = 16;
 const BUILD_MENU_EDGE_Y = 16;
+const BUILD_MENU_HORIZONTAL_PADDING = 10;
+const BUILD_MENU_ROW_ICON_AND_GAP = BUILDING_ICON_FRAME_SIZE + 4;
 
 const HOTKEY_DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as const;
 
@@ -387,6 +389,19 @@ const createBuildMenuDom = (root: HTMLElement): BuildMenuDom => {
     };
 };
 
+const measureTextWidth = (text: string, font: string): number => {
+    if (typeof document === "undefined") {
+        return text.length * 8;
+    }
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+        return text.length * 8;
+    }
+    context.font = font;
+    return context.measureText(text).width;
+};
+
 const resolveBuildMenuViewSize = (state: ClientState): { width: number; height: number; } => {
     const width = state.pointer.surfaceWidth > 0
         ? state.pointer.surfaceWidth
@@ -400,16 +415,34 @@ const resolveBuildMenuViewSize = (state: ClientState): { width: number; height: 
 const positionBuildMenu = (
     state: ClientState,
     panel: HTMLDivElement,
-    entryCount: number
+    entryCount: number,
+    menuWidth: number
 ): void => {
     const { width, height } = resolveBuildMenuViewSize(state);
     const menuHeight = Math.max(BUILD_MENU_ROW_HEIGHT, (entryCount + 1) * BUILD_MENU_ROW_HEIGHT);
-    const left = Math.max(BUILD_MENU_EDGE_X, Math.min(width - BUILD_MENU_WIDTH - BUILD_MENU_EDGE_X, state.ui.buildMenuAnchorX));
+    const left = Math.max(BUILD_MENU_EDGE_X, Math.min(width - menuWidth - BUILD_MENU_EDGE_X, state.ui.buildMenuAnchorX));
     const bottom = Math.max(menuHeight, Math.min(height - BUILD_MENU_EDGE_Y, state.ui.buildMenuAnchorY));
     const top = Math.max(0, bottom - menuHeight);
+    panel.style.width = `${menuWidth}px`;
     panel.style.height = `${menuHeight}px`;
     panel.style.left = `${left}px`;
     panel.style.top = `${top}px`;
+};
+
+const resolveBuildMenuWidth = (
+    state: ClientState,
+    entries: ResolvedBuildMenuEntry[]
+): number => {
+    const { width } = resolveBuildMenuViewSize(state);
+    let longest = measureTextWidth("Demolish building", "12px monospace");
+    for (const entry of entries) {
+        const suffix = entry.state === "pending" ? " (researching)" : "";
+        const textWidth = measureTextWidth(`${entry.label}${suffix}`, "12px monospace");
+        longest = Math.max(longest, textWidth);
+    }
+    const desired = Math.ceil(longest + BUILD_MENU_ROW_ICON_AND_GAP + (BUILD_MENU_HORIZONTAL_PADDING * 2));
+    const maxWidth = Math.max(BUILD_MENU_WIDTH, width - (BUILD_MENU_EDGE_X * 2));
+    return Math.max(BUILD_MENU_WIDTH, Math.min(maxWidth, desired));
 };
 
 const buildMenuEntriesSignature = (entries: ResolvedBuildMenuEntry[]): string => {
@@ -489,7 +522,8 @@ const renderBuildMenuPanel = (
     }
 
     renderBuildMenuRows(state, list, entries);
-    positionBuildMenu(state, panel, entries.length);
+    const menuWidth = resolveBuildMenuWidth(state, entries);
+    positionBuildMenu(state, panel, entries.length, menuWidth);
 };
 
 export const createBuildMenu = (

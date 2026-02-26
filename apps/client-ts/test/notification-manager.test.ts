@@ -36,7 +36,7 @@ test("collectNotificationEvents appends notices for promotion, denials, and orb"
         queue
     );
 
-    assert.equal(queue.length, 8);
+    assert.equal(queue.length, 7);
     assert.ok(queue.some((entry) => entry.text.includes("Promotion: Promoted to captain (+100).")));
     assert.ok(queue.some((entry) => entry.text.includes("Research Pending: Research must finish")));
     assert.ok(queue.some((entry) => entry.text.includes("Demolition Restricted: Only mayors can order demolitions.")));
@@ -44,7 +44,6 @@ test("collectNotificationEvents appends notices for promotion, denials, and orb"
     assert.ok(queue.some((entry) => entry.text.includes("Elimination: enemy_1 killed by ally_7.")));
     assert.ok(queue.some((entry) => entry.text.includes("Action Rate Limit: Please wait")));
     assert.ok(queue.some((entry) => entry.text.includes("Chat Rate Limit: Team chat cooling down")));
-    assert.ok(queue.some((entry) => entry.text.includes("Item Pickup: Item 3 x1")));
     assert.equal(next.promotionCount, 1);
 });
 

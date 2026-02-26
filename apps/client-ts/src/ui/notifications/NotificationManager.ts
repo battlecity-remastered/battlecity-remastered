@@ -175,14 +175,6 @@ export const collectNotificationEvents = (
     const pickupSignature = pickup
         ? `${pickup.playerId}:${pickup.itemType}:${pickup.amount}:${pickup.cityId}`
         : null;
-    if (pickup && pickupSignature !== previous.lastPickupSignature) {
-        enqueueNotice(queue, {
-            title: "Item Pickup",
-            body: `Item ${pickup.itemType} x${pickup.amount} added to inventory.`,
-            variant: "success",
-            timeoutMs: 2800
-        });
-    }
     return {
         promotionCount: state.events.promotions.length,
         lastBuildDeniedReason: state.events.lastBuildDeniedReason,
