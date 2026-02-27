@@ -1,5 +1,6 @@
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import { resolveBuildingBlockingHeightTiles } from "../../runtime/blocking-height.js";
+export { BinaryMinHeap } from "./bot-path-heap.js";
 import {
     nearestPassableTile,
     resolvePathBounds,

@@ -5,6 +5,12 @@ import path from "node:path";
 
 const scenePath = path.resolve("apps/client-ts/src/render/scene.ts");
 const effectsPath = path.resolve("apps/client-ts/src/render/effects/EffectsRenderer.ts");
+const explosionRendererPath = path.resolve("apps/client-ts/src/render/effects/explosion-renderer.ts");
+const floatingPointsRendererPath = path.resolve("apps/client-ts/src/render/effects/floating-points-renderer.ts");
+const sceneLayersPath = path.resolve("apps/client-ts/src/render/scene-layers.ts");
+const sceneWorldBuildingsPath = path.resolve("apps/client-ts/src/render/scene-world-buildings.ts");
+const sceneWorldDefensesPath = path.resolve("apps/client-ts/src/render/scene-world-defenses.ts");
+const sidePanelPath = path.resolve("apps/client-ts/src/render/side-panel.ts");
 const nameLabelPath = path.resolve("apps/client-ts/src/render/labels/NameLabelRenderer.ts");
 
 test("tank row contracts match local/remote mayor and city parity rules", () => {
@@ -20,7 +26,7 @@ test("tank sprite origin uses top-left anchor to avoid center drift", () => {
 });
 
 test("effects renderer uses large explosion texture variant path", () => {
-    const effectsSource = fs.readFileSync(effectsPath, "utf8");
+    const effectsSource = fs.readFileSync(explosionRendererPath, "utf8");
     const sceneSource = fs.readFileSync(scenePath, "utf8");
 
     assert.match(effectsSource, /explosion\.variant === "large" \? largeExplosionTexture : smallExplosionTexture/);
@@ -44,7 +50,7 @@ test("effects renderer shakes only for non-local orb events", () => {
 });
 
 test("floating score popups render numeric amounts instead of placeholder boxes", () => {
-    const effectsSource = fs.readFileSync(effectsPath, "utf8");
+    const effectsSource = fs.readFileSync(floatingPointsRendererPath, "utf8");
     assert.match(effectsSource, /new Text\(/);
     assert.match(effectsSource, /formatFloatingPointsAmount\(points\.amount\)/);
     assert.match(effectsSource, /label\.position\.set\(points\.x,\s*points\.y - 10 - yOffset\)/);
@@ -52,13 +58,16 @@ test("floating score popups render numeric amounts instead of placeholder boxes"
 });
 
 test("building sprites always animate across bitmap columns", () => {
-    const sceneSource = fs.readFileSync(scenePath, "utf8");
-    assert.match(sceneSource, /resolveBuildingTexture\(\s*layers\.textures,\s*building\.type,\s*animationCounter\s*\)/);
+    const sceneSource = fs.readFileSync(sceneWorldBuildingsPath, "utf8");
+    assert.match(
+        sceneSource,
+        /resolveBuildingTexture\(\s*layers\.textures,\s*building\.type,\s*animationCounter,\s*resolveBuildingBaseFrame,\s*resolveBuildingAnimationFrameX,\s*getFrameTexture\s*\)/
+    );
     assert.doesNotMatch(sceneSource, /building\.health < building\.maxHealth \? animationCounter : null/);
 });
 
-test("defense base sprites use legacy row and health-based damage columns", () => {
-    const sceneSource = fs.readFileSync(scenePath, "utf8");
+test("defense base sprites use classic row and health-based damage columns", () => {
+    const sceneSource = fs.readFileSync(sceneWorldDefensesPath, "utf8");
     assert.match(sceneSource, /resolveDefenseDamageColumn\(defenseType,\s*health,\s*maxHealth\)/);
     assert.match(sceneSource, /const typeRow = Math\.max\(0,\s*Math\.min\(2,\s*defenseType - 9\)\);/);
     assert.match(sceneSource, /damageColumn \* 48/);
@@ -66,25 +75,28 @@ test("defense base sprites use legacy row and health-based damage columns", () =
 });
 
 test("research strips render as right-side underlays beneath research buildings", () => {
-    const sceneSource = fs.readFileSync(scenePath, "utf8");
-    assert.match(sceneSource, /buildingUnderlayLayer: Container/);
-    assert.match(sceneSource, /syncEntityCache\(layers\.researchStripSprites,\s*layers\.buildingUnderlayLayer/);
-    assert.match(sceneSource, /resolveResearchStripPlacement\(building\.tileX,\s*building\.tileY\)/);
+    const layerSource = fs.readFileSync(sceneLayersPath, "utf8");
+    const buildingsSource = fs.readFileSync(sceneWorldBuildingsPath, "utf8");
+    assert.match(layerSource, /buildingUnderlayLayer: Container/);
+    assert.match(buildingsSource, /syncEntityCache\(layers\.researchStripSprites,\s*layers\.buildingUnderlayLayer/);
+    assert.match(buildingsSource, /resolveResearchStripPlacement\(building\.tileX,\s*building\.tileY\)/);
 });
 
 test("panel inventory icons use sprite textures for framed item icons", () => {
-    const sceneSource = fs.readFileSync(scenePath, "utf8");
-    assert.match(sceneSource, /panelInventoryIcons: Map<number, Sprite>/);
-    assert.match(sceneSource, /iconSprite\.texture = iconFrame;/);
-    assert.match(sceneSource, /panelInventorySelection\.texture = layers\.textures\.inventorySelection;/);
+    const layerSource = fs.readFileSync(sceneLayersPath, "utf8");
+    const sidePanelSource = fs.readFileSync(sidePanelPath, "utf8");
+    assert.match(layerSource, /panelInventoryIcons: Map<number, Sprite>/);
+    assert.match(sidePanelSource, /iconSprite\.texture = iconFrame;/);
+    assert.match(sidePanelSource, /panelInventorySelection\.texture = layers\.textures\.inventorySelection;/);
 });
 
 test("panel inventory stack counts render as overlay text above item icons", () => {
-    const sceneSource = fs.readFileSync(scenePath, "utf8");
-    assert.match(sceneSource, /panelInventoryCountTexts: Map<number, Text>/);
-    assert.match(sceneSource, /countText\.position\.set\(panelX \+ slot\.x \+ 22,\s*slot\.y \+ 12\);/);
-    assert.match(sceneSource, /countText\.visible = true;/);
-    assert.doesNotMatch(sceneSource, /panel-count-t:/);
+    const layerSource = fs.readFileSync(sceneLayersPath, "utf8");
+    const sidePanelSource = fs.readFileSync(sidePanelPath, "utf8");
+    assert.match(layerSource, /panelInventoryCountTexts: Map<number, Text>/);
+    assert.match(sidePanelSource, /countText\.position\.set\(panelX \+ slot\.x \+ 22,\s*slot\.y \+ 12\);/);
+    assert.match(sidePanelSource, /countText\.visible = true;/);
+    assert.doesNotMatch(sidePanelSource, /panel-count-t:/);
 });
 
 test("name labels are centered above tank bounds with outlined high-contrast text", () => {
@@ -107,7 +119,7 @@ test("name labels show city display names instead of numeric city ids", () => {
     assert.doesNotMatch(source, /\\nCity \\$\\{city\\}/);
 });
 
-test("scene top-left hint renders nearest orbable city line instead of legacy debug block", () => {
+test("scene top-left hint renders nearest orbable city line instead of classic debug block", () => {
     const sceneSource = fs.readFileSync(scenePath, "utf8");
     assert.match(sceneSource, /formatNearestOrbableCityLine\(resolveNearestOrbableCity\(state\)\)/);
     assert.doesNotMatch(sceneSource, /buildHudLines/);

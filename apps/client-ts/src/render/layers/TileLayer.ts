@@ -1,11 +1,17 @@
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { LoadedMap } from "../../world/map-loader.js";
-import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { getFrameTexture } from "../TextureRegistry.js";
 import {
     resolveTerrainFrameOffset,
     TILE_DRAW_RADIUS,
     TILE_SIZE
 } from "./terrain-parity-helpers.js";
+import {
+    isRenderStateUnchanged,
+    resolveTextureSize,
+    updateRenderSnapshot,
+    type TileLayerRenderSnapshot
+} from "./tile-layer-state.js";
 const MAP_SQUARE_LAVA = 1;
 const MAP_SQUARE_ROCK = 2;
 const MAP_SQUARE_BUILDING = 3;
@@ -14,32 +20,7 @@ const BUILDING_FRAME_SIZE = TILE_SIZE * 3;
 type TexturedTileState = {
     layer: Container;
     sprites: Map<string, Sprite>;
-    lastCenterTileX: number | null;
-    lastCenterTileY: number | null;
-    lastMapRef: ReadonlyArray<ReadonlyArray<number>> | null;
-    lastRockTextureUid: number;
-    lastLavaTextureUid: number;
-    lastBuildingTextureUid: number;
-    lastRockTextureWidth: number;
-    lastRockTextureHeight: number;
-    lastLavaTextureWidth: number;
-    lastLavaTextureHeight: number;
-    lastBuildingTextureWidth: number;
-    lastBuildingTextureHeight: number;
-    lastDrawRadiusX: number;
-    lastDrawRadiusY: number;
-};
-
-type TileRenderParams = {
-    mapData: LoadedMap;
-    tx: number;
-    ty: number;
-    key: string;
-    sprite: Graphics;
-    texturedTileState: TexturedTileState;
-    rockTexture: Texture | null;
-    lavaTexture: Texture | null;
-    buildingTexture: Texture | null;
+    snapshot: TileLayerRenderSnapshot;
 };
 
 const texturedTileStateByLayer = new WeakMap<Container, TexturedTileState>();
@@ -70,20 +51,22 @@ const ensureTexturedTileState = (layer: Container, anchor: Graphics): TexturedTi
     const created = {
         layer: textureLayer,
         sprites: new Map<string, Sprite>(),
-        lastCenterTileX: null,
-        lastCenterTileY: null,
-        lastMapRef: null,
-        lastRockTextureUid: -1,
-        lastLavaTextureUid: -1,
-        lastBuildingTextureUid: -1,
-        lastRockTextureWidth: -1,
-        lastRockTextureHeight: -1,
-        lastLavaTextureWidth: -1,
-        lastLavaTextureHeight: -1,
-        lastBuildingTextureWidth: -1,
-        lastBuildingTextureHeight: -1,
-        lastDrawRadiusX: -1,
-        lastDrawRadiusY: -1
+        snapshot: {
+            lastCenterTileX: null,
+            lastCenterTileY: null,
+            lastMapRef: null,
+            lastRockTextureUid: -1,
+            lastLavaTextureUid: -1,
+            lastBuildingTextureUid: -1,
+            lastRockTextureWidth: -1,
+            lastRockTextureHeight: -1,
+            lastLavaTextureWidth: -1,
+            lastLavaTextureHeight: -1,
+            lastBuildingTextureWidth: -1,
+            lastBuildingTextureHeight: -1,
+            lastDrawRadiusX: -1,
+            lastDrawRadiusY: -1
+        }
     };
     texturedTileStateByLayer.set(layer, created);
     return created;
@@ -93,46 +76,31 @@ const resolveTextureUid = (texture: Texture | null): number => {
     return texture?.source?.uid ?? -1;
 };
 
-const resolveTextureSize = (texture: Texture | null): { width: number; height: number; } => {
-    if (!texture) {
-        return { width: -1, height: -1 };
-    }
-    const width = Number.isFinite(texture.width) ? Math.floor(texture.width) : -1;
-    const height = Number.isFinite(texture.height) ? Math.floor(texture.height) : -1;
-    return { width, height };
+type TextureRenderMetadata = {
+    uid: number;
+    width: number;
+    height: number;
 };
 
-const isRenderStateUnchanged = (
-    state: TexturedTileState,
-    mapData: LoadedMap,
-    centerTileX: number,
-    centerTileY: number,
-    rockTextureUid: number,
-    lavaTextureUid: number,
-    buildingTextureUid: number,
-    rockTextureWidth: number,
-    rockTextureHeight: number,
-    lavaTextureWidth: number,
-    lavaTextureHeight: number,
-    buildingTextureWidth: number,
-    buildingTextureHeight: number,
-    drawRadiusX: number,
-    drawRadiusY: number
-): boolean => {
-    return state.lastCenterTileX === centerTileX
-        && state.lastCenterTileY === centerTileY
-        && state.lastMapRef === mapData.map
-        && state.lastRockTextureUid === rockTextureUid
-        && state.lastLavaTextureUid === lavaTextureUid
-        && state.lastBuildingTextureUid === buildingTextureUid
-        && state.lastRockTextureWidth === rockTextureWidth
-        && state.lastRockTextureHeight === rockTextureHeight
-        && state.lastLavaTextureWidth === lavaTextureWidth
-        && state.lastLavaTextureHeight === lavaTextureHeight
-        && state.lastBuildingTextureWidth === buildingTextureWidth
-        && state.lastBuildingTextureHeight === buildingTextureHeight
-        && state.lastDrawRadiusX === drawRadiusX
-        && state.lastDrawRadiusY === drawRadiusY;
+const resolveTextureRenderMetadata = (texture: Texture | null): TextureRenderMetadata => {
+    const size = resolveTextureSize(texture?.width ?? null, texture?.height ?? null);
+    return {
+        uid: resolveTextureUid(texture),
+        width: size.width,
+        height: size.height
+    };
+};
+
+type TileRenderParams = {
+    mapData: LoadedMap;
+    tx: number;
+    ty: number;
+    key: string;
+    sprite: Graphics;
+    texturedTileState: TexturedTileState;
+    rockTexture: Texture | null;
+    lavaTexture: Texture | null;
+    buildingTexture: Texture | null;
 };
 
 const drawColorTile = (
@@ -221,39 +189,6 @@ const renderTileAt = (params: TileRenderParams): boolean => {
     return renderTerrainTile(params, value);
 };
 
-const updateRenderSnapshot = (
-    state: TexturedTileState,
-    mapData: LoadedMap,
-    centerTileX: number,
-    centerTileY: number,
-    rockTextureUid: number,
-    lavaTextureUid: number,
-    buildingTextureUid: number,
-    rockTextureWidth: number,
-    rockTextureHeight: number,
-    lavaTextureWidth: number,
-    lavaTextureHeight: number,
-    buildingTextureWidth: number,
-    buildingTextureHeight: number,
-    drawRadiusX: number,
-    drawRadiusY: number
-): void => {
-    state.lastCenterTileX = centerTileX;
-    state.lastCenterTileY = centerTileY;
-    state.lastMapRef = mapData.map;
-    state.lastRockTextureUid = rockTextureUid;
-    state.lastLavaTextureUid = lavaTextureUid;
-    state.lastBuildingTextureUid = buildingTextureUid;
-    state.lastRockTextureWidth = rockTextureWidth;
-    state.lastRockTextureHeight = rockTextureHeight;
-    state.lastLavaTextureWidth = lavaTextureWidth;
-    state.lastLavaTextureHeight = lavaTextureHeight;
-    state.lastBuildingTextureWidth = buildingTextureWidth;
-    state.lastBuildingTextureHeight = buildingTextureHeight;
-    state.lastDrawRadiusX = drawRadiusX;
-    state.lastDrawRadiusY = drawRadiusY;
-};
-
 const syncTexturedTileSprite = (
     state: TexturedTileState,
     key: string,
@@ -290,59 +225,63 @@ const pruneTexturedTileSprites = (
     }
 };
 
-export const renderTileLayer = (
-    mapData: LoadedMap,
-    cameraX: number,
-    cameraY: number,
+type TileLayerRenderConfig = {
+    mapData: LoadedMap;
+    centerTileX: number;
+    centerTileY: number;
+    drawRadiusX: number;
+    drawRadiusY: number;
+    rockTextureMeta: TextureRenderMetadata;
+    lavaTextureMeta: TextureRenderMetadata;
+    buildingTextureMeta: TextureRenderMetadata;
+};
+
+const shouldSkipTileLayerRender = (
+    config: TileLayerRenderConfig,
+    texturedTileState: TexturedTileState,
     layer: Container,
-    sprite: Graphics,
-    rockTexture: Texture | null = null,
-    lavaTexture: Texture | null = null,
-    buildingTexture: Texture | null = null,
-    drawRadiusX: number = TILE_DRAW_RADIUS,
-    drawRadiusY: number = TILE_DRAW_RADIUS
-): void => {
-    const texturedTileState = ensureTexturedTileState(layer, sprite);
-    const centerTileX = Math.floor(cameraX / TILE_SIZE);
-    const centerTileY = Math.floor(cameraY / TILE_SIZE);
-    const rockTextureUid = resolveTextureUid(rockTexture);
-    const lavaTextureUid = resolveTextureUid(lavaTexture);
-    const buildingTextureUid = resolveTextureUid(buildingTexture);
-    const rockSize = resolveTextureSize(rockTexture);
-    const lavaSize = resolveTextureSize(lavaTexture);
-    const buildingSize = resolveTextureSize(buildingTexture);
+    sprite: Graphics
+): boolean => {
     const unchanged = isRenderStateUnchanged(
-        texturedTileState,
-        mapData,
-        centerTileX,
-        centerTileY,
-        rockTextureUid,
-        lavaTextureUid,
-        buildingTextureUid,
-        rockSize.width,
-        rockSize.height,
-        lavaSize.width,
-        lavaSize.height,
-        buildingSize.width,
-        buildingSize.height,
-        drawRadiusX,
-        drawRadiusY
+        texturedTileState.snapshot,
+        config.mapData,
+        config.centerTileX,
+        config.centerTileY,
+        config.rockTextureMeta.uid,
+        config.lavaTextureMeta.uid,
+        config.buildingTextureMeta.uid,
+        config.rockTextureMeta.width,
+        config.rockTextureMeta.height,
+        config.lavaTextureMeta.width,
+        config.lavaTextureMeta.height,
+        config.buildingTextureMeta.width,
+        config.buildingTextureMeta.height,
+        config.drawRadiusX,
+        config.drawRadiusY
     );
-    if (unchanged) {
-        if (!layer.children.includes(sprite)) {
-            layer.addChild(sprite);
-        }
-        return;
+    if (!unchanged) {
+        return false;
     }
+    if (!layer.children.includes(sprite)) {
+        layer.addChild(sprite);
+    }
+    return true;
+};
 
-    sprite.clear();
+const renderVisibleTiles = (
+    config: TileLayerRenderConfig,
+    sprite: Graphics,
+    texturedTileState: TexturedTileState,
+    rockTexture: Texture | null,
+    lavaTexture: Texture | null,
+    buildingTexture: Texture | null
+): Set<string> => {
     const texturedTileKeys = new Set<string>();
-
-    for (let tx = centerTileX - drawRadiusX; tx <= centerTileX + drawRadiusX; tx += 1) {
-        for (let ty = centerTileY - drawRadiusY; ty <= centerTileY + drawRadiusY; ty += 1) {
+    for (let tx = config.centerTileX - config.drawRadiusX; tx <= config.centerTileX + config.drawRadiusX; tx += 1) {
+        for (let ty = config.centerTileY - config.drawRadiusY; ty <= config.centerTileY + config.drawRadiusY; ty += 1) {
             const key = `${tx},${ty}`;
             const textured = renderTileAt({
-                mapData,
+                mapData: config.mapData,
                 tx,
                 ty,
                 key,
@@ -357,24 +296,71 @@ export const renderTileLayer = (
             }
         }
     }
-    pruneTexturedTileSprites(texturedTileState, texturedTileKeys);
+    return texturedTileKeys;
+};
+
+const updateTileLayerSnapshot = (
+    config: TileLayerRenderConfig,
+    texturedTileState: TexturedTileState
+): void => {
     updateRenderSnapshot(
-        texturedTileState,
-        mapData,
-        centerTileX,
-        centerTileY,
-        rockTextureUid,
-        lavaTextureUid,
-        buildingTextureUid,
-        rockSize.width,
-        rockSize.height,
-        lavaSize.width,
-        lavaSize.height,
-        buildingSize.width,
-        buildingSize.height,
-        drawRadiusX,
-        drawRadiusY
+        texturedTileState.snapshot,
+        config.mapData,
+        config.centerTileX,
+        config.centerTileY,
+        config.rockTextureMeta.uid,
+        config.lavaTextureMeta.uid,
+        config.buildingTextureMeta.uid,
+        config.rockTextureMeta.width,
+        config.rockTextureMeta.height,
+        config.lavaTextureMeta.width,
+        config.lavaTextureMeta.height,
+        config.buildingTextureMeta.width,
+        config.buildingTextureMeta.height,
+        config.drawRadiusX,
+        config.drawRadiusY
     );
+};
+
+export const renderTileLayer = (
+    mapData: LoadedMap,
+    cameraX: number,
+    cameraY: number,
+    layer: Container,
+    sprite: Graphics,
+    rockTexture: Texture | null = null,
+    lavaTexture: Texture | null = null,
+    buildingTexture: Texture | null = null,
+    drawRadiusX: number = TILE_DRAW_RADIUS,
+    drawRadiusY: number = TILE_DRAW_RADIUS
+): void => {
+    const texturedTileState = ensureTexturedTileState(layer, sprite);
+    const config: TileLayerRenderConfig = {
+        mapData,
+        centerTileX: Math.floor(cameraX / TILE_SIZE),
+        centerTileY: Math.floor(cameraY / TILE_SIZE),
+        drawRadiusX,
+        drawRadiusY,
+        rockTextureMeta: resolveTextureRenderMetadata(rockTexture),
+        lavaTextureMeta: resolveTextureRenderMetadata(lavaTexture),
+        buildingTextureMeta: resolveTextureRenderMetadata(buildingTexture)
+    };
+
+    if (shouldSkipTileLayerRender(config, texturedTileState, layer, sprite)) {
+        return;
+    }
+
+    sprite.clear();
+    const texturedTileKeys = renderVisibleTiles(
+        config,
+        sprite,
+        texturedTileState,
+        rockTexture,
+        lavaTexture,
+        buildingTexture
+    );
+    pruneTexturedTileSprites(texturedTileState, texturedTileKeys);
+    updateTileLayerSnapshot(config, texturedTileState);
 
     if (!layer.children.includes(sprite)) {
         layer.addChild(sprite);

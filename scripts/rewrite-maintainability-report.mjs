@@ -11,6 +11,7 @@ const MAX_FILE_LINES_OVERRIDES = {
     "apps/client-ts/src/app/network-events.ts": 400,
     "apps/client-ts/src/input/mouse-input.ts": 560,
     "apps/client-ts/src/ui/map/MapModal.ts": 400,
+    "apps/client-ts/src/render/layers/TileLayer.ts": 400,
     "apps/client-ts/src/ui/build-menu/BuildMenu.ts": 560,
     "apps/server-ts/src/runtime/dispatch.ts": 560,
     "apps/client-ts/src/ui/chat/ChatManager.ts": 560,
