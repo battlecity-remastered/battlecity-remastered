@@ -4,3 +4,7 @@ export * from "./player.js";
 export * from "./bullet.js";
 export * from "./combat.js";
 export * from "./collision-world.js";
+export * from "./building-placement.js";
+export * from "./tile-occupancy.js";
+export * from "./input.js";
+export * from "./building-footprint.js";
