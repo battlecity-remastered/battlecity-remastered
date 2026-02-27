@@ -16,7 +16,7 @@ const makeStateAndBroadcast = () => {
     return { state, broadcast, emitter };
 };
 
-test("defense turret uses legacy 400ms fire cooldown", () => {
+test("defense turret uses classic 400ms fire cooldown", () => {
     const { state, broadcast, emitter } = makeStateAndBroadcast();
     const config = { ...DEFAULT_RUNTIME_CONFIG };
 

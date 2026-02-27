@@ -1,6 +1,6 @@
 import type { KnownEventType } from "./envelope.js";
 
-const legacyToCanonicalType = {
+const aliasToCanonicalType = {
     "lobby:join:request": "lobby.join.request",
     "lobby:leave": "lobby.leave.request",
     "lobby:assignment": "lobby.assignment",
@@ -44,14 +44,14 @@ const legacyToCanonicalType = {
     demolish_building: "building.demolished"
 } as const;
 
-export type LegacyEventType = keyof typeof legacyToCanonicalType;
+export type AliasEventType = keyof typeof aliasToCanonicalType;
 
 export const canonicalizeEventType = (eventType: string): string => {
-    return legacyToCanonicalType[eventType as LegacyEventType] ?? eventType;
+    return aliasToCanonicalType[eventType as AliasEventType] ?? eventType;
 };
 
-export const isLegacyAliasEventType = (eventType: string): eventType is LegacyEventType => {
-    return eventType in legacyToCanonicalType;
+export const isAliasEventType = (eventType: string): eventType is AliasEventType => {
+    return eventType in aliasToCanonicalType;
 };
 
 export const canonicalizeKnownEventType = (eventType: string): KnownEventType | undefined => {

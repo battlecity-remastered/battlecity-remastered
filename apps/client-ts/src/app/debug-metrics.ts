@@ -133,39 +133,52 @@ export const recordDebugLatencySample = (
     stats.updatedAt = nowMs;
 };
 
-export const buildDebugHudLines = (state: ClientState, nowMs: number = Date.now()): string[] => {
-    const lines: string[] = [];
+const appendLatencyLines = (lines: string[], state: ClientState, nowMs: number): void => {
     const latency = state.debug.latency;
-    if (latency.latest !== null) {
-        const latest = Math.round(latency.latest);
-        const average = Math.round(latency.avg ?? latest);
-        const jitter = Math.round(latency.jitter ?? 0);
-        const min = Math.round(latency.min ?? latest);
-        const max = Math.round(latency.max ?? latest);
-        lines.push(`Ping: ${latest} ms (avg ${average}, jitter ${jitter}, min ${min}, max ${max}, n=${latency.samples.length})`);
-        if (latency.updatedAt !== null) {
-            lines.push(`Last pong: ${Math.max(0, nowMs - latency.updatedAt)} ms ago`);
-        }
-    } else {
+    if (latency.latest === null) {
         lines.push("Ping: n/a");
+        return;
     }
 
+    const latest = Math.round(latency.latest);
+    const average = Math.round(latency.avg ?? latest);
+    const jitter = Math.round(latency.jitter ?? 0);
+    const min = Math.round(latency.min ?? latest);
+    const max = Math.round(latency.max ?? latest);
+    lines.push(`Ping: ${latest} ms (avg ${average}, jitter ${jitter}, min ${min}, max ${max}, n=${latency.samples.length})`);
+    if (latency.updatedAt !== null) {
+        lines.push(`Last pong: ${Math.max(0, nowMs - latency.updatedAt)} ms ago`);
+    }
+};
+
+const appendSendLines = (lines: string[], state: ClientState, nowMs: number): void => {
     const send = state.debug.send;
     if (send.hz !== null || send.avgMs !== null) {
         lines.push(`Client sends: ${formatRate(send.hz)} Hz (avg ${formatRate(send.avgMs)} ms)`);
     }
-    if (send.rejections > 0) {
-        const age = send.lastRejectionAt !== null
-            ? `${Math.max(0, nowMs - send.lastRejectionAt)} ms ago`
-            : "";
-        const suffix = send.lastRejection ? ` last=${send.lastRejection}${age ? ` ${age}` : ""}` : "";
-        lines.push(`Rejections: ${send.rejections}${suffix}`);
+    if (send.rejections === 0) {
+        return;
     }
 
+    const age = send.lastRejectionAt !== null
+        ? `${Math.max(0, nowMs - send.lastRejectionAt)} ms ago`
+        : "";
+    const suffix = send.lastRejection ? ` last=${send.lastRejection}${age ? ` ${age}` : ""}` : "";
+    lines.push(`Rejections: ${send.rejections}${suffix}`);
+};
+
+const appendLoopLines = (lines: string[], state: ClientState): void => {
     const loop = state.debug.loop;
     const mismatch = loop.mismatchEvents > 0 ? `, stale updates ${loop.mismatchEvents}` : "";
     lines.push(`Render/update: ${loop.renderCount}/${loop.updateCount} (last render +${formatMs(loop.lastRenderDeltaMs)}${mismatch})`);
     lines.push(`FPS: ${formatRate(loop.renderHz)}  Tick: ${formatRate(loop.updateHz)} Hz`);
+};
+
+export const buildDebugHudLines = (state: ClientState, nowMs: number = Date.now()): string[] => {
+    const lines: string[] = [];
+    appendLatencyLines(lines, state, nowMs);
+    appendSendLines(lines, state, nowMs);
+    appendLoopLines(lines, state);
     lines.push(`Socket: ${state.debug.socketConnected ? "connected" : "disconnected"}`);
     if (state.debug.lastServerEventAt !== null) {
         lines.push(`Last server event: ${Math.max(0, nowMs - state.debug.lastServerEventAt)} ms ago`);

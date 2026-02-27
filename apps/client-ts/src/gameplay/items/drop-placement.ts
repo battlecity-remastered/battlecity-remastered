@@ -1,9 +1,13 @@
 import type { ClientState } from "../../app/state.js";
 import { TILE } from "../../render/parity/constants.js";
+import {
+    hasBlockingBuildingAtTile,
+    hasPositionedEntityAtTile,
+    hasTileEntityAt
+} from "@battlecity/sim-core";
 
 const PLAYER_HITBOX_PADDING = 8;
 const PLAYER_HITBOX_SIZE = TILE - (2 * PLAYER_HITBOX_PADDING);
-const COMMAND_CENTER_BUILDING_TYPE = 0;
 const WORLD_TILE_MIN = 0;
 const LEGACY_MAP_SIZE_TILES = 512;
 
@@ -14,68 +18,16 @@ const resolveMapSizeTiles = (state: ClientState): number => {
     return LEGACY_MAP_SIZE_TILES;
 };
 
-const isFactoryType = (type: number): boolean => {
-    return Number.isFinite(type) && type >= 100 && Math.floor(type / 100) === 1;
-};
-
-const isCommandCenter = (type: number): boolean => {
-    return type === COMMAND_CENTER_BUILDING_TYPE;
-};
-
-const isHospital = (type: number): boolean => {
-    const family = Math.floor(type / 100);
-    return type === 300 || type === 301 || (family === 2 && type >= 200 && type < 300);
-};
-
-const isPlacementAllowedOnBuilding = (
-    tileX: number,
-    tileY: number,
-    building: { type: number; tileX: number; tileY: number }
-): boolean => {
-    if (isFactoryType(building.type)) {
-        const pickupY = building.tileY + 2;
-        return tileY === pickupY && tileX >= building.tileX && tileX <= (building.tileX + 2);
-    }
-    if (isCommandCenter(building.type) || isHospital(building.type)) {
-        return tileY === (building.tileY + 2) && tileX >= building.tileX && tileX <= (building.tileX + 2);
-    }
-    return false;
-};
-
 const hasBlockingBuilding = (state: ClientState, tileX: number, tileY: number): boolean => {
-    for (const building of state.buildings.values()) {
-        const inFootprint = tileX >= building.tileX
-            && tileX <= (building.tileX + 2)
-            && tileY >= building.tileY
-            && tileY <= (building.tileY + 2);
-        if (!inFootprint) {
-            continue;
-        }
-        if (!isPlacementAllowedOnBuilding(tileX, tileY, building)) {
-            return true;
-        }
-    }
-    return false;
+    return hasBlockingBuildingAtTile(state.buildings.values(), tileX, tileY);
 };
 
 const hasBlockingDefense = (state: ClientState, tileX: number, tileY: number): boolean => {
-    for (const defense of state.defenses.values()) {
-        if (defense.tileX === tileX && defense.tileY === tileY) {
-            return true;
-        }
-    }
-    return false;
+    return hasTileEntityAt(state.defenses.values(), tileX, tileY);
 };
 
 const hasBlockingHazard = (state: ClientState, tileX: number, tileY: number): boolean => {
-    for (const hazard of state.hazards.values()) {
-        const hazardTileX = Math.floor(hazard.x / TILE);
-        const hazardTileY = Math.floor(hazard.y / TILE);
-        if (hazardTileX === tileX && hazardTileY === tileY) {
-            return true;
-        }
-    }
-    return false;
+    return hasPositionedEntityAtTile(state.hazards.values(), tileX, tileY, TILE);
 };
 
 const isOutOfBounds = (state: ClientState, tileX: number, tileY: number): boolean => {

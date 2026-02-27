@@ -13,7 +13,7 @@ test("decodeServerEnvelope accepts canonical event types", () => {
     assert.equal(decoded?.type, "lobby.join.request");
 });
 
-test("decodeServerEnvelope canonicalizes legacy alias event types", () => {
+test("decodeServerEnvelope canonicalizes classic alias event types", () => {
     const decoded = Effect.runSync(decodeServerEnvelope({
         type: "population:update",
         version: "1",
@@ -34,7 +34,7 @@ test("decodeServerEnvelope canonicalizes legacy alias event types", () => {
     assert.equal(decoded?.type, "population.update");
 });
 
-test("decodeServerEnvelope canonicalizes legacy rejection alias", () => {
+test("decodeServerEnvelope canonicalizes classic rejection alias", () => {
     const decoded = Effect.runSync(decodeServerEnvelope({
         type: "event:rejected",
         version: "1",

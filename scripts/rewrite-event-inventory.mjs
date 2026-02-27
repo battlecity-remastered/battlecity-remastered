@@ -86,26 +86,26 @@ const collectProtocolEventTypes = (text) => {
 };
 
 const files = await collectSourceFiles();
-const legacyEvents = new Set();
+const socketEvents = new Set();
 
 for (const file of files) {
     const text = await readFile(file, "utf8");
     const events = collectSocketEvents(text);
     for (const event of events) {
-        legacyEvents.add(event);
+        socketEvents.add(event);
     }
 }
 
 const envelopeSource = await readFile("packages/protocol/src/envelope.ts", "utf8");
 const protocolEvents = collectProtocolEventTypes(envelopeSource);
 
-const missingInProtocol = [...legacyEvents].filter((event) => !protocolEvents.has(event)).sort();
-const protocolOnly = [...protocolEvents].filter((event) => !legacyEvents.has(event)).sort();
+const missingInProtocol = [...socketEvents].filter((event) => !protocolEvents.has(event)).sort();
+const protocolOnly = [...protocolEvents].filter((event) => !socketEvents.has(event)).sort();
 
 const report = {
     generatedAt: new Date().toISOString(),
     summary: {
-        totalSocketEvents: legacyEvents.size,
+        totalSocketEvents: socketEvents.size,
         totalProtocolEvents: protocolEvents.size,
         missingInProtocol: missingInProtocol.length,
         protocolOnly: protocolOnly.length

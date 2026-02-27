@@ -1,6 +1,9 @@
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
-
-const BUILDING_FOOTPRINT_TILES = 3;
+import {
+    BUILDING_FOOTPRINT_TILES,
+    hasDefenseInFootprint,
+    hasOverlappingBuildingFootprint
+} from "@battlecity/sim-core";
 
 const FACTORY_RESEARCH_REQUIREMENT: Readonly<Record<number, number>> = {
     100: 400,
@@ -40,30 +43,6 @@ const hasResearchRequirementSatisfied = (
     return completed.includes(requiredResearch);
 };
 
-const overlapsFootprint = (
-    leftA: number,
-    topA: number,
-    leftB: number,
-    topB: number
-): boolean => {
-    return leftA < (leftB + BUILDING_FOOTPRINT_TILES)
-        && (leftA + BUILDING_FOOTPRINT_TILES) > leftB
-        && topA < (topB + BUILDING_FOOTPRINT_TILES)
-        && (topA + BUILDING_FOOTPRINT_TILES) > topB;
-};
-
-const footprintContains = (
-    originX: number,
-    originY: number,
-    tileX: number,
-    tileY: number
-): boolean => {
-    return tileX >= originX
-        && tileX < (originX + BUILDING_FOOTPRINT_TILES)
-        && tileY >= originY
-        && tileY < (originY + BUILDING_FOOTPRINT_TILES);
-};
-
 const isOutOfBounds = (
     tileX: number,
     tileY: number,
@@ -100,12 +79,7 @@ const hasBlockingBuildingFootprint = (
     tileX: number,
     tileY: number
 ): boolean => {
-    for (const building of state.buildings.values()) {
-        if (overlapsFootprint(tileX, tileY, building.tileX, building.tileY)) {
-            return true;
-        }
-    }
-    return false;
+    return hasOverlappingBuildingFootprint(state.buildings.values(), tileX, tileY, BUILDING_FOOTPRINT_TILES);
 };
 
 const hasBlockingDefenseFootprint = (
@@ -113,12 +87,7 @@ const hasBlockingDefenseFootprint = (
     tileX: number,
     tileY: number
 ): boolean => {
-    for (const defense of state.defenses.values()) {
-        if (footprintContains(tileX, tileY, defense.tileX, defense.tileY)) {
-            return true;
-        }
-    }
-    return false;
+    return hasDefenseInFootprint(state.defenses.values(), tileX, tileY, BUILDING_FOOTPRINT_TILES);
 };
 
 export const canBuildInCity = (
@@ -142,7 +111,7 @@ export const canBuildInCity = (
         return "collision";
     }
 
-    // Command centers are chain roots and bypass distance checks in legacy runtime.
+    // Command centers are chain roots and bypass distance checks in classic runtime.
     if (Math.floor(buildingType) === 0) {
         return "ok";
     }

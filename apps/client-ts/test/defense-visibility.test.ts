@@ -38,7 +38,7 @@ test("friendly sleepers stay visible", () => {
     );
 });
 
-test("enemy sleepers are hidden outside legacy 400px targeting range", () => {
+test("enemy sleepers are hidden outside classic 400px targeting range", () => {
     const state = createClientState();
     state.local.city = 0;
     state.local.x = 0;
@@ -55,7 +55,7 @@ test("enemy sleepers are hidden outside legacy 400px targeting range", () => {
     );
 });
 
-test("enemy sleepers become visible once inside legacy targeting range", () => {
+test("enemy sleepers become visible once inside classic targeting range", () => {
     const state = createClientState();
     state.local.city = 0;
     state.local.x = 0;

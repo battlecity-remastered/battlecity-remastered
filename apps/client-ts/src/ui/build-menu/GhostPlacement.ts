@@ -1,7 +1,11 @@
 import type { ClientState } from "../../app/state.js";
+import {
+    BUILDING_FOOTPRINT_TILES,
+    hasDefenseInFootprint,
+    hasOverlappingBuildingFootprint
+} from "@battlecity/sim-core";
 import { TILE_SIZE, resolvePointerWorldPosition } from "../../gameplay/world-viewport.js";
 
-export const BUILDING_FOOTPRINT_TILES = 3;
 const HALF_FOOTPRINT_PIXELS = (BUILDING_FOOTPRINT_TILES * TILE_SIZE) / 2;
 
 export type GhostPlacement = {
@@ -9,25 +13,6 @@ export type GhostPlacement = {
     tileY: number;
     blocked: boolean;
     buildType: number;
-};
-
-const overlapsFootprint = (
-    leftA: number,
-    topA: number,
-    leftB: number,
-    topB: number
-): boolean => {
-    return leftA < (leftB + BUILDING_FOOTPRINT_TILES)
-        && (leftA + BUILDING_FOOTPRINT_TILES) > leftB
-        && topA < (topB + BUILDING_FOOTPRINT_TILES)
-        && (topA + BUILDING_FOOTPRINT_TILES) > topB;
-};
-
-const footprintContains = (originX: number, originY: number, tileX: number, tileY: number): boolean => {
-    return tileX >= originX
-        && tileX < (originX + BUILDING_FOOTPRINT_TILES)
-        && tileY >= originY
-        && tileY < (originY + BUILDING_FOOTPRINT_TILES);
 };
 
 const hasBlockingTerrainFootprint = (
@@ -59,12 +44,7 @@ const hasBlockingBuildingFootprint = (
     tileX: number,
     tileY: number
 ): boolean => {
-    for (const building of state.buildings.values()) {
-        if (overlapsFootprint(tileX, tileY, building.tileX, building.tileY)) {
-            return true;
-        }
-    }
-    return false;
+    return hasOverlappingBuildingFootprint(state.buildings.values(), tileX, tileY, BUILDING_FOOTPRINT_TILES);
 };
 
 const hasBlockingDefenseFootprint = (
@@ -72,12 +52,7 @@ const hasBlockingDefenseFootprint = (
     tileX: number,
     tileY: number
 ): boolean => {
-    for (const defense of state.defenses.values()) {
-        if (footprintContains(tileX, tileY, defense.tileX, defense.tileY)) {
-            return true;
-        }
-    }
-    return false;
+    return hasDefenseInFootprint(state.defenses.values(), tileX, tileY, BUILDING_FOOTPRINT_TILES);
 };
 
 export const isGhostTileBlocked = (

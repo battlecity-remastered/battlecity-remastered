@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveDefenseDamageColumn } from "../src/render/parity/defense-damage.js";
 
-test("resolveDefenseDamageColumn matches legacy turret burn/damage thresholds", () => {
+test("resolveDefenseDamageColumn matches classic turret burn/damage thresholds", () => {
     assert.equal(resolveDefenseDamageColumn(9, 32, 32), 0);
     assert.equal(resolveDefenseDamageColumn(9, 20, 32), 1);
     assert.equal(resolveDefenseDamageColumn(9, 8, 32), 2);

@@ -1,4 +1,4 @@
-# Non-runtime legacy artifacts copied from Windows distributions or skin work dirs.
+# Non-runtime classic artifacts copied from Windows distributions or skin work dirs.
 Thumbs.db
 *.ini
 *.dll

@@ -1,3 +1,5 @@
+import type { KnownEventPayloadByType } from "@battlecity/protocol";
+import type { BulletState } from "@battlecity/sim-core";
 import { resolveCitySpawn } from "../world/city-spawn.js";
 
 export type LocalState = {
@@ -35,6 +37,12 @@ export type RemotePlayer = {
     health?: number;
     maxHealth?: number;
 };
+
+type Mutable<T> = {
+    -readonly [K in keyof T]: T[K];
+};
+
+type ClientDefenseState = Mutable<KnownEventPayloadByType["defense.spawn"]>;
 
 export type DebugLatencyStats = {
     samples: number[];
@@ -123,16 +131,7 @@ export type ClientState = {
         armed?: boolean;
         active?: boolean;
     }>;
-    bullets: Map<string, {
-        id: string;
-        ownerId: string;
-        city: number;
-        x: number;
-        y: number;
-        direction: number;
-        speed: number;
-        type: number;
-    }>;
+    bullets: Map<string, BulletState>;
     buildings: Map<string, {
         id: string;
         ownerId: string;
@@ -145,16 +144,7 @@ export type ClientState = {
         population: number;
         attachedHouseId?: string;
     }>;
-    defenses: Map<string, {
-        id: string;
-        cityId: number;
-        type: number;
-        tileX: number;
-        tileY: number;
-        health: number;
-        maxHealth: number;
-        orientation?: number;
-    }>;
+    defenses: Map<string, ClientDefenseState>;
     scoreProfile: {
         userId: string | null;
         score: number;

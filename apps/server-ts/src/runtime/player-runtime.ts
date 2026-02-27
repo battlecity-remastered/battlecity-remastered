@@ -1,37 +1,21 @@
 import {
-    advancePointByLegacyHeading32,
+    advancePointByTankHeading32,
     clampToWorld,
     collidesAt,
     findNearestSafePoint,
+    normalizeThrottle,
     normalizeHeading32,
-    tileToRect,
-    type BlockingRect,
     type CollisionPoint,
     type CollisionWorld,
     type CombatPlayerState
 } from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeConfig, RuntimePlayer, RuntimeState } from "./types.js";
+import { buildCollisionWorld } from "./collision-world.js";
 
 const PLAYER_RADIUS = 12;
 const PLAYER_SPRITE_SIZE = 48;
 const PLAYER_SPRITE_HALF = PLAYER_SPRITE_SIZE / 2;
-const BUILDING_FOOTPRINT_TILES = 3;
-const MAP_COLLISION_RADIUS_TILES = 14;
-
-const resolveBlockingHeightTiles = (buildingType: number): number => {
-    if (!Number.isFinite(buildingType)) {
-        return BUILDING_FOOTPRINT_TILES;
-    }
-    if (buildingType === 0) {
-        return 2;
-    }
-    if (buildingType >= 100) {
-        const family = Math.floor(buildingType / 100);
-        return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
-    }
-    return BUILDING_FOOTPRINT_TILES;
-};
 
 const toCollisionPoint = (x: number, y: number): CollisionPoint => {
     return {
@@ -52,61 +36,6 @@ const clampTopLeftToWorld = (x: number, y: number, mapMax: number): CollisionPoi
     return {
         x: Math.max(0, Math.min(max, x)),
         y: Math.max(0, Math.min(max, y))
-    };
-};
-
-const collectBlockingRects = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    centerX: number,
-    centerY: number
-): CollisionWorld["blocks"] => {
-    const blocks: BlockingRect[] = [];
-
-    for (const building of state.buildings.values()) {
-        const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
-        blocks.push({
-            x: building.tileX * config.tileSize,
-            y: building.tileY * config.tileSize,
-            width: config.tileSize * BUILDING_FOOTPRINT_TILES,
-            height: config.tileSize * blockingHeightTiles
-        });
-    }
-
-    for (const defense of state.defenses.values()) {
-        blocks.push(tileToRect(defense.tileX, defense.tileY, config.tileSize));
-    }
-
-    const mapSize = Math.max(1, Math.floor(config.mapMax / config.tileSize));
-    const centerTileX = Math.floor(centerX / config.tileSize);
-    const centerTileY = Math.floor(centerY / config.tileSize);
-    const minTileX = Math.max(0, centerTileX - MAP_COLLISION_RADIUS_TILES);
-    const minTileY = Math.max(0, centerTileY - MAP_COLLISION_RADIUS_TILES);
-    const maxTileX = Math.min(mapSize - 1, centerTileX + MAP_COLLISION_RADIUS_TILES);
-    const maxTileY = Math.min(mapSize - 1, centerTileY + MAP_COLLISION_RADIUS_TILES);
-
-    for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
-        for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
-            if (!state.blockingTiles.has(`${tileX},${tileY}`)) {
-                continue;
-            }
-            blocks.push(tileToRect(tileX, tileY, config.tileSize));
-        }
-    }
-
-    return blocks;
-};
-
-const buildCollisionWorld = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    centerX: number,
-    centerY: number
-): CollisionWorld => {
-    return {
-        maxX: config.mapMax,
-        maxY: config.mapMax,
-        blocks: collectBlockingRects(state, config, centerX, centerY)
     };
 };
 
@@ -152,13 +81,7 @@ const resolveMovementThrottle = (payload: KnownEventPayloadByType["player.update
     if (typeof throttle !== "number" || !Number.isFinite(throttle)) {
         return 1;
     }
-    if (throttle > 0) {
-        return 1;
-    }
-    if (throttle < 0) {
-        return -1;
-    }
-    return 0;
+    return normalizeThrottle(throttle);
 };
 
 const makeDefaultPlayer = (
@@ -203,7 +126,7 @@ export const upsertPlayerFromUpdate = (
 
     const moved = movementThrottle !== 0 && !isFrozen
         ? (() => {
-            const advanced = advancePointByLegacyHeading32(
+            const advanced = advancePointByTankHeading32(
                 currentSafeCenter.x,
                 currentSafeCenter.y,
                 withDirection.direction,

@@ -1,4 +1,5 @@
 import type { ClientState } from "../../app/state.js";
+import { toFiniteNumber } from "@battlecity/sim-core";
 
 export type ChatScope = "team" | "global";
 
@@ -18,19 +19,6 @@ export type ChatHistoryRenderContext = {
     messageTimestamps: Map<string, number>;
     messageHideMs: number;
     onNewMessageWhileClosed: () => void;
-};
-
-const toFiniteNumber = (value: unknown, fallback: number): number => {
-    if (typeof value === "number" && Number.isFinite(value)) {
-        return value;
-    }
-    if (typeof value === "string") {
-        const parsed = Number(value);
-        if (Number.isFinite(parsed)) {
-            return parsed;
-        }
-    }
-    return fallback;
 };
 
 const normalizeCityId = (value: unknown): number | null => {

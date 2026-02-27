@@ -1,4 +1,9 @@
 import type { BulletState, CombatBuildingState, PlayerState } from "@battlecity/sim-core";
+import type { KnownEventPayloadByType } from "@battlecity/protocol";
+
+type Mutable<T> = {
+    -readonly [K in keyof T]: T[K];
+};
 
 export type RuntimePlayer = PlayerState & {
     city: number;
@@ -18,15 +23,7 @@ export type RuntimeBuilding = CombatBuildingState & {
     attachedHouseId?: string;
 };
 
-export type RuntimeDefense = {
-    id: string;
-    cityId: number;
-    type: number;
-    tileX: number;
-    tileY: number;
-    health: number;
-    maxHealth: number;
-    orientation?: number;
+export type RuntimeDefense = Mutable<KnownEventPayloadByType["defense.spawn"]> & {
     nextShotAt?: number;
 };
 

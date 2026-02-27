@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveRankTitle } from "../src/domain/score/RankService.js";
 
-test("rank ladder matches legacy thresholds", () => {
+test("rank ladder matches classic thresholds", () => {
     assert.equal(resolveRankTitle(0), "Private");
     assert.equal(resolveRankTitle(99), "Private");
     assert.equal(resolveRankTitle(100), "Corporal");

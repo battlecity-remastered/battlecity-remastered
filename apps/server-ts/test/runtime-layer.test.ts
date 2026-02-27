@@ -9,7 +9,7 @@ const broadcaster = {
     reject: (_socketId: string, _reason: string) => {}
 };
 
-test("runtime layer hydrates blocking tiles from legacy map data", async () => {
+test("runtime layer hydrates blocking tiles from classic map data", async () => {
     const services = makeRuntimeServices(broadcaster);
     try {
         const state = services.runtime.getReadonlyState();

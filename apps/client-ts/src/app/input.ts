@@ -81,7 +81,7 @@ const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: bo
         return;
     }
     if (code === "keyb" || key === "b") {
-        // Legacy parity: plain B is bomb shortcut; keep Ctrl+B as a build modifier.
+        // Classic parity: plain B is bomb shortcut; keep Ctrl+B as a build modifier.
         if (!value) {
             state.controls.build = false;
             return;

@@ -1,26 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-    legacyDirectionToBulletHeading,
-    normalizeLegacyDirection,
+    direction32ToBulletHeading,
+    normalizeDirection32,
     resolveTankMuzzlePosition
 } from "../src/gameplay/combat/shot-geometry.js";
 
-test("normalizeLegacyDirection wraps and rounds to legacy 32-step headings", () => {
-    assert.equal(normalizeLegacyDirection(0), 0);
-    assert.equal(normalizeLegacyDirection(31.6), 0);
-    assert.equal(normalizeLegacyDirection(-1), 31);
-    assert.equal(normalizeLegacyDirection(24.4), 24);
+test("normalizeDirection32 wraps and rounds to classic 32-step headings", () => {
+    assert.equal(normalizeDirection32(0), 0);
+    assert.equal(normalizeDirection32(31.6), 0);
+    assert.equal(normalizeDirection32(-1), 31);
+    assert.equal(normalizeDirection32(24.4), 24);
 });
 
-test("legacyDirectionToBulletHeading maps cardinal legacy directions to bullet headings", () => {
-    assert.equal(legacyDirectionToBulletHeading(0), 24); // up
-    assert.equal(legacyDirectionToBulletHeading(8), 0); // right
-    assert.equal(legacyDirectionToBulletHeading(16), 8); // down
-    assert.equal(legacyDirectionToBulletHeading(24), 16); // left
+test("direction32ToBulletHeading maps cardinal classic directions to bullet headings", () => {
+    assert.equal(direction32ToBulletHeading(0), 24); // up
+    assert.equal(direction32ToBulletHeading(8), 0); // right
+    assert.equal(direction32ToBulletHeading(16), 8); // down
+    assert.equal(direction32ToBulletHeading(24), 16); // left
 });
 
-test("resolveTankMuzzlePosition uses legacy sprite offsets", () => {
+test("resolveTankMuzzlePosition uses classic sprite offsets", () => {
     const up = resolveTankMuzzlePosition(128, 128, 0);
     assert.ok(Math.abs(up.x - 152) < 0.001);
     assert.ok(Math.abs(up.y - 128.55) < 0.001);

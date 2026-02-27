@@ -776,7 +776,7 @@ test("building placement uses placement blocking set when terrain is passable fo
     assert.equal(broadcast.filter((event) => event.type === "building.placed").length, 0);
 });
 
-test("building placement chain distance uses euclidean radius like legacy server", () => {
+test("building placement chain distance uses euclidean radius like classic server", () => {
     const { runtime, broadcast, direct } = makeHarness({ buildingCost: 10 });
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
@@ -1117,7 +1117,7 @@ test("lobby leave emits released and updates snapshot", () => {
     assert.equal(city1?.recruitCount, 0);
 });
 
-test("legacy colon event names are accepted on ingress", () => {
+test("classic colon event names are accepted on ingress", () => {
     const { runtime, broadcast } = makeHarness();
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
@@ -1258,7 +1258,7 @@ test("factory stock is produced on tick and can be collected", () => {
     assert.equal(items[0]?.count, 1);
 });
 
-test("factory laser stock is capped at legacy limit", () => {
+test("factory laser stock is capped at classic limit", () => {
     const { runtime, broadcast } = makeHarness({
         buildingCost: 10,
         factoryProductionTickMs: 100,
@@ -2628,7 +2628,7 @@ test("deployed turret tracks enemy players and fires authoritatively", () => {
     assert.ok(enemyHit);
 });
 
-test("deployed turret keeps legacy engagement range (400px)", () => {
+test("deployed turret keeps classic engagement range (400px)", () => {
     const { runtime, broadcast } = makeHarness({
         botTickMs: 100,
         fakeCityPlayerThreshold: 999
@@ -3174,13 +3174,13 @@ test("fake city activates under low population and spawns defender bots", () => 
     const state = runtime.getReadonlyState();
     assert.equal(state.fakeCities.get(17)?.active, true);
     const fakeCityBuildings = Array.from(state.buildings.values()).filter((building) => building.cityId === 17);
-    // Legacy parity: city 17 (Annaba) uses curated .city layouts (36 buildings) rather than generic template fallback.
+    // Classic parity: city 17 (Annaba) uses curated .city layouts (36 buildings) rather than generic template fallback.
     assert.ok(fakeCityBuildings.length >= 35);
     assert.ok(Array.from(state.players.values()).some((player) => player.isBot && player.botType === "defender"));
     assert.ok(broadcast.some((event) => event.type === "players.snapshot"));
 });
 
-test("fake city defender spawns rotate legacy bot roles", () => {
+test("fake city defender spawns rotate classic bot roles", () => {
     const { runtime } = makeHarness({
         cityCount: 50,
         botTickMs: 50,
@@ -3399,7 +3399,7 @@ test("mine hazards damage and can destroy rogue bots", () => {
     }));
 });
 
-test("player:bot_damage legacy alias applies authoritative health updates", () => {
+test("player:bot_damage classic alias applies authoritative health updates", () => {
     const { runtime, broadcast } = makeHarness();
 
     runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));

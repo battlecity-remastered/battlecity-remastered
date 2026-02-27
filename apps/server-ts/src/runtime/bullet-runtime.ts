@@ -21,6 +21,7 @@ import { restoreFactoryStock } from "../domain/factories/FactoryService.js";
 import { detonateActiveBombsOwnedBy } from "../domain/hazards/HazardService.js";
 import { eliminatePlayer } from "./player-elimination.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
+import { resolveBuildingBlockingHeightTiles } from "./blocking-height.js";
 
 const PLAYER_SPRITE_HALF = 24;
 const MAX_CLIENT_SHOT_OFFSET = 96;
@@ -272,27 +273,13 @@ const handleHazardHit = (
     emitter.emit("factory.stock", restoreFactoryStock(state, hazard.cityId, hazard.type));
 };
 
-const resolveBlockingHeightTiles = (buildingType: number): number => {
-    if (!Number.isFinite(buildingType)) {
-        return BUILDING_FOOTPRINT_TILES;
-    }
-    if (buildingType === 0) {
-        return REDUCED_BLOCKING_HEIGHT_TILES;
-    }
-    if (buildingType >= 100) {
-        const family = Math.floor(buildingType / 100);
-        return family <= 2 ? REDUCED_BLOCKING_HEIGHT_TILES : BUILDING_FOOTPRINT_TILES;
-    }
-    return BUILDING_FOOTPRINT_TILES;
-};
-
 const collectCombatTargets = (
     state: RuntimeState,
     friendlyCityId: number
 ): CombatBuildingState[] => {
     const targets: CombatBuildingState[] = [];
     for (const building of state.buildings.values()) {
-        const blockingHeightTiles = resolveBlockingHeightTiles(building.type);
+        const blockingHeightTiles = resolveBuildingBlockingHeightTiles(building.type, REDUCED_BLOCKING_HEIGHT_TILES);
         for (let dx = 0; dx < BUILDING_FOOTPRINT_TILES; dx += 1) {
             for (let dy = 0; dy < blockingHeightTiles; dy += 1) {
                 targets.push({

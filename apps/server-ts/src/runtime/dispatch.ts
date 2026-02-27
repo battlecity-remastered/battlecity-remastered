@@ -22,7 +22,7 @@ import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.j
 import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
 import { awardOrbProfileScore, lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
-import { deployDefense } from "../domain/defense/DefenseService.js";
+import { asSpawnPayload, deployDefense } from "../domain/defense/DefenseService.js";
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
@@ -60,18 +60,11 @@ const rejectWithContext = (
     });
 };
 
-const emitJoinWorldHydration = (context: DispatchContext, socketId: string): void => {
-    const { state, config, emitter } = context;
-    const cityIds = new Set<number>();
-    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
-        cityIds.add(cityId);
-    }
-    for (const cityId of state.cities.keys()) {
-        cityIds.add(cityId);
-    }
-    const sortedCityIds = [...cityIds].sort((left, right) => left - right);
-
-    // Hydrate full world entities so late-join clients can render the same authoritative state.
+const emitHydrationEntities = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    socketId: string
+): void => {
     for (const bullet of state.bullets.values()) {
         emitter.emitTo(socketId, "bullet.fired", {
             id: bullet.id,
@@ -125,22 +118,17 @@ const emitJoinWorldHydration = (context: DispatchContext, socketId: string): voi
     }
 
     for (const defense of state.defenses.values()) {
-        const basePayload = {
-            id: defense.id,
-            cityId: defense.cityId,
-            type: defense.type,
-            tileX: defense.tileX,
-            tileY: defense.tileY,
-            health: defense.health,
-            maxHealth: defense.maxHealth
-        };
-        const defensePayload: KnownEventPayloadByType["defense.spawn"] =
-            typeof defense.orientation === "number" && Number.isFinite(defense.orientation)
-                ? { ...basePayload, orientation: defense.orientation }
-                : basePayload;
-        emitter.emitTo(socketId, "defense.spawn", defensePayload);
+        emitter.emitTo(socketId, "defense.spawn", asSpawnPayload(defense));
     }
+};
 
+const emitHydrationCityState = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    socketId: string,
+    sortedCityIds: number[]
+): void => {
     for (const cityId of sortedCityIds) {
         getOrCreateCity(state, cityId, config);
         emitter.emitTo(socketId, "city.finance", buildCityFinancePayload(state, cityId, config));
@@ -167,6 +155,21 @@ const emitJoinWorldHydration = (context: DispatchContext, socketId: string): voi
             });
         }
     }
+};
+
+const emitJoinWorldHydration = (context: DispatchContext, socketId: string): void => {
+    const { state, config, emitter } = context;
+    const cityIds = new Set<number>();
+    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
+        cityIds.add(cityId);
+    }
+    for (const cityId of state.cities.keys()) {
+        cityIds.add(cityId);
+    }
+    const sortedCityIds = [...cityIds].sort((left, right) => left - right);
+
+    emitHydrationEntities(state, emitter, socketId);
+    emitHydrationCityState(state, config, emitter, socketId, sortedCityIds);
 
     emitter.emitTo(socketId, "players.snapshot", buildPlayersSnapshot(state));
 };

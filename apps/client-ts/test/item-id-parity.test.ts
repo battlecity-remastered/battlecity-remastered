@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ITEM_TYPE_IDS } from "../src/render/parity/constants.js";
 
-test("canonical item type ids match legacy ordering", () => {
+test("canonical item type ids match classic ordering", () => {
     assert.deepEqual(ITEM_TYPE_IDS, {
         cloak: 0,
         rocket: 1,

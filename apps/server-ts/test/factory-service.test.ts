@@ -96,7 +96,7 @@ test("factory production uses per-building cadence after successful production",
         factoryStockCap: 99
     };
 
-    // First eligible tick produces immediately (legacy parity behavior).
+    // First eligible tick produces immediately (classic parity behavior).
     tickFactories(state, config, emitter, 100);
     let stock = state.factoryStock.get(1)?.get(ITEM_TYPE_LASER) ?? 0;
     assert.equal(stock, 1);
@@ -112,7 +112,7 @@ test("factory production uses per-building cadence after successful production",
     assert.equal(stock, 2);
 });
 
-test("factory production caps match legacy per-item limits for all factory types", () => {
+test("factory production caps match classic per-item limits for all factory types", () => {
     for (const entry of FACTORY_CAP_MATRIX) {
         const state = createRuntimeState();
         state.buildings.set(`factory_${entry.buildingType}`, {

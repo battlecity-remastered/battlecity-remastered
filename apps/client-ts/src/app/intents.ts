@@ -1,10 +1,10 @@
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
-import { normalizeHeading32 } from "@battlecity/sim-core";
+import { normalizeHeading32, normalizeThrottle } from "@battlecity/sim-core";
 import type { ClientState } from "./state.js";
 import { appendActionIntents, type Intent } from "./intents-actions.js";
 import {
-    legacyDirectionToBulletHeading,
-    normalizeLegacyDirection,
+    direction32ToBulletHeading,
+    normalizeDirection32,
     resolveTankMuzzlePosition
 } from "../gameplay/combat/shot-geometry.js";
 import { ITEM_TYPE_FLARE, ITEM_TYPE_LASER, ITEM_TYPE_ROCKET } from "../render/parity/constants.js";
@@ -38,7 +38,7 @@ const asBulletIntent = (state: ClientState, bulletType: number): Intent<"bullet.
         payload: {
             ownerId: state.local.id ?? "",
             position: { x: muzzle.x, y: muzzle.y },
-            direction: legacyDirectionToBulletHeading(state.local.direction),
+            direction: direction32ToBulletHeading(state.local.direction),
             type: bulletType
         }
     };
@@ -58,17 +58,17 @@ const appendFlareBurstIntents = (state: ClientState, nowMs: number, intents: Int
         return false;
     }
 
-    const direction = normalizeLegacyDirection(state.local.direction);
-    const reverseCenter = normalizeLegacyDirection(direction + 16);
+    const direction = normalizeDirection32(state.local.direction);
+    const reverseCenter = normalizeDirection32(direction + 16);
     const muzzle = resolveTankMuzzlePosition(state.local.x, state.local.y, reverseCenter);
     for (const offset of FLARE_BURST_SPREAD_OFFSETS) {
-        const shotDirection = normalizeLegacyDirection(reverseCenter + offset);
+        const shotDirection = normalizeDirection32(reverseCenter + offset);
         intents.push({
             type: "bullet.fire.request",
             payload: {
                 ownerId: state.local.id ?? "",
                 position: { x: muzzle.x, y: muzzle.y },
-                direction: legacyDirectionToBulletHeading(shotDirection),
+                direction: direction32ToBulletHeading(shotDirection),
                 type: BULLET_TYPE_FLARE
             }
         });
@@ -88,13 +88,7 @@ const resolveDirection = (state: ClientState, dtMs: number): number => {
 
 const resolveMovementThrottle = (state: ClientState): number => {
     const throttle = Number(state.controls.moveForward) - Number(state.controls.moveBackward);
-    if (throttle > 0) {
-        return 1;
-    }
-    if (throttle < 0) {
-        return -1;
-    }
-    return 0;
+    return normalizeThrottle(throttle);
 };
 
 const resolveShotBulletType = (state: ClientState, isMoving: boolean): number | null => {

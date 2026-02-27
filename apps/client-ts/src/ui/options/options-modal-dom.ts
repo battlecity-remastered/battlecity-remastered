@@ -105,7 +105,7 @@ const createOptionsSectionBodyFrame = (): {
 
     const lead = document.createElement("p");
     lead.className = "battlecity-options-lead";
-    lead.textContent = "Import a city layout for the selected city slot. This mirrors the legacy options panel flow while keeping TypeScript parity import controls.";
+    lead.textContent = "Import a city layout for the selected city slot. This mirrors the classic options panel flow while keeping TypeScript parity import controls.";
 
     const steps = document.createElement("ul");
     steps.className = "battlecity-options-steps";

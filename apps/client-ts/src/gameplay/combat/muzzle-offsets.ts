@@ -1,5 +1,5 @@
-// Legacy muzzle offsets (pixels from tank center at 24,24), extracted from tank sprites.
-// Index = 32-step legacy heading (0=up, positive clockwise).
+// Classic muzzle offsets (pixels from tank center at 24,24), extracted from tank sprites.
+// Index = 32-step classic heading (0=up, positive clockwise).
 export const STEP_MUZZLE_OFFSETS: ReadonlyArray<{ x: number; y: number }> = [
     { x: 0.000000, y: -23.450000 },
     { x: 4.272478, y: -21.479198 },

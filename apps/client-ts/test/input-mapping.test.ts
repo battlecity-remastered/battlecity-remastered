@@ -26,7 +26,7 @@ test("keyboard mapping supports arrow-based turn-right aliases", () => {
     assert.match(source, /const fromCode = KEY_TO_CONTROL\[code\];/);
 });
 
-test("keyboard mapping uses legacy pickup/use/cloak/output keys", () => {
+test("keyboard mapping uses classic pickup/use/cloak/output keys", () => {
     const source = fs.readFileSync(inputPath, "utf8");
     assert.match(source, /u:\s*"collectFactory"/);
     assert.match(source, /c:\s*"useCloak"/);

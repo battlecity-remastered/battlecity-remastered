@@ -1,15 +1,16 @@
 import citySpawns from "../../../data/citySpawns.json" with { type: "json" };
 import {
-    advancePointByLegacyHeading32,
+    advancePointByTankHeading32,
     clampToWorld,
     collidesAt,
     findNearestSafePoint,
-    tileToRect,
-    type BlockingRect,
     type CollisionPoint,
     type CollisionWorld
 } from "@battlecity/sim-core";
-import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
+import type { RuntimeEmitter } from "../../runtime/emitter.js";
+import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
+import { buildCollisionWorld } from "../../runtime/collision-world.js";
+import { findBotPath, type BotPathContext } from "./BotPathingService.js";
 
 type CitySpawn = {
     tileX?: number;
@@ -20,8 +21,6 @@ const CITY_SPAWNS = citySpawns as Record<string, CitySpawn>;
 const BOT_RADIUS = 18;
 const BOT_SPRITE_SIZE = 48;
 const BOT_SPRITE_HALF = BOT_SPRITE_SIZE / 2;
-const BUILDING_FOOTPRINT_TILES = 3;
-const MAP_COLLISION_RADIUS_TILES = 14;
 
 const normalizeHeading = (direction: number): number => {
     const normalized = Math.round(direction) % 32;
@@ -33,21 +32,6 @@ const toFinite = (value: unknown): number | null => {
         return null;
     }
     return value;
-};
-
-const resolveBlockingHeightTiles = (buildingType: number): number => {
-    // Keep bot collision identical to player runtime rules.
-    if (!Number.isFinite(buildingType)) {
-        return BUILDING_FOOTPRINT_TILES;
-    }
-    if (buildingType === 0) {
-        return 2;
-    }
-    if (buildingType >= 100) {
-        const family = Math.floor(buildingType / 100);
-        return family <= 2 ? 2 : BUILDING_FOOTPRINT_TILES;
-    }
-    return BUILDING_FOOTPRINT_TILES;
 };
 
 const toCollisionPoint = (x: number, y: number): CollisionPoint => {
@@ -69,68 +53,6 @@ const clampTopLeftToWorld = (x: number, y: number, mapMax: number): CollisionPoi
     return {
         x: Math.max(0, Math.min(max, x)),
         y: Math.max(0, Math.min(max, y))
-    };
-};
-
-const collectBlockingRects = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    centerX: number,
-    centerY: number
-): CollisionWorld["blocks"] => {
-    const blocks: BlockingRect[] = [];
-
-    for (const building of state.buildings.values()) {
-        if (!Number.isFinite(building.tileX) || !Number.isFinite(building.tileY)) {
-            continue;
-        }
-        const buildingType = Number.isFinite(building.type) ? building.type : 0;
-        const blockingHeightTiles = resolveBlockingHeightTiles(buildingType);
-        blocks.push({
-            x: Math.floor(building.tileX) * config.tileSize,
-            y: Math.floor(building.tileY) * config.tileSize,
-            width: config.tileSize * BUILDING_FOOTPRINT_TILES,
-            height: config.tileSize * blockingHeightTiles
-        });
-    }
-
-    for (const defense of state.defenses.values()) {
-        if (!Number.isFinite(defense.tileX) || !Number.isFinite(defense.tileY)) {
-            continue;
-        }
-        blocks.push(tileToRect(Math.floor(defense.tileX), Math.floor(defense.tileY), config.tileSize));
-    }
-
-    const mapSize = Math.max(1, Math.floor(config.mapMax / config.tileSize));
-    const centerTileX = Math.floor(centerX / config.tileSize);
-    const centerTileY = Math.floor(centerY / config.tileSize);
-    const minTileX = Math.max(0, centerTileX - MAP_COLLISION_RADIUS_TILES);
-    const minTileY = Math.max(0, centerTileY - MAP_COLLISION_RADIUS_TILES);
-    const maxTileX = Math.min(mapSize - 1, centerTileX + MAP_COLLISION_RADIUS_TILES);
-    const maxTileY = Math.min(mapSize - 1, centerTileY + MAP_COLLISION_RADIUS_TILES);
-
-    for (let tileX = minTileX; tileX <= maxTileX; tileX += 1) {
-        for (let tileY = minTileY; tileY <= maxTileY; tileY += 1) {
-            if (!state.blockingTiles.has(`${tileX},${tileY}`)) {
-                continue;
-            }
-            blocks.push(tileToRect(tileX, tileY, config.tileSize));
-        }
-    }
-
-    return blocks;
-};
-
-const buildCollisionWorld = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    centerX: number,
-    centerY: number
-): CollisionWorld => {
-    return {
-        maxX: config.mapMax,
-        maxY: config.mapMax,
-        blocks: collectBlockingRects(state, config, centerX, centerY)
     };
 };
 
@@ -250,7 +172,7 @@ export const moveBotByHeading = (
     const currentCenter = toCollisionPoint(x, y);
     const world = buildCollisionWorld(state, config, currentCenter.x, currentCenter.y);
     const safeCenter = resolveStartPoint(world, currentCenter);
-    const advancedCenter = advancePointByLegacyHeading32(
+    const advancedCenter = advancePointByTankHeading32(
         safeCenter.x,
         safeCenter.y,
         normalizedDirection,
@@ -279,6 +201,262 @@ export const normalizeBotHeading = (direction: number): number => {
     return normalizeHeading(direction);
 };
 
-export const legacyHeadingToBulletHeading = (direction: number): number => {
+export const heading32ToBulletHeading = (direction: number): number => {
     return normalizeHeading(direction - 8);
+};
+
+export const botFireAtTarget = (
+    state: RuntimeState,
+    emitter: RuntimeEmitter,
+    config: RuntimeConfig,
+    bot: RuntimePlayer,
+    controller: RuntimeBotController,
+    target: { x: number; y: number },
+    now: number,
+    options: { shootRangeTiles: number; muzzleOffsetPx: number; shootIntervalMs: number; bulletCity: number }
+): void => {
+    if (now < controller.nextShotAt) {
+        return;
+    }
+
+    const botCenterX = bot.x + BOT_SPRITE_HALF;
+    const botCenterY = bot.y + BOT_SPRITE_HALF;
+    const targetCenterX = target.x + BOT_SPRITE_HALF;
+    const targetCenterY = target.y + BOT_SPRITE_HALF;
+    const dx = targetCenterX - botCenterX;
+    const dy = targetCenterY - botCenterY;
+    const rangeSq = (dx * dx) + (dy * dy);
+    const maxRange = config.tileSize * options.shootRangeTiles;
+    if (rangeSq > (maxRange * maxRange)) {
+        return;
+    }
+
+    const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
+    const bulletDirection = heading32ToBulletHeading(direction);
+    const radians = (-normalizeHeading(direction) / 16) * Math.PI;
+    const muzzleX = botCenterX + (Math.sin(radians) * -options.muzzleOffsetPx);
+    const muzzleY = botCenterY + (Math.cos(radians) * -options.muzzleOffsetPx);
+
+    controller.nextShotAt = now + options.shootIntervalMs;
+    state.seq += 1;
+    const bulletId = `bullet_${state.seq}`;
+    state.bullets.set(bulletId, {
+        id: bulletId,
+        ownerId: bot.id,
+        city: options.bulletCity,
+        x: muzzleX,
+        y: muzzleY,
+        direction: bulletDirection,
+        speed: config.bulletSpeed,
+        type: 0
+    });
+    emitter.emit("bullet.fired", {
+        id: bulletId,
+        ownerId: bot.id,
+        city: options.bulletCity,
+        position: { x: muzzleX, y: muzzleY },
+        direction: bulletDirection,
+        type: 0
+    });
+};
+
+export const maybeAdvancePathWaypoint = (
+    controller: RuntimeBotController,
+    bot: RuntimePlayer,
+    reachedDistancePx: number
+): void => {
+    const path = controller.path;
+    if (!path || path.length === 0) {
+        controller.pathIndex = 0;
+        return;
+    }
+
+    const index = controller.pathIndex ?? 0;
+    const waypoint = path[index];
+    if (!waypoint) {
+        controller.pathIndex = path.length;
+        return;
+    }
+
+    const dx = waypoint.x - bot.x;
+    const dy = waypoint.y - bot.y;
+    if ((dx * dx) + (dy * dy) > (reachedDistancePx * reachedDistancePx)) {
+        return;
+    }
+
+    controller.pathIndex = index + 1;
+};
+
+export const maybeRebuildBotPath = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    now: number,
+    controller: RuntimeBotController,
+    bot: RuntimePlayer,
+    target: { id?: string; x: number; y: number },
+    options: {
+        searchRadiusTiles: number;
+        maxNodes: number;
+        pathfindIntervalMs: number;
+        fallbackTarget?: { x: number; y: number };
+        pathContext?: BotPathContext;
+    }
+): void => {
+    const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
+    if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
+        return;
+    }
+
+    let path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
+        searchRadiusTiles: options.searchRadiusTiles,
+        maxNodes: options.maxNodes,
+        context: options.pathContext
+    });
+    if (!path && options.fallbackTarget) {
+        path = findBotPath(state, config, bot.x, bot.y, options.fallbackTarget.x, options.fallbackTarget.y, {
+            searchRadiusTiles: options.searchRadiusTiles,
+            maxNodes: options.maxNodes,
+            context: options.pathContext
+        });
+    }
+
+    if (path) {
+        controller.path = path;
+    } else {
+        delete controller.path;
+    }
+    controller.pathIndex = 0;
+    controller.nextPathAt = now + options.pathfindIntervalMs;
+    if (target.id) {
+        controller.targetPlayerId = target.id;
+    } else {
+        delete controller.targetPlayerId;
+    }
+};
+
+export const computeBotStandOffTarget = (
+    config: RuntimeConfig,
+    bot: RuntimePlayer,
+    target: { x: number; y: number },
+    options: { shootRangeTiles: number; standoffFactor: number; minTargetBufferTiles: number }
+): { x: number; y: number } => {
+    const botCenterX = bot.x + BOT_SPRITE_HALF;
+    const botCenterY = bot.y + BOT_SPRITE_HALF;
+    const targetCenterX = target.x + BOT_SPRITE_HALF;
+    const targetCenterY = target.y + BOT_SPRITE_HALF;
+    const dx = targetCenterX - botCenterX;
+    const dy = targetCenterY - botCenterY;
+    const distance = Math.hypot(dx, dy);
+    if (!Number.isFinite(distance) || distance < 1e-3) {
+        return { x: target.x, y: target.y };
+    }
+
+    const shootRangePx = config.tileSize * options.shootRangeTiles;
+    const desiredStandOffPx = shootRangePx * options.standoffFactor;
+    const minBufferPx = config.tileSize * options.minTargetBufferTiles;
+    const keepBackPx = Math.max(minBufferPx, Math.min(shootRangePx * 0.95, desiredStandOffPx));
+    const ratio = Math.max(0, (distance - keepBackPx) / distance);
+    const goalCenterX = botCenterX + (dx * ratio);
+    const goalCenterY = botCenterY + (dy * ratio);
+
+    return {
+        x: goalCenterX - BOT_SPRITE_HALF,
+        y: goalCenterY - BOT_SPRITE_HALF
+    };
+};
+
+export const resolvePathMovementTarget = (
+    controller: RuntimeBotController,
+    fallback: { x: number; y: number }
+): { x: number; y: number } => {
+    const path = controller.path;
+    const index = controller.pathIndex ?? 0;
+    if (!path || index >= path.length) {
+        return fallback;
+    }
+    return path[index] ?? fallback;
+};
+
+export const buildBotPathOptions = (
+    fallbackPathTarget: { x: number; y: number } | undefined,
+    searchRadiusTiles: number,
+    maxNodes: number,
+    pathfindIntervalMs: number,
+    pathContext: BotPathContext
+): {
+    searchRadiusTiles: number;
+    maxNodes: number;
+    pathfindIntervalMs: number;
+    fallbackTarget?: { x: number; y: number };
+    pathContext?: BotPathContext;
+} => {
+    if (fallbackPathTarget) {
+        return {
+            searchRadiusTiles,
+            maxNodes,
+            pathfindIntervalMs,
+            fallbackTarget: fallbackPathTarget,
+            pathContext
+        };
+    }
+    return {
+        searchRadiusTiles,
+        maxNodes,
+        pathfindIntervalMs,
+        pathContext
+    };
+};
+
+export const stepBotAlongPath = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    now: number,
+    deltaMs: number,
+    controller: RuntimeBotController,
+    bot: RuntimePlayer,
+    movementTargetFallback: { x: number; y: number },
+    options: {
+        fallbackPathTarget: { x: number; y: number } | undefined;
+        searchRadiusTiles: number;
+        maxNodes: number;
+        pathfindIntervalMs: number;
+        pathContext: BotPathContext;
+        waypointReachedDistancePx: number;
+        moveSpeed: number;
+    }
+): RuntimePlayer => {
+    const pathOptions = buildBotPathOptions(
+        options.fallbackPathTarget,
+        options.searchRadiusTiles,
+        options.maxNodes,
+        options.pathfindIntervalMs,
+        options.pathContext
+    );
+    maybeRebuildBotPath(state, config, now, controller, bot, movementTargetFallback, pathOptions);
+    maybeAdvancePathWaypoint(controller, bot, options.waypointReachedDistancePx);
+    const movementTarget = resolvePathMovementTarget(controller, movementTargetFallback);
+    const direction = headingToTarget(
+        bot.x + BOT_SPRITE_HALF,
+        bot.y + BOT_SPRITE_HALF,
+        movementTarget.x + BOT_SPRITE_HALF,
+        movementTarget.y + BOT_SPRITE_HALF,
+        bot.direction
+    );
+    const moved = moveBotByHeading(
+        state,
+        config,
+        bot.x,
+        bot.y,
+        direction,
+        options.moveSpeed,
+        deltaMs
+    );
+    const updatedBot: RuntimePlayer = {
+        ...bot,
+        direction,
+        x: moved.x,
+        y: moved.y
+    };
+    state.players.set(bot.id, updatedBot);
+    return updatedBot;
 };

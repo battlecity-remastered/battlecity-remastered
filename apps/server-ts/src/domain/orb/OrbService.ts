@@ -1,4 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
+import { hasCommandCenterBuilding } from "@battlecity/sim-core";
 import { okResult, rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 import { addCityScore, getOrCreateCity } from "../economy/CityEconomyService.js";
 import { clearCityDefenses } from "../defense/DefenseService.js";
@@ -40,15 +41,6 @@ export type OrbDropResult = {
     removedHazardIds: string[];
     removedDefenseIds: string[];
     inventory: KnownEventPayloadByType["inventory.update"];
-};
-
-const hasCommandCenter = (state: RuntimeState, cityId: number): boolean => {
-    for (const building of state.buildings.values()) {
-        if (building.cityId === cityId && building.type === 0) {
-            return true;
-        }
-    }
-    return false;
 };
 
 const resolveDropCenter = (
@@ -158,7 +150,7 @@ export const dropOrb = (
     if (resolvedTargetCityId === null || resolvedTargetCityId !== payload.targetCityId) {
         return rejectResult("orb_invalid");
     }
-    if (!hasCommandCenter(state, resolvedTargetCityId)) {
+    if (!hasCommandCenterBuilding(state.buildings.values(), resolvedTargetCityId)) {
         return rejectResult("orb_invalid");
     }
 

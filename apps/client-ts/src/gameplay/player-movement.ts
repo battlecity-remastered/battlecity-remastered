@@ -1,5 +1,5 @@
 import {
-    advancePointByLegacyHeading32,
+    advancePointByTankHeading32,
     type CollisionWorld
 } from "@battlecity/sim-core";
 import type { ClientState } from "../app/state.js";
@@ -49,7 +49,7 @@ export const moveLocalPlayer = (state: ClientState, direction: number, throttle:
     const currentCenter = toCollisionPoint(state.local.x, state.local.y);
     const currentSafeCenter = resolveStuckPlayerPosition(world, currentCenter, PLAYER_RADIUS);
     const movementThrottle = Math.max(-1, Math.min(1, Number.isFinite(throttle) ? throttle : 0));
-    const desiredCenter = advancePointByLegacyHeading32(
+    const desiredCenter = advancePointByTankHeading32(
         currentSafeCenter.x,
         currentSafeCenter.y,
         direction,

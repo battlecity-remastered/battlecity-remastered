@@ -116,7 +116,7 @@ test("resolveNearestOrbableCity falls back to command center presence when finan
     assert.equal(nearest.cityId, 17);
 });
 
-test("formatNearestOrbableCityLine renders legacy-friendly top-left hint", () => {
+test("formatNearestOrbableCityLine renders classic-friendly top-left hint", () => {
     const line = formatNearestOrbableCityLine({
         cityId: 3,
         cityName: "Jumarity",

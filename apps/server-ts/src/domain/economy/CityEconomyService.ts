@@ -1,4 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
+import { hasCommandCenterBuilding } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeCity, RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import { resolveCityBuildStates } from "../buildings/BuildPermissionsService.js";
@@ -20,15 +21,6 @@ const ensureCity = (state: RuntimeState, cityId: number, config: RuntimeConfig):
     return city;
 };
 
-const hasCommandCenter = (state: RuntimeState, cityId: number): boolean => {
-    for (const building of state.buildings.values()) {
-        if (building.cityId === cityId && building.type === 0) {
-            return true;
-        }
-    }
-    return false;
-};
-
 const toFinancePayload = (state: RuntimeState, city: RuntimeCity): KnownEventPayloadByType["city.finance"] => {
     return {
         cityId: city.cityId,
@@ -36,7 +28,7 @@ const toFinancePayload = (state: RuntimeState, city: RuntimeCity): KnownEventPay
         income: city.income,
         score: city.score,
         researchLevel: city.researchLevel,
-        isOrbable: hasCommandCenter(state, city.cityId),
+        isOrbable: hasCommandCenterBuilding(state.buildings.values(), city.cityId),
         canBuildStates: resolveCityBuildStates(state, city.cityId)
     };
 };

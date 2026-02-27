@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getCityDisplayName, listCitySpawns, resolveCitySpawn } from "../src/world/city-spawn.js";
 
-test("resolveCitySpawn returns legacy spawn coordinates for runtime cities", () => {
+test("resolveCitySpawn returns classic spawn coordinates for runtime cities", () => {
     const city0 = resolveCitySpawn(0);
     const city7 = resolveCitySpawn(7);
     const city56 = resolveCitySpawn(56);

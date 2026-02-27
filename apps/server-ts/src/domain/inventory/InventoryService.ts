@@ -42,9 +42,9 @@ export const resolveInventoryCap = (
     itemType: number,
     config: RuntimeConfig
 ): number => {
-    const legacyCap = LEGACY_ITEM_CAPS[itemType];
-    if (typeof legacyCap === "number" && Number.isFinite(legacyCap)) {
-        return Math.max(0, Math.floor(legacyCap));
+    const itemCap = LEGACY_ITEM_CAPS[itemType];
+    if (typeof itemCap === "number" && Number.isFinite(itemCap)) {
+        return Math.max(0, Math.floor(itemCap));
     }
     return Math.max(0, Math.floor(config.inventoryPerItemCap));
 };

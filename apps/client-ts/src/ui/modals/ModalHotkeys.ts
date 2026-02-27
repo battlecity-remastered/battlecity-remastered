@@ -3,6 +3,7 @@ import { applyOptionsAction } from "../options/OptionsModal.js";
 import { applyIntroAction } from "../intro/IntroModal.js";
 import { applyTutorialToggle } from "../tutorial/TutorialManager.js";
 import { toggleDebugMode } from "../../app/debug-metrics.js";
+import { registerKeydownHandler } from "../hotkeys/register-keydown-handler.js";
 
 export const applyModalToggle = (state: ClientState, key: string): boolean => {
     const normalized = key.toLowerCase();
@@ -39,14 +40,5 @@ export const applyModalToggle = (state: ClientState, key: string): boolean => {
 };
 
 export const registerModalHotkeys = (state: ClientState): (() => void) => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-        const handled = applyModalToggle(state, event.key);
-        if (handled) {
-            event.preventDefault();
-        }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-        window.removeEventListener("keydown", onKeyDown);
-    };
+    return registerKeydownHandler((event) => applyModalToggle(state, event.key));
 };

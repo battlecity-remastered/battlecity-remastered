@@ -18,7 +18,7 @@ import {
     loadCityLayoutsFromDirectory
 } from "../src/domain/map/CityLayoutService.js";
 
-test("decodeMapBuffer matches legacy axis-flipped indexing", () => {
+test("decodeMapBuffer matches classic axis-flipped indexing", () => {
     const size = MAP_SIZE * MAP_SIZE;
     const bytes = Buffer.alloc(size, 0);
 
@@ -98,7 +98,7 @@ test("loadPlacementBlockingTiles reads map bytes from file", () => {
     assert.equal(blocking.has("6,10"), true);
 });
 
-test("convertBuildingType maps legacy ids to remastered ids", () => {
+test("convertBuildingType maps classic ids to remastered ids", () => {
     assert.equal(convertBuildingType(0), 0);
     assert.equal(convertBuildingType(1), 200);
     assert.equal(convertBuildingType(26), 106);

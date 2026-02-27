@@ -1,15 +1,15 @@
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
 import {
-    headingToTarget,
+    botFireAtTarget,
+    computeBotStandOffTarget,
     isBotTopLeftPositionValid,
-    legacyHeadingToBulletHeading,
-    moveBotByHeading,
     nearestHumanPlayer,
-    normalizeBotHeading,
-    resolveCityCenter
+    resolveCityCenter,
+    stepBotAlongPath
 } from "./BotShared.js";
-import { createBotPathContext, findBotPath, type BotPathContext } from "./BotPathingService.js";
+import { createBotPathContext } from "./BotPathingService.js";
+import { chooseRogueTargetCity } from "./RogueBotTargetingService.js";
 
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
@@ -39,58 +39,6 @@ const countRogues = (state: RuntimeState): number => {
     return total;
 };
 
-const countBuildingsForCity = (state: RuntimeState, cityId: number): number => {
-    let total = 0;
-    for (const building of state.buildings.values()) {
-        if (building.cityId === cityId) {
-            total += 1;
-        }
-    }
-    return total;
-};
-
-const chooseTargetCity = (state: RuntimeState, config: RuntimeConfig): number | null => {
-    for (const player of state.players.values()) {
-        if (player.isBot) {
-            continue;
-        }
-        if (state.fakeCities.get(player.city)?.active) {
-            continue;
-        }
-        if (countBuildingsForCity(state, player.city) >= config.rogueBuildingThreshold) {
-            return player.city;
-        }
-    }
-
-    const candidateCityIds = new Set<number>();
-    for (const cityId of state.cities.keys()) {
-        candidateCityIds.add(cityId);
-    }
-    for (const building of state.buildings.values()) {
-        candidateCityIds.add(building.cityId);
-    }
-
-    let selected: number | null = null;
-    let bestScore = -1;
-    for (const cityId of candidateCityIds.values()) {
-        const city = state.cities.get(cityId);
-        if (state.fakeCities.get(cityId)?.active) {
-            continue;
-        }
-        if (countBuildingsForCity(state, cityId) < config.rogueBuildingThreshold) {
-            continue;
-        }
-        const cityScore = city?.score ?? 0;
-        if (cityScore <= bestScore) {
-            continue;
-        }
-        selected = cityId;
-        bestScore = cityScore;
-    }
-
-    return selected;
-};
-
 const resolveRogueSpawn = (
     state: RuntimeState,
     config: RuntimeConfig,
@@ -109,26 +57,129 @@ const resolveRogueSpawn = (
     for (let step = 0; step < SPAWN_ANGLE_SAMPLES; step += 1) {
         const angle = baseAngle + ((Math.PI * 2 * step) / SPAWN_ANGLE_SAMPLES);
         for (const radius of radiusCandidates) {
-            const candidateX = center.x + (Math.cos(angle) * radius) - BOT_HALF;
-            const candidateY = center.y + (Math.sin(angle) * radius) - BOT_HALF;
-            if (candidateX < minTopLeft || candidateY < minTopLeft || candidateX > maxTopLeft || candidateY > maxTopLeft) {
-                continue;
+            const spawn = resolveRogueSpawnCandidate(
+                state,
+                config,
+                center,
+                angle,
+                radius,
+                minTopLeft,
+                maxTopLeft,
+                minDistanceSq
+            );
+            if (spawn) {
+                return spawn;
             }
-            if (!isBotTopLeftPositionValid(state, config, candidateX, candidateY)) {
-                continue;
-            }
-            const safeCenterX = candidateX + BOT_HALF;
-            const safeCenterY = candidateY + BOT_HALF;
-            const dx = safeCenterX - center.x;
-            const dy = safeCenterY - center.y;
-            if ((dx * dx) + (dy * dy) < minDistanceSq) {
-                continue;
-            }
-            return { x: candidateX, y: candidateY };
         }
     }
 
     return null;
+};
+
+const resolveRogueSpawnCandidate = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    center: { x: number; y: number },
+    angle: number,
+    radius: number,
+    minTopLeft: number,
+    maxTopLeft: number,
+    minDistanceSq: number
+): { x: number; y: number } | null => {
+    const candidateX = center.x + (Math.cos(angle) * radius) - BOT_HALF;
+    const candidateY = center.y + (Math.sin(angle) * radius) - BOT_HALF;
+    if (candidateX < minTopLeft || candidateY < minTopLeft || candidateX > maxTopLeft || candidateY > maxTopLeft) {
+        return null;
+    }
+    if (!isBotTopLeftPositionValid(state, config, candidateX, candidateY)) {
+        return null;
+    }
+
+    const safeCenterX = candidateX + BOT_HALF;
+    const safeCenterY = candidateY + BOT_HALF;
+    const dx = safeCenterX - center.x;
+    const dy = safeCenterY - center.y;
+    if ((dx * dx) + (dy * dy) < minDistanceSq) {
+        return null;
+    }
+    return { x: candidateX, y: candidateY };
+};
+
+const resolveRogueMovementFallback = (
+    config: RuntimeConfig,
+    bot: RuntimePlayer,
+    nearest: { id: string; x: number; y: number } | null,
+    fallbackTarget: { x: number; y: number }
+): { id?: string; x: number; y: number } => {
+    if (!nearest) {
+        return fallbackTarget;
+    }
+    return computeBotStandOffTarget(config, bot, nearest, {
+        shootRangeTiles: SHOOT_RANGE_TILES,
+        standoffFactor: STANDOFF_FACTOR,
+        minTargetBufferTiles: MIN_TARGET_BUFFER_TILES
+    });
+};
+
+const tickRogueController = (
+    state: RuntimeState,
+    config: RuntimeConfig,
+    emitter: RuntimeEmitter,
+    now: number,
+    deltaMs: number,
+    botId: string,
+    controller: RuntimeBotController,
+    pathContext: ReturnType<typeof createBotPathContext>
+): boolean => {
+    const bot = state.players.get(botId);
+    if (!bot || !bot.isBot || bot.health <= 0 || state.fakeCities.get(controller.targetCityId)?.active) {
+        state.botControllers.delete(botId);
+        state.players.delete(botId);
+        return true;
+    }
+
+    const targetCenter = resolveCityCenter(controller.targetCityId, config);
+    const fallbackTarget = {
+        x: targetCenter.x - BOT_HALF,
+        y: targetCenter.y - BOT_HALF
+    };
+    const nearest = nearestHumanPlayer(
+        state,
+        bot.x,
+        bot.y,
+        Math.max(config.botDetectionRadius, config.tileSize * 18),
+        controller.targetCityId
+    );
+    const attackTarget = nearest
+        ? { id: nearest.id, x: nearest.x, y: nearest.y }
+        : { x: fallbackTarget.x, y: fallbackTarget.y };
+    const movementTargetFallback = resolveRogueMovementFallback(config, bot, nearest, attackTarget);
+    const fallbackPathTarget = nearest ? { x: nearest.x, y: nearest.y } : undefined;
+    const updatedBot = stepBotAlongPath(
+        state,
+        config,
+        now,
+        deltaMs,
+        controller,
+        bot,
+        movementTargetFallback,
+        {
+            fallbackPathTarget,
+            searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
+            maxNodes: PATH_MAX_NODES,
+            pathfindIntervalMs: PATHFIND_INTERVAL_MS,
+            pathContext,
+            waypointReachedDistancePx: WAYPOINT_REACHED_DISTANCE_PX,
+            moveSpeed: config.botMoveSpeed * MOVE_SPEED_MULTIPLIER
+        }
+    );
+    botFireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now, {
+        shootRangeTiles: SHOOT_RANGE_TILES,
+        muzzleOffsetPx: MUZZLE_OFFSET_PX,
+        shootIntervalMs: Math.max(SHOOT_INTERVAL_MS, config.botShootIntervalMs),
+        bulletCity: -1
+    });
+    return true;
 };
 
 const spawnRogue = (
@@ -183,173 +234,12 @@ const ensureRoguePopulation = (
         return false;
     }
 
-    const targetCityId = chooseTargetCity(state, config);
+    const targetCityId = chooseRogueTargetCity(state, config);
     if (targetCityId === null) {
         return false;
     }
 
     return spawnRogue(state, config, now, targetCityId);
-};
-
-const fireAtTarget = (
-    state: RuntimeState,
-    emitter: RuntimeEmitter,
-    config: RuntimeConfig,
-    bot: RuntimePlayer,
-    controller: RuntimeBotController,
-    target: { x: number; y: number },
-    now: number
-): void => {
-    if (now < controller.nextShotAt) {
-        return;
-    }
-
-    const botCenterX = bot.x + BOT_HALF;
-    const botCenterY = bot.y + BOT_HALF;
-    const targetCenterX = target.x + BOT_HALF;
-    const targetCenterY = target.y + BOT_HALF;
-    const dx = targetCenterX - botCenterX;
-    const dy = targetCenterY - botCenterY;
-    const rangeSq = (dx * dx) + (dy * dy);
-    const maxRange = config.tileSize * SHOOT_RANGE_TILES;
-    if (rangeSq > (maxRange * maxRange)) {
-        return;
-    }
-
-    const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
-    const bulletDirection = legacyHeadingToBulletHeading(direction);
-    const radians = (-normalizeBotHeading(direction) / 16) * Math.PI;
-    const muzzleX = botCenterX + (Math.sin(radians) * -MUZZLE_OFFSET_PX);
-    const muzzleY = botCenterY + (Math.cos(radians) * -MUZZLE_OFFSET_PX);
-
-    controller.nextShotAt = now + Math.max(SHOOT_INTERVAL_MS, config.botShootIntervalMs);
-    state.seq += 1;
-    const bulletId = `bullet_${state.seq}`;
-    state.bullets.set(bulletId, {
-        id: bulletId,
-        ownerId: bot.id,
-        city: -1,
-        x: muzzleX,
-        y: muzzleY,
-        direction: bulletDirection,
-        speed: config.bulletSpeed,
-        type: 0
-    });
-    emitter.emit("bullet.fired", {
-        id: bulletId,
-        ownerId: bot.id,
-        city: -1,
-        position: { x: muzzleX, y: muzzleY },
-        direction: bulletDirection,
-        type: 0
-    });
-};
-
-const maybeAdvanceWaypoint = (controller: RuntimeBotController, bot: RuntimePlayer): void => {
-    const path = controller.path;
-    if (!path || path.length === 0) {
-        controller.pathIndex = 0;
-        return;
-    }
-
-    const index = controller.pathIndex ?? 0;
-    const waypoint = path[index];
-    if (!waypoint) {
-        controller.pathIndex = path.length;
-        return;
-    }
-
-    const dx = waypoint.x - bot.x;
-    const dy = waypoint.y - bot.y;
-    if ((dx * dx) + (dy * dy) > (WAYPOINT_REACHED_DISTANCE_PX * WAYPOINT_REACHED_DISTANCE_PX)) {
-        return;
-    }
-
-    controller.pathIndex = index + 1;
-};
-
-const maybeRebuildPath = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    now: number,
-    controller: RuntimeBotController,
-    bot: RuntimePlayer,
-    target: { id?: string; x: number; y: number },
-    fallbackTarget?: { x: number; y: number },
-    pathContext?: BotPathContext
-): void => {
-    const targetChanged = (target.id ?? "") !== (controller.targetPlayerId ?? "");
-    if (!targetChanged && now < (controller.nextPathAt ?? 0)) {
-        return;
-    }
-
-    let path = findBotPath(state, config, bot.x, bot.y, target.x, target.y, {
-        searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-        maxNodes: PATH_MAX_NODES,
-        context: pathContext
-    });
-    if (!path && fallbackTarget) {
-        path = findBotPath(state, config, bot.x, bot.y, fallbackTarget.x, fallbackTarget.y, {
-            searchRadiusTiles: PATH_SEARCH_RADIUS_TILES,
-            maxNodes: PATH_MAX_NODES,
-            context: pathContext
-        });
-    }
-
-    if (path) {
-        controller.path = path;
-    } else {
-        delete controller.path;
-    }
-    controller.pathIndex = 0;
-    controller.nextPathAt = now + PATHFIND_INTERVAL_MS;
-    if (target.id) {
-        controller.targetPlayerId = target.id;
-    } else {
-        delete controller.targetPlayerId;
-    }
-};
-
-const computeStandOffTarget = (
-    config: RuntimeConfig,
-    bot: RuntimePlayer,
-    target: { x: number; y: number }
-): { x: number; y: number } => {
-    const botCenterX = bot.x + BOT_HALF;
-    const botCenterY = bot.y + BOT_HALF;
-    const targetCenterX = target.x + BOT_HALF;
-    const targetCenterY = target.y + BOT_HALF;
-    const dx = targetCenterX - botCenterX;
-    const dy = targetCenterY - botCenterY;
-    const distance = Math.hypot(dx, dy);
-    if (!Number.isFinite(distance) || distance < 1e-3) {
-        return { x: target.x, y: target.y };
-    }
-
-    const shootRangePx = config.tileSize * SHOOT_RANGE_TILES;
-    const desiredStandOffPx = shootRangePx * STANDOFF_FACTOR;
-    const minBufferPx = config.tileSize * MIN_TARGET_BUFFER_TILES;
-    const keepBackPx = Math.max(minBufferPx, Math.min(shootRangePx * 0.95, desiredStandOffPx));
-    const ratio = Math.max(0, (distance - keepBackPx) / distance);
-    const goalCenterX = botCenterX + (dx * ratio);
-    const goalCenterY = botCenterY + (dy * ratio);
-
-    return {
-        x: goalCenterX - BOT_HALF,
-        y: goalCenterY - BOT_HALF
-    };
-};
-
-const resolveMovementTarget = (
-    controller: RuntimeBotController,
-    fallback: { x: number; y: number }
-): { x: number; y: number } => {
-    const path = controller.path;
-    const index = controller.pathIndex ?? 0;
-    if (!path || index >= path.length) {
-        return fallback;
-    }
-    return path[index] ?? fallback;
 };
 
 export const tickRogueBots = (
@@ -366,84 +256,7 @@ export const tickRogueBots = (
         if (controller.botType !== ROGUE_TYPE) {
             continue;
         }
-
-        const bot = state.players.get(botId);
-        if (!bot || !bot.isBot || bot.health <= 0) {
-            state.botControllers.delete(botId);
-            state.players.delete(botId);
-            dirty = true;
-            continue;
-        }
-
-        if (state.fakeCities.get(controller.targetCityId)?.active) {
-            state.botControllers.delete(botId);
-            state.players.delete(botId);
-            dirty = true;
-            continue;
-        }
-
-        const targetCenter = resolveCityCenter(controller.targetCityId, config);
-        const fallbackTarget = {
-            x: targetCenter.x - BOT_HALF,
-            y: targetCenter.y - BOT_HALF
-        };
-
-        const nearest = nearestHumanPlayer(
-            state,
-            bot.x,
-            bot.y,
-            Math.max(config.botDetectionRadius, config.tileSize * 18),
-            controller.targetCityId
-        );
-
-        const attackTarget = nearest
-            ? { id: nearest.id, x: nearest.x, y: nearest.y }
-            : { x: fallbackTarget.x, y: fallbackTarget.y };
-        const movementTargetFallback = nearest
-            ? computeStandOffTarget(config, bot, attackTarget)
-            : attackTarget;
-
-        maybeRebuildPath(
-            state,
-            config,
-            now,
-            controller,
-            bot,
-            movementTargetFallback,
-            nearest ? { x: nearest.x, y: nearest.y } : undefined,
-            pathContext
-        );
-        maybeAdvanceWaypoint(controller, bot);
-        const movementTarget = resolveMovementTarget(controller, movementTargetFallback);
-
-        const direction = headingToTarget(
-            bot.x + BOT_HALF,
-            bot.y + BOT_HALF,
-            movementTarget.x + BOT_HALF,
-            movementTarget.y + BOT_HALF,
-            bot.direction
-        );
-
-        const moved = moveBotByHeading(
-            state,
-            config,
-            bot.x,
-            bot.y,
-            direction,
-            config.botMoveSpeed * MOVE_SPEED_MULTIPLIER,
-            deltaMs
-        );
-
-        const updatedBot: RuntimePlayer = {
-            ...bot,
-            direction,
-            x: moved.x,
-            y: moved.y
-        };
-        state.players.set(botId, updatedBot);
-
-        fireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now);
-        dirty = true;
+        dirty = tickRogueController(state, config, emitter, now, deltaMs, botId, controller, pathContext) || dirty;
     }
 
     return dirty;

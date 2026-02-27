@@ -1,6 +1,8 @@
 import type { ClientState } from "../../app/state.js";
+import { isCommandCenterType } from "@battlecity/sim-core";
 import { isInteractiveKeyboardTarget } from "../../input/interactive-target.js";
 import type { EventSender } from "../../network/events.js";
+import { registerKeydownHandler } from "../../ui/hotkeys/register-keydown-handler.js";
 import {
     ITEM_TYPE_BOMB,
     ITEM_TYPE_ORB,
@@ -87,6 +89,47 @@ const resolveOrbDropPosition = (state: ClientState): { x: number; y: number } =>
     };
 };
 
+const canOrbTargetCity = (state: ClientState, cityId: number): boolean => {
+    const orbableFlag = state.cityFinance.get(cityId)?.isOrbable;
+    if (orbableFlag === false) {
+        return false;
+    }
+    if (orbableFlag === true) {
+        return true;
+    }
+    for (const building of state.buildings.values()) {
+        if (building.cityId !== cityId) {
+            continue;
+        }
+        if (isCommandCenterType(building.type) || building.type === 200 || building.type === 201) {
+            return true;
+        }
+    }
+    return false;
+};
+
+const resolveOrbDistanceSq = (
+    centerX: number,
+    centerY: number,
+    spawn: ReturnType<typeof listCitySpawns>[number]
+): number | null => {
+    const rectX = spawn.tileX * TILE;
+    const rectY = (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE;
+    const rectWidth = COMMAND_CENTER_WIDTH_TILES * TILE;
+    const rectHeight = TILE;
+    const rectRight = rectX + rectWidth;
+    const rectBottom = rectY + rectHeight;
+    if (centerX < rectX || centerX > rectRight || centerY < rectY || centerY > rectBottom) {
+        return null;
+    }
+
+    const clampedX = Math.max(rectX, Math.min(centerX, rectRight));
+    const clampedY = Math.max(rectY, Math.min(centerY, rectBottom));
+    const dx = centerX - clampedX;
+    const dy = centerY - clampedY;
+    return (dx * dx) + (dy * dy);
+};
+
 const resolveOrbDropPayload = (
     state: ClientState
 ): { sourceCityId: number; targetCityId: number; position: { x: number; y: number; }; } | null => {
@@ -94,44 +137,18 @@ const resolveOrbDropPayload = (
     const centerX = position.x + (TILE / 2);
     const centerY = position.y + (TILE / 2);
     let best: { cityId: number; distanceSq: number } | null = null;
-    const hasCommandCenter = (cityId: number): boolean => {
-        for (const building of state.buildings.values()) {
-            if (building.cityId !== cityId) {
-                continue;
-            }
-            if (building.type === 0 || building.type === 200 || building.type === 201) {
-                return true;
-            }
-        }
-        return false;
-    };
 
     for (const spawn of listCitySpawns()) {
         if (spawn.cityId === state.local.city) {
             continue;
         }
-        const orbableFlag = state.cityFinance.get(spawn.cityId)?.isOrbable;
-        if (orbableFlag === false) {
+        if (!canOrbTargetCity(state, spawn.cityId)) {
             continue;
         }
-        if (orbableFlag !== true && !hasCommandCenter(spawn.cityId)) {
+        const distanceSq = resolveOrbDistanceSq(centerX, centerY, spawn);
+        if (distanceSq === null) {
             continue;
         }
-        const rectX = spawn.tileX * TILE;
-        const rectY = (spawn.tileY + COMMAND_CENTER_HEIGHT_TILES) * TILE;
-        const rectWidth = COMMAND_CENTER_WIDTH_TILES * TILE;
-        const rectHeight = TILE;
-        const rectRight = rectX + rectWidth;
-        const rectBottom = rectY + rectHeight;
-        if (centerX < rectX || centerX > rectRight || centerY < rectY || centerY > rectBottom) {
-            continue;
-        }
-
-        const clampedX = Math.max(rectX, Math.min(centerX, rectRight));
-        const clampedY = Math.max(rectY, Math.min(centerY, rectBottom));
-        const dx = centerX - clampedX;
-        const dy = centerY - clampedY;
-        const distanceSq = (dx * dx) + (dy * dy);
         if (!best || distanceSq < best.distanceSq) {
             best = { cityId: spawn.cityId, distanceSq };
         }
@@ -178,7 +195,7 @@ const dropSelectedIcon = (state: ClientState, send: EventSender): boolean => {
         return true;
     }
 
-    // Legacy behavior: non-defense items are dropped on-map via hazard deploy,
+    // Classic behavior: non-defense items are dropped on-map via hazard deploy,
     // snapped to the player's dominant tile and blocked by local collision guards.
     const placement = resolveHazardDropPlacement(state);
     if (!placement) {
@@ -235,6 +252,38 @@ const dropArmedBombShortcut = (state: ClientState, send: EventSender): boolean =
     return true;
 };
 
+const hasHotkeyModifiers = (event: KeyboardEvent): boolean => {
+    return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+};
+
+const handleInventoryHotkey = (
+    state: ClientState,
+    send: EventSender,
+    event: KeyboardEvent
+): boolean => {
+    const key = event.key.toLowerCase();
+    switch (key) {
+        case "q":
+            cycleInventorySelection(state, -1);
+            return true;
+        case "e":
+            cycleInventorySelection(state, 1);
+            return true;
+        case "v":
+            return toggleBombArming(state);
+        case "d":
+            return dropSelectedIcon(state, send);
+        case "o":
+            return !hasHotkeyModifiers(event) && dropOrbShortcut(state, send);
+        case "b":
+            return dropArmedBombShortcut(state, send);
+        case "x":
+            return event.shiftKey && dropSelectedIcon(state, send);
+        default:
+            return false;
+    }
+};
+
 export const buildInventoryHudLines = (state: ClientState): string[] => {
     ensureSelectedItem(state);
     const entries = sortedInventoryEntries(state);
@@ -254,52 +303,10 @@ export const registerInventoryHotkeys = (
     state: ClientState,
     send: EventSender
 ): (() => void) => {
-    const hasModifiers = (event: KeyboardEvent): boolean => {
-        return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
-    };
-
-    const handleInventoryHotkey = (event: KeyboardEvent): boolean => {
-        const key = event.key.toLowerCase();
-        if (key === "q") {
-            cycleInventorySelection(state, -1);
-            return true;
-        }
-        if (key === "e") {
-            cycleInventorySelection(state, 1);
-            return true;
-        }
-        if (key === "v") {
-            return toggleBombArming(state);
-        }
-        if (key === "d") {
-            return dropSelectedIcon(state, send);
-        }
-        if (key === "o") {
-            if (hasModifiers(event)) {
-                return false;
-            }
-            return dropOrbShortcut(state, send);
-        }
-        if (key === "b") {
-            return dropArmedBombShortcut(state, send);
-        }
-        if (key === "x") {
-            return event.shiftKey && dropSelectedIcon(state, send);
-        }
-        return false;
-    };
-
-    const onKeyDown = (event: KeyboardEvent): void => {
+    return registerKeydownHandler((event) => {
         if (isInteractiveKeyboardTarget(event)) {
-            return;
+            return false;
         }
-        if (handleInventoryHotkey(event)) {
-            event.preventDefault();
-        }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-        window.removeEventListener("keydown", onKeyDown);
-    };
+        return handleInventoryHotkey(state, send, event);
+    });
 };

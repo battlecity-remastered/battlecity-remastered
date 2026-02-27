@@ -1,7 +1,7 @@
 # Agent Guide: BattleCity TypeScript Monorepo
 
 ## Quick Facts
-- Legacy JavaScript app workspaces were removed.
+- Classic JavaScript app workspaces were removed.
 - Active runtime is TypeScript-only:
   - `apps/client-ts` (Vite + Pixi.js)
   - `apps/server-ts` (Express + Socket.IO)

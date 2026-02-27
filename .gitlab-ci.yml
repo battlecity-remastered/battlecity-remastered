@@ -1,5 +1,6 @@
 stages:
   - verify
+  - publish
 
 verify:
   stage: verify
@@ -15,3 +16,21 @@ verify:
     - npm run typecheck
     - npm run test
     - npm run rewrite:check:strict
+
+publish:typescript:
+  stage: publish
+  image: docker:27
+  services:
+    - name: docker:27-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    VITE_SERVER_URL: http://localhost:8121
+  needs:
+    - verify
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "feature/typescript"'
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    - docker build --pull --build-arg VITE_SERVER_URL="$VITE_SERVER_URL" -t "$CI_REGISTRY_IMAGE:typescript" .
+    - docker push "$CI_REGISTRY_IMAGE:typescript"

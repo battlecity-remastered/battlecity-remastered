@@ -1,7 +1,7 @@
 import { normalizeHeading32 } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeConfig, RuntimeDefense, RuntimeState } from "../../runtime/types.js";
-import { headingToTarget, legacyHeadingToBulletHeading } from "../bots/BotShared.js";
+import { headingToTarget, heading32ToBulletHeading } from "../bots/BotShared.js";
 
 const DEFENSE_HALF = 24;
 const IDLE_SPIN_STEP = 0;
@@ -111,7 +111,7 @@ const fireFromDefense = (
 ): void => {
     const bulletType = BULLET_TYPE_BY_DEFENSE[defense.type] ?? 0;
     const direction = normalizeHeading32(orientation);
-    const bulletDirection = legacyHeadingToBulletHeading(direction);
+    const bulletDirection = heading32ToBulletHeading(direction);
     const center = resolveDefenseCenter(defense, config.tileSize);
     const radians = (-direction / 16) * Math.PI;
     const muzzleX = center.x + (Math.sin(radians) * -MUZZLE_OFFSET_PX);

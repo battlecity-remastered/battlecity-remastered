@@ -65,7 +65,7 @@ test("decodeKnownEnvelope rejects unknown event types", () => {
     assert.equal(decoded._tag, "Left");
 });
 
-test("decodeKnownEnvelope normalizes legacy alias type names", () => {
+test("decodeKnownEnvelope normalizes classic alias type names", () => {
     const decoded = decodeKnownEnvelope({
         type: "player:health",
         version: "1",
@@ -84,7 +84,7 @@ test("decodeKnownEnvelope normalizes legacy alias type names", () => {
     }
 });
 
-test("canonicalizeEventType maps known legacy aliases to canonical names", () => {
+test("canonicalizeEventType maps known classic aliases to canonical names", () => {
     assert.equal(canonicalizeEventType("players:snapshot"), "players.snapshot");
     assert.equal(canonicalizeEventType("bullet:fired"), "bullet.fired");
     assert.equal(canonicalizeEventType("bullet:resolved"), "bullet.resolved");
@@ -172,7 +172,7 @@ test("decodeKnownEnvelope validates lobby.high_scores payload", () => {
     assert.equal(decoded._tag, "Right");
 });
 
-test("decodeKnownEnvelope normalizes defense legacy aliases", () => {
+test("decodeKnownEnvelope normalizes defense classic aliases", () => {
     const deploy = decodeKnownEnvelope({
         type: "defense:deploy",
         version: "1",
@@ -233,7 +233,7 @@ test("decodeKnownEnvelope supports extended removal/reason payloads", () => {
     assert.equal(bullet._tag, "Right");
 });
 
-test("decodeKnownEnvelope validates population updates and legacy alias", () => {
+test("decodeKnownEnvelope validates population updates and classic alias", () => {
     const canonical = decodeKnownEnvelope({
         type: "population.update",
         version: "1",
@@ -252,7 +252,7 @@ test("decodeKnownEnvelope validates population updates and legacy alias", () => 
     });
     assert.equal(canonical._tag, "Right");
 
-    const legacy = decodeKnownEnvelope({
+    const classic = decodeKnownEnvelope({
         type: "population:update",
         version: "1",
         seq: 2,
@@ -267,9 +267,9 @@ test("decodeKnownEnvelope validates population updates and legacy alias", () => 
             removed: true
         }
     });
-    assert.equal(legacy._tag, "Right");
-    if (legacy._tag === "Right") {
-        assert.equal(legacy.right.type, "population.update");
+    assert.equal(classic._tag, "Right");
+    if (classic._tag === "Right") {
+        assert.equal(classic.right.type, "population.update");
     }
 });
 

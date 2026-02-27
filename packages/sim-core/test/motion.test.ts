@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
     advancePointByHeading32,
-    advancePointByLegacyHeading32,
+    advancePointByTankHeading32,
     heading32ToRadians,
     normalizeHeading32
 } from "../src/index.js";
@@ -28,16 +28,16 @@ test("advancePointByHeading32 applies speed and dt in heading direction", () => 
     assert.equal(next.x, 130);
 });
 
-test("advancePointByLegacyHeading32 follows tank-forward orientation", () => {
-    const forward = advancePointByLegacyHeading32(100, 200, 0, 300, 100);
+test("advancePointByTankHeading32 follows tank-forward orientation", () => {
+    const forward = advancePointByTankHeading32(100, 200, 0, 300, 100);
     assert.equal(forward.x, 100);
     assert.equal(forward.y, 170);
 
-    const reverse = advancePointByLegacyHeading32(100, 200, 0, -300, 100);
+    const reverse = advancePointByTankHeading32(100, 200, 0, -300, 100);
     assert.equal(reverse.x, 100);
     assert.equal(reverse.y, 230);
 
-    const right = advancePointByLegacyHeading32(100, 200, 8, 300, 100);
+    const right = advancePointByTankHeading32(100, 200, 8, 300, 100);
     assert.equal(Math.round(right.x), 130);
     assert.equal(Math.round(right.y), 200);
 });

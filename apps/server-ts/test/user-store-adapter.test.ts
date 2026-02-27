@@ -25,7 +25,7 @@ const withTempDir = (fn: (dir: string) => void): void => {
     }
 };
 
-test("UserStoreAdapter can read/write legacy player_scores schema", { skip: !sqliteAvailable }, () => {
+test("UserStoreAdapter can read/write classic player_scores schema", { skip: !sqliteAvailable }, () => {
     withTempDir((dir) => {
         const dbPath = path.join(dir, "scores.db");
 
@@ -73,7 +73,7 @@ test("UserStoreAdapter can read/write legacy player_scores schema", { skip: !sql
     });
 });
 
-test("UserStoreAdapter migrates missing legacy columns safely", { skip: !sqliteAvailable }, () => {
+test("UserStoreAdapter migrates missing classic columns safely", { skip: !sqliteAvailable }, () => {
     withTempDir((dir) => {
         const dbPath = path.join(dir, "scores.db");
 

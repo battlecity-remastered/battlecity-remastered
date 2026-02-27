@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createClientState } from "../src/app/state.js";
 import { applyImportedCityLayout, parseCityImportFile } from "../src/world/city-import.js";
 
-test("parseCityImportFile converts legacy city rows into remastered tile coords/types", () => {
+test("parseCityImportFile converts classic city rows into remastered tile coords/types", () => {
     const layout = parseCityImportFile([
         "6 510 509",
         "18 500 500",

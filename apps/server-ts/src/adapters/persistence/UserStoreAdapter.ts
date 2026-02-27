@@ -4,6 +4,14 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Effect } from "effect";
 import { resolveRankTitle, clampToNonNegativeInt } from "../../domain/score/RankService.js";
+import {
+    compareRuntimeProfiles,
+    escapeValue,
+    parseBool,
+    providerFromUserId,
+    sanitizeDisplayName,
+    sanitizeUserId
+} from "./user-store-utils.js";
 
 export type RuntimeUserProfile = {
     id: string;
@@ -15,86 +23,13 @@ export type RuntimeUserProfile = {
     updatedAt: number;
 };
 
-type PersistedScoreRow = {
-    userId?: string;
-    displayName?: string;
-    provider?: string;
-    points?: number;
-    orbs?: number;
-    assists?: number;
-    rankTitle?: string;
-    createdAt?: number;
-    updatedAt?: number;
-};
+type PersistedScoreRow = { userId?: string; displayName?: string; provider?: string; points?: number; orbs?: number; assists?: number; rankTitle?: string; createdAt?: number; updatedAt?: number; };
+type UserStoreAdapterOptions = { dbPath?: string; sqliteBin?: string; useSqlStorage?: boolean; };
 
-type UserStoreAdapterOptions = {
-    dbPath?: string;
-    sqliteBin?: string;
-    useSqlStorage?: boolean;
-};
-
-const CONTROL_CHAR_PATTERN = /[\u0000-\u001F\u007F]/g;
-const NAME_MAX_LENGTH = 64;
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DB_PATH = path.resolve(moduleDir, "../../../data/scores.db");
 const LEGACY_DB_PATH = path.resolve(moduleDir, "../../../../server/data/scores.db");
 const SQLITE_BIN = process.env.SQLITE3_PATH || "sqlite3";
-
-const sanitizeDisplayName = (rawName: string | undefined, fallback: string): string => {
-    if (typeof rawName !== "string") {
-        return fallback;
-    }
-    const trimmed = rawName
-        .replace(CONTROL_CHAR_PATTERN, "")
-        .replace(/\s+/g, " ")
-        .trim();
-    if (trimmed.length === 0) {
-        return fallback;
-    }
-    return trimmed.slice(0, NAME_MAX_LENGTH);
-};
-
-const sanitizeUserId = (rawId: string): string => {
-    return String(rawId)
-        .replace(CONTROL_CHAR_PATTERN, "")
-        .trim();
-};
-
-const providerFromUserId = (userId: string): string => {
-    const separator = userId.indexOf(":");
-    if (separator <= 0) {
-        return "local";
-    }
-    const provider = userId.slice(0, separator).trim().toLowerCase();
-    return provider.length > 0 ? provider : "local";
-};
-
-const escapeValue = (value: unknown): string => {
-    if (value === null || value === undefined) {
-        return "NULL";
-    }
-    if (typeof value === "number" && Number.isFinite(value)) {
-        return String(Math.floor(value));
-    }
-    const stringValue = String(value)
-        .replace(CONTROL_CHAR_PATTERN, "")
-        .replace(/'/g, "''");
-    return `'${stringValue}'`;
-};
-
-const parseBool = (raw: string | undefined): boolean | undefined => {
-    if (raw === undefined) {
-        return undefined;
-    }
-    const normalized = raw.trim().toLowerCase();
-    if (["1", "true", "yes", "on"].includes(normalized)) {
-        return true;
-    }
-    if (["0", "false", "no", "off"].includes(normalized)) {
-        return false;
-    }
-    return undefined;
-};
 
 export class UserStoreAdapter {
     private readonly users = new Map<string, RuntimeUserProfile>();
@@ -201,21 +136,7 @@ export class UserStoreAdapter {
                 : 20;
 
             return Array.from(this.users.values())
-                .sort((left, right) => {
-                    const scoreDiff = right.score - left.score;
-                    if (scoreDiff !== 0) {
-                        return scoreDiff;
-                    }
-                    const orbDiff = right.orbs - left.orbs;
-                    if (orbDiff !== 0) {
-                        return orbDiff;
-                    }
-                    const assistDiff = right.assists - left.assists;
-                    if (assistDiff !== 0) {
-                        return assistDiff;
-                    }
-                    return left.updatedAt - right.updatedAt;
-                })
+                .sort(compareRuntimeProfiles)
                 .slice(0, boundedLimit);
         });
     }

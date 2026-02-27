@@ -1,5 +1,6 @@
 import type { ClientState } from "../../app/state.js";
 import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
+import { registerKeydownHandler } from "../hotkeys/register-keydown-handler.js";
 
 type BuildTreeEntry = {
     key: string;
@@ -283,16 +284,7 @@ export const applyBuildMenuHotkey = (state: ClientState, key: string, anchor?: B
 };
 
 export const registerBuildMenuHotkeys = (state: ClientState): (() => void) => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-        const handled = applyBuildMenuHotkey(state, event.key);
-        if (handled) {
-            event.preventDefault();
-        }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-        window.removeEventListener("keydown", onKeyDown);
-    };
+    return registerKeydownHandler((event) => applyBuildMenuHotkey(state, event.key));
 };
 
 const createIcon = (iconIndex: number): HTMLSpanElement => {
