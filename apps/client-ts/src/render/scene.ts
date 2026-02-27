@@ -13,7 +13,12 @@ import { renderEffects } from "./effects/EffectsRenderer.js";
 import { renderBotDebugLayer } from "./debug/BotDebugLayer.js";
 import { formatNearestOrbableCityLine, resolveNearestOrbableCity } from "./orb-target.js";
 import { loadMapData, type LoadedMap } from "../world/map-loader.js";
-import { getFrameTexture, loadLegacyTextures, type LegacyTextures } from "./LegacyTextureRegistry.js";
+import {
+    createEmptyLegacyTextures,
+    getFrameTexture,
+    loadLegacyTextures,
+    type LegacyTextures
+} from "./LegacyTextureRegistry.js";
 import {
     resolveBuildingAnimationFrameX,
     resolveBuildingBaseFrame,
@@ -64,6 +69,7 @@ const COMMAND_CENTER_LABEL_VIEW_THRESHOLD = 40 * TILE;
 const COMMAND_CENTER_LABEL_RESOLUTION = 2;
 const SIDE_PANEL_REFRESH_MS = 33;
 const WORLD_OBJECT_OVERSCAN_PX = TILE * 4;
+const RENDER_DIAGNOSTIC_INTERVAL_MS = 3000;
 
 type TankPalette = {
     tread: number;
@@ -467,6 +473,43 @@ const updateTankEntityTexture = (
     entity.texture = texture;
 };
 
+const replaceEntityInLayer = (
+    layer: Container,
+    current: CacheEntity,
+    replacement: CacheEntity
+): void => {
+    const currentIndex = layer.children.includes(current) ? layer.getChildIndex(current) : -1;
+    if (currentIndex >= 0) {
+        layer.removeChild(current);
+        layer.addChildAt(replacement, currentIndex);
+    } else {
+        layer.addChild(replacement);
+    }
+    current.destroy();
+};
+
+const maybeUpgradeTankEntity = (
+    layer: Container,
+    entity: RenderableEntity,
+    textures: LegacyTextures,
+    row: number,
+    direction: number
+): RenderableEntity => {
+    if (entity instanceof Sprite) {
+        return entity;
+    }
+    const frame = resolveTankTexture(textures, row, direction);
+    if (!frame) {
+        return entity;
+    }
+    const sprite = new Sprite(frame);
+    sprite.anchor.set(0, 0);
+    sprite.position.set(entity.position.x, entity.position.y);
+    sprite.rotation = entity.rotation;
+    replaceEntityInLayer(layer, entity, sprite);
+    return sprite;
+};
+
 const renderGhostPlacement = (state: ClientState, layers: SceneLayers): void => {
     const layer = layers.ghostPlacementLayer;
     const fill = layers.ghostPlacementFill;
@@ -734,12 +777,19 @@ const syncBuildingSprites = (
     syncEntityCache(layers.buildingSprites, layers.objectLayer, visibleBuildingIds, () => createBuildingEntity(layers, state));
     for (const buildingId of visibleBuildingIds) {
         const building = state.buildings.get(buildingId);
-        const sprite = layers.buildingSprites.get(buildingId);
+        let sprite = layers.buildingSprites.get(buildingId);
         if (!building || !sprite) {
             continue;
         }
+        const frame = resolveBuildingTexture(layers.textures, building.type, animationCounter);
+        if (!(sprite instanceof Sprite) && frame) {
+            const upgraded = new Sprite(frame);
+            upgraded.position.set(sprite.position.x, sprite.position.y);
+            replaceEntityInLayer(layers.objectLayer, sprite, upgraded);
+            layers.buildingSprites.set(buildingId, upgraded);
+            sprite = upgraded;
+        }
         if (sprite instanceof Sprite) {
-            const frame = resolveBuildingTexture(layers.textures, building.type, animationCounter);
             if (frame && sprite.texture !== frame) {
                 sprite.texture = frame;
             }
@@ -1335,19 +1385,34 @@ const renderSceneFrame = (state: ClientState, mapData: LoadedMap, layers: SceneL
     layers.world.pivot.set(localRender.x, localRender.y);
 
     const localRow = resolveLocalRole(state) === "mayor" ? 1 : 0;
+    layers.localTank = maybeUpgradeTankEntity(
+        layers.world,
+        layers.localTank,
+        layers.textures,
+        localRow,
+        state.local.direction
+    );
     updateTankEntityTexture(layers.localTank, layers.textures, localRow, state.local.direction);
     layers.localTank.position.set(localRender.x, localRender.y);
     layers.localTank.rotation = 0;
 
     syncEntityCache(layers.remoteTanks, layers.remoteLayer, state.remotePlayers.keys(), () => createTankSprite(layers.textures, 2, 0));
     for (const remote of state.remotePlayers.values()) {
-        const tank = layers.remoteTanks.get(remote.id);
+        let tank = layers.remoteTanks.get(remote.id);
         if (!tank) {
             continue;
         }
         const isSameCity = remote.city === state.local.city;
         const isMayor = resolveRemoteRole(state, remote.id) === "mayor";
         const remoteRow = isSameCity ? (isMayor ? 1 : 0) : (isMayor ? 3 : 2);
+        tank = maybeUpgradeTankEntity(
+            layers.remoteLayer,
+            tank,
+            layers.textures,
+            remoteRow,
+            remote.direction
+        );
+        layers.remoteTanks.set(remote.id, tank);
         updateTankEntityTexture(tank, layers.textures, remoteRow, remote.direction);
         tank.position.set(remote.x, remote.y);
         tank.rotation = 0;
@@ -1412,12 +1477,33 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     });
 
     attachCanvasToRoot(app);
-    const textures = await loadLegacyTextures();
+    const textures = createEmptyLegacyTextures();
+    console.info("[scene.init] loading legacy textures");
+    void loadLegacyTextures()
+        .then((loadedTextures) => {
+            Object.assign(textures, loadedTextures);
+            const textureEntries = Object.entries(textures);
+            const loadedTextureCount = textureEntries.filter(([, texture]) => texture !== null).length;
+            console.info("[scene.init] textures ready", {
+                loaded: loadedTextureCount,
+                total: textureEntries.length
+            });
+        })
+        .catch((error) => {
+            console.warn("[scene.init] texture preload failed", error);
+        });
     const layers = createSceneLayers(app, textures);
     const mapData = await loadMapData();
+    console.info("[scene.init] map ready", {
+        size: mapData.map.length,
+        blockingTiles: mapData.blockingTiles.size,
+        buildBlockingTiles: mapData.buildBlockingTiles.size
+    });
     state.world.blockingTiles = mapData.blockingTiles;
     state.world.buildBlockingTiles = mapData.buildBlockingTiles;
     state.world.mapSize = mapData.map.length;
+    let lastDiagnosticAt = 0;
+    let renderedFrames = 0;
 
     return {
         app,
@@ -1430,6 +1516,32 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
                 state.pointer.surfaceHeight = rect.height;
             }
             renderSceneFrame(state, mapData, layers);
+            renderedFrames += 1;
+            const nowMs = Date.now();
+            if ((nowMs - lastDiagnosticAt) >= RENDER_DIAGNOSTIC_INTERVAL_MS) {
+                lastDiagnosticAt = nowMs;
+                console.info("[scene.render]", {
+                    frames: renderedFrames,
+                    canvas: {
+                        width: Math.floor(rect.width),
+                        height: Math.floor(rect.height)
+                    },
+                    local: {
+                        id: state.local.id,
+                        city: state.local.city,
+                        x: Math.floor(state.local.x),
+                        y: Math.floor(state.local.y)
+                    },
+                    entities: {
+                        remotePlayers: state.remotePlayers.size,
+                        buildings: state.buildings.size,
+                        hazards: state.hazards.size,
+                        defenses: state.defenses.size,
+                        bullets: state.bullets.size
+                    },
+                    layerChildren: layers.world.children.length
+                });
+            }
         }
     };
 };

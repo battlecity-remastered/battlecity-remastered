@@ -48,6 +48,8 @@ const unregisterIdentityHotkeys = registerIdentityHotkeys(state);
 const unregisterInventoryHotkeys = registerInventoryHotkeys(state, network.send);
 const loop = startGameLoop(state, network.send);
 const tickErrorCounts = new Map<string, number>();
+let lastTickHeartbeatAt = 0;
+let tickFrames = 0;
 
 const runTickSegment = (label: string, fn: () => void): void => {
     try {
@@ -62,6 +64,7 @@ const runTickSegment = (label: string, fn: () => void): void => {
 };
 
 scene.app.ticker.add(() => {
+    tickFrames += 1;
     runTickSegment("scene.render", scene.render);
     runTickSegment("lobby.render", lobbyUi.render);
     runTickSegment("chat.render", chatUi.render);
@@ -77,6 +80,17 @@ scene.app.ticker.add(() => {
     runTickSegment("notifications.render", notificationsUi.render);
     runTickSegment("audio.tick", audio.tick);
     runTickSegment("music.tick", music.tick);
+    const nowMs = Date.now();
+    if ((nowMs - lastTickHeartbeatAt) >= 5000) {
+        lastTickHeartbeatAt = nowMs;
+        console.info("[tick.heartbeat]", {
+            frames: tickFrames,
+            socketConnected: state.debug.socketConnected,
+            localPlayerId: state.local.id,
+            localCity: state.local.city,
+            mapSize: state.world.mapSize
+        });
+    }
 });
 
 window.addEventListener("beforeunload", () => {
