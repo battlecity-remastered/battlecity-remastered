@@ -7,26 +7,7 @@ export const heading32ToRadians = (direction: number): number => {
     return (normalizeHeading32(direction) / 32) * (Math.PI * 2);
 };
 
-export const advancePointByHeading32 = (
-    x: number,
-    y: number,
-    direction: number,
-    speed: number,
-    dtMs: number
-): { x: number; y: number } => {
-    const radians = heading32ToRadians(direction);
-    const distance = speed * (dtMs / 1000);
-    return {
-        x: x + (Math.cos(radians) * distance),
-        y: y + (Math.sin(radians) * distance)
-    };
-};
-
-// Legacy tank heading math:
-// - direction 0 points up
-// - positive direction rotates clockwise
-// - positive speed moves "forward"; negative speed moves "reverse"
-export const advancePointByLegacyHeading32 = (
+export const advancePointByTankHeading32 = (
     x: number,
     y: number,
     direction: number,
@@ -39,5 +20,24 @@ export const advancePointByLegacyHeading32 = (
     return {
         x: x + (Math.sin(angle) * -distance),
         y: y + (Math.cos(angle) * -distance)
+    };
+};
+
+// Classic tank heading math:
+// - direction 0 points up
+// - positive direction rotates clockwise
+// - positive speed moves "forward"; negative speed moves "reverse"
+export const advancePointByHeading32 = (
+    x: number,
+    y: number,
+    direction: number,
+    speed: number,
+    dtMs: number
+): { x: number; y: number } => {
+    const angle = heading32ToRadians(direction);
+    const distance = speed * (dtMs / 1000);
+    return {
+        x: x + (Math.cos(angle) * distance),
+        y: y + (Math.sin(angle) * distance)
     };
 };
