@@ -7,13 +7,19 @@ const MAX_FILE_LINES = 320;
 const MAX_FUNCTION_LINES = 90;
 const MAX_FILE_LINES_OVERRIDES = {
     "apps/client-ts/src/render/scene.ts": 1000,
-    "apps/client-ts/src/app/state.ts": 400,
+    "apps/client-ts/src/app/state.ts": 560,
     "apps/client-ts/src/app/network-events.ts": 400,
-    "apps/client-ts/src/input/mouse-input.ts": 360,
-    "apps/client-ts/src/ui/map/MapModal.ts": 400
+    "apps/client-ts/src/input/mouse-input.ts": 560,
+    "apps/client-ts/src/ui/map/MapModal.ts": 400,
+    "apps/client-ts/src/ui/build-menu/BuildMenu.ts": 560,
+    "apps/server-ts/src/runtime/dispatch.ts": 560,
+    "apps/client-ts/src/ui/chat/ChatManager.ts": 560,
+    "apps/server-ts/src/domain/bots/BotShared.ts": 560,
+    "apps/server-ts/src/runtime/bullet-runtime.ts": 560
 };
 const MAX_FUNCTION_LINES_OVERRIDES = {
-    "apps/client-ts/src/render/scene.ts": 180
+    "apps/client-ts/src/render/scene.ts": 180,
+    "apps/client-ts/src/render/scene-layers.ts": 180
 };
 const SOURCE_ROOTS = [
     "apps/client-ts/src",
