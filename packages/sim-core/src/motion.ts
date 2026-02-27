@@ -41,3 +41,6 @@ export const advancePointByHeading32 = (
         y: y + (Math.sin(angle) * distance)
     };
 };
+
+// Backward-compatible alias used by older call sites.
+export const advancePointByLegacyHeading32 = advancePointByHeading32;
