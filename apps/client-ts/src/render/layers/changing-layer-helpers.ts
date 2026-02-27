@@ -1,29 +1,17 @@
+import {
+    isCommandCenterType as isCommandCenterTypeShared,
+    isFactoryType as isFactoryTypeShared,
+    resolveBuildingBaseType as resolveBaseType
+} from "@battlecity/sim-core";
+
 const TILE = 48;
 
-const resolveBaseType = (buildingType: number): number => {
-    const numeric = Number(buildingType);
-    if (!Number.isFinite(numeric)) {
-        return -1;
-    }
-    if (numeric === 0) {
-        return 0;
-    }
-    if (numeric < 100) {
-        return -1;
-    }
-    return Math.floor(numeric / 100);
-};
-
 export const isCommandCenterType = (buildingType: number): boolean => {
-    const numeric = Number(buildingType);
-    if (!Number.isFinite(numeric)) {
-        return false;
-    }
-    return numeric === 0;
+    return isCommandCenterTypeShared(buildingType);
 };
 
 export const isFactoryType = (buildingType: number): boolean => {
-    return resolveBaseType(buildingType) === 1;
+    return isFactoryTypeShared(buildingType);
 };
 
 export const resolveSmokeFrame = (nowMs: number): number => {

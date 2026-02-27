@@ -1,4 +1,4 @@
-export const LEGACY_TEXTURE_PATHS = {
+export const TEXTURE_PATHS = {
     tanks: "/assets/imgTanks.png",
     buildings: "/assets/skins/BattleCityDX/imgBuildings.png",
     items: "/assets/imgItems.png",
@@ -31,8 +31,8 @@ export const LEGACY_TEXTURE_PATHS = {
     buttonStaff: "/assets/imgBtnStaff.png"
 } as const;
 
-export type LegacyTextureKey = keyof typeof LEGACY_TEXTURE_PATHS;
+export type TextureKey = keyof typeof TEXTURE_PATHS;
 
-export const parityTextureKeys = (): LegacyTextureKey[] => {
-    return Object.keys(LEGACY_TEXTURE_PATHS) as LegacyTextureKey[];
+export const parityTextureKeys = (): TextureKey[] => {
+    return Object.keys(TEXTURE_PATHS) as TextureKey[];
 };

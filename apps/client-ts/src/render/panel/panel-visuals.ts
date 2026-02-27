@@ -119,7 +119,7 @@ export const PANEL_INVENTORY_SLOTS: ReadonlyArray<{ itemType: number; x: number;
     { itemType: 9, x: 7, y: 372 }, // turret
     { itemType: 10, x: 42, y: 372 }, // sleeper
     { itemType: 11, x: 77, y: 372 }, // plasma
-    { itemType: 0, x: 7, y: 372 } // cloak (legacy overlap)
+    { itemType: 0, x: 7, y: 372 } // cloak (classic overlap)
 ];
 
 export const HOME_ARROW = {

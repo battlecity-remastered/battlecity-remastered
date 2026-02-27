@@ -1,6 +1,6 @@
 import { Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { ClientState } from "../../app/state.js";
-import { getFrameTexture } from "../LegacyTextureRegistry.js";
+import { getFrameTexture } from "../TextureRegistry.js";
 import { isRefreshDue } from "../pacing.js";
 import {
     isFactoryType,

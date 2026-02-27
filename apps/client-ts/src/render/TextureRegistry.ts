@@ -1,7 +1,7 @@
 import { Assets, Rectangle, Texture } from "pixi.js";
-import { LEGACY_TEXTURE_PATHS, type LegacyTextureKey } from "./parity/texture-paths.js";
+import { TEXTURE_PATHS, type TextureKey } from "./parity/texture-paths.js";
 
-export type LegacyTextures = {
+export type TextureSet = {
     tanks: Texture | null;
     buildings: Texture | null;
     items: Texture | null;
@@ -34,7 +34,7 @@ export type LegacyTextures = {
     buttonStaff: Texture | null;
 };
 
-export const createEmptyLegacyTextures = (): LegacyTextures => ({
+export const createEmptyTextureSet = (): TextureSet => ({
     tanks: null,
     buildings: null,
     items: null,
@@ -110,18 +110,18 @@ const safeLoadTexture = async (path: string): Promise<Texture | null> => {
     }
 };
 
-const loadTextureEntries = async (): Promise<Array<[LegacyTextureKey, Texture | null]>> => {
+const loadTextureEntries = async (): Promise<Array<[TextureKey, Texture | null]>> => {
     return Promise.all(
-        Object.entries(LEGACY_TEXTURE_PATHS).map(async ([key, path]) => {
+        Object.entries(TEXTURE_PATHS).map(async ([key, path]) => {
             const texture = await safeLoadTexture(path);
-            return [key, texture] as [LegacyTextureKey, Texture | null];
+            return [key, texture] as [TextureKey, Texture | null];
         })
     );
 };
 
-export const loadLegacyTextures = async (): Promise<LegacyTextures> => {
+export const loadTextureSet = async (): Promise<TextureSet> => {
     const entries = await loadTextureEntries();
-    const textures = Object.fromEntries(entries) as Record<LegacyTextureKey, Texture | null>;
+    const textures = Object.fromEntries(entries) as Record<TextureKey, Texture | null>;
     return {
         ...textures
     };
