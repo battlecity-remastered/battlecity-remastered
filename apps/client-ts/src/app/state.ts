@@ -604,8 +604,9 @@ export const updateFromSnapshot = (
                 state.local.x += dx * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
                 state.local.y += dy * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
             } else if (!isLocallyMoving && driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
-                state.local.x += dx * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
-                state.local.y += dy * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
+                // No easing at rest: snap immediately to avoid visible "slow stop" drift.
+                state.local.x = targetX;
+                state.local.y = targetY;
             }
             state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
             if (typeof player.health === "number") {
