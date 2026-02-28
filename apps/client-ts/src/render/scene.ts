@@ -21,6 +21,7 @@ import { replaceEntityInLayer, syncEntityCache } from "./scene-world-objects-sha
 import { resolveWorldViewBounds } from "./world-bounds.js";
 const WORLD_OBJECT_OVERSCAN_PX = TILE * 4;
 const RENDER_DIAGNOSTIC_INTERVAL_MS = 3000;
+const PIXI_INIT_TIMEOUT_MS = 12000;
 
 const resolveLocalRole = (state: ClientState): "mayor" | "recruit" => {
     const assignment = state.lobby.assignments.find((entry) => entry.city === state.local.city);
@@ -202,15 +203,63 @@ export type SceneRuntime = {
     render: () => void;
 };
 
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    try {
+        return await Promise.race([
+            promise,
+            new Promise<T>((_, reject) => {
+                timeoutId = setTimeout(() => {
+                    reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+                }, timeoutMs);
+            })
+        ]);
+    } finally {
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+        }
+    }
+};
+
+const initPixiApplication = async (): Promise<Application> => {
+    const attempts: Array<"webgl" | "webgpu"> = ["webgl", "webgpu"];
+    let lastError: unknown = null;
+
+    for (const preference of attempts) {
+        const app = new Application();
+        try {
+            console.info("[scene.init] pixi init attempt", { preference });
+            await withTimeout(
+                app.init({
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    background: "#15241f",
+                    antialias: false,
+                    roundPixels: true,
+                    preference
+                }),
+                PIXI_INIT_TIMEOUT_MS,
+                `pixi init (${preference})`
+            );
+            console.info("[scene.init] pixi init ok", { preference });
+            return app;
+        } catch (error) {
+            lastError = error;
+            console.warn("[scene.init] pixi init failed", {
+                preference,
+                error: error instanceof Error ? error.message : String(error)
+            });
+            app.destroy(true, { children: true, texture: false });
+        }
+    }
+
+    throw new Error(
+        `pixi init failed for all renderers: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+    );
+};
+
 export const createSceneRuntime = async (state: ClientState): Promise<SceneRuntime> => {
-    const app = new Application();
-    await app.init({
-        width: window.innerWidth,
-        height: window.innerHeight,
-        background: "#15241f",
-        antialias: false,
-        roundPixels: true
-    });
+    const app = await initPixiApplication();
 
     attachCanvasToRoot(app);
     const textures = createEmptyTextureSet();
