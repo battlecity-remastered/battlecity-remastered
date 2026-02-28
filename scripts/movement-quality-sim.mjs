@@ -13,18 +13,36 @@ const RENDER_TICK_MS = 16;
 const PLAYER_SPEED = 600;
 const MAP_MAX = 24_576;
 const SPRITE_SIZE = 48;
-const HARD_RECONCILE = 72;
-const SOFT_RECONCILE = 12;
-const SOFT_GAIN = 0.2;
-const MOVING_RECONCILE = 64;
-const MOVING_GAIN = 0.12;
-const HISTORY_MAX = 12;
-const INTERP_DELAY_MS = 90;
-const MAX_EXTRAP_MS = 120;
-const MIN_ALLOWANCE = 24;
-const MAX_ALLOWANCE = 420;
-const HEADROOM = 2.5;
-const BASE_ALLOWANCE = 80;
+
+const PROFILE_CURRENT = {
+    hardReconcilePx: 72,
+    softReconcilePx: 12,
+    softGain: 0.2,
+    movingReconcilePx: 64,
+    movingGain: 0.12,
+    historyMax: 12,
+    interpolationDelayMs: 90,
+    maxExtrapolationMs: 120,
+    minAllowancePx: 24,
+    maxAllowancePx: 420,
+    headroomMultiplier: 2.5,
+    baseAllowancePx: 80
+};
+
+const PROFILE_CANDIDATE = {
+    hardReconcilePx: 72,
+    softReconcilePx: 16,
+    softGain: 0.14,
+    movingReconcilePx: 88,
+    movingGain: 0.08,
+    historyMax: 16,
+    interpolationDelayMs: 115,
+    maxExtrapolationMs: 100,
+    minAllowancePx: 24,
+    maxAllowancePx: 420,
+    headroomMultiplier: 2.8,
+    baseAllowancePx: 90
+};
 
 const seeded = (seed) => {
     let t = seed >>> 0;
@@ -64,22 +82,26 @@ const expectedPathPosition = (timeMs) => {
     return position;
 };
 
-const resolveAllowance = (lastAcceptedUpdateAt, nowMs) => {
+const resolveAllowance = (lastAcceptedUpdateAt, nowMs, profile) => {
     const previousAt = Number.isFinite(lastAcceptedUpdateAt) ? lastAcceptedUpdateAt : (nowMs - SERVER_STEP_MS);
     const elapsedMs = Math.max(SERVER_STEP_MS, nowMs - previousAt);
     const travel = PLAYER_SPEED * (elapsedMs / 1000);
-    const adaptive = (travel * HEADROOM) + MIN_ALLOWANCE;
-    return clamp(Math.max(BASE_ALLOWANCE, adaptive), MIN_ALLOWANCE, MAX_ALLOWANCE);
+    const adaptive = (travel * profile.headroomMultiplier) + profile.minAllowancePx;
+    return clamp(
+        Math.max(profile.baseAllowancePx, adaptive),
+        profile.minAllowancePx,
+        profile.maxAllowancePx
+    );
 };
 
-const normalizeSnapshotTarget = (history, nowMs) => {
+const normalizeSnapshotTarget = (history, nowMs, profile) => {
     if (history.length === 0) {
         return null;
     }
     if (history.length === 1) {
         return history[0];
     }
-    const targetTime = nowMs - INTERP_DELAY_MS;
+    const targetTime = nowMs - profile.interpolationDelayMs;
     for (let i = 0; i < history.length - 1; i += 1) {
         const a = history[i];
         const b = history[i + 1];
@@ -94,11 +116,11 @@ const normalizeSnapshotTarget = (history, nowMs) => {
     const previous = history[history.length - 2];
     const dt = Math.max(1, latest.serverTime - previous.serverTime);
     const vx = (latest.x - previous.x) / dt;
-    const extra = clamp(targetTime - latest.serverTime, 0, MAX_EXTRAP_MS);
+    const extra = clamp(targetTime - latest.serverTime, 0, profile.maxExtrapolationMs);
     return { x: latest.x + (vx * extra), serverTime: targetTime };
 };
 
-const runScenario = (scenario, seed) => {
+const runScenario = (scenario, seed, profileName, profile) => {
     const rng = seeded(seed);
     const oneWay = scenario.rttMs / 2;
     const jitterRange = scenario.jitterMs;
@@ -149,7 +171,7 @@ const runScenario = (scenario, seed) => {
         renderedSamples.push({ t: nowMs, x: clientRenderedX });
 
         for (const packet of popReady(queueToServer, nowMs)) {
-            const allowance = resolveAllowance(lastAcceptedUpdateAt, nowMs);
+            const allowance = resolveAllowance(lastAcceptedUpdateAt, nowMs, profile);
             const distance = Math.abs(packet.offset - serverX);
             if (distance > allowance) {
                 invalidRejections += 1;
@@ -163,7 +185,7 @@ const runScenario = (scenario, seed) => {
 
         for (const packet of popReady(queueToClient, nowMs)) {
             snapshotHistory.push(packet);
-            while (snapshotHistory.length > HISTORY_MAX) {
+            while (snapshotHistory.length > profile.historyMax) {
                 snapshotHistory.shift();
             }
         }
@@ -190,7 +212,6 @@ const runScenario = (scenario, seed) => {
 
         if (nowMs >= nextServerTick) {
             nextServerTick += SERVER_STEP_MS;
-            // server movement is driven by accepted inputs above.
         }
 
         if (nowMs >= nextSnapshotTick) {
@@ -205,19 +226,19 @@ const runScenario = (scenario, seed) => {
 
         if (nowMs >= nextRenderTick) {
             nextRenderTick += RENDER_TICK_MS;
-            const target = normalizeSnapshotTarget(snapshotHistory, nowMs);
+            const target = normalizeSnapshotTarget(snapshotHistory, nowMs, profile);
             if (target) {
                 const dx = target.x - clientX;
                 const drift = Math.abs(dx);
-                if (drift > HARD_RECONCILE) {
+                if (drift > profile.hardReconcilePx) {
                     correctionEvents.push(drift);
                     clientX = target.x;
-                } else if (isMoving && drift > MOVING_RECONCILE) {
-                    const delta = dx * MOVING_GAIN;
+                } else if (isMoving && drift > profile.movingReconcilePx) {
+                    const delta = dx * profile.movingGain;
                     correctionEvents.push(Math.abs(delta));
                     clientX += delta;
-                } else if (!isMoving && drift > SOFT_RECONCILE) {
-                    const delta = dx * SOFT_GAIN;
+                } else if (!isMoving && drift > profile.softReconcilePx) {
+                    const delta = dx * profile.softGain;
                     correctionEvents.push(Math.abs(delta));
                     clientX += delta;
                 }
@@ -251,6 +272,7 @@ const runScenario = (scenario, seed) => {
         : 0;
 
     return {
+        profile: profileName,
         scenario: scenario.name,
         rttMs: scenario.rttMs,
         jitterMs: scenario.jitterMs,
@@ -298,9 +320,61 @@ const printTable = (rows) => {
     }
 };
 
-const runs = [];
+const printDeltaTable = (baselineRows, candidateRows) => {
+    const columns = [
+        "scenario",
+        "d_inputToVisibleMs",
+        "d_stopSettlingMs",
+        "d_idleDriftPx",
+        "d_pathErrorMeanPx",
+        "d_pathErrorP95Px",
+        "d_correctionCount",
+        "d_correctionGt24",
+        "d_correctionMaxPx",
+        "d_invalidRejections"
+    ];
+    console.log(`| ${columns.join(" | ")} |`);
+    console.log(`| ${columns.map(() => "---").join(" | ")} |`);
+
+    for (let i = 0; i < baselineRows.length; i += 1) {
+        const a = baselineRows[i];
+        const b = candidateRows[i];
+        const diff = (key) => {
+            if (a[key] === null || b[key] === null) {
+                return "n/a";
+            }
+            return Number((b[key] - a[key]).toFixed(2));
+        };
+        const row = {
+            scenario: a.scenario,
+            d_inputToVisibleMs: diff("inputToVisibleMs"),
+            d_stopSettlingMs: diff("stopSettlingMs"),
+            d_idleDriftPx: diff("idleDriftPx"),
+            d_pathErrorMeanPx: diff("pathErrorMeanPx"),
+            d_pathErrorP95Px: diff("pathErrorP95Px"),
+            d_correctionCount: diff("correctionCount"),
+            d_correctionGt24: diff("correctionGt24"),
+            d_correctionMaxPx: diff("correctionMaxPx"),
+            d_invalidRejections: diff("invalidRejections")
+        };
+        console.log(`| ${columns.map((c) => format(row[c])).join(" | ")} |`);
+    }
+};
+
+const runsCurrent = [];
+const runsCandidate = [];
 for (let i = 0; i < DEFAULT_SCENARIOS.length; i += 1) {
-    runs.push(runScenario(DEFAULT_SCENARIOS[i], 1337 + (i * 17)));
+    const scenario = DEFAULT_SCENARIOS[i];
+    const seed = 1337 + (i * 17);
+    runsCurrent.push(runScenario(scenario, seed, "current", PROFILE_CURRENT));
+    runsCandidate.push(runScenario(scenario, seed, "candidate", PROFILE_CANDIDATE));
 }
 
-printTable(runs);
+console.log("## Current Profile");
+printTable(runsCurrent);
+console.log("");
+console.log("## Candidate Profile");
+printTable(runsCandidate);
+console.log("");
+console.log("## Candidate - Current Delta (negative is better)");
+printDeltaTable(runsCurrent, runsCandidate);
