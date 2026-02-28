@@ -458,8 +458,10 @@ export const createClientState = (): ClientState => {
     };
 };
 
-// Ignore tiny server/client drift to avoid constant micro snap-back jitter while moving.
-const LOCAL_SNAPSHOT_RECONCILE_DISTANCE_PX = 12;
+// Server authority plus WAN latency causes small drift; soften correction to avoid visible jitter.
+const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 12;
+const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 72;
+const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.35;
 
 export const updateFromSnapshot = (
     state: ClientState,
@@ -480,7 +482,8 @@ export const updateFromSnapshot = (
             state.local.direction = player.direction;
             const dx = player.offset.x - state.local.x;
             const dy = player.offset.y - state.local.y;
-            if ((dx * dx) + (dy * dy) > (LOCAL_SNAPSHOT_RECONCILE_DISTANCE_PX ** 2)) {
+            const driftSq = (dx * dx) + (dy * dy);
+            if (driftSq > (LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX ** 2)) {
                 state.local.x = player.offset.x;
                 state.local.y = player.offset.y;
                 state.render.previousLocalX = player.offset.x;
@@ -488,6 +491,9 @@ export const updateFromSnapshot = (
                 state.render.projectedOffsetX = 0;
                 state.render.projectedOffsetY = 0;
                 state.render.lastResolvedAt = null;
+            } else if (driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
+                state.local.x += dx * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
+                state.local.y += dy * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
             }
             state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
             if (typeof player.health === "number") {
