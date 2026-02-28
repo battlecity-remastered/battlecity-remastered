@@ -76,6 +76,13 @@ export const clearClientWorldForReconnect = (state: ClientState): void => {
     state.ui.buildGhostMode = false;
     state.ui.buildDemolishMode = false;
     state.ui.pendingBuildPlacement = null;
+
+    state.render.previousLocalX = state.local.x;
+    state.render.previousLocalY = state.local.y;
+    state.render.projectedOffsetX = 0;
+    state.render.projectedOffsetY = 0;
+    state.render.lastResolvedAt = null;
+    state.render.authoritativeSnapshots = [];
 };
 
 export const buildReconnectJoinPayload = (

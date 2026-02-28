@@ -103,6 +103,7 @@ export const handlers: {
             state.render.projectedOffsetX = 0;
             state.render.projectedOffsetY = 0;
             state.render.lastResolvedAt = null;
+            state.render.authoritativeSnapshots = [];
         }
         state.lobby.deniedReason = null;
     },

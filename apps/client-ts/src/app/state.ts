@@ -246,6 +246,12 @@ export type ClientState = {
         projectedOffsetX: number;
         projectedOffsetY: number;
         lastResolvedAt: number | null;
+        authoritativeSnapshots: Array<{
+            serverTime: number;
+            x: number;
+            y: number;
+            direction: number;
+        }>;
     };
     debug: DebugState;
     ui: {
@@ -451,7 +457,8 @@ export const createClientState = (): ClientState => {
             previousLocalY: local.y,
             projectedOffsetX: 0,
             projectedOffsetY: 0,
-            lastResolvedAt: null
+            lastResolvedAt: null,
+            authoritativeSnapshots: []
         },
         debug: createDebugDefaults(),
         ui: createUiDefaults()
@@ -461,39 +468,131 @@ export const createClientState = (): ClientState => {
 // Server authority plus WAN latency causes small drift; soften correction to avoid visible jitter.
 const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 12;
 const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 72;
-const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.35;
-const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 40;
+const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.2;
+const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 64;
+const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.12;
+const LOCAL_SNAPSHOT_HISTORY_MAX = 12;
+const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS = 90;
+const LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS = 120;
+
+type PlayersSnapshotPayload = KnownEventPayloadByType["players.snapshot"];
+type PlayersSnapshotEntry = PlayersSnapshotPayload extends { players: ReadonlyArray<infer TPlayer>; } ? TPlayer : never;
+
+const normalizePlayersSnapshotPayload = (
+    payload: PlayersSnapshotPayload
+): { serverTime: number; players: ReadonlyArray<PlayersSnapshotEntry>; } => {
+    if (Array.isArray(payload)) {
+        return {
+            serverTime: Date.now(),
+            players: payload as unknown as PlayersSnapshotEntry[]
+        };
+    }
+    const serverTime = Number.isFinite(payload.serverTime) ? payload.serverTime : Date.now();
+    return {
+        serverTime,
+        players: payload.players
+    };
+};
+
+const pushAuthoritativeSnapshot = (
+    state: ClientState,
+    serverTime: number,
+    player: PlayersSnapshotEntry
+): void => {
+    const history = state.render.authoritativeSnapshots;
+    const previous = history.length > 0 ? history[history.length - 1] : null;
+    if (previous && previous.serverTime === serverTime) {
+        previous.x = player.offset.x;
+        previous.y = player.offset.y;
+        previous.direction = player.direction;
+        return;
+    }
+    history.push({
+        serverTime,
+        x: player.offset.x,
+        y: player.offset.y,
+        direction: player.direction
+    });
+    while (history.length > LOCAL_SNAPSHOT_HISTORY_MAX) {
+        history.shift();
+    }
+};
+
+const resolveAuthoritativeTarget = (
+    state: ClientState,
+    nowMs: number
+): { x: number; y: number; direction: number; } | null => {
+    const history = state.render.authoritativeSnapshots;
+    if (history.length === 0) {
+        return null;
+    }
+    if (history.length === 1) {
+        const only = history[0]!;
+        return { x: only.x, y: only.y, direction: only.direction };
+    }
+
+    const targetTime = nowMs - LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS;
+    for (let index = 0; index < history.length - 1; index += 1) {
+        const current = history[index]!;
+        const next = history[index + 1]!;
+        if (targetTime < current.serverTime || targetTime > next.serverTime) {
+            continue;
+        }
+        const dt = Math.max(1, next.serverTime - current.serverTime);
+        const alpha = Math.max(0, Math.min(1, (targetTime - current.serverTime) / dt));
+        return {
+            x: current.x + ((next.x - current.x) * alpha),
+            y: current.y + ((next.y - current.y) * alpha),
+            direction: next.direction
+        };
+    }
+
+    const latest = history[history.length - 1]!;
+    const previous = history[history.length - 2]!;
+    const dt = Math.max(1, latest.serverTime - previous.serverTime);
+    const vx = (latest.x - previous.x) / dt;
+    const vy = (latest.y - previous.y) / dt;
+    const extrapolationMs = Math.max(0, Math.min(
+        LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS,
+        targetTime - latest.serverTime
+    ));
+    return {
+        x: latest.x + (vx * extrapolationMs),
+        y: latest.y + (vy * extrapolationMs),
+        direction: latest.direction
+    };
+};
 
 export const updateFromSnapshot = (
     state: ClientState,
-    snapshot: ReadonlyArray<{
-        id: string;
-        city: number;
-        direction: number;
-        offset: { x: number; y: number };
-        health?: number | undefined;
-        maxHealth?: number | undefined;
-    }>
+    snapshotPayload: PlayersSnapshotPayload
 ): void => {
+    const snapshot = normalizePlayersSnapshotPayload(snapshotPayload);
     state.remotePlayers.clear();
     const isLocallyMoving = state.controls.moveForward || state.controls.moveBackward;
     const isLocallyTurning = state.controls.turnLeft || state.controls.turnRight;
+    const nowMs = Date.now();
 
-    for (const player of snapshot) {
+    for (const player of snapshot.players) {
         if (player.id === state.local.id) {
+            pushAuthoritativeSnapshot(state, snapshot.serverTime, player);
+            const authoritative = resolveAuthoritativeTarget(state, nowMs);
             state.local.city = player.city;
             if (!isLocallyTurning) {
-                state.local.direction = player.direction;
+                state.local.direction = authoritative?.direction ?? player.direction;
             }
-            const dx = player.offset.x - state.local.x;
-            const dy = player.offset.y - state.local.y;
+            const targetX = authoritative?.x ?? player.offset.x;
+            const targetY = authoritative?.y ?? player.offset.y;
+            const targetDirection = authoritative?.direction ?? player.direction;
+            const dx = targetX - state.local.x;
+            const dy = targetY - state.local.y;
             const driftSq = (dx * dx) + (dy * dy);
             if (driftSq > (LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX ** 2)) {
-                state.local.x = player.offset.x;
-                state.local.y = player.offset.y;
-                state.local.direction = player.direction;
-                state.render.previousLocalX = player.offset.x;
-                state.render.previousLocalY = player.offset.y;
+                state.local.x = targetX;
+                state.local.y = targetY;
+                state.local.direction = targetDirection;
+                state.render.previousLocalX = targetX;
+                state.render.previousLocalY = targetY;
                 state.render.projectedOffsetX = 0;
                 state.render.projectedOffsetY = 0;
                 state.render.lastResolvedAt = null;
@@ -502,8 +601,8 @@ export const updateFromSnapshot = (
                 && driftSq > (LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX ** 2)
             ) {
                 // While moving on higher-latency links, avoid tiny snap-back corrections.
-                state.local.x += dx * 0.2;
-                state.local.y += dy * 0.2;
+                state.local.x += dx * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
+                state.local.y += dy * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
             } else if (!isLocallyMoving && driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
                 state.local.x += dx * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
                 state.local.y += dy * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;

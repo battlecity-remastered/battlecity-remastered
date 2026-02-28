@@ -54,7 +54,10 @@ export const PlayersSnapshotEntry = Schema.Struct({
     health: Schema.optional(Schema.Number),
     maxHealth: Schema.optional(Schema.Number)
 });
-export const PlayersSnapshot = Schema.Array(PlayersSnapshotEntry);
+export const PlayersSnapshot = Schema.Struct({
+    serverTime: Schema.Number,
+    players: Schema.Array(PlayersSnapshotEntry)
+});
 export const PlayerHealthUpdate = Schema.Struct({
     id: Schema.String,
     health: Schema.Number,

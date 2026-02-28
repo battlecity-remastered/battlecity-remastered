@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import { decodeKnownEnvelope, makeKnownEnvelope } from "../src/index.js";
 
 test("protocol envelope decode benchmark smoke", () => {
-    const event = makeKnownEnvelope("players.snapshot", 1, [{
-        id: "p1",
-        city: 1,
-        direction: 0,
-        offset: { x: 10, y: 20 }
-    }]);
+    const event = makeKnownEnvelope("players.snapshot", 1, {
+        serverTime: Date.now(),
+        players: [{
+            id: "p1",
+            city: 1,
+            direction: 0,
+            offset: { x: 10, y: 20 }
+        }]
+    });
     const encoded = JSON.stringify(event);
 
     const iterations = 250;
