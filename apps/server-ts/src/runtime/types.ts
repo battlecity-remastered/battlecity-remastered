@@ -205,7 +205,7 @@ export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
     cityCount: 8,
-    maxRecruitsPerCity: 7,
+    maxRecruitsPerCity: 3,
     mapMax: 24576,
     serverStepMs: 33,
     bulletTickMs: 100,

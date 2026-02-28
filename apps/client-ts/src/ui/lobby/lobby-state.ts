@@ -2,7 +2,7 @@ import type { ClientState } from "../../app/state.js";
 import { getCityDisplayName } from "../../world/city-spawn.js";
 
 const MAX_ASSIGNMENTS = 8;
-export const MAX_RECRUITS_PER_CITY = 7;
+export const MAX_RECRUITS_PER_CITY = 3;
 const DEFAULT_LOBBY_CITY_COUNT = 8;
 
 export const collectVisibleCities = (state: ClientState): number[] => {
