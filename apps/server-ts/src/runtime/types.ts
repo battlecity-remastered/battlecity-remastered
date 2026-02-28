@@ -9,6 +9,7 @@ export type RuntimePlayer = PlayerState & {
     city: number;
     health: number;
     maxHealth: number;
+    lastAcceptedUpdateAt?: number;
     lastHospitalHealAt?: number;
     frozenUntil?: number;
     frozenBy?: string;

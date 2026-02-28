@@ -2,6 +2,26 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { rejectResult, type CommandResult, type RuntimeConfig, type RuntimePlayer } from "../../runtime/types.js";
 import { distanceSquared } from "../shared/distance.js";
 
+const MIN_DISTANCE_ALLOWANCE_PX = 24;
+const MAX_DISTANCE_ALLOWANCE_PX = 420;
+const JITTER_HEADROOM_MULTIPLIER = 2.5;
+
+const resolveAdaptiveDistanceAllowance = (
+    existing: RuntimePlayer,
+    config: RuntimeConfig,
+    nowMs: number
+): number => {
+    const base = config.maxPlayerUpdateDistancePerTick;
+    const previousAt = typeof existing.lastAcceptedUpdateAt === "number"
+        ? existing.lastAcceptedUpdateAt
+        : (nowMs - config.serverStepMs);
+    const elapsedMs = Math.max(config.serverStepMs, nowMs - previousAt);
+    const speed = Number.isFinite(existing.speed) ? Math.max(0, existing.speed) : config.playerSpeed;
+    const travelDistance = speed * (elapsedMs / 1000);
+    const adaptive = (travelDistance * JITTER_HEADROOM_MULTIPLIER) + MIN_DISTANCE_ALLOWANCE_PX;
+    return Math.min(MAX_DISTANCE_ALLOWANCE_PX, Math.max(base, adaptive));
+};
+
 export const validatePlayerUpdate = (
     existing: RuntimePlayer | undefined,
     payload: KnownEventPayloadByType["player.update"],
@@ -11,7 +31,8 @@ export const validatePlayerUpdate = (
         return { ok: true, value: undefined };
     }
 
-    const max = config.maxPlayerUpdateDistancePerTick;
+    const nowMs = Date.now();
+    const max = resolveAdaptiveDistanceAllowance(existing, config, nowMs);
     const maxSq = max * max;
     const next = payload.offset;
     if (distanceSquared({ x: existing.x, y: existing.y }, next) > maxSq) {

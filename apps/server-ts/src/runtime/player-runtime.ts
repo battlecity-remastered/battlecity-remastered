@@ -90,6 +90,7 @@ const makeDefaultPlayer = (
     payload: KnownEventPayloadByType["player.update"],
     config: RuntimeConfig
 ): RuntimePlayer => {
+    const nowMs = Date.now();
     return {
         id: socketId,
         city,
@@ -98,7 +99,8 @@ const makeDefaultPlayer = (
         direction: normalizeHeading32(payload.direction),
         speed: config.playerSpeed,
         health: 100,
-        maxHealth: 100
+        maxHealth: 100,
+        lastAcceptedUpdateAt: nowMs
     };
 };
 
@@ -142,7 +144,8 @@ export const upsertPlayerFromUpdate = (
                 y: clampedTopLeft.y,
                 city,
                 health: current.health,
-                maxHealth: current.maxHealth
+                maxHealth: current.maxHealth,
+                lastAcceptedUpdateAt: nowMs
             };
         })()
         : (() => {
@@ -151,7 +154,8 @@ export const upsertPlayerFromUpdate = (
             return {
                 ...withDirection,
                 x: clampedTopLeft.x,
-                y: clampedTopLeft.y
+                y: clampedTopLeft.y,
+                lastAcceptedUpdateAt: nowMs
             };
         })();
 
