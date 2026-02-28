@@ -477,17 +477,21 @@ export const updateFromSnapshot = (
 ): void => {
     state.remotePlayers.clear();
     const isLocallyMoving = state.controls.moveForward || state.controls.moveBackward;
+    const isLocallyTurning = state.controls.turnLeft || state.controls.turnRight;
 
     for (const player of snapshot) {
         if (player.id === state.local.id) {
             state.local.city = player.city;
-            state.local.direction = player.direction;
+            if (!isLocallyTurning) {
+                state.local.direction = player.direction;
+            }
             const dx = player.offset.x - state.local.x;
             const dy = player.offset.y - state.local.y;
             const driftSq = (dx * dx) + (dy * dy);
             if (driftSq > (LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX ** 2)) {
                 state.local.x = player.offset.x;
                 state.local.y = player.offset.y;
+                state.local.direction = player.direction;
                 state.render.previousLocalX = player.offset.x;
                 state.render.previousLocalY = player.offset.y;
                 state.render.projectedOffsetX = 0;
