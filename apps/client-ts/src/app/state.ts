@@ -246,6 +246,7 @@ export type ClientState = {
         projectedOffsetX: number;
         projectedOffsetY: number;
         lastResolvedAt: number | null;
+        lastLocalTurnInputAt: number | null;
         authoritativeSnapshots: Array<{
             serverTime: number;
             x: number;
@@ -458,6 +459,7 @@ export const createClientState = (): ClientState => {
             projectedOffsetX: 0,
             projectedOffsetY: 0,
             lastResolvedAt: null,
+            lastLocalTurnInputAt: null,
             authoritativeSnapshots: []
         },
         debug: createDebugDefaults(),
@@ -474,9 +476,25 @@ const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.101;
 const LOCAL_SNAPSHOT_HISTORY_MAX = 10;
 const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS = 91;
 const LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS = 153;
+const LOCAL_DIRECTION_RECONCILE_HOLDOFF_MS = 140;
 
 type PlayersSnapshotPayload = KnownEventPayloadByType["players.snapshot"];
 type PlayersSnapshotEntry = PlayersSnapshotPayload extends { players: ReadonlyArray<infer TPlayer>; } ? TPlayer : never;
+
+const normalizeDirection32Step = (direction: number): number => {
+    if (!Number.isFinite(direction)) {
+        return 0;
+    }
+    const normalized = Math.round(direction) % 32;
+    return normalized < 0 ? normalized + 32 : normalized;
+};
+
+const normalizeSnapshotEntry = (player: PlayersSnapshotEntry): PlayersSnapshotEntry => {
+    return {
+        ...player,
+        direction: normalizeDirection32Step(player.direction)
+    };
+};
 
 const normalizePlayersSnapshotPayload = (
     payload: PlayersSnapshotPayload
@@ -484,13 +502,13 @@ const normalizePlayersSnapshotPayload = (
     if (Array.isArray(payload)) {
         return {
             serverTime: Date.now(),
-            players: payload as unknown as PlayersSnapshotEntry[]
+            players: (payload as unknown as PlayersSnapshotEntry[]).map(normalizeSnapshotEntry)
         };
     }
     const serverTime = Number.isFinite(payload.serverTime) ? payload.serverTime : Date.now();
     return {
         serverTime,
-        players: payload.players
+        players: payload.players.map(normalizeSnapshotEntry)
     };
 };
 
@@ -572,18 +590,23 @@ export const updateFromSnapshot = (
     const isLocallyMoving = state.controls.moveForward || state.controls.moveBackward;
     const isLocallyTurning = state.controls.turnLeft || state.controls.turnRight;
     const nowMs = Date.now();
+    const canApplyAuthoritativeDirection = !isLocallyTurning
+        && (state.render.lastLocalTurnInputAt === null
+            || (nowMs - state.render.lastLocalTurnInputAt) >= LOCAL_DIRECTION_RECONCILE_HOLDOFF_MS);
 
     for (const player of snapshot.players) {
         if (player.id === state.local.id) {
             pushAuthoritativeSnapshot(state, snapshot.serverTime, player);
             const authoritative = resolveAuthoritativeTarget(state, nowMs);
             state.local.city = player.city;
-            if (!isLocallyTurning) {
+            if (canApplyAuthoritativeDirection) {
                 state.local.direction = authoritative?.direction ?? player.direction;
             }
             const targetX = authoritative?.x ?? player.offset.x;
             const targetY = authoritative?.y ?? player.offset.y;
-            const targetDirection = authoritative?.direction ?? player.direction;
+            const targetDirection = canApplyAuthoritativeDirection
+                ? (authoritative?.direction ?? player.direction)
+                : state.local.direction;
             const dx = targetX - state.local.x;
             const dy = targetY - state.local.y;
             const driftSq = (dx * dx) + (dy * dy);
@@ -621,7 +644,7 @@ export const updateFromSnapshot = (
         const remote: RemotePlayer = {
             id: player.id,
             city: player.city,
-            direction: player.direction,
+            direction: normalizeDirection32Step(player.direction),
             x: player.offset.x,
             y: player.offset.y
         };

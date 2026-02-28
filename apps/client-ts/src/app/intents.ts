@@ -130,6 +130,10 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
     }
 
     const intents: Intent[] = [];
+    const isLocallyTurning = state.controls.turnLeft || state.controls.turnRight;
+    if (isLocallyTurning) {
+        state.render.lastLocalTurnInputAt = nowMs;
+    }
     const nextDirection = resolveDirection(state, dtMs);
     const throttle = resolveMovementThrottle(state);
     const isMoving = throttle !== 0;
