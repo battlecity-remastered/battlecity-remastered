@@ -1,8 +1,5 @@
 # syntax=docker/dockerfile:1.7
-ARG VITE_SERVER_URL
-
 FROM node:20-bookworm AS builder
-ENV VITE_SERVER_URL=${VITE_SERVER_URL}
 WORKDIR /app
 
 COPY package*.json ./

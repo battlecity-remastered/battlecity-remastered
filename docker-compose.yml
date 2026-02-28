@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        VITE_SERVER_URL: ${VITE_SERVER_URL:-http://localhost:8121}
     container_name: battlecity-server-ts
     restart: unless-stopped
     environment:

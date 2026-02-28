@@ -19,9 +19,13 @@ import {
 const resolveServerUrl = (): string => {
     const env = (import.meta as ImportMeta & { env?: Record<string, unknown>; }).env;
     const configured = env?.VITE_SERVER_URL;
-    return typeof configured === "string" && configured.length > 0
-        ? configured
-        : "http://localhost:8121";
+    if (typeof configured === "string" && configured.length > 0) {
+        return configured;
+    }
+    if (typeof window !== "undefined" && typeof window.location?.origin === "string") {
+        return window.location.origin;
+    }
+    return "http://localhost:8121";
 };
 
 const SERVER_URL = resolveServerUrl();
