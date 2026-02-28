@@ -3,7 +3,7 @@ import type { ClientState } from "./state.js";
 export const CLIENT_SIMULATION_STEP_MS = 33;
 const MAX_EXTRAPOLATION_ALPHA = 1;
 const MAX_VISUAL_STEP_DISTANCE_PX = 96;
-const VISUAL_OFFSET_LERP_TIME_MS = 24;
+const VISUAL_OFFSET_LERP_TIME_MS = 36;
 
 const clampUnit = (value: number): number => {
     if (!Number.isFinite(value)) {
@@ -21,6 +21,14 @@ export const resolveLocalRenderPosition = (
     state: ClientState,
     nowMs: number = Date.now()
 ): { x: number; y: number; } => {
+    const movementInputActive = state.controls.moveForward || state.controls.moveBackward;
+    if (!movementInputActive) {
+        state.render.projectedOffsetX = 0;
+        state.render.projectedOffsetY = 0;
+        state.render.lastResolvedAt = nowMs;
+        return { x: state.local.x, y: state.local.y };
+    }
+
     const lastUpdateAt = state.debug.loop.lastUpdateAt;
     if (lastUpdateAt === null) {
         state.render.projectedOffsetX = 0;
