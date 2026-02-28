@@ -229,7 +229,6 @@ const handlers: HandlerMap = {
             return;
         }
         upsertPlayerFromUpdate(context.state, socketId, assignedCity, payload, context.config);
-        emitPlayersSnapshot(context.state, context.emitter);
     },
     "player.bot_damage": (socketId, payload, context) => {
         handlePlayerBotDamage(socketId, payload, context);

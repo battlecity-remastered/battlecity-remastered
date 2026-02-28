@@ -121,20 +121,6 @@ export const upsertPlayerFromUpdate = (
         speed: config.playerSpeed,
         direction: isFrozen ? current.direction : normalizeHeading32(payload.direction)
     };
-    const requestedTopLeft = clampTopLeftToWorld(payload.offset.x, payload.offset.y, config.mapMax);
-    if (!isFrozen && !withDirection.isBot) {
-        state.players.set(socketId, {
-            ...withDirection,
-            x: requestedTopLeft.x,
-            y: requestedTopLeft.y,
-            city,
-            health: current.health,
-            maxHealth: current.maxHealth,
-            lastAcceptedUpdateAt: nowMs
-        });
-        return;
-    }
-
     const movementThrottle = resolveMovementThrottle(payload);
     const currentCenter = toCollisionPoint(withDirection.x, withDirection.y);
     const collisionWorld = buildCollisionWorld(state, config, currentCenter.x, currentCenter.y);

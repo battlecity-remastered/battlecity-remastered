@@ -168,6 +168,7 @@ export class GameRuntime {
             const state = readRuntimeState(this.stateRef);
             tickBullets(state, this.config, this.emitter);
             tickRuntimeSystems(state, this.config, this.emitter, this.config.bulletTickMs);
+            emitPlayersSnapshot(state, this.emitter);
         });
     }
 
