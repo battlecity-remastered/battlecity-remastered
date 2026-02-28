@@ -462,6 +462,7 @@ export const createClientState = (): ClientState => {
 const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 12;
 const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 72;
 const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.35;
+const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 40;
 
 export const updateFromSnapshot = (
     state: ClientState,
@@ -475,6 +476,7 @@ export const updateFromSnapshot = (
     }>
 ): void => {
     state.remotePlayers.clear();
+    const isLocallyMoving = state.controls.moveForward || state.controls.moveBackward;
 
     for (const player of snapshot) {
         if (player.id === state.local.id) {
@@ -491,7 +493,14 @@ export const updateFromSnapshot = (
                 state.render.projectedOffsetX = 0;
                 state.render.projectedOffsetY = 0;
                 state.render.lastResolvedAt = null;
-            } else if (driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
+            } else if (
+                isLocallyMoving
+                && driftSq > (LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX ** 2)
+            ) {
+                // While moving on higher-latency links, avoid tiny snap-back corrections.
+                state.local.x += dx * 0.2;
+                state.local.y += dy * 0.2;
+            } else if (!isLocallyMoving && driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
                 state.local.x += dx * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
                 state.local.y += dy * LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN;
             }
