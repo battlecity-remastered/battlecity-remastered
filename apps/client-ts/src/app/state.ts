@@ -466,14 +466,14 @@ export const createClientState = (): ClientState => {
 };
 
 // Server authority plus WAN latency causes small drift; soften correction to avoid visible jitter.
-const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 12;
-const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 72;
-const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.2;
-const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 64;
-const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.12;
-const LOCAL_SNAPSHOT_HISTORY_MAX = 12;
-const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS = 90;
-const LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS = 120;
+const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 22;
+const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 84;
+const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.231;
+const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 61;
+const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.101;
+const LOCAL_SNAPSHOT_HISTORY_MAX = 10;
+const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS = 91;
+const LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS = 153;
 
 type PlayersSnapshotPayload = KnownEventPayloadByType["players.snapshot"];
 type PlayersSnapshotEntry = PlayersSnapshotPayload extends { players: ReadonlyArray<infer TPlayer>; } ? TPlayer : never;

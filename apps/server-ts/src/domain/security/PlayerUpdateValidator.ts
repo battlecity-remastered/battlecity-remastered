@@ -2,9 +2,9 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { rejectResult, type CommandResult, type RuntimeConfig, type RuntimePlayer } from "../../runtime/types.js";
 import { distanceSquared } from "../shared/distance.js";
 
-const MIN_DISTANCE_ALLOWANCE_PX = 24;
-const MAX_DISTANCE_ALLOWANCE_PX = 420;
-const JITTER_HEADROOM_MULTIPLIER = 2.5;
+const MIN_DISTANCE_ALLOWANCE_PX = 31;
+const MAX_DISTANCE_ALLOWANCE_PX = 385;
+const JITTER_HEADROOM_MULTIPLIER = 3.108;
 
 const resolveAdaptiveDistanceAllowance = (
     existing: RuntimePlayer,

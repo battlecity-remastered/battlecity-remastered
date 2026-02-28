@@ -44,6 +44,24 @@ const PROFILE_CANDIDATE = {
     baseAllowancePx: 90
 };
 
+const scoreRun = (run) => {
+    const input = run.inputToVisibleMs ?? 0;
+    const settle = run.stopSettlingMs ?? 0;
+    return (
+        (input * 1.5)
+        + (settle * 0.7)
+        + (run.idleDriftPx * 0.6)
+        + (run.pathErrorMeanPx * 2.0)
+        + (run.pathErrorP95Px * 1.4)
+        + (run.correctionCount * 1.0)
+        + (run.correctionGt24 * 20.0)
+        + (run.correctionMaxPx * 1.2)
+        + (run.invalidRejections * 60.0)
+    );
+};
+
+const totalScore = (runs) => runs.reduce((acc, run) => acc + scoreRun(run), 0);
+
 const seeded = (seed) => {
     let t = seed >>> 0;
     return () => {
@@ -361,20 +379,85 @@ const printDeltaTable = (baselineRows, candidateRows) => {
     }
 };
 
+const randomInt = (rng, min, max) => Math.floor(min + (rng() * (max - min + 1)));
+const randomFloat = (rng, min, max) => min + (rng() * (max - min));
+
+const sampleProfile = (rng) => {
+    return {
+        hardReconcilePx: randomInt(rng, 64, 90),
+        softReconcilePx: randomInt(rng, 10, 22),
+        softGain: Number(randomFloat(rng, 0.1, 0.25).toFixed(3)),
+        movingReconcilePx: randomInt(rng, 58, 110),
+        movingGain: Number(randomFloat(rng, 0.05, 0.16).toFixed(3)),
+        historyMax: randomInt(rng, 10, 24),
+        interpolationDelayMs: randomInt(rng, 80, 145),
+        maxExtrapolationMs: randomInt(rng, 70, 160),
+        minAllowancePx: randomInt(rng, 20, 36),
+        maxAllowancePx: randomInt(rng, 300, 460),
+        headroomMultiplier: Number(randomFloat(rng, 2.0, 3.2).toFixed(3)),
+        baseAllowancePx: randomInt(rng, 70, 130)
+    };
+};
+
+const evaluateProfile = (profile, profileName = "candidate") => {
+    const runs = [];
+    for (let i = 0; i < DEFAULT_SCENARIOS.length; i += 1) {
+        const scenario = DEFAULT_SCENARIOS[i];
+        const seed = 1337 + (i * 17);
+        runs.push(runScenario(scenario, seed, profileName, profile));
+    }
+    return {
+        profile,
+        runs,
+        score: Number(totalScore(runs).toFixed(2))
+    };
+};
+
+const runOptimizer = () => {
+    const rng = seeded(20260228);
+    const baseline = evaluateProfile(PROFILE_CURRENT, "current");
+    let best = evaluateProfile(PROFILE_CANDIDATE, "candidate");
+    for (let i = 0; i < 1800; i += 1) {
+        const sample = evaluateProfile(sampleProfile(rng), "candidate");
+        if (sample.score < best.score) {
+            best = sample;
+        }
+    }
+    console.log("## Baseline Score");
+    console.log(`current_score=${baseline.score}`);
+    console.log("## Best Candidate Score");
+    console.log(`candidate_score=${best.score}`);
+    console.log("## Best Candidate Profile");
+    console.log(JSON.stringify(best.profile, null, 2));
+    console.log("");
+    console.log("## Current Profile");
+    printTable(baseline.runs);
+    console.log("");
+    console.log("## Best Candidate Profile");
+    printTable(best.runs);
+    console.log("");
+    console.log("## Best - Current Delta (negative is better)");
+    printDeltaTable(baseline.runs, best.runs);
+};
+
 const runsCurrent = [];
 const runsCandidate = [];
-for (let i = 0; i < DEFAULT_SCENARIOS.length; i += 1) {
-    const scenario = DEFAULT_SCENARIOS[i];
-    const seed = 1337 + (i * 17);
-    runsCurrent.push(runScenario(scenario, seed, "current", PROFILE_CURRENT));
-    runsCandidate.push(runScenario(scenario, seed, "candidate", PROFILE_CANDIDATE));
-}
+if (process.argv.includes("--optimize")) {
+    runOptimizer();
+} else {
+    for (let i = 0; i < DEFAULT_SCENARIOS.length; i += 1) {
+        const scenario = DEFAULT_SCENARIOS[i];
+        const seed = 1337 + (i * 17);
+        runsCurrent.push(runScenario(scenario, seed, "current", PROFILE_CURRENT));
+        runsCandidate.push(runScenario(scenario, seed, "candidate", PROFILE_CANDIDATE));
+    }
 
-console.log("## Current Profile");
-printTable(runsCurrent);
-console.log("");
-console.log("## Candidate Profile");
-printTable(runsCandidate);
-console.log("");
-console.log("## Candidate - Current Delta (negative is better)");
-printDeltaTable(runsCurrent, runsCandidate);
+    console.log("## Current Profile");
+    printTable(runsCurrent);
+    console.log("");
+    console.log("## Candidate Profile");
+    printTable(runsCandidate);
+    console.log("");
+    console.log("## Candidate - Current Delta (negative is better)");
+    printDeltaTable(runsCurrent, runsCandidate);
+}
