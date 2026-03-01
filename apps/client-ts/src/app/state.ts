@@ -475,7 +475,8 @@ const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.231;
 const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 61;
 const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.101;
 const LOCAL_SNAPSHOT_HISTORY_MAX = 10;
-const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS = 91;
+const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MOVING_MS = 16;
+const LOCAL_SNAPSHOT_INTERPOLATION_DELAY_REST_MS = 48;
 const LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS = 153;
 const LOCAL_DIRECTION_RECONCILE_HOLDOFF_MS = 140;
 
@@ -539,7 +540,8 @@ const pushAuthoritativeSnapshot = (
 
 const resolveAuthoritativeTarget = (
     state: ClientState,
-    nowMs: number
+    nowMs: number,
+    interpolationDelayMs: number
 ): { x: number; y: number; direction: number; } | null => {
     const history = state.render.authoritativeSnapshots;
     if (history.length === 0) {
@@ -550,7 +552,7 @@ const resolveAuthoritativeTarget = (
         return { x: only.x, y: only.y, direction: only.direction };
     }
 
-    const targetTime = nowMs - LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MS;
+    const targetTime = nowMs - interpolationDelayMs;
     for (let index = 0; index < history.length - 1; index += 1) {
         const current = history[index]!;
         const next = history[index + 1]!;
@@ -591,6 +593,9 @@ export const updateFromSnapshot = (
     const isLocallyMoving = state.controls.moveForward || state.controls.moveBackward;
     const isLocallyTurning = state.controls.turnLeft || state.controls.turnRight;
     const nowMs = Date.now();
+    const interpolationDelayMs = isLocallyMoving
+        ? LOCAL_SNAPSHOT_INTERPOLATION_DELAY_MOVING_MS
+        : LOCAL_SNAPSHOT_INTERPOLATION_DELAY_REST_MS;
     const canApplyAuthoritativeDirection = !isLocallyTurning
         && (state.render.lastLocalTurnInputAt === null
             || (nowMs - state.render.lastLocalTurnInputAt) >= LOCAL_DIRECTION_RECONCILE_HOLDOFF_MS);
@@ -598,7 +603,7 @@ export const updateFromSnapshot = (
     for (const player of snapshot.players) {
         if (player.id === state.local.id) {
             pushAuthoritativeSnapshot(state, snapshot.serverTime, player);
-            const authoritative = resolveAuthoritativeTarget(state, nowMs);
+            const authoritative = resolveAuthoritativeTarget(state, nowMs, interpolationDelayMs);
             state.local.city = player.city;
             if (canApplyAuthoritativeDirection) {
                 state.local.direction = authoritative?.direction ?? player.direction;
