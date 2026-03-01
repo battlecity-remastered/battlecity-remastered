@@ -27,10 +27,47 @@ import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
 import { logRuntime } from "../observability/RuntimeLogger.js";
+import type { RuntimePlayer } from "./types.js";
 
 type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
+
+const MOVEMENT_DIAG_ENABLED = process.env.BC_MOVEMENT_DIAG === "1";
+const MOVEMENT_DIAG_SOCKET = process.env.BC_MOVEMENT_DIAG_SOCKET;
+const MOVEMENT_DIAG_INTERVAL_MS = 250;
+const movementDiagLastEmitAtBySocket = new Map<string, number>();
+
+const roundMetric = (value: number | undefined): number | null => {
+    if (!Number.isFinite(value)) {
+        return null;
+    }
+    return Number((value as number).toFixed(3));
+};
+
+const shouldEmitMovementDiag = (socketId: string): boolean => {
+    if (!MOVEMENT_DIAG_ENABLED) {
+        return false;
+    }
+    if (typeof MOVEMENT_DIAG_SOCKET === "string" && MOVEMENT_DIAG_SOCKET.length > 0 && MOVEMENT_DIAG_SOCKET !== socketId) {
+        return false;
+    }
+    const now = Date.now();
+    const lastEmitAt = movementDiagLastEmitAtBySocket.get(socketId) ?? 0;
+    if ((now - lastEmitAt) < MOVEMENT_DIAG_INTERVAL_MS) {
+        return false;
+    }
+    movementDiagLastEmitAtBySocket.set(socketId, now);
+    return true;
+};
+
+const serializePlayerPos = (player: RuntimePlayer | undefined): { x: number | null; y: number | null; direction: number | null; } => {
+    return {
+        x: roundMetric(player?.x),
+        y: roundMetric(player?.y),
+        direction: roundMetric(player?.direction)
+    };
+};
 
 const emitLobbyHighScoreSnapshot = (
     context: DispatchContext,
@@ -219,16 +256,46 @@ const handlers: HandlerMap = {
             rejectWithContext(context, socketId, "player_not_joined", "player.update", payload);
             return;
         }
+        const existingPlayer = context.state.players.get(socketId);
         const validation = validatePlayerUpdate(
-            context.state.players.get(socketId),
+            existingPlayer,
             payload,
             context.config
         );
         if (!validation.ok) {
+            if (shouldEmitMovementDiag(socketId)) {
+                Effect.runSync(logRuntime("debug", "movement.update_rejected", {
+                    socketId,
+                    reason: validation.reason,
+                    payload: {
+                        x: roundMetric(payload.offset.x),
+                        y: roundMetric(payload.offset.y),
+                        direction: roundMetric(payload.direction),
+                        throttle: roundMetric(payload.throttle)
+                    },
+                    serverBefore: serializePlayerPos(existingPlayer)
+                }));
+            }
             rejectWithContext(context, socketId, validation.reason, "player.update", payload);
             return;
         }
         upsertPlayerFromUpdate(context.state, socketId, assignedCity, payload, context.config);
+        if (shouldEmitMovementDiag(socketId)) {
+            const updatedPlayer = context.state.players.get(socketId);
+            Effect.runSync(logRuntime("debug", "movement.update_applied", {
+                socketId,
+                assignedCity,
+                payload: {
+                    x: roundMetric(payload.offset.x),
+                    y: roundMetric(payload.offset.y),
+                    direction: roundMetric(payload.direction),
+                    isMoving: payload.isMoving,
+                    throttle: roundMetric(payload.throttle)
+                },
+                serverBefore: serializePlayerPos(existingPlayer),
+                serverAfter: serializePlayerPos(updatedPlayer)
+            }));
+        }
     },
     "player.bot_damage": (socketId, payload, context) => {
         handlePlayerBotDamage(socketId, payload, context);

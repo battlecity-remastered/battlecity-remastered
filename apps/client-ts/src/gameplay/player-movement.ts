@@ -8,6 +8,7 @@ import {
     movePlayerWithCollision,
     resolveStuckPlayerPosition
 } from "./collision/collision-player.js";
+import { logMovementDiag } from "../app/movement-diagnostics.js";
 
 const MAP_MAX = 24576;
 const PLAYER_RADIUS = 12;
@@ -57,6 +58,26 @@ export const moveLocalPlayer = (state: ClientState, direction: number, throttle:
         dtMs
     );
     const nextCenter = movePlayerWithCollision(world, currentSafeCenter, desiredCenter, PLAYER_RADIUS);
+    const desiredDx = desiredCenter.x - currentSafeCenter.x;
+    const desiredDy = desiredCenter.y - currentSafeCenter.y;
+    const appliedDx = nextCenter.x - currentSafeCenter.x;
+    const appliedDy = nextCenter.y - currentSafeCenter.y;
+    const desiredDistance = Math.sqrt((desiredDx * desiredDx) + (desiredDy * desiredDy));
+    const appliedDistance = Math.sqrt((appliedDx * appliedDx) + (appliedDy * appliedDy));
+    if (movementThrottle !== 0 && desiredDistance > 0.01 && (appliedDistance + 0.01) < (desiredDistance * 0.6)) {
+        logMovementDiag("collision.clamp", {
+            playerId: state.local.id,
+            throttle: movementThrottle,
+            dtMs: Number(dtMs.toFixed(2)),
+            direction: Number(direction.toFixed(3)),
+            desiredDistance: Number(desiredDistance.toFixed(3)),
+            appliedDistance: Number(appliedDistance.toFixed(3)),
+            center: {
+                x: Number(currentSafeCenter.x.toFixed(2)),
+                y: Number(currentSafeCenter.y.toFixed(2))
+            }
+        });
+    }
     const nextTopLeft = fromCollisionPoint(nextCenter.x, nextCenter.y);
     const clampedTopLeft = clampTopLeftToWorld(nextTopLeft.x, nextTopLeft.y);
     state.local.x = clampedTopLeft.x;

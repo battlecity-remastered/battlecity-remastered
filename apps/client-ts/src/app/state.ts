@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { BulletState } from "@battlecity/sim-core";
 import { resolveCitySpawn } from "../world/city-spawn.js";
+import { logMovementDiag } from "./movement-diagnostics.js";
 
 export type LocalState = {
     id: string | null;
@@ -610,7 +611,26 @@ export const updateFromSnapshot = (
             const dx = targetX - state.local.x;
             const dy = targetY - state.local.y;
             const driftSq = (dx * dx) + (dy * dy);
+            const drift = Math.sqrt(driftSq);
             if (driftSq > (LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX ** 2)) {
+                logMovementDiag("reconcile.hard_snap", {
+                    playerId: state.local.id,
+                    isLocallyMoving,
+                    isLocallyTurning,
+                    canApplyAuthoritativeDirection,
+                    drift: Number(drift.toFixed(2)),
+                    local: {
+                        x: Number(state.local.x.toFixed(2)),
+                        y: Number(state.local.y.toFixed(2)),
+                        direction: Number(state.local.direction.toFixed(3))
+                    },
+                    target: {
+                        x: Number(targetX.toFixed(2)),
+                        y: Number(targetY.toFixed(2)),
+                        direction: Number(targetDirection.toFixed(3))
+                    },
+                    pingMs: state.debug.latency.latest
+                });
                 state.local.x = targetX;
                 state.local.y = targetY;
                 state.local.direction = targetDirection;
@@ -623,13 +643,54 @@ export const updateFromSnapshot = (
                 isLocallyMoving
                 && driftSq > (LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX ** 2)
             ) {
+                logMovementDiag("reconcile.moving_soft", {
+                    playerId: state.local.id,
+                    drift: Number(drift.toFixed(2)),
+                    gain: LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN,
+                    local: {
+                        x: Number(state.local.x.toFixed(2)),
+                        y: Number(state.local.y.toFixed(2)),
+                        direction: Number(state.local.direction.toFixed(3))
+                    },
+                    target: {
+                        x: Number(targetX.toFixed(2)),
+                        y: Number(targetY.toFixed(2)),
+                        direction: Number(targetDirection.toFixed(3))
+                    }
+                });
                 // While moving on higher-latency links, avoid tiny snap-back corrections.
                 state.local.x += dx * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
                 state.local.y += dy * LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN;
             } else if (!isLocallyMoving && driftSq > (LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX ** 2)) {
+                logMovementDiag("reconcile.rest_snap", {
+                    playerId: state.local.id,
+                    drift: Number(drift.toFixed(2)),
+                    local: {
+                        x: Number(state.local.x.toFixed(2)),
+                        y: Number(state.local.y.toFixed(2))
+                    },
+                    target: {
+                        x: Number(targetX.toFixed(2)),
+                        y: Number(targetY.toFixed(2))
+                    }
+                });
                 // No easing at rest: snap immediately to avoid visible "slow stop" drift.
                 state.local.x = targetX;
                 state.local.y = targetY;
+            }
+            if (canApplyAuthoritativeDirection) {
+                const directionDelta = Math.abs(targetDirection - state.local.direction);
+                const wrappedDirectionDelta = Math.min(directionDelta, 32 - directionDelta);
+                if (wrappedDirectionDelta >= 2) {
+                    logMovementDiag("direction.delta", {
+                        playerId: state.local.id,
+                        delta: Number(wrappedDirectionDelta.toFixed(3)),
+                        localDirection: Number(state.local.direction.toFixed(3)),
+                        targetDirection: Number(targetDirection.toFixed(3)),
+                        drift: Number(drift.toFixed(2)),
+                        isLocallyMoving
+                    });
+                }
             }
             state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
             if (typeof player.health === "number") {
