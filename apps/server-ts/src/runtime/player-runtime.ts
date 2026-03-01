@@ -16,6 +16,8 @@ import { buildCollisionWorld } from "./collision-world.js";
 const PLAYER_RADIUS = 12;
 const PLAYER_SPRITE_SIZE = 48;
 const PLAYER_SPRITE_HALF = PLAYER_SPRITE_SIZE / 2;
+const MIN_MOVEMENT_STEP_MS = 8;
+const MAX_MOVEMENT_STEP_MS = 120;
 
 const toCollisionPoint = (x: number, y: number): CollisionPoint => {
     return {
@@ -84,6 +86,17 @@ const resolveMovementThrottle = (payload: KnownEventPayloadByType["player.update
     return normalizeThrottle(throttle);
 };
 
+const resolveMovementStepMs = (player: RuntimePlayer, nowMs: number, config: RuntimeConfig): number => {
+    const previousAt = typeof player.lastAcceptedUpdateAt === "number"
+        ? player.lastAcceptedUpdateAt
+        : (nowMs - config.serverStepMs);
+    const elapsedMs = nowMs - previousAt;
+    if (!Number.isFinite(elapsedMs)) {
+        return config.serverStepMs;
+    }
+    return Math.max(MIN_MOVEMENT_STEP_MS, Math.min(MAX_MOVEMENT_STEP_MS, elapsedMs));
+};
+
 const makeDefaultPlayer = (
     socketId: string,
     city: number,
@@ -121,6 +134,7 @@ export const upsertPlayerFromUpdate = (
         speed: config.playerSpeed,
         direction: isFrozen ? current.direction : normalizeHeading32(payload.direction)
     };
+    const movementStepMs = resolveMovementStepMs(current, nowMs, config);
     const movementThrottle = resolveMovementThrottle(payload);
     const currentCenter = toCollisionPoint(withDirection.x, withDirection.y);
     const collisionWorld = buildCollisionWorld(state, config, currentCenter.x, currentCenter.y);
@@ -133,7 +147,7 @@ export const upsertPlayerFromUpdate = (
                 currentSafeCenter.y,
                 withDirection.direction,
                 withDirection.speed * movementThrottle,
-                config.serverStepMs
+                movementStepMs
             );
             const resolvedCenter = movePlayerWithCollision(collisionWorld, currentSafeCenter, advanced);
             const resolvedTopLeft = fromCollisionPoint(resolvedCenter.x, resolvedCenter.y);
