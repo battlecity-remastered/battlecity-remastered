@@ -104,3 +104,4 @@ Last updated: 2026-02-24
 - [x] Live driving tolerates captured 1.2-second input bursts and recovers lost commands; prediction is bounded during longer outages.
 - [x] City GPU resources prepare during joining; the loading transition adds no repeated uploads or DOM mutations to steady gameplay.
 - [x] Terrain skips discarded lava/bank calculations; offscreen industrial effects use animation-safe bounds, with GPU image comparisons and live-city timing.
+- [x] HDR copying and colour-only AO/bloom buffers preserve all half-float pixels across viewport resizing; scene and AO depth remain intact.

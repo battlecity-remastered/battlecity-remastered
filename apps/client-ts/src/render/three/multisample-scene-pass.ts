@@ -19,6 +19,16 @@ export class MultisampleScenePass extends RenderPass {
         this.renderToScreen=false;
         super.render(renderer,writeBuffer,this.target,deltaTime,maskActive);
         this.renderToScreen=screen;
+        if (!screen && !maskActive && readBuffer.samples === 0 && readBuffer.width === this.target.width && readBuffer.height === this.target.height
+            && readBuffer.texture.type === this.target.texture.type && readBuffer.texture.format === this.target.texture.format
+            && readBuffer.texture.colorSpace === this.target.texture.colorSpace) {
+            // The resolved HDR image needs an exact copy, not a full-screen
+            // shader draw. Three initializes/reinitializes storage after resize.
+            renderer.initRenderTarget(readBuffer);
+            renderer.copyTextureToTexture(this.target.texture, readBuffer.texture);
+            renderer.setRenderTarget(readBuffer);
+            return;
+        }
         this.copy.renderToScreen=screen;
         this.copy.render(renderer,writeBuffer,readBuffer,deltaTime,maskActive);
     }

@@ -28,6 +28,7 @@ import { createNetworkCombat } from "./network-combat.js";
 import { createOrbVictoryEffects } from "./orb-victory-effects.js";
 import { createPlacementPreviews } from "./placement-previews.js";
 import { createPopulationDisplay } from "./population-display.js";
+import { configurePostprocessTargets } from "./postprocess-targets.js";
 import { prepareCityModels } from "./prepare-city-models.js";
 import { createProjectileCollider } from "./projectile-collider.js";
 import { createResearchDisplays } from "./research-display.js";
@@ -227,6 +228,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         ambientOcclusion.updatePdMaterial({ radius: 2 });
         composer.addPass(ambientOcclusion);
         const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.30, 0.18, 0.72);
+        configurePostprocessTargets(ambientOcclusion, bloom);
         composer.addPass(bloom);
         const heatPass = createHeatOutputPass();
         composer.addPass(heatPass);

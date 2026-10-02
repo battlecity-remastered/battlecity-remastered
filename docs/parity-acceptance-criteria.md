@@ -74,3 +74,4 @@ Accepted only if all hard requirements pass and `docs/parity-checklist.md` is fu
 - Driving transport: captured turning bursts and 1400 ms ordered stalls at 6–144 FPS preserve the shared pose without correction; a five-second command outage bounds prediction and resumes after retry acknowledgement.
 - City entry: prepare shared city resources after hydration, preserve renderer targets and graphics settings, and verify steady GPU frame times against the same public world.
 - Graphics performance: preserve lava flow, bank relief, noise detail and effect trajectories; validate shader changes with fixed-time GPU reference captures and benchmark the same live city views.
+- Postprocessing: retain 4x scene MSAA, AO and bloom settings; verify resolved HDR copy and colour-only filter targets against the original pixels at multiple sizes, including resize.

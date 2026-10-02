@@ -833,3 +833,24 @@ short runs indicate roughly 3–6% additional FPS in those dense views; results
 remain dependent on hardware and the live scene.
 Strict verification passes all 502 tests and all structural/type checks; lint
 and the production client build pass.
+
+
+The following postprocessing cleanup keeps the 4x MSAA scene and every AO/bloom
+setting. Compatible resolved HDR targets use a GPU texture copy instead of an
+extra fullscreen shader draw; screen output, masks and format conversions retain
+the previous draw path. Thirteen colour-only AO/bloom filter targets no longer
+allocate depth attachments. The scene depth and AO normal/depth target remain.
+At 1440x900 this removes 1,835,550 depth pixels (about 7 MB with 32-bit storage).
+
+Separate GPU comparisons of the copy and depth-storage changes each matched all
+7,326,724 half-float channel values exactly across four viewport sizes, including
+odd dimensions and resizing. Four alternating GPU-timer pairs measured the
+postprocessing fixture at 10.54 ms before / 10.39 ms after removing unused depth;
+the copy fixture averaged 4.04 / 3.92 ms. These are small isolated savings.
+Public AI-city comparisons at 1440x900 measured 70.39 / 70.19 ms on v1.0.8 and
+69.80 / 69.57 ms with both changes. This is below 1% and too small to promise a
+noticeable FPS improvement from short live-world runs. No quality setting or
+animation rate changed. Shadow-trigonometry, light-facing and transform-cache
+experiments were discarded after inconsistent city results.
+Strict verification passes all 503 tests and all structural/type checks; lint
+and the production client build pass.
