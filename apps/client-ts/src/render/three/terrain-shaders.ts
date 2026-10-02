@@ -93,8 +93,13 @@ export const materialPatch5 = `
             // Derivatives of world-space relief keep the surface readable at any zoom.
             float relief = stoneHeight(terrainPosition.xz);
             #ifndef USE_MAP
-                relief = mix(stoneHeight(terrainPosition.xz)*0.15,
-                    fbm((terrainPosition.xz - vec2(0.16,-0.10) * terrainTime) * 7.0)*0.012,liquid);
+                // Select the relief before taking derivatives below. Both
+                // functions are pure noise: no texture derivatives in the branch.
+                if (liquid > 0.0) {
+                    relief = fbm((terrainPosition.xz - vec2(0.16,-0.10) * terrainTime) * 7.0)*0.012;
+                } else {
+                    relief = stoneHeight(terrainPosition.xz)*0.15;
+                }
             #endif
             #ifdef USE_MAP
                 relief += dot(texture2D(map, terrainPosition.xz * 0.25).rgb,vec3(0.299,0.587,0.114)) * 0.035;

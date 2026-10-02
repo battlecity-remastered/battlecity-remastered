@@ -41,34 +41,39 @@ const makeSurface = (lava: boolean, time: {
         shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", lava ? `
             #include <color_fragment>
             vec2 p = terrainPosition.xz;
-            // Advect the glowing surface past stationary banks. A slower second
-            // layer stretches and folds the current into viscous hot ribbons.
-            vec2 current = vec2(0.16, -0.10) * terrainTime;
-            vec2 moving = p - current;
-            vec2 flow = vec2(fbm(moving * 1.3 + terrainTime * 0.025),
-                             fbm(moving * 1.3 + 8.4 - terrainTime * 0.018));
-            vec2 warped = moving * 3.4 + flow * 3.0;
-            float turbulence = fbm(warped);
-            float skin = fbm((p - current * 0.45) * 7.0 + flow * 1.5);
-            vec2 raft = cells((p-current*0.45)*2.1+flow*1.8);
-            float fracture = 1.0-smoothstep(0.035,0.14,raft.y+(skin-0.5)*0.065);
-            float river = smoothstep(0.46,0.70,fbm(warped*0.58));
-            float heat = max(fracture*0.76,river*0.94);
-            heat *= 0.78+turbulence*0.35;
-            // The exposed rock face ends at the recessed molten floor. Depth
-            // and its lighting define the rim, without a painted soft outline.
             float liquid = step(${LAVA_DEPTH - 0.06},-terrainPosition.y);
-            heat *= liquid;
-            diffuseColor.rgb = mix(vec3(0.013,0.011,0.009)*(0.7+skin*0.6),vec3(0.20,0.022,0.003),heat);
-            vec3 glow = mix(vec3(1.4,0.014,0.001),vec3(3.0,0.34,0.009),pow(heat,3.6));
-            totalEmissiveRadiance = glow*pow(heat,1.5);
-            vec3 cliffMineral = texture2D(terrainMineral,p*0.25).rgb*(0.25+fbm(p*12.0)*0.16);
-            diffuseColor.rgb = mix(cliffMineral,diffuseColor.rgb,liquid);
+            float heat = 0.0;
+            // Keep the texture fetch outside divergent flow so mip selection
+            // and anisotropic filtering retain their original derivatives.
+            vec3 cliffTexel = texture2D(terrainMineral,p*0.25).rgb;
+            if (liquid > 0.0) {
+                // Advect the glowing surface past stationary banks. A slower second
+                // layer stretches and folds the current into viscous hot ribbons.
+                vec2 current = vec2(0.16, -0.10) * terrainTime;
+                vec2 moving = p - current;
+                vec2 flow = vec2(fbm(moving * 1.3 + terrainTime * 0.025),
+                                 fbm(moving * 1.3 + 8.4 - terrainTime * 0.018));
+                vec2 warped = moving * 3.4 + flow * 3.0;
+                float turbulence = fbm(warped);
+                float skin = fbm((p - current * 0.45) * 7.0 + flow * 1.5);
+                vec2 raft = cells((p-current*0.45)*2.1+flow*1.8);
+                float fracture = 1.0-smoothstep(0.035,0.14,raft.y+(skin-0.5)*0.065);
+                float river = smoothstep(0.46,0.70,fbm(warped*0.58));
+                heat = max(fracture*0.76,river*0.94);
+                heat *= 0.78+turbulence*0.35;
+                diffuseColor.rgb = mix(vec3(0.013,0.011,0.009)*(0.7+skin*0.6),vec3(0.20,0.022,0.003),heat);
+                vec3 glow = mix(vec3(1.4,0.014,0.001),vec3(3.0,0.34,0.009),pow(heat,3.6));
+                totalEmissiveRadiance = glow*pow(heat,1.5);
+            } else {
+                // The cliff contributes no lava emission or flowing surface.
+                diffuseColor.rgb = cliffTexel * (0.25+fbm(p*12.0)*0.16);
+                totalEmissiveRadiance = vec3(0.0);
+            }
         ` : materialPatch3);
         if (lava) shader.fragmentShader = shader.fragmentShader.replace("#include <roughnessmap_fragment>", materialPatch4);
         shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_maps>", materialPatch5);
     };
-    material.customProgramCacheKey = () => lava ? "dx-lava-cliff-v11" : "dx-earth-clean-rim-v10";
+    material.customProgramCacheKey = () => lava ? "dx-lava-cliff-v12" : "dx-earth-clean-rim-v10";
     return material;
 };
 type TerrainVertices = { positions: number[]; indices: number[]; lookup: Map<string, number> };
