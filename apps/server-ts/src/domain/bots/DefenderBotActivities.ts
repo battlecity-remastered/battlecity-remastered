@@ -7,7 +7,7 @@ import { isBotTopLeftPositionValid, resolveCityCenter } from "./BotShared.js";
 type PatrolPoint = { x: number; y: number };
 const patrolCache = new WeakMap<RuntimeState, Map<number, { signature: string; goals: PatrolPoint[] }>>();
 
-const cityPatrolGoals = (state: RuntimeState, config: RuntimeConfig, cityId: number): PatrolPoint[] => {
+export const cityPatrolGoals = (state: RuntimeState, config: RuntimeConfig, cityId: number): PatrolPoint[] => {
     const buildings = [...state.buildings.values()].filter(building => building.cityId === cityId);
     const signature = JSON.stringify([buildings.map(building => [building.id, building.type, building.tileX, building.tileY]), [...state.defenses.values()].map(defense => [defense.id, defense.tileX, defense.tileY])]);
     let cities = patrolCache.get(state);

@@ -1,10 +1,10 @@
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
-import { createBotPathContext, findBotPath } from "./BotPathingService.js";
+import { createBotPathContext } from "./BotPathingService.js";
+import { findDefenderSpawn } from "./DefenderBotSpawn.js";
 import {
     botFireAtTarget,
     hasBotTerrainSight,
-    isBotTopLeftPositionValid,
     resolveCityCenter,
     stepBotAlongPath
 } from "./BotShared.js";
@@ -101,24 +101,7 @@ const createDefender = (
 ): RuntimePlayer | undefined => {
     state.seq += 1;
     const id = `defender_${cityId}_${state.seq}`;
-    const center = resolveCityCenter(cityId, config);
-    const angle = Math.random() * (Math.PI * 2);
-    let safeSpawn: { x: number; y: number } | undefined;
-    const pathContext = createBotPathContext();
-    for (let sample = 0; sample < 32 && !safeSpawn; sample++) {
-        const heading = angle + sample * Math.PI / 16;
-        const spawnRadius = config.tileSize * (sample % 2 ? 8 : 10);
-        const candidate = {
-            x: Math.floor((center.x + Math.cos(heading) * spawnRadius - BOT_HALF) / config.tileSize) * config.tileSize,
-            y: Math.floor((center.y + Math.sin(heading) * spawnRadius - BOT_HALF) / config.tileSize) * config.tileSize
-        };
-        if (candidate.x < 0 || candidate.y < 0 || candidate.x + 48 > config.mapMax || candidate.y + 48 > config.mapMax) continue;
-        if (!isBotTopLeftPositionValid(state, config, candidate.x, candidate.y)) continue;
-        if ([...state.players.values()].some(player => Math.hypot(player.x - candidate.x, player.y - candidate.y) < config.tileSize * 2)) continue;
-        if (!findBotPath(state, config, candidate.x, candidate.y, center.x - 24, center.y + config.tileSize,
-            { searchRadiusTiles: 32, maxNodes: 8000, context: pathContext })) continue;
-        safeSpawn = candidate;
-    }
+    const safeSpawn = findDefenderSpawn(state, config, cityId);
     if (!safeSpawn) return undefined;
 
     const player: RuntimePlayer = {
@@ -143,6 +126,7 @@ const createDefender = (
         homeCityId: cityId,
         targetCityId: cityId,
         pathIndex: 0,
+        ...(safeSpawn.patrolIndex === undefined ? {} : { patrolIndex: safeSpawn.patrolIndex }),
         nextPathAt: now,
         nextRetargetAt: now,
         nextHazardAt: now + 6000,

@@ -190,6 +190,39 @@ test("all configured AI cities spawn tile-aligned defenders with usable real-map
     }
 });
 
+test("defenders use reachable city entrances when a generated layout isolates the centre", context => {
+    // Seed 55 reproduced a city 42 layout with no defenders at all.
+    let seed = 55;
+    context.mock.method(Math, "random", () => {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        return seed / 4294967296;
+    });
+    const state = createRuntimeState({ fakeCityIds: [42], blockingTiles: buildBlockingTileSet(loadMapData()) });
+    const emitter = createRuntimeEmitter(state, { emitAll: () => {}, emitTo: () => {}, reject: () => {} });
+    const spawn = resolveCityCenter(42, config);
+    state.players.set("human", { ...human(), x: spawn.x, y: spawn.y + 48 });
+    tickFakeCityLifecycle(state, config, emitter, 1000);
+    state.players.get("human")!.city = 42;
+    tickDefenderBots(state, config, emitter, 1000, 0);
+    assert.equal(state.botControllers.size, 4);
+    const starts = new Map([...state.players.values()].filter(player => player.isBot).map(bot => [bot.id, { x: bot.x, y: bot.y }]));
+    for (const start of starts.values()) {
+        assert.equal(start.x % config.tileSize, 0);
+        assert.equal(start.y % config.tileSize, 0);
+    }
+    const travel = new Map<string, number>();
+    for (let tick = 0; tick < 100; tick++) {
+        const before = new Map([...state.players.values()].filter(bot => bot.isBot).map(bot => [bot.id, { x: bot.x, y: bot.y }]));
+        tickDefenderBots(state, config, emitter, 1100 + tick * 100, 100);
+        for (const bot of state.players.values()) if (bot.isBot) {
+            assert.equal(isBotTopLeftPositionValid(state, config, bot.x, bot.y), true);
+            const previous = before.get(bot.id)!;
+            travel.set(bot.id, (travel.get(bot.id) ?? 0) + Math.hypot(bot.x - previous.x, bot.y - previous.y));
+        }
+    }
+    for (const [id, distance] of travel) assert.ok(distance > 48, `${id} did not patrol: ${distance}`);
+});
+
 test("defenders flank a rock wall instead of stopping at firing range and firing into it",()=>{
     const {state,emitter}=harness();const now=Date.now();
     state.fakeCities.set(17,{cityId:17,active:true,cooldownUntil:0,buildingIds:[],defenseIds:[],hazardIds:[]});
