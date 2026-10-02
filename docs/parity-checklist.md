@@ -102,3 +102,4 @@ Last updated: 2026-02-24
 - [x] `npm run rewrite:check:strict` passes.
 - [x] Manual parity spot-check completed at `1024x768`.
 - [x] Live driving tolerates captured 1.2-second input bursts and recovers lost commands; prediction is bounded during longer outages.
+- [x] City GPU resources prepare during joining; the loading transition adds no repeated uploads or DOM mutations to steady gameplay.

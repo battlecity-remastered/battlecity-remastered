@@ -72,3 +72,4 @@ This defines objective acceptance for visual parity between classic `master` and
 ## Final acceptance decision
 Accepted only if all hard requirements pass and `docs/parity-checklist.md` is fully checked.
 - Driving transport: captured turning bursts and 1400 ms ordered stalls at 6–144 FPS preserve the shared pose without correction; a five-second command outage bounds prediction and resumes after retry acknowledgement.
+- City entry: prepare shared city resources after hydration, preserve renderer targets and graphics settings, and verify steady GPU frame times against the same public world.

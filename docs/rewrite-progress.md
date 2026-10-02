@@ -776,3 +776,18 @@ A 70-command burst allowance retains the 35/s sustained rate limit. Tests replay
 the sanitized captured turning inputs, 1400 ms transport stalls at 6–144 FPS,
 and a five-second outage with dropped commands. The HUD exposes buffered and
 clipped input time. Camera edge clamps prevent views beyond the finite map.
+
+October 2 city-entry preparation: reproduced a 2083 ms first-view stall on the
+public server in an isolated Chrome session using the Intel GPU. Joining now
+precompiles the hydrated scene against the same linear render target used by the
+composer, uploads shared city geometries/textures once, and primes research
+screens. The loading transition waits for hydration and blocks movement while
+GPU preparation runs. No terrain pre-render, quality changes or recurring GPU
+work were added; steady frames perform no loading-UI DOM writes.
+
+The optimized preparation took 1.5–1.6 seconds on that GPU. First-view stalls in
+the sampled cities fell to 150–267 ms. Sequential public-server comparisons
+measured 88.3 vs 88.8 ms and 124.1 vs 127.2 ms average steady frame time. These
+short runs show comparable steady performance, not a guaranteed FPS increase.
+Regression coverage checks shared resources, renderer-state restoration and the
+hydration/loading transition. Strict verification, lint and the client build pass.

@@ -160,6 +160,13 @@ export const createResearchDisplays = (renderer: THREE.WebGLRenderer, environmen
             renderer.setRenderTarget(previousTarget);
             renderer.setClearColor(savedColor, previousAlpha);
         },
+        async prepare(): Promise<void> {
+            for (const display of displays) {
+                const previous = renderer.getRenderTarget();
+                try { renderer.setRenderTarget(display.target); await renderer.compileAsync(display.scene, display.camera); renderer.render(display.scene, display.camera); }
+                finally { renderer.setRenderTarget(previous); }
+            }
+        },
         get statusSignature(): string { return statusSignature; },
         dispose: (): void => {
             for (const display of displays) {

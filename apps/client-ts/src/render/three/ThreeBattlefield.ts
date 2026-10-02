@@ -26,7 +26,9 @@ import { createLiveWorld } from "./live-world.js";
 import { MultisampleScenePass } from "./multisample-scene-pass.js";
 import { createNetworkCombat } from "./network-combat.js";
 import { createOrbVictoryEffects } from "./orb-victory-effects.js";
+import { createPlacementPreviews } from "./placement-previews.js";
 import { createPopulationDisplay } from "./population-display.js";
+import { prepareCityModels } from "./prepare-city-models.js";
 import { createProjectileCollider } from "./projectile-collider.js";
 import { createResearchDisplays } from "./research-display.js";
 import { createSupportBuilding, setSupportBuildingTemplate } from "./support-buildings.js";
@@ -38,6 +40,7 @@ import { createTerrain } from "./terrain.js";
 export type ThreeBattlefield = {
     canvas: HTMLCanvasElement;
     render: (state: ClientState) => void;
+    prepare: (state: ClientState) => Promise<void>;
     observeServerEvent: (event: KnownTypedEventEnvelope, state: ClientState) => void;
     pickBuilding: (clientX: number, clientY: number, state: ClientState) => ClientState["buildings"] extends Map<string, infer B> ? B | null : never;
     pickGround: (clientX: number, clientY: number) => { tileX: number; tileY: number } | null;
@@ -208,10 +211,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     buildingBatches = createBuildingBatches(scene, batchableBuildings);
     // The color, AO and shadow passes consume the same prepared transforms.
     scene.matrixWorldAutoUpdate = false; scene.matrixAutoUpdate = false;
-    const ghost = new THREE.Mesh(new THREE.BoxGeometry(3, 0.025, 3), new THREE.MeshBasicMaterial({ color: 0x75efb0, transparent: true, opacity: 0.23, depthWrite: false })); ghost.visible = false; scene.add(ghost);
-    const dropCorners: number[] = [];
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { dropCorners.push(sx * .46, 0, sz * .46, sx * .29, 0, sz * .46, sx * .46, 0, sz * .46, sx * .46, 0, sz * .29); }
-    const dropReticle = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(dropCorners, 3)), new THREE.LineBasicMaterial({ color: 0x83dfbc, transparent: true, opacity: .62, depthWrite: false })); dropReticle.visible = false; scene.add(dropReticle);
+    const { ghost, dropReticle } = createPlacementPreviews(scene);
     const camera = createBattlefieldCamera(window.innerWidth, window.innerHeight); camera.layers.enable(1);
     const createPostprocessing = () => {
         const renderTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
@@ -258,6 +258,13 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     const raycaster = new THREE.Raycaster(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     return {
         canvas: renderer.domElement, render, resize,
+        prepare: async state => {
+            const start = performance.now();
+            liveWorld?.update(state, 0); scene.updateMatrixWorld(); buildingBatches!.update(true);
+            await prepareCityModels(renderer, scene, camera, [tank, centerAsset.scene, ...[...industrialAssets.values()].map(asset => asset.scene), ...scene.children.filter(root => root.userData.renderTileX !== undefined)]);
+            await researchDisplays.prepare();
+            setDiagnostic("cityPrepareMs", (performance.now() - start).toFixed(0));
+        },
         previewBuild: (type, tileX, tileY) => { if (!demoMode) return; if (type >= 400 || (type >= 100 && type <= 112)) { createIndustrialVisual({ type, tileX, tileY, kind: type >= 400 ? "research" : type === 105 ? "orb-factory" : "factory" }); } else { const model = createSupportBuilding(type); model.position.set(tileX - 256 + 1.5, 0, tileY - 256 + (type === 200 ? 1 : 1.5)); model.userData.renderTileX = tileX; model.userData.renderTileY = tileY; scene.add(model); projectileCollider.register(model, "metal"); } },
         previewRemove: (tileX, tileY) => { if (!demoMode) return; for (const model of scene.children) if (model.userData.renderTileX === tileX && model.userData.renderTileY === tileY) { model.visible = false; projectileCollider.unregister(model); } },
         previewOrb: state => {
