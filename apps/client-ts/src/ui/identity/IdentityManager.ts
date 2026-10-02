@@ -13,6 +13,10 @@ export const restoreIdentity = (state: ClientState, storage: Storage | null = ty
             return;
         }
         const parsed = JSON.parse(raw) as Partial<ClientState["identity"]>;
+        if (typeof parsed.authToken === "string" && typeof parsed.authExpiresAt === "number" && parsed.authExpiresAt > Date.now()) {
+            state.identity.authToken = parsed.authToken;
+            state.identity.authExpiresAt = parsed.authExpiresAt;
+        }
         if (typeof parsed.userId === "string") {
             state.identity.userId = parsed.userId;
         }
@@ -27,11 +31,12 @@ export const restoreIdentity = (state: ClientState, storage: Storage | null = ty
     }
 };
 
-const persistIdentity = (state: ClientState, storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void => {
+export const persistIdentity = (state: ClientState, storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void => {
     if (!storage) {
         return;
     }
-    storage.setItem(STORAGE_KEY, JSON.stringify(state.identity));
+    try { storage.setItem(STORAGE_KEY, JSON.stringify(state.identity)); }
+    catch { /* The current signed session can still play when storage is unavailable. */ }
 };
 
 export const registerIdentityHotkeys = (state: ClientState): (() => void) => {

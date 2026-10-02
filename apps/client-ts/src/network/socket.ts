@@ -10,6 +10,7 @@ import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
 import { decodeServerEnvelope } from "./event-router.js";
 import { logClient } from "../observability/ClientLogger.js";
+import { identityJoinFields } from "../ui/identity/account-session.js";
 import {
     recordDebugLatencySample,
     recordDebugOutboundSend,
@@ -95,10 +96,7 @@ export const buildReconnectJoinPayload = (
 ): KnownEventPayloadByType["lobby.join.request"] => {
     return {
         desiredCity,
-        callsign: state.identity.callsign,
-        ...(typeof state.identity.userId === "string" && state.identity.userId.length > 0
-            ? { userId: state.identity.userId }
-            : {})
+        ...identityJoinFields(state)
     };
 };
 

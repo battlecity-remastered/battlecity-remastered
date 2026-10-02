@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { resolveScoreDatabasePath } from "./score-database-path.js";
 import { Effect } from "effect";
 import { resolveRankTitle, clampToNonNegativeInt } from "../../domain/score/RankService.js";
 import {
@@ -15,6 +15,7 @@ import {
 
 export type RuntimeUserProfile = {
     id: string;
+    provider: string;
     name: string;
     score: number;
     rank: string;
@@ -26,9 +27,6 @@ export type RuntimeUserProfile = {
 type PersistedScoreRow = { userId?: string; displayName?: string; provider?: string; points?: number; orbs?: number; assists?: number; rankTitle?: string; createdAt?: number; updatedAt?: number; };
 type UserStoreAdapterOptions = { dbPath?: string; sqliteBin?: string; useSqlStorage?: boolean; };
 
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DB_PATH = path.resolve(moduleDir, "../../../data/scores.db");
-const LEGACY_DB_PATH = path.resolve(moduleDir, "../../../../../server/data/scores.db");
 const SQLITE_BIN = process.env.SQLITE3_PATH || "sqlite3";
 
 export class UserStoreAdapter {
@@ -40,13 +38,10 @@ export class UserStoreAdapter {
     constructor(options: UserStoreAdapterOptions = {}) {
         this.sqliteBin = options.sqliteBin || SQLITE_BIN;
 
-        const envDbPath = process.env.BATTLECITY_SCORES_DB_PATH || process.env.SCORES_DB_PATH;
-        const preferredPath = options.dbPath || envDbPath || DEFAULT_DB_PATH;
-        const existingPath = [preferredPath, LEGACY_DB_PATH].find((candidate) => fs.existsSync(candidate));
-        this.dbPath = existingPath || preferredPath;
+        this.dbPath = resolveScoreDatabasePath(options.dbPath);
 
         const explicitSqlToggle = options.useSqlStorage ?? parseBool(process.env.BATTLECITY_ENABLE_SQL_STORE);
-        const shouldEnableSql = explicitSqlToggle ?? (existingPath !== undefined);
+        const shouldEnableSql = explicitSqlToggle ?? fs.existsSync(this.dbPath);
 
         if (shouldEnableSql && this.canUseSqlite()) {
             this.sqlEnabled = true;
@@ -57,7 +52,7 @@ export class UserStoreAdapter {
         }
     }
 
-    public getOrCreate(userId: string, displayName?: string): Effect.Effect<RuntimeUserProfile> {
+    public getOrCreate(userId: string, displayName?: string, provider = providerFromUserId(userId)): Effect.Effect<RuntimeUserProfile> {
         return Effect.sync(() => {
             const normalizedUserId = sanitizeUserId(userId);
             const existing = this.users.get(normalizedUserId);
@@ -81,6 +76,7 @@ export class UserStoreAdapter {
             const now = Date.now();
             const created: RuntimeUserProfile = {
                 id: normalizedUserId,
+                provider,
                 name: sanitizeDisplayName(displayName, normalizedUserId.slice(0, 12) || "Player"),
                 score: 0,
                 rank: resolveRankTitle(0),
@@ -102,6 +98,7 @@ export class UserStoreAdapter {
             const now = Date.now();
             const existing = this.users.get(normalizedUserId) ?? {
                 id: normalizedUserId,
+                provider: providerFromUserId(normalizedUserId),
                 name: sanitizeDisplayName(displayName, normalizedUserId.slice(0, 12) || "Player"),
                 score: 0,
                 rank: resolveRankTitle(0),
@@ -114,6 +111,7 @@ export class UserStoreAdapter {
             const nextName = sanitizeDisplayName(displayName, existing.name);
             const updated: RuntimeUserProfile = {
                 id: normalizedUserId,
+                provider: existing.provider,
                 name: nextName,
                 score: nextScore,
                 rank: resolveRankTitle(nextScore),
@@ -228,6 +226,7 @@ export class UserStoreAdapter {
             const score = clampToNonNegativeInt(row.points);
             const profile: RuntimeUserProfile = {
                 id,
+                provider: row.provider || providerFromUserId(id),
                 name: sanitizeDisplayName(row.displayName, id.slice(0, 12) || "Player"),
                 score,
                 rank: resolveRankTitle(score),
@@ -246,7 +245,7 @@ export class UserStoreAdapter {
         const resolvedRank = resolveRankTitle(score);
         const updatedAt = clampToNonNegativeInt(profile.updatedAt || now);
         const createdAt = updatedAt;
-        const provider = providerFromUserId(safeId);
+        const provider = profile.provider;
 
         const sql = `
             INSERT INTO player_scores (

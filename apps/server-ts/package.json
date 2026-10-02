@@ -16,6 +16,7 @@
         "@effect/schema": "^0.75.5",
         "effect": "^3.12.10",
         "express": "^4.21.2",
+        "google-auth-library": "^11.1.0",
         "socket.io": "^4.8.1",
         "tsx": "^4.20.6"
     },

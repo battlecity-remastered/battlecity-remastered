@@ -1,4 +1,5 @@
 import { createHttpApp } from "./http-app.js";
+import { createIdentityHttpServices } from "./identity-http.js";
 import http from "node:http";
 import { Server } from "socket.io";
 import { makeEnvelope } from "@battlecity/protocol";
@@ -6,7 +7,7 @@ import { Effect } from "effect";
 import { buildRuntimeServices } from "./layers/RuntimeLayer.js";
 import { logRuntime } from "./observability/RuntimeLogger.js";
 
-const app = createHttpApp();
+const app = createHttpApp(undefined, createIdentityHttpServices());
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {

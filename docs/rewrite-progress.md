@@ -893,3 +893,17 @@ render targets. Isolated Intel GPU Chrome checks against playbattlecity.com
 passed at 1440x900 and 1024x768: target navigation, carrying highlight, map click,
 empty-state cleanup and panel bounds, with no browser errors. All 509 tests and
 strict structural/type checks pass.
+
+
+### Restore persistent Google accounts (2026-10-02)
+
+Restored Google sign-in in the lobby. The server verifies Google ID tokens with
+Google's auth library, looks up the original `users.provider_id`, and issues a
+signed seven-day session for that exact account UUID. Existing custom callsigns,
+scores, orbs and Google provider metadata remain attached to the original row.
+The session signing key lives beside `scores.db` in `.identity-secret` unless
+`BATTLECITY_IDENTITY_SECRET` is configured, so app replacement preserves sessions.
+`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_IDS` enable sign-in; guest play remains available.
+Previously generated guest scores cannot be safely attributed to old accounts
+by callsign alone and are not automatically merged.
+

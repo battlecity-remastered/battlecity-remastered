@@ -7,7 +7,7 @@ import { collectFactoryStock } from "../domain/factories/FactoryService.js";
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { deployHazard } from "../domain/hazards/HazardService.js";
 import { pickupIcon } from "../domain/icons/IconDropService.js";
-import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
+import { bindSocketIdentity, resolveSocketUserId, verifyIdentityToken } from "../domain/identity/IdentityService.js";
 import { addInventoryItem, emitInventoryState } from "../domain/inventory/InventoryService.js";
 import { useItem } from "../domain/items/ItemUseService.js";
 import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
@@ -98,6 +98,10 @@ const rejectWithContext = (
 
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
+        const account = verifyIdentityToken(payload.authToken);
+        if (payload.authToken && !account) {
+            rejectSocket(context.broadcaster, socketId, "invalid_envelope"); return;
+        }
         const userId = bindSocketIdentity(context.state, socketId, payload);
         handleCommandResult(socketId, context.emitter, context.broadcaster, joinLobby(
             context.state,
@@ -107,7 +111,7 @@ const handlers: HandlerMap = {
         ), (assignment) => {
             if (!context.state.players.has(socketId)) context.initializeJoinedPlayer?.(context.state, assignment.city, socketId, context.config);
             if (context.userStore) {
-                Effect.runSync(context.userStore.getOrCreate(userId, payload.callsign));
+                Effect.runSync(context.userStore.getOrCreate(userId, account?.name ?? payload.callsign, account?.provider));
             }
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));

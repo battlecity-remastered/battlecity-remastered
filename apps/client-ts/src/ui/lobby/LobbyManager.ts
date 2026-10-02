@@ -14,6 +14,8 @@ import {
     resolveFilterLabel
 } from "./lobby-state.js";
 import { ensureLobbyStyles } from "./lobby-styles.js";
+import { createLobbyAccount } from "../identity/lobby-account.js";
+import { identityJoinFields } from "../identity/account-session.js";
 
 export { applyLobbyAction, buildLobbyLines } from "./lobby-state.js";
 
@@ -39,6 +41,7 @@ export const createLobbyManager = (
     ensureLobbyStyles();
 
     const { overlay, subtitle, citiesTab, scoresTab, cityPanel, scorePanel, cityFilterInput, cityList, scoreList, autoButton, refreshButton, statusNode } = createLobbyLayout(root);
+    const disposeAccount = createLobbyAccount(state, subtitle.parentElement!);
 
     const dirty = createDirtyFlagTracker();
 
@@ -68,15 +71,13 @@ export const createLobbyManager = (
 
     const buildJoinPayload = (desiredCity?: number): KnownEventPayloadByType["lobby.join.request"] => {
         return {
-            callsign: state.identity.callsign,
-            ...(typeof desiredCity === "number" ? { desiredCity } : {}),
-            ...(typeof state.identity.userId === "string" && state.identity.userId.length > 0
-                ? { userId: state.identity.userId }
-                : {})
+            ...identityJoinFields(state),
+            ...(typeof desiredCity === "number" ? { desiredCity } : {})
         };
     };
 
     const requestJoin = (desiredCity?: number): void => {
+        if (state.identity.authPending) { setStatus("Please wait for sign-in to finish."); return; }
         if (!send) {
             setStatus("Lobby join controls unavailable.", "error");
             return;
@@ -200,6 +201,7 @@ export const createLobbyManager = (
             }
         },
         dispose: () => {
+            disposeAccount();
             window.removeEventListener("keydown", onKeyDown);
             citiesTab.removeEventListener("click", onCitiesTabClick);
             scoresTab.removeEventListener("click", onScoresTabClick);

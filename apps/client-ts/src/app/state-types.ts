@@ -153,6 +153,9 @@ export type ClientState = {
         rank: string | null;
     };
     identity: {
+        authToken?: string;
+        authExpiresAt?: number;
+        authPending?: boolean;
         userId: string | null;
         callsign: string;
         provider: "local" | "google";

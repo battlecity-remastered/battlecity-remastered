@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { RuntimeState } from "../../runtime/types.js";
+import { resolveIdentitySecret } from "./account-token.js";
 
 const sanitizeUserId = (rawUserId: string | undefined, fallback: string): string => {
     if (typeof rawUserId !== "string") {
@@ -23,13 +24,10 @@ const decodeBase64Url = (input: string): Buffer | null => {
     }
 };
 
-const resolveIdentitySecret = (): string | null => {
-    const secret = process.env.BATTLECITY_IDENTITY_SECRET;
-    return typeof secret === "string" && secret.length >= 16 ? secret : null;
-};
-
 const splitTokenParts = (authToken: string): { payloadPart: string; signaturePart: string } | null => {
-    const [payloadPart, signaturePart] = authToken.split(".");
+    const parts = authToken.split(".");
+    if (parts.length !== 2) return null;
+    const [payloadPart, signaturePart] = parts;
     if (!payloadPart || !signaturePart) {
         return null;
     }
@@ -49,20 +47,22 @@ const hasValidSignature = (
     return signature.length === expected.length && timingSafeEqual(signature, expected);
 };
 
-const parseIdentityPayload = (payloadPart: string): { sub: string; exp: number } | null => {
+type IdentityPayload = { sub: string; exp: number; kind?: string; name?: string };
+const parseIdentityPayload = (payloadPart: string): IdentityPayload | null => {
     const payloadBuffer = decodeBase64Url(payloadPart);
     if (!payloadBuffer) {
         return null;
     }
 
     try {
-        const parsed = JSON.parse(payloadBuffer.toString("utf8")) as { sub?: unknown; exp?: unknown };
+        const parsed = JSON.parse(payloadBuffer.toString("utf8")) as Partial<IdentityPayload>;
         const sub = typeof parsed.sub === "string" ? parsed.sub.trim() : "";
         const exp = Number(parsed.exp);
         if (sub.length === 0 || !Number.isFinite(exp)) {
             return null;
         }
-        return { sub, exp };
+        return { sub, exp, ...(typeof parsed.kind === "string" ? { kind: parsed.kind } : {}),
+            ...(typeof parsed.name === "string" ? { name: parsed.name } : {}) };
     } catch {
         return null;
     }
@@ -73,7 +73,7 @@ const isIdentityExpired = (exp: number): boolean => {
     return Date.now() >= expiryMs;
 };
 
-const verifyIdentityToken = (authToken: string | undefined): string | null => {
+export const verifyIdentityToken = (authToken: string | undefined): { userId: string; name?: string; provider?: "google" } | null => {
     if (typeof authToken !== "string" || authToken.trim().length === 0) {
         return null;
     }
@@ -92,7 +92,10 @@ const verifyIdentityToken = (authToken: string | undefined): string | null => {
     if (!payload || isIdentityExpired(payload.exp)) {
         return null;
     }
-    return sanitizeUserId(payload.sub, "").slice(0, 120);
+    const sub = sanitizeUserId(payload.sub, "").slice(0, 120);
+    return { userId: payload.kind === "account" ? sub : `verified:${sub}`,
+        ...(payload.kind === "account" ? { provider: "google" as const } : {}),
+        ...(payload.name ? { name: payload.name } : {}) };
 };
 
 export const bindSocketIdentity = (
@@ -100,9 +103,9 @@ export const bindSocketIdentity = (
     socketId: string,
     joinPayload: KnownEventPayloadByType["lobby.join.request"]
 ): string => {
-    const verifiedSub = verifyIdentityToken(joinPayload.authToken);
-    const userId = verifiedSub
-        ? `verified:${verifiedSub}`
+    const verified = verifyIdentityToken(joinPayload.authToken);
+    const userId = verified
+        ? verified.userId
         : sanitizeUserId(undefined, `guest:${socketId}`);
     state.socketUserIds.set(socketId, userId);
     return userId;
