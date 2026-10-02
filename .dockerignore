@@ -2,6 +2,17 @@ node_modules
 **/node_modules
 coverage
 **/coverage
+.cache
+.direnv
+.venv
+.yaaf-worktrees
+**/dist
+**/__pycache__
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/*.sqlite
+**/*.sqlite3
 .git
 .github
 .env

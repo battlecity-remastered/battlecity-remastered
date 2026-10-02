@@ -28,7 +28,7 @@ type UserStoreAdapterOptions = { dbPath?: string; sqliteBin?: string; useSqlStor
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DB_PATH = path.resolve(moduleDir, "../../../data/scores.db");
-const LEGACY_DB_PATH = path.resolve(moduleDir, "../../../../server/data/scores.db");
+const LEGACY_DB_PATH = path.resolve(moduleDir, "../../../../../server/data/scores.db");
 const SQLITE_BIN = process.env.SQLITE3_PATH || "sqlite3";
 
 export class UserStoreAdapter {

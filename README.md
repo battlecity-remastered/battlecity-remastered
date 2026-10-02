@@ -67,3 +67,24 @@ longer an npm dependency. The approved rendering quality is preserved.
 - `apps/client-ts/test` - client TypeScript tests
 - `packages/protocol/src` - typed event envelope/schema
 - `packages/sim-core/src` - deterministic sim helpers
+
+## Deployment and existing scores
+
+The Compose service retains the original `battlecity` service/container identity,
+`battlecity_data` named volume and `/app/server/data` mount. The TypeScript server
+explicitly uses `/app/server/data/scores.db`; SQLite is installed in the runtime
+image. The public host port remains 8021 by default, mapped to internal port 8121.
+The application does not copy a seed database over that mounted directory.
+
+Keep the existing Compose project name when updating: Docker prefixes the named
+volume with that project name. Before the eventual deploy, confirm the running
+container's actual volume and take a consistent SQLite backup. Never use
+`docker compose down -v` or delete the data volume during an app update. Keep a
+pre-upgrade backup and the old image for rollback. Schema upgrades add missing
+columns in place; unrelated tables remain untouched.
+
+The GitHub release workflow publishes images on release tags and pushes to
+`feature/typescript`. It contains no deployment step; updating `master` alone
+does not redeploy the running service. Production web serving and the strict
+complexity/maintainability gate still need the release-hardening work described
+in `docs/rewrite-progress.md` before this image is promoted to the live site.

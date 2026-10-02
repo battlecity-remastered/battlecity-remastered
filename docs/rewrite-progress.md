@@ -713,3 +713,35 @@ The renderer follows authoritative city research snapshots with a per-city deadl
 Existing distance/frustum culling and 10 Hz item-view capture are retained. Status text uploads only when its caption/countdown changes; shader clocks animate between captures. Each lab adds one small transparent rim ring and owns its status materials/textures for cleanup. Stable research diagnostics use the display system's cached signature.
 
 Validation: focused research-state, population, mayor and live-world tests pass (four test files); monorepo typecheck and client production build pass. Isolated Intel GPU browser captures verified active, halfway, ready and restarted states with no console/runtime/shader errors; screenshots inspected at normal map scale and with the full research buildings in view.
+
+## 2026-10-02 — Focused commits and preservation of production scores
+
+Grouped the port into asset/tooling, authoritative server, AI opponents, Three.js
+client and documentation commits. Generated builds, caches and local exploratory
+images/scripts are excluded. The original master is an ancestor of the port, so
+promotion can preserve all history by fast-forwarding.
+
+Inspection of the former master found `battlecity_data:/app/server/data` and a
+SQLite-equipped runtime image. The TypeScript deployment template had lost both.
+Restored the original service/container/volume identity, explicitly configured
+`/app/server/data/scores.db`, installed SQLite, retained external port 8021 and
+updated its internal proxy target to 8121. Corrected the legacy database fallback
+to the original root `server/data` path. Docker build context excludes local
+runtime databases, worktrees, virtual environments and generated outputs.
+A restart regression verifies existing score rows persist, new scores survive
+adapter recreation and an unrelated legacy users table remains unchanged.
+
+This is a Git promotion, not a production deployment. The checked GitHub workflow
+only builds/publishes images for feature-branch pushes or tags; master pushes run
+verification. The existing production volume/project identity must be confirmed
+and backed up before a later container update. No live database or container was
+modified. Public client serving and strict complexity/maintainability failures
+remain release blockers and have not been waived.
+
+Final promotion verification: an isolated archive of the committed tree installed
+from the lockfile, typechecked, built the production client and passed all 98 test
+files with four-file concurrency. The SQLite adapter's three detailed tests ran
+without skips, including the existing-database restart case. Compose validation
+confirmed the retained data mount and public 8021-to-internal-8121 mapping. Lint
+and whitespace checks pass. The strict check passes tests/event inventory and
+stops at its existing complexity limits; it is not a clean strict release gate.

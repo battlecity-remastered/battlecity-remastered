@@ -17,6 +17,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8121
+RUN apk add --no-cache sqlite
 
 COPY package*.json ./
 COPY tsconfig.base.json ./

@@ -106,3 +106,26 @@ test("UserStoreAdapter migrates missing classic columns safely", { skip: !sqlite
         assert.equal(names.has("created_at"), true);
     });
 });
+
+// Simulates mounting the existing production volume while replacing only the app.
+test("opening the existing database preserves unrelated user tables and scores across restarts", { skip: !sqliteAvailable }, () => {
+    withTempDir((dir) => {
+        const dbPath = path.join(dir, "scores.db");
+        execFileSync("sqlite3", [dbPath, `
+            CREATE TABLE users (id TEXT PRIMARY KEY, display_name TEXT NOT NULL);
+            INSERT INTO users VALUES ('google:existing-player', 'Original Pilot');
+            CREATE TABLE player_scores (
+                user_id TEXT PRIMARY KEY, display_name TEXT NOT NULL, provider TEXT NOT NULL,
+                points INTEGER NOT NULL DEFAULT 0, rank_title TEXT NOT NULL, updated_at INTEGER NOT NULL
+            );
+            INSERT INTO player_scores VALUES ('google:existing-player', 'Original Pilot', 'google', 42000, 'General', 123);
+        `], { stdio: ["ignore", "pipe", "pipe"] });
+        const before = execFileSync("sqlite3", [dbPath, "SELECT * FROM users;"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+        const first = new UserStoreAdapter({ dbPath, useSqlStorage: true });
+        assert.equal(Effect.runSync(first.getOrCreate("google:existing-player")).score, 42000);
+        Effect.runSync(first.addScore("google:existing-player", 250));
+        const restarted = new UserStoreAdapter({ dbPath, useSqlStorage: true });
+        assert.equal(Effect.runSync(restarted.getOrCreate("google:existing-player")).score, 42250);
+        assert.equal(execFileSync("sqlite3", [dbPath, "SELECT * FROM users;"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }), before);
+    });
+});

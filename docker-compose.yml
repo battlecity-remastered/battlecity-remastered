@@ -1,20 +1,31 @@
 version: "3.9"
 
 services:
-  battlecity-ts:
+  battlecity:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: battlecity-server-ts
+    container_name: battlecity-server
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: ${PORT:-8121}
+      PORT: 8121
+      BATTLECITY_ENABLE_SQL_STORE: "true"
+      BATTLECITY_SCORES_DB_PATH: /app/server/data/scores.db
     ports:
-      - "${PORT:-8121}:8121"
+      - "${PORT:-8021}:8121"
+    volumes:
+      - battlecity_data:/app/server/data
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || '8121') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 15s
+    labels:
+      caddy: battlecity.alanhollis.com
+      caddy.reverse_proxy: "{{upstreams 8121}}"
+
+volumes:
+  battlecity_data:
+    driver: local
