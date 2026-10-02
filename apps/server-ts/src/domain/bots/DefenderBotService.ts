@@ -2,21 +2,24 @@ import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
 import {
     botFireAtTarget,
-    moveBotByHeading,
+    hasBotTerrainSight,
+    isBotTopLeftPositionValid,
     resolveCityCenter,
     stepBotAlongPath
 } from "./BotShared.js";
-import { createBotPathContext } from "./BotPathingService.js";
+import { createBotPathContext, findBotPath } from "./BotPathingService.js";
 import { pickDefenderTarget, resolveDefenderMovementFallback } from "./DefenderBotTargetingService.js";
+
+import { defenderPatrolGoal, maybeLayMinerTrap } from "./DefenderBotActivities.js";
 
 const DEFENDER_TYPE: RuntimeBotController["botType"] = "defender";
 const MAX_DEFENDERS_PER_CITY = 4;
 const MAX_TOTAL_DEFENDERS = 16;
 const SPAWN_CHECK_INTERVAL_MS = 3000;
 const PATHFIND_INTERVAL_MS = 1000;
-const PATH_SEARCH_RADIUS_TILES = 120;
+const PATH_SEARCH_RADIUS_TILES = 32;
 const PATH_MAX_NODES = 8000;
-const WAYPOINT_REACHED_DISTANCE_PX = 24;
+const WAYPOINT_REACHED_DISTANCE_PX = 2;
 const SHOOT_RANGE_TILES = 16;
 const MUZZLE_OFFSET_PX = 30;
 const BOT_HALF = 24;
@@ -95,15 +98,28 @@ const createDefender = (
     now: number,
     cityId: number,
     role: NonNullable<RuntimeBotController["botRole"]>
-): RuntimePlayer => {
+): RuntimePlayer | undefined => {
     state.seq += 1;
     const id = `defender_${cityId}_${state.seq}`;
     const center = resolveCityCenter(cityId, config);
     const angle = Math.random() * (Math.PI * 2);
-    const spawnRadius = config.tileSize * 10;
-    const spawnX = center.x + (Math.cos(angle) * spawnRadius) - BOT_HALF;
-    const spawnY = center.y + (Math.sin(angle) * spawnRadius) - BOT_HALF;
-    const safeSpawn = moveBotByHeading(state, config, spawnX, spawnY, 0, 0, 0);
+    let safeSpawn: {x: number; y: number} | undefined;
+    const pathContext = createBotPathContext();
+    for (let sample = 0; sample < 32 && !safeSpawn; sample++) {
+        const heading = angle + sample * Math.PI / 16;
+        const spawnRadius = config.tileSize * (sample % 2 ? 8 : 10);
+        const candidate = {
+            x: Math.floor((center.x + Math.cos(heading)*spawnRadius - BOT_HALF)/config.tileSize)*config.tileSize,
+            y: Math.floor((center.y + Math.sin(heading)*spawnRadius - BOT_HALF)/config.tileSize)*config.tileSize
+        };
+        if (candidate.x<0 || candidate.y<0 || candidate.x+48>config.mapMax || candidate.y+48>config.mapMax) continue;
+        if (!isBotTopLeftPositionValid(state, config, candidate.x, candidate.y)) continue;
+        if ([...state.players.values()].some(player => Math.hypot(player.x-candidate.x,player.y-candidate.y)<config.tileSize*2)) continue;
+        if (!findBotPath(state, config, candidate.x, candidate.y, center.x-24, center.y+config.tileSize,
+            {searchRadiusTiles:32, maxNodes:8000, context:pathContext})) continue;
+        safeSpawn = candidate;
+    }
+    if (!safeSpawn) return undefined;
 
     const player: RuntimePlayer = {
         id,
@@ -118,6 +134,8 @@ const createDefender = (
         botType: DEFENDER_TYPE
     };
     state.players.set(id, player);
+    const city = state.fakeCities.get(cityId);
+    if (city) { city.defenderRoster ??= {}; city.defenderRoster[role] = {id, respawnAt: 0}; }
     state.botControllers.set(id, {
         id,
         botType: DEFENDER_TYPE,
@@ -127,6 +145,7 @@ const createDefender = (
         pathIndex: 0,
         nextPathAt: now,
         nextRetargetAt: now,
+        nextHazardAt: now + 6000,
         nextShotAt: now + config.botShootIntervalMs
     });
     return player;
@@ -149,11 +168,13 @@ const evaluateDefenderPopulation = (
     for (const fakeCity of state.fakeCities.values()) {
         if (!fakeCity.active) {
             dirty = removeDefendersForCity(state, fakeCity.cityId) || dirty;
+            delete fakeCity.defenderRoster;
             continue;
         }
 
         if (!cityHasNearbyHuman(state, config, fakeCity.cityId, engagementRadius)) {
             dirty = removeDefendersForCity(state, fakeCity.cityId) || dirty;
+            delete fakeCity.defenderRoster;
             continue;
         }
 
@@ -162,12 +183,13 @@ const evaluateDefenderPopulation = (
             continue;
         }
 
-        let canSpawn = Math.min(maxPerCity - cityDefenderCount, MAX_TOTAL_DEFENDERS - countTotalDefenders(state));
-        while (canSpawn > 0) {
-            const role = DEFENDER_ROLES[countDefendersForCity(state, fakeCity.cityId) % DEFENDER_ROLES.length] ?? "shooter";
-            createDefender(state, config, now, fakeCity.cityId, role);
-            canSpawn -= 1;
-            dirty = true;
+        for (const role of DEFENDER_ROLES.slice(0, maxPerCity)) {
+            if (countTotalDefenders(state) >= MAX_TOTAL_DEFENDERS) break;
+            const slot = fakeCity.defenderRoster?.[role];
+            if (slot && state.players.has(slot.id) && state.botControllers.has(slot.id)) continue;
+            if (slot && slot.respawnAt === 0) { slot.respawnAt = now + 20_000; continue; }
+            if (slot && now < slot.respawnAt) continue;
+            dirty = !!createDefender(state, config, now, fakeCity.cityId, role) || dirty;
         }
     }
 
@@ -197,13 +219,12 @@ const tickDefenderController = (
         return true;
     }
 
-    const fallbackCenter = resolveCityCenter(controller.homeCityId, config);
-    const fallback = {
-        x: fallbackCenter.x - BOT_HALF,
-        y: fallbackCenter.y - BOT_HALF
-    };
-    const attackTarget = pickDefenderTarget(state, config, bot, controller, detectionRadius);
-    const movementTargetFallback = resolveDefenderMovementFallback(config, bot, attackTarget) ?? fallback;
+    if ((bot.frozenUntil ?? 0) > now) return false;
+    const fallback = defenderPatrolGoal(state, config, bot, controller, now);
+    const attackTarget = pickDefenderTarget(state, config, bot, controller, detectionRadius, now);
+    const clearShot = !attackTarget || hasBotTerrainSight(state, config, bot, attackTarget);
+    const movementTargetFallback = attackTarget && !clearShot
+        ? attackTarget : (resolveDefenderMovementFallback(config, bot, attackTarget) ?? fallback);
     const fallbackPathTarget = attackTarget ? { x: attackTarget.x, y: attackTarget.y } : undefined;
     const updatedBot = stepBotAlongPath(
         state,
@@ -223,7 +244,8 @@ const tickDefenderController = (
             moveSpeed: config.botMoveSpeed
         }
     );
-    if (attackTarget) {
+    maybeLayMinerTrap(state, config, emitter, updatedBot, controller, attackTarget?.id, now);
+    if (attackTarget && hasBotTerrainSight(state, config, updatedBot, attackTarget) && (updatedBot.frozenUntil ?? 0) <= now) {
         botFireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now, {
             shootRangeTiles: SHOOT_RANGE_TILES,
             muzzleOffsetPx: MUZZLE_OFFSET_PX,

@@ -58,9 +58,10 @@ export const pickDefenderTarget = (
     config: RuntimeConfig,
     bot: RuntimePlayer,
     controller: RuntimeBotController,
-    detectionRadius: number
+    detectionRadius: number,
+    now = Date.now()
 ): { id?: string; x: number; y: number; standOffPx: number } | null => {
-    const nearestPlayer = nearestHumanPlayer(state, bot.x, bot.y, detectionRadius);
+    const nearestPlayer = nearestHumanPlayer(state, bot.x, bot.y, detectionRadius, undefined, bot.city, now);
     const bombTarget = nearestBombTarget(state, config, bot, detectionRadius);
 
     if (controller.botRole === "bomb_defuser" && bombTarget) {

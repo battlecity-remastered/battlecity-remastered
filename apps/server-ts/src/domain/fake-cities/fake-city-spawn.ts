@@ -233,10 +233,18 @@ export const spawnFakeCities = (
         if (cityId === null) {
             return false;
         }
+        if ([...state.socketCities.values()].includes(cityId) || [...state.players.values()].some(player => !player.isBot && player.city === cityId)) return false;
         const fakeCity = state.fakeCities.get(cityId);
         return !!fakeCity && !fakeCity.active && now >= fakeCity.cooldownUntil;
     });
 
+    const humans = [...state.players.values()].filter(player => !player.isBot);
+    const distance = (entry: FakeCityConfigEntry): number => {
+        const spawn = CITY_SPAWNS[String(entry.cityId)];
+        if (!spawn || !humans.length) return 0;
+        return Math.min(...humans.map(player => Math.hypot(asFiniteNumber(spawn.tileX, 0)*runtimeConfig.tileSize-player.x, asFiniteNumber(spawn.tileY, 0)*runtimeConfig.tileSize-player.y)));
+    };
+    available.sort((a,b) => distance(a)-distance(b));
     for (const entry of available) {
         if (createdIds.length >= count) {
             break;

@@ -2,6 +2,7 @@ import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
 import {
     botFireAtTarget,
+    hasBotTerrainSight,
     computeBotStandOffTarget,
     isBotTopLeftPositionValid,
     nearestHumanPlayer,
@@ -14,9 +15,9 @@ import { chooseRogueTargetCity } from "./RogueBotTargetingService.js";
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
 const PATHFIND_INTERVAL_MS = 1200;
-const PATH_SEARCH_RADIUS_TILES = 120;
+const PATH_SEARCH_RADIUS_TILES = 32;
 const PATH_MAX_NODES = 8000;
-const WAYPOINT_REACHED_DISTANCE_PX = 24;
+const WAYPOINT_REACHED_DISTANCE_PX = 2;
 const SHOOT_INTERVAL_MS = 1400;
 const SHOOT_RANGE_TILES = 12;
 const STANDOFF_FACTOR = 0.5;
@@ -148,12 +149,15 @@ const tickRogueController = (
         bot.x,
         bot.y,
         Math.max(config.botDetectionRadius, config.tileSize * 18),
-        controller.targetCityId
+        controller.targetCityId,
+        undefined,
+        now
     );
     const attackTarget = nearest
         ? { id: nearest.id, x: nearest.x, y: nearest.y }
         : { x: fallbackTarget.x, y: fallbackTarget.y };
-    const movementTargetFallback = resolveRogueMovementFallback(config, bot, nearest, attackTarget);
+    const movementTargetFallback = nearest && !hasBotTerrainSight(state, config, bot, nearest)
+        ? nearest : resolveRogueMovementFallback(config, bot, nearest, attackTarget);
     const fallbackPathTarget = nearest ? { x: nearest.x, y: nearest.y } : undefined;
     const updatedBot = stepBotAlongPath(
         state,
@@ -173,7 +177,7 @@ const tickRogueController = (
             moveSpeed: config.botMoveSpeed * MOVE_SPEED_MULTIPLIER
         }
     );
-    botFireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now, {
+    if ((updatedBot.frozenUntil ?? 0) <= now && (!nearest || hasBotTerrainSight(state, config, updatedBot, nearest))) botFireAtTarget(state, emitter, config, updatedBot, controller, attackTarget, now, {
         shootRangeTiles: SHOOT_RANGE_TILES,
         muzzleOffsetPx: MUZZLE_OFFSET_PX,
         shootIntervalMs: Math.max(SHOOT_INTERVAL_MS, config.botShootIntervalMs),

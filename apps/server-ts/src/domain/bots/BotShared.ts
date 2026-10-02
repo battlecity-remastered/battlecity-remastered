@@ -107,7 +107,9 @@ export const nearestHumanPlayer = (
     x: number,
     y: number,
     maxDistance: number,
-    cityId?: number
+    cityId?: number,
+    enemyOfCity?: number,
+    now = Date.now()
 ): { id: string; x: number; y: number; city: number } | null => {
     let nearest: { id: string; x: number; y: number; city: number } | null = null;
     let nearestDistance = maxDistance * maxDistance;
@@ -116,6 +118,7 @@ export const nearestHumanPlayer = (
         if (player.isBot) {
             continue;
         }
+        if (player.health <= 0 || (player.cloakedUntil??0)>now || player.city===enemyOfCity) continue;
         if (cityId !== undefined && player.city !== cityId) {
             continue;
         }
@@ -172,14 +175,14 @@ export const moveBotByHeading = (
     const currentCenter = toCollisionPoint(x, y);
     const world = buildCollisionWorld(state, config, currentCenter.x, currentCenter.y);
     const safeCenter = resolveStartPoint(world, currentCenter);
-    const advancedCenter = advancePointByTankHeading32(
-        safeCenter.x,
-        safeCenter.y,
-        normalizedDirection,
-        speed,
-        deltaMs
-    );
-    const resolvedCenter = moveWithSlide(world, safeCenter, advancedCenter);
+    const steps = Math.max(1, Math.ceil(Math.abs(speed * deltaMs / 1000) / 8));
+    let resolvedCenter = safeCenter;
+    for (let step = 0; step < steps; step++) {
+        const advancedCenter = advancePointByTankHeading32(
+            resolvedCenter.x, resolvedCenter.y, normalizedDirection, speed, deltaMs / steps
+        );
+        resolvedCenter = moveWithSlide(world, resolvedCenter, advancedCenter);
+    }
     const topLeft = fromCollisionPoint(resolvedCenter.x, resolvedCenter.y);
     return clampTopLeftToWorld(topLeft.x, topLeft.y, config.mapMax);
 };
@@ -203,6 +206,18 @@ export const normalizeBotHeading = (direction: number): number => {
 
 export const heading32ToBulletHeading = (direction: number): number => {
     return normalizeHeading(direction - 8);
+};
+
+// A tank within firing range may still be separated by a lava bank or rock wall.
+export const hasBotTerrainSight = (
+    state: RuntimeState, config: RuntimeConfig, bot: RuntimePlayer, target: {x: number; y: number}
+): boolean => {
+    const dx = target.x-bot.x, dy = target.y-bot.y, distance = Math.hypot(dx,dy);
+    for (let step = 30; step < distance; step += 8) {
+        const x = bot.x+24+dx*step/distance, y = bot.y+24+dy*step/distance;
+        if (state.blockingTiles.has(`${Math.floor(x/config.tileSize)},${Math.floor(y/config.tileSize)}`)) return false;
+    }
+    return true;
 };
 
 export const botFireAtTarget = (
@@ -237,6 +252,7 @@ export const botFireAtTarget = (
     const muzzleX = botCenterX + (Math.sin(radians) * -options.muzzleOffsetPx);
     const muzzleY = botCenterY + (Math.cos(radians) * -options.muzzleOffsetPx);
 
+    bot.direction = direction;
     controller.nextShotAt = now + options.shootIntervalMs;
     state.seq += 1;
     const bulletId = `bullet_${state.seq}`;
@@ -256,7 +272,8 @@ export const botFireAtTarget = (
         city: options.bulletCity,
         position: { x: muzzleX, y: muzzleY },
         direction: bulletDirection,
-        type: 0
+        type: 0,
+        speed: config.bulletSpeed
     });
 };
 
@@ -284,6 +301,9 @@ export const maybeAdvancePathWaypoint = (
         return;
     }
 
+    // Finish the grid step exactly before turning; the path resolver checked clearance.
+    bot.x = waypoint.x;
+    bot.y = waypoint.y;
     controller.pathIndex = index + 1;
 };
 
@@ -326,6 +346,14 @@ export const maybeRebuildBotPath = (
         delete controller.path;
     }
     controller.pathIndex = 0;
+    // Replanning mid-step must not send the tank backwards to its previous centre.
+    if (path && path.length > 1) {
+        const first = path[0]!, second = path[1]!;
+        const dx = second.x-first.x, dy = second.y-first.y, lengthSq = dx*dx+dy*dy;
+        const progress = ((bot.x-first.x)*dx+(bot.y-first.y)*dy)/lengthSq;
+        const distanceFromSegment = Math.abs((bot.x-first.x)*dy-(bot.y-first.y)*dx)/Math.sqrt(lengthSq);
+        if (progress >= 0 && progress <= 1 && distanceFromSegment <= 2) controller.pathIndex = 1;
+    }
     controller.nextPathAt = now + options.pathfindIntervalMs;
     if (target.id) {
         controller.targetPlayerId = target.id;
@@ -371,9 +399,8 @@ export const resolvePathMovementTarget = (
 ): { x: number; y: number } => {
     const path = controller.path;
     const index = controller.pathIndex ?? 0;
-    if (!path || index >= path.length) {
-        return fallback;
-    }
+    if (!path) return fallback;
+    if (index >= path.length) return path[path.length-1] ?? fallback;
     return path[index] ?? fallback;
 };
 
@@ -425,6 +452,7 @@ export const stepBotAlongPath = (
         moveSpeed: number;
     }
 ): RuntimePlayer => {
+    if ((bot.frozenUntil ?? 0) > now) return bot;
     const pathOptions = buildBotPathOptions(
         options.fallbackPathTarget,
         options.searchRadiusTiles,
@@ -433,8 +461,18 @@ export const stepBotAlongPath = (
         options.pathContext
     );
     maybeRebuildBotPath(state, config, now, controller, bot, movementTargetFallback, pathOptions);
+    // No direct steering fallback: it cuts corners and pins tanks against walls.
+    if (!controller.path) {
+        if (controller.botType === "defender" && controller.targetPlayerId?.startsWith("patrol:")) {
+            controller.patrolIndex = (controller.patrolIndex ?? 0) + 1;
+            controller.nextPathAt = now + 500;
+        }
+        return bot;
+    }
     maybeAdvancePathWaypoint(controller, bot, options.waypointReachedDistancePx);
     const movementTarget = resolvePathMovementTarget(controller, movementTargetFallback);
+    const remainingDistance = Math.hypot(movementTarget.x-bot.x, movementTarget.y-bot.y);
+    if (remainingDistance < 2) return bot;
     const direction = headingToTarget(
         bot.x + BOT_SPRITE_HALF,
         bot.y + BOT_SPRITE_HALF,
@@ -448,9 +486,17 @@ export const stepBotAlongPath = (
         bot.x,
         bot.y,
         direction,
-        options.moveSpeed,
+        Math.min(options.moveSpeed, remainingDistance * 1000 / Math.max(1, deltaMs)),
         deltaMs
     );
+    const travelled = Math.hypot(moved.x-bot.x, moved.y-bot.y);
+    controller.stalledMs = travelled < 1 ? (controller.stalledMs ?? 0) + deltaMs : 0;
+    if (controller.stalledMs >= 800) {
+        controller.nextPathAt = 0;
+        delete controller.path;
+        controller.stalledMs = 0;
+        if (controller.botType === "defender" && controller.targetPlayerId?.startsWith("patrol:")) controller.patrolIndex = (controller.patrolIndex ?? 0) + 1;
+    }
     const updatedBot: RuntimePlayer = {
         ...bot,
         direction,

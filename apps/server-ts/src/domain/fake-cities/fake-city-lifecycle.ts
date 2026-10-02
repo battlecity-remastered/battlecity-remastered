@@ -43,6 +43,7 @@ export const markFakeCityCooldown = (
         cityId,
         active: false,
         cooldownUntil: now + runtimeConfig.fakeCityCooldownMs,
+        defenderRoster: {},
         buildingIds: [],
         defenseIds: [],
         hazardIds: []
@@ -144,7 +145,8 @@ export const tickFakeCityLifecycle = (
     }
 
     const activeCount = countActiveFakeCities(state);
-    const desired = resolveDesiredActiveFakeCities(state, humanCount, minPlayers, maxActive);
+    // Wait for the first player, then retain battle progress through deaths/reconnects.
+    const desired = humanCount === 0 ? activeCount : resolveDesiredActiveFakeCities(state, humanCount, minPlayers, maxActive);
 
     if (desired > activeCount) {
         const createdIds = spawnFakeCities(state, runtimeConfig, emitter, now, desired - activeCount, configured);
