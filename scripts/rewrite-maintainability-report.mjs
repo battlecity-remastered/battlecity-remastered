@@ -2,6 +2,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { measureSource } from "./source-metrics.mjs";
 
 const MAX_FILE_LINES = 320;
 const MAX_FUNCTION_LINES = 90;
@@ -27,12 +28,6 @@ const SOURCE_ROOTS = [
     "apps/server-ts/src",
     "packages/protocol/src",
     "packages/sim-core/src"
-];
-
-const FUNCTION_START_PATTERNS = [
-    /function\s+\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g,
-    /(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*(?::\s*[^=]+)?=>\s*\{/g,
-    /(?:public|private|protected)?\s*(?:readonly\s+)?(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g
 ];
 
 const run = (cmd, args) => {
@@ -78,36 +73,12 @@ const collectSourceFiles = async () => {
 
 const countLines = (text) => text.split("\n").length;
 
-const getFunctionLengths = (text) => {
-    const lengths = [];
-    for (const pattern of FUNCTION_START_PATTERNS) {
-        pattern.lastIndex = 0;
-        for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
-            const bodyStart = match.index + match[0].length;
-            let end = bodyStart;
-            let depth = 1;
-            while (end < text.length && depth > 0) {
-                const char = text[end];
-                if (char === "{") {
-                    depth += 1;
-                } else if (char === "}") {
-                    depth -= 1;
-                }
-                end += 1;
-            }
-            const slice = text.slice(match.index, Math.max(match.index, end));
-            lengths.push(countLines(slice));
-        }
-    }
-    return lengths;
-};
-
 const files = await collectSourceFiles();
 
 const reportRows = [];
 for (const file of files) {
     const text = await readFile(file, "utf8");
-    const functionLengths = getFunctionLengths(text);
+    const functionLengths = measureSource(text, file).map(fn => fn.lines);
     const fileLines = countLines(text);
     const maxFunctionLines = functionLengths.length > 0 ? Math.max(...functionLengths) : 0;
 
@@ -139,7 +110,8 @@ const report = {
         maxFileLines: MAX_FILE_LINES,
         maxFunctionLines: MAX_FUNCTION_LINES
     },
-    worstFiles: reportRows.slice(0, 20)
+    worstFiles: reportRows.slice(0, 20),
+    violations: { files: fileLimitExceeded, functions: functionLimitExceeded }
 };
 
 console.log(JSON.stringify(report, null, 4));

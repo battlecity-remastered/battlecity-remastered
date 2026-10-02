@@ -2,13 +2,8 @@
 import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { measureSource } from "./source-metrics.mjs";
 
-const FUNCTION_START_PATTERNS = [
-    /function\s+\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g,
-    /(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*(?::\s*[^=]+)?=>\s*\{/g,
-    /(?:public|private|protected)?\s*(?:readonly\s+)?(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/g
-];
-const DECISION_REGEX = /\b(if|else\s+if|for|while|switch|case|catch)\b|\?|&&|\|\|/g;
 const FILE_MAX_OVERRIDES = {};
 const SOURCE_ROOTS = [
     "apps/client-ts/src",
@@ -58,44 +53,12 @@ const collectSourceFiles = async () => {
     }
 };
 
-const getFunctions = (text) => {
-    const functions = [];
-    for (const pattern of FUNCTION_START_PATTERNS) {
-        let match = pattern.exec(text);
-        while (match) {
-            const start = match.index + match[0].length;
-            let depth = 1;
-            let end = start;
-
-            while (end < text.length && depth > 0) {
-                const char = text[end];
-                if (char === "{") {
-                    depth += 1;
-                }
-                if (char === "}") {
-                    depth -= 1;
-                }
-                end += 1;
-            }
-
-            const body = text.slice(start, Math.max(start, end - 1));
-            const decisions = body.match(DECISION_REGEX)?.length ?? 0;
-            const complexity = 1 + decisions;
-            functions.push({ complexity });
-
-            match = pattern.exec(text);
-        }
-    }
-
-    return functions;
-};
-
 const files = await collectSourceFiles();
 
 const reportRows = [];
 for (const file of files) {
     const text = await readFile(file, "utf8");
-    const funcs = getFunctions(text);
+    const funcs = measureSource(text, file);
     const maxComplexity = funcs.reduce((max, fn) => Math.max(max, fn.complexity), 0);
     const totalComplexity = funcs.reduce((sum, fn) => sum + fn.complexity, 0);
     const averageComplexity = funcs.length === 0 ? 0 : Number((totalComplexity / funcs.length).toFixed(2));
@@ -115,6 +78,11 @@ const avgOverall = reportRows.length === 0
     ? 0
     : Number((reportRows.reduce((sum, row) => sum + row.averageComplexity, 0) / reportRows.length).toFixed(2));
 
+const violations = reportRows.filter((row) => {
+    const maxAllowed = FILE_MAX_OVERRIDES[row.file] ?? 15;
+    return row.maxComplexity > maxAllowed || row.averageComplexity > 8;
+});
+
 const report = {
     generatedAt: new Date().toISOString(),
     summary: {
@@ -126,17 +94,12 @@ const report = {
         maxFunctionComplexity: 15,
         averageFileComplexity: 8
     },
-    worstFiles: reportRows.slice(0, 20)
+    worstFiles: reportRows.slice(0, 20),
+    violations
 };
 
 console.log(JSON.stringify(report, null, 4));
 
-if (process.argv.includes("--strict")) {
-    const exceeded = reportRows.filter((row) => {
-        const maxAllowed = FILE_MAX_OVERRIDES[row.file] ?? 15;
-        return row.maxComplexity > maxAllowed || row.averageComplexity > 8;
-    });
-    if (exceeded.length > 0) {
-        process.exit(1);
-    }
+if (process.argv.includes("--strict") && violations.length > 0) {
+    process.exit(1);
 }
