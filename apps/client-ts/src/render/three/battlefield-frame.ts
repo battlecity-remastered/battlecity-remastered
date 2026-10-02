@@ -170,6 +170,10 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         const destruction = cannon.destructionStats;
         setDiagnostic("blastBursts", String(destruction.bursts)); setDiagnostic("collapsingBuildings", String(destruction.collapsing)); setDiagnostic("blastDebris", String(destruction.fragments)); setDiagnostic("blastClouds", String(destruction.clouds));
         setDiagnostic("movementClock", "frame");
+        setDiagnostic("movementAck", String(state.movement.lastAck));
+        setDiagnostic("movementPending", String(state.movement.pending.length));
+        setDiagnostic("movementCorrection", state.movement.correctionPx.toFixed(3));
+        setDiagnostic("movementMaxCorrection", state.movement.maxCorrectionPx.toFixed(3));
         setDiagnostic("remotePlayers", String(state.remotePlayers.size));
         setDiagnostic("liveBuildings", String(state.buildings.size));
         setDiagnostic("populationHouse", state.ui.selectedPopulationHouseId ?? "");
@@ -192,7 +196,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         terrain.update(seconds);
         deployedPreview.forEach(deployment => deployment.update(dt));
         updatePlacement(state);
-        const position = state.local;
+        const position = { x: state.local.x + state.movement.visualOffsetX, y: state.local.y + state.movement.visualOffsetY };
         liveWorld?.update(state, dt); orbVictory.update(state, dt); populationDisplay.update(state, seconds);
         setDiagnostic("orbAge", String(preview.collapse));
         updateCollapse(state, dt);

@@ -6,7 +6,7 @@ import { resolveTankDropTarget } from "../render/three/tank-drop-target.js";
 import { listCitySpawns } from "../world/city-spawn.js";
 import type { DemoWeapon } from "../render/three/demo-combat.js";
 
-export const createThreeGameActions = (state: ClientState, send: EventSender) => {
+export const createThreeGameActions = (state: ClientState, send: EventSender, flushMovement: () => void = () => {}) => {
     let lastShot = -Infinity, lastAction = -Infinity;
     const ready = (): boolean => Boolean(state.local.id && state.debug.socketConnected && state.local.health > 0);
     const actionReady = (): boolean => {
@@ -18,17 +18,18 @@ export const createThreeGameActions = (state: ClientState, send: EventSender) =>
             if (!ready() || performance.now() - lastShot < 1_000) return;
             const type = weapon === "rocket" ? 1 : 0;
             if ((state.inventory.get(type === 1 ? 1 : 12) ?? 0) <= 0) return;
-            lastShot = performance.now();
+            lastShot = performance.now(); flushMovement();
             send("bullet.fire.request", { ownerId: state.local.id!, position: resolveTankMuzzlePosition(state.local.x, state.local.y, state.local.direction), direction: direction32ToBulletHeading(state.local.direction), type });
         },
         collect(): number | null {
             if (!actionReady()) return null;
             const type = resolveNearbyPickupItemType(state);
-            if (type !== null) send("icon.pickup.request", { cityId: state.local.city, itemType: type, amount: 1 });
+            if (type !== null) { flushMovement(); send("icon.pickup.request", { cityId: state.local.city, itemType: type, amount: 1 }); }
             return type;
         },
         deploy(type: number, use = false): boolean {
             if (!actionReady() || (state.inventory.get(type) ?? 0) <= 0) return false;
+            flushMovement();
             if (use && (type === 0 || type === 2)) {
                 send("item.use.request", { itemType: type }); return true;
             }
@@ -49,6 +50,7 @@ export const createThreeGameActions = (state: ClientState, send: EventSender) =>
         },
         flare(): void {
             if (!actionReady() || (state.inventory.get(6) ?? 0) <= 0) return;
+            flushMovement();
             for (const spread of [-4, 0, 4]) {
                 const heading = state.local.direction + 16 + spread;
                 send("bullet.fire.request", { ownerId: state.local.id!, position: resolveTankMuzzlePosition(state.local.x, state.local.y, heading), direction: direction32ToBulletHeading(heading), type: 3 });

@@ -2,6 +2,7 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { logMovementDiag } from "./movement-diagnostics.js";
 import { LEGACY_PLAYER_SPEED_PX_PER_SECOND } from "./player-constants.js";
 import type { ClientState, RemotePlayer } from "./state-types.js";
+import { reconcilePredictedMovement } from "./movement-prediction.js";
 
 // Server authority plus WAN latency causes small drift; soften correction to avoid visible jitter.
 const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 22;
@@ -190,10 +191,17 @@ const reconcilePosition = (state: ClientState, targetX: number, targetY: number,
 };
 
 const updateLocalSnapshot = (state: ClientState, player: PlayersSnapshotEntry, serverTime: number, nowMs: number, interpolationDelayMs: number, isLocallyMoving: boolean, isLocallyTurning: boolean, canApplyAuthoritativeDirection: boolean): void => {
-    pushAuthoritativeSnapshot(state, serverTime, player);
-    const authoritative = resolveAuthoritativeTarget(state, nowMs, interpolationDelayMs, isLocallyMoving);
     state.local.cloakedUntil = player.cloakedUntil ?? 0; state.local.frozenUntil = player.frozenUntil ?? 0;
     state.local.city = player.city;
+    state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
+    if (typeof player.health === "number") state.local.health = player.health;
+    if (typeof player.maxHealth === "number") state.local.maxHealth = player.maxHealth;
+    if (player.movementAck) {
+        reconcilePredictedMovement(state, player);
+        return;
+    }
+    pushAuthoritativeSnapshot(state, serverTime, player);
+    const authoritative = resolveAuthoritativeTarget(state, nowMs, interpolationDelayMs, isLocallyMoving);
     if (canApplyAuthoritativeDirection) {
         state.local.direction = authoritative?.direction ?? player.direction;
     }
@@ -217,13 +225,6 @@ const updateLocalSnapshot = (state: ClientState, player: PlayersSnapshotEntry, s
                 isLocallyMoving
             });
         }
-    }
-    state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
-    if (typeof player.health === "number") {
-        state.local.health = player.health;
-    }
-    if (typeof player.maxHealth === "number") {
-        state.local.maxHealth = player.maxHealth;
     }
 };
 

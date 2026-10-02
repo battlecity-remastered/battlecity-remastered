@@ -760,3 +760,10 @@ The GPU browser exercised researching/ready/restart states and the full armed
 bomb, explosion, building-collapse, debris and cleanup sequence with zero runtime
 errors. The relocated shader literals are byte-for-byte identical to the approved
 version. No production container, deployment settings or database was changed.
+
+October 2 movement follow-up: live Three.js driving now uses sequenced inputs,
+shared collision/turn integration and acknowledgement/replay. This replaces
+arrival-time simulation and local snapshot extrapolation for updated clients.
+The debug HUD reports acknowledged/pending inputs and correction distances.
+Roundtrip regression coverage checks low and high frame rates with WAN jitter,
+curved driving, reverse, terrain collisions and clock skew.

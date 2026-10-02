@@ -1,5 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
-import type { BulletState } from "@battlecity/sim-core";
+import type { BulletState, TankMovementInput } from "@battlecity/sim-core";
 
 export type LocalState = {
     cloakedUntil?: number;
@@ -156,6 +156,16 @@ export type ClientState = {
         userId: string | null;
         callsign: string;
         provider: "local" | "google";
+    };
+    movement: {
+        nextSeq: number;
+        lastAck: number;
+        lastSentSeq: number;
+        pending: TankMovementInput[];
+        visualOffsetX: number;
+        visualOffsetY: number;
+        correctionPx: number;
+        maxCorrectionPx: number;
     };
     chat: {
         history: Array<{

@@ -42,3 +42,12 @@ test("inventory arming is preserved in the subsequent under-tank bomb drop",()=>
     state.ui.bombArmed=false;assert.equal(createThreeGameActions(state,send).deploy(3),true);
     assert.equal((events.at(-1)!.payload as {armed:boolean}).armed,false);
 });
+
+test("pending movement reaches the server before the precise under-tank drop",()=>{
+    const state=createClientState(),events:string[]=[];
+    Object.assign(state.local,{id:"pilot",x:480,y:480});state.debug.socketConnected=true;state.inventory.set(3,1);
+    const send:EventSender=type=>events.push(type);
+    const actions=createThreeGameActions(state,send,()=>events.push("player.update"));
+    assert.equal(actions.deploy(3),true);
+    assert.deepEqual(events,["player.update","hazard.deploy.request"]);
+});

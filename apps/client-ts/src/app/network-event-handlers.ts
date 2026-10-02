@@ -7,6 +7,7 @@ import { updateFromSnapshot } from "./state.js";
 import { resolveBulletSpeed } from "../gameplay/bullets/BulletClientService.js";
 import { resolveCitySpawn } from "../world/city-spawn.js";
 import { auxHandlers } from "./network-event-handlers-state-sync.js";
+import { resetMovementPrediction } from "./movement-prediction.js";
 
 type EventHandler<TType extends keyof KnownEventPayloadByType> =
     (state: ClientState, payload: KnownEventPayloadByType[TType]) => void;
@@ -88,6 +89,7 @@ export const handlers: {
 } = {
     ...auxHandlers,
     "lobby.assignment": (state, payload) => {
+        resetMovementPrediction(state);
         const spawn = resolveCitySpawn(payload.city);
         state.local.id = payload.id;
         state.local.city = payload.city;

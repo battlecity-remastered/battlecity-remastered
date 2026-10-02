@@ -22,10 +22,12 @@ export const startThreeGame=async():Promise<void>=>{
     const map=await loadMapData();state.world.blockingTiles=map.blockingTiles;state.world.buildBlockingTiles=map.buildBlockingTiles;state.world.mapSize=map.map.length;
     let battlefield:ThreeBattlefield|undefined;
     const network=createSocketRuntime(state,event=>{battlefield?.observeServerEvent(event,state);if(event.type==="score.profile" && event.payload.playerId===state.local.id)saveIdentity({...state.identity,userId:event.payload.userId});});
-    const actions=createThreeGameActions(state,network.send);
+    let flushMovement=():void=>{};
+    const actions=createThreeGameActions(state,network.send,()=>flushMovement());
     battlefield=await createThreeBattlefield(map,[],[],actions);root.prepend(battlefield.canvas);battlefield.canvas.dataset.runtime="three-live";battlefield.canvas.tabIndex=0;battlefield.canvas.style.outline="none";
     root.addEventListener("click",event=>{const target=event.target;if(target instanceof HTMLElement)target.closest<HTMLButtonElement>("button")?.blur();},true);
     const input=registerInputHandlers(state,true),runtime=createThreeGameRuntime(state,network.send),lobby=createLobbyManager(state,network.send,root),chat=createChatManager(state,network.send,root),notifications=createNotificationManager(state,root),gameConsole=createGameConsole(state,network.send,root),debug=createDebugHud(state,root);
+    flushMovement=runtime.sendMovement;
     const identity=document.createElement("label");identity.className="bc-lobby-identity";identity.innerHTML='<span>CALLSIGN</span><input maxlength="20" aria-label="Callsign">';const name=identity.querySelector("input")!;name.value=state.identity.callsign;name.addEventListener("change",()=>{state.identity.callsign=name.value.trim().slice(0,20)||"Pilot";saveIdentity(state.identity);});root.append(identity);
     const pointer=(event:PointerEvent):void=>{state.pointer.x=event.clientX;state.pointer.y=event.clientY;state.pointer.inside=true;const tile=battlefield!.pickGround(event.clientX,event.clientY);state.ui.pendingBuildPlacement=state.ui.buildGhostMode&&tile?{tileX:tile.tileX-1,tileY:tile.tileY-1,type:state.ui.selectedBuildType}:null;};
     const down=(event:PointerEvent):void=>{

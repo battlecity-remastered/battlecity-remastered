@@ -99,6 +99,16 @@ const createDebugDefaults = (): DebugState => ({
         mismatchEvents: 0
     }
 });
+const createRenderDefaults = (local: LocalState): ClientState["render"] => ({
+    previousLocalX: local.x,
+    previousLocalY: local.y,
+    projectedOffsetX: 0,
+    projectedOffsetY: 0,
+    lastResolvedAt: null,
+    lastLocalTurnInputAt: null,
+    authoritativeSnapshots: []
+});
+
 export const createClientState = (): ClientState => {
     const local = createLocalDefaults();
     return {
@@ -128,6 +138,7 @@ export const createClientState = (): ClientState => {
             callsign: "Pilot",
             provider: "local"
         },
+        movement: { nextSeq: 1, lastAck: 0, lastSentSeq: 0, pending: [], visualOffsetX: 0, visualOffsetY: 0, correctionPx: 0, maxCorrectionPx: 0 },
         chat: {
             history: [],
             rateLimitedUntil: null,
@@ -176,15 +187,7 @@ export const createClientState = (): ClientState => {
             surfaceWidth: 0,
             surfaceHeight: 0
         },
-        render: {
-            previousLocalX: local.x,
-            previousLocalY: local.y,
-            projectedOffsetX: 0,
-            projectedOffsetY: 0,
-            lastResolvedAt: null,
-            lastLocalTurnInputAt: null,
-            authoritativeSnapshots: []
-        },
+        render: createRenderDefaults(local),
         debug: createDebugDefaults(),
         ui: createUiDefaults()
     };
