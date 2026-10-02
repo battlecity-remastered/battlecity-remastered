@@ -1,5 +1,5 @@
-import { isThreeDemoMode, type ClientState } from "./state.js";
 import { isInteractiveKeyboardTarget } from "../input/interactive-target.js";
+import { isThreeDemoMode, type ClientState } from "./state.js";
 
 const asLower = (value: string): string => value.toLowerCase();
 
@@ -61,19 +61,24 @@ const outputBuildings = (state: ClientState): void => {
     }
 };
 
-const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean, modernDriving = false): void => {
+const setModifierControl = (state: ClientState, event: KeyboardEvent, value: boolean): boolean => {
     if (isShiftEvent(event)) {
         state.controls.shift = value;
         state.controls.shoot = value;
-        return;
+        return true;
     }
     if (isControlEvent(event)) {
         state.controls.ctrl = value;
         if (value && !event.repeat) {
             state.local.pendingFlareBurst = true;
         }
-        return;
+        return true;
     }
+    return false;
+};
+
+const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean, modernDriving = false): void => {
+    if (setModifierControl(state, event, value)) return;
     const code = asLower(event.code);
     const key = asLower(event.key);
     if (isThreeDemoMode() || modernDriving) {
@@ -111,7 +116,7 @@ export const registerInputHandlers = (state: ClientState, modernDriving = false)
         if (isInteractiveKeyboardTarget(event)) {
             return;
         }
-        if ((isThreeDemoMode() || modernDriving) && ["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.code)) event.preventDefault();
+        if ((isThreeDemoMode() || modernDriving) && ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
         setControlFromEvent(state, event, true, modernDriving);
     };
 

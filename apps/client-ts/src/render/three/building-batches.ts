@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-type Batch = {sources: THREE.Mesh[]; mesh?: THREE.InstancedMesh; previous?: Float64Array};
+type Batch = { sources: THREE.Mesh[]; mesh?: THREE.InstancedMesh; previous?: Float64Array };
 
 // Identical building parts share draws. Keep every articulated source transform,
 // but upload instance buffers only when animation, placement or visibility changes.
@@ -10,7 +10,7 @@ export const createBuildingBatches = (scene: THREE.Scene, initialRoots: Readonly
     const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
     const resizeBatch = (batch: Batch): void => {
         if (batch.sources.length < 2) {
-            if (batch.mesh) {batch.mesh.removeFromParent(); batch.mesh.dispose(); delete batch.mesh; delete batch.previous;}
+            if (batch.mesh) { batch.mesh.removeFromParent(); batch.mesh.dispose(); delete batch.mesh; delete batch.previous; }
             for (const source of batch.sources) source.visible = true;
             return;
         }
@@ -21,7 +21,7 @@ export const createBuildingBatches = (scene: THREE.Scene, initialRoots: Readonly
             const mesh = new THREE.InstancedMesh(first.geometry, first.material, capacity);
             mesh.name = "Repeated factory parts"; mesh.castShadow = first.castShadow; mesh.receiveShadow = first.receiveShadow;
             mesh.layers.mask = first.layers.mask; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-            mesh.count = batch.sources.length; mesh.updateMatrix();mesh.matrixAutoUpdate=false;scene.add(mesh); batch.mesh = mesh;
+            mesh.count = batch.sources.length; mesh.updateMatrix(); mesh.matrixAutoUpdate = false; scene.add(mesh); batch.mesh = mesh;
         }
         batch.mesh.count = batch.sources.length;
         batch.previous = new Float64Array(batch.mesh.instanceMatrix.count * 16).fill(NaN);
@@ -37,7 +37,7 @@ export const createBuildingBatches = (scene: THREE.Scene, initialRoots: Readonly
             if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh || !object.visible || Array.isArray(object.material) || object.material.transparent || object.morphTargetInfluences?.length) return;
             const key = `${cellX},${cellZ}/${object.geometry.uuid}/${object.material.uuid}/${object.castShadow}/${object.receiveShadow}/${object.layers.mask}`;
             let batch = groups.get(key);
-            if (!batch) {batch = {sources: []}; groups.set(key, batch);}
+            if (!batch) { batch = { sources: [] }; groups.set(key, batch); }
             batch.sources.push(object); changed.add(batch);
         });
         for (const batch of changed) resizeBatch(batch);
@@ -54,33 +54,38 @@ export const createBuildingBatches = (scene: THREE.Scene, initialRoots: Readonly
             if (!batch.sources.length) groups.delete(key);
         }
     };
+    const isVisible = (source: THREE.Mesh): boolean => {
+        let parent = source.parent;
+        while (parent && parent !== scene && parent.visible) parent = parent.parent;
+        return parent === scene && scene.visible;
+    };
     const update = (worldMatricesReady = false): void => {
         if (!worldMatricesReady) for (const root of roots) root.updateWorldMatrix(true, true);
         for (const batch of groups.values()) {
-            const {mesh, previous} = batch;
+            const { mesh, previous } = batch;
             if (!mesh || !previous) continue;
             let changed = false;
             for (let index = 0; index < batch.sources.length; index++) {
                 const source = batch.sources[index]!;
-                let parent = source.parent;
-                while (parent && parent !== scene && parent.visible) parent = parent.parent;
-                const visible = parent === scene && scene.visible;
+                const visible = isVisible(source);
                 const matrix = visible ? source.matrixWorld : hidden;
                 const offset = index * 16, elements = matrix.elements;
                 let differs = false;
                 for (let element = 0; element < 16; element++) {
-                    if (previous[offset + element] !== elements[element]) {differs = true; break;}
+                    if (previous[offset + element] !== elements[element]) { differs = true; break; }
                 }
                 if (!differs) continue;
                 previous.set(elements, offset); mesh.setMatrixAt(index, matrix); changed = true;
             }
-            if (changed) {mesh.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere();}
+            if (changed) { mesh.instanceMatrix.needsUpdate = true; mesh.computeBoundingSphere(); }
         }
     };
     for (const root of initialRoots) register(root);
     update();
-    return {register, unregister, update, get count(): number {return [...groups.values()].filter(batch => batch.mesh).length;}, dispose(): void {
-        for (const batch of groups.values()) {batch.mesh?.removeFromParent(); batch.mesh?.dispose(); for (const source of batch.sources) source.visible = true;}
-        groups.clear(); roots.clear();
-    }};
+    return {
+        register, unregister, update, get count(): number { return [...groups.values()].filter(batch => batch.mesh).length; }, dispose(): void {
+            for (const batch of groups.values()) { batch.mesh?.removeFromParent(); batch.mesh?.dispose(); for (const source of batch.sources) source.visible = true; }
+            groups.clear(); roots.clear();
+        }
+    };
 };

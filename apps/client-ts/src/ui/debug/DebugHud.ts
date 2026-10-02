@@ -1,5 +1,5 @@
-import { isThreeDemoMode, type ClientState } from "../../app/state.js";
 import { buildDebugHudLines } from "../../app/debug-metrics.js";
+import { isThreeDemoMode, type ClientState } from "../../app/state.js";
 
 type DebugHud = {
     render: () => void;
@@ -16,8 +16,8 @@ export const createDebugHud = (
 ): DebugHud => {
     if (!root || typeof document === "undefined") {
         return {
-            render: () => {},
-            dispose: () => {}
+            render: () => { },
+            dispose: () => { }
         };
     }
 
@@ -37,15 +37,30 @@ export const createDebugHud = (
     panel.style.whiteSpace = "pre";
     panel.style.zIndex = "150";
     panel.style.display = "none";
-    const demoMode=isThreeDemoMode();
-    const battlefieldCanvas=root.querySelector<HTMLCanvasElement>('canvas[data-renderer="three-battlefield"]');
-    if(demoMode){panel.style.left="16px";panel.style.right="auto";panel.style.bottom="16px";panel.style.maxWidth="calc(100vw - 232px)";panel.style.whiteSpace="pre-wrap";}
+    const demoMode = isThreeDemoMode();
+    const battlefieldCanvas = root.querySelector<HTMLCanvasElement>('canvas[data-renderer="three-battlefield"]');
+    if (demoMode) { panel.style.left = "16px"; panel.style.right = "auto"; panel.style.bottom = "16px"; panel.style.maxWidth = "calc(100vw - 232px)"; panel.style.whiteSpace = "pre-wrap"; }
     root.appendChild(panel);
 
     let lastText = "";
     let lastVisible = false;
     let lastRefreshAt = 0;
 
+    const appendRendererStats = (lines: string[]): void => {
+        if (battlefieldCanvas) {
+            const stats = battlefieldCanvas.dataset;
+            lines.push(`Main thread: movement ${stats.movementCpuMs ?? "n/a"} ms / render ${stats.renderCpuMs ?? "n/a"} ms`);
+            lines.push(`Draw calls: ${stats.drawCalls ?? "n/a"} / triangles: ${Number(stats.triangles ?? 0).toLocaleString()}`);
+            lines.push(`Scene/update: ${stats.sceneCpuMs ?? "n/a"} ms / draw-driver: ${stats.drawSubmitMs ?? "n/a"} ms`);
+            const stages: Record<string, number> = JSON.parse(stats.renderStages ?? "{}");
+            const stage = (name: string) => stages[name]?.toFixed(1) ?? "n/a";
+            lines.push(`Update ms: world ${stage("world")} / animation ${stage("animation")} / research ${stage("research")}`);
+            lines.push(`Update ms: UI ${stage("interface")} / combat ${stage("combat")} / transforms ${stage("matrices")} / batches ${stage("batches")}`);
+            lines.push(`Draw ms: scene ${stage("sceneDraw")} / inventory ${stage("previewDraw")}`);
+            lines.push(`GPU: ${(stats.gpuRenderer ?? "unavailable").slice(0, 100)}`);
+            lines.push("Local movement: frame clock · F3 to hide");
+        }
+    };
     return {
         render: () => {
             const visible = state.ui.showBotDebug;
@@ -61,20 +76,8 @@ export const createDebugHud = (
             if (lastRefreshAt !== 0 && (now - lastRefreshAt) < HUD_REFRESH_INTERVAL_MS) {
                 return;
             }
-            const lines=buildDebugHudLines(state,now);
-            if(battlefieldCanvas){
-                const stats=battlefieldCanvas.dataset;
-                lines.push(`Main thread: movement ${stats.movementCpuMs??"n/a"} ms / render ${stats.renderCpuMs??"n/a"} ms`);
-                lines.push(`Draw calls: ${stats.drawCalls??"n/a"} / triangles: ${Number(stats.triangles??0).toLocaleString()}`);
-                lines.push(`Scene/update: ${stats.sceneCpuMs??"n/a"} ms / draw-driver: ${stats.drawSubmitMs??"n/a"} ms`);
-                const stages:Record<string,number>=JSON.parse(stats.renderStages??"{}");
-                const stage=(name:string)=>stages[name]?.toFixed(1)??"n/a";
-                lines.push(`Update ms: world ${stage("world")} / animation ${stage("animation")} / research ${stage("research")}`);
-                lines.push(`Update ms: UI ${stage("interface")} / combat ${stage("combat")} / transforms ${stage("matrices")} / batches ${stage("batches")}`);
-                lines.push(`Draw ms: scene ${stage("sceneDraw")} / inventory ${stage("previewDraw")}`);
-                lines.push(`GPU: ${(stats.gpuRenderer??"unavailable").slice(0,100)}`);
-                lines.push("Local movement: frame clock · F3 to hide");
-            }
+            const lines = buildDebugHudLines(state, now);
+            appendRendererStats(lines);
             const text = lines.join("\n");
             if (text !== lastText) {
                 panel.textContent = text;

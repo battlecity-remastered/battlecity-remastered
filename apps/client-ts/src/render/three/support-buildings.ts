@@ -2,7 +2,26 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 const templates = new Map<number, THREE.Group>();
-export const setSupportBuildingTemplate=(type:number,model:THREE.Object3D):void=>{const root=new THREE.Group();root.name=type===300?"Residential habitat":"Field hospital";root.add(model);templates.set(type,root);};
+export const setSupportBuildingTemplate = (type: number, model: THREE.Object3D): void => { const root = new THREE.Group(); root.name = type === 300 ? "Residential habitat" : "Field hospital"; root.add(model); templates.set(type, root); };
+const mergeStaticPieces = (root: THREE.Group): void => {
+    // Merge static pieces by material so every apartment window is not a draw.
+    root.updateWorldMatrix(true, true);
+    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    root.traverse(object => {
+        if (!(object instanceof THREE.Mesh) || Array.isArray(object.material)) return;
+        const geometry = object.geometry.index ? object.geometry.toNonIndexed() : object.geometry.clone();
+        geometry.applyMatrix4(object.matrixWorld);
+        const group = groups.get(object.material) ?? []; group.push(geometry); groups.set(object.material, group);
+        object.geometry.dispose();
+    });
+    root.clear();
+    for (const [material, geometries] of groups) {
+        const geometry = mergeGeometries(geometries)!;
+        geometries.forEach(part => part.dispose());
+        const mesh = new THREE.Mesh(geometry, material); mesh.castShadow = mesh.receiveShadow = true; root.add(mesh);
+    }
+};
+
 export const createSupportBuilding = (type: number): THREE.Group => {
     const cached = templates.get(type);
     if (cached) return cached.clone(true);
@@ -47,22 +66,7 @@ export const createSupportBuilding = (type: number): THREE.Group => {
         box(0.32, 0.48, 0.06, glass, 0, 0.57, 1.12);
         for (let lamp = 0; lamp < 4; lamp++) box(0.04, 0.04, 0.23, glow, 0, 0.14, -0.65 + lamp * 0.48);
     }
-    // Merge static pieces by material so every apartment window is not a draw.
-    root.updateWorldMatrix(true, true);
-    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    root.traverse(object => {
-        if (!(object instanceof THREE.Mesh) || Array.isArray(object.material)) return;
-        const geometry = object.geometry.index ? object.geometry.toNonIndexed() : object.geometry.clone();
-        geometry.applyMatrix4(object.matrixWorld);
-        const group = groups.get(object.material) ?? []; group.push(geometry); groups.set(object.material, group);
-        object.geometry.dispose();
-    });
-    root.clear();
-    for (const [material, geometries] of groups) {
-        const geometry = mergeGeometries(geometries)!;
-        geometries.forEach(part => part.dispose());
-        const mesh = new THREE.Mesh(geometry, material); mesh.castShadow = mesh.receiveShadow = true; root.add(mesh);
-    }
+    mergeStaticPieces(root);
     root.name = hospital ? "Field hospital" : "Residential habitat";
     templates.set(type, root);
     return root.clone(true);

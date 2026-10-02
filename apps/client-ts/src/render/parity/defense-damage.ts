@@ -5,12 +5,14 @@ const DEFENSE_BURN_THRESHOLD_BY_TYPE: Readonly<Record<number, number>> = Object.
     11: 20
 });
 
+const isUndamagedOrInvalid = (health: number, maxHealth: number): boolean => !Number.isFinite(maxHealth) || maxHealth <= 0 || !Number.isFinite(health) || health >= maxHealth;
+
 export const resolveDefenseDamageColumn = (
     defenseType: number,
     health: number,
     maxHealth: number
 ): number => {
-    if (!Number.isFinite(maxHealth) || maxHealth <= 0 || !Number.isFinite(health) || health >= maxHealth) {
+    if (isUndamagedOrInvalid(health, maxHealth)) {
         return 0;
     }
 

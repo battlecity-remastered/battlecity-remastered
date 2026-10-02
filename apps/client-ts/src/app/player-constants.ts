@@ -1,0 +1,1 @@
+export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
