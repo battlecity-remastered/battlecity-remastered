@@ -40,7 +40,10 @@ export const joinLobby = (
     desiredCity: number | undefined,
     config: RuntimeConfig
 ): CommandResult<KnownEventPayloadByType["lobby.assignment"]> => {
+    const currentCity=state.socketCities.get(socketId);
+    if(currentCity!==undefined)return okResult({id:socketId,city:currentCity,role:state.socketRoles.get(socketId)??"recruit"});
     const city = clampCity(desiredCity, config);
+    if (state.fakeCities.get(city)?.active) return rejectResult("lobby_full");
     const role = hasMayor(state, city) ? "recruit" : "mayor";
 
     if (role === "recruit" && recruitsInCity(state, city) >= config.maxRecruitsPerCity) {
@@ -62,6 +65,7 @@ export const leaveLobby = (
     socketId: string
 ): KnownEventPayloadByType["lobby.released"] | undefined => {
     const city = state.socketCities.get(socketId);
+    const wasMayor=state.socketRoles.get(socketId)==="mayor";
     state.socketCities.delete(socketId);
     state.socketRoles.delete(socketId);
 
@@ -69,6 +73,7 @@ export const leaveLobby = (
         return undefined;
     }
 
+    if(wasMayor){const successor=[...state.socketCities].find(([,assignedCity])=>assignedCity===city);if(successor)state.socketRoles.set(successor[0],"mayor");}
     return {
         id: socketId,
         city
@@ -82,8 +87,8 @@ export const buildLobbySnapshot = (
     const entries: Array<KnownEventPayloadByType["lobby.snapshot"][number]> = [];
 
     for (let city = 0; city < config.cityCount; city += 1) {
-        let mayorId: string | undefined;
-        let recruitCount = 0;
+        let mayorId: string | undefined = state.fakeCities.get(city)?.active ? `fake_city_${city}` : undefined;
+        let recruitCount = state.fakeCities.get(city)?.active ? config.maxRecruitsPerCity : 0;
 
         for (const [socketId, assignedCity] of state.socketCities.entries()) {
             if (assignedCity !== city) {

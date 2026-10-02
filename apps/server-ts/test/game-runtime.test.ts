@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { makeEnvelope, type EventEnvelope } from "@battlecity/protocol";
+import { makeEnvelope, type EventEnvelope, type KnownEventPayloadByType } from "@battlecity/protocol";
 import { Effect } from "effect";
 import citySpawnsJson from "../data/citySpawns.json" with { type: "json" };
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
@@ -93,12 +93,13 @@ test("join + movement emits assignment and snapshots", () => {
     assert.ok(assignment);
     assert.equal((assignment.event.payload as { city: number }).city, 2);
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
     const lastSnapshot = snapshots.at(-1);
     assert.ok(lastSnapshot);
 
-    const players = lastSnapshot.payload as Array<{ id: string; offset: { x: number; y: number } }>;
+    const players = (lastSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.length, 1);
     assert.equal(players[0]?.id, "s1");
     assert.notEqual(players[0]?.offset.x, 100);
@@ -251,7 +252,7 @@ test("late join hydrates existing world entities and economy state", () => {
         if (event.type !== "players.snapshot") {
             return false;
         }
-        const payload = event.payload as Array<{ id: string }>;
+        const payload = (event.payload as KnownEventPayloadByType["players.snapshot"]).players;
         return payload.some((entry) => entry.id === "s1");
     }));
 });
@@ -312,12 +313,13 @@ test("player.update throttle supports reverse movement", () => {
         offset: { x: 100, y: 100 }
     }));
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
     const lastSnapshot = snapshots.at(-1);
     assert.ok(lastSnapshot);
 
-    const players = lastSnapshot.payload as Array<{ id: string; offset: { x: number; y: number } }>;
+    const players = (lastSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.length, 1);
     assert.equal(players[0]?.id, "s1");
     assert.ok((players[0]?.offset.y ?? 100) > 100);
@@ -337,12 +339,13 @@ test("player.update movement respects blocking terrain tiles", () => {
         offset: { x: 130, y: 120 }
     }));
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
     const lastSnapshot = snapshots.at(-1);
     assert.ok(lastSnapshot);
 
-    const players = lastSnapshot.payload as Array<{ id: string; offset: { x: number; y: number } }>;
+    const players = (lastSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.length, 1);
     assert.equal(players[0]?.id, "s1");
     assert.ok((players[0]?.offset.x ?? 999) < (3 * 48));
@@ -367,11 +370,12 @@ test("player.update allows bottom-row movement through factory/cc/hospital famil
         offset: { x: 70, y: 200 }
     }));
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
     const lastSnapshot = snapshots.at(-1);
     assert.ok(lastSnapshot);
-    const players = lastSnapshot.payload as Array<{ id: string; offset: { x: number; y: number } }>;
+    const players = (lastSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.length, 1);
     assert.equal(players[0]?.id, "s1");
     assert.ok((players[0]?.offset.x ?? 0) > 70);
@@ -396,11 +400,12 @@ test("player.update blocks bottom-row movement through non-drive-through buildin
         offset: { x: 70, y: 200 }
     }));
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length >= 2);
     const lastSnapshot = snapshots.at(-1);
     assert.ok(lastSnapshot);
-    const players = lastSnapshot.payload as Array<{ id: string; offset: { x: number; y: number } }>;
+    const players = (lastSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.length, 1);
     assert.equal(players[0]?.id, "s1");
     assert.ok((players[0]?.offset.x ?? 999) <= 70);
@@ -1050,10 +1055,11 @@ test("disconnect emits player.removed and clears player from snapshot", () => {
     assert.equal(removed.length, 1);
     assert.equal((removed[0]?.payload as { id: string }).id, "s1");
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     const latestSnapshot = snapshots.at(-1);
     assert.ok(latestSnapshot);
-    const players = latestSnapshot.payload as Array<{ id: string }>;
+    const players = (latestSnapshot.payload as KnownEventPayloadByType["players.snapshot"]).players;
     assert.equal(players.some((player) => player.id === "s1"), false);
 });
 
@@ -1136,6 +1142,7 @@ test("classic colon event names are accepted on ingress", () => {
         }
     });
 
+    runtime.tickBullets();
     const snapshots = broadcast.filter((event) => event.type === "players.snapshot");
     assert.ok(snapshots.length > 0);
 });
@@ -3160,14 +3167,16 @@ test("fake city activates under low population and spawns defender bots", () => 
         fakeCityIds: [17]
     });
 
-    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
     runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
         id: "p1",
-        city: 17,
+        city: 0,
         direction: 0,
         isMoving: false,
         offset: { x: 4600, y: 7600 }
     }));
+    const visitingHuman = runtime.getReadonlyState().players.get("p1") ?? runtime.getReadonlyState().players.get("seed");
+    if (visitingHuman) { visitingHuman.x = 4600; visitingHuman.y = 7600; }
     runtime.tickBullets();
     runtime.tickBullets();
 
@@ -3190,14 +3199,16 @@ test("fake city defender spawns rotate classic bot roles", () => {
         fakeCityIds: [17]
     });
 
-    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
     runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
         id: "p1",
-        city: 17,
+        city: 0,
         direction: 0,
         isMoving: false,
         offset: { x: 4600, y: 7600 }
     }));
+    const visitingHuman = runtime.getReadonlyState().players.get("p1") ?? runtime.getReadonlyState().players.get("seed");
+    if (visitingHuman) { visitingHuman.x = 4600; visitingHuman.y = 7600; }
     runtime.tickBullets();
     runtime.tickBullets();
 
@@ -3221,17 +3232,22 @@ test("bomb_defuser defenders prioritize active enemy bombs over players", () => 
         fakeCityIds: [17]
     });
 
-    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("p1", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
     runtime.handleRawEvent("p1", makeEnvelope("player.update", 2, {
         id: "p1",
-        city: 17,
+        city: 0,
         direction: 0,
         isMoving: false,
         offset: { x: 4600, y: 7600 }
     }));
+    const visitingHuman = runtime.getReadonlyState().players.get("p1") ?? runtime.getReadonlyState().players.get("seed");
+    if (visitingHuman) { visitingHuman.x = 4600; visitingHuman.y = 7600; }
     runtime.tickBullets();
     runtime.tickBullets();
 
+    // Setup turrets have already fired at the visitor. Keep those rounds from
+    // destroying the new bomb before the next bot targeting update.
+    runtime.getReadonlyState().bullets.clear();
     runtime.getReadonlyState().hazards.set("bomb_role_test", {
         id: "bomb_role_test",
         ownerId: "enemy",
@@ -3252,6 +3268,7 @@ test("bomb_defuser defenders prioritize active enemy bombs over players", () => 
     const bombDefuser = Array.from(runtime.getReadonlyState().botControllers.values())
         .find((controller) => controller.botType === "defender" && controller.botRole === "bomb_defuser");
 
+    assert.ok(runtime.getReadonlyState().hazards.has("bomb_role_test"));
     assert.ok(bombDefuser);
     assert.equal(bombDefuser?.targetPlayerId, "bomb_role_test");
 });
@@ -3266,16 +3283,18 @@ test("orbing a fake city applies cooldown and removes its defender bots", () => 
         fakeCityIds: [17]
     });
 
-    runtime.handleRawEvent("seed", makeEnvelope("lobby.join.request", 1, { desiredCity: 17 }));
+    runtime.handleRawEvent("seed", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
     runtime.handleRawEvent("seed", makeEnvelope("player.update", 2, {
         id: "seed",
-        city: 17,
+        city: 0,
         direction: 0,
         isMoving: false,
         offset: { x: 4600, y: 7600 }
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("lobby.join.request", 3, { desiredCity: 1 }));
     grantInventoryItem(runtime, "attacker", ITEM_TYPE_ORB, 1);
+    const visitingHuman = runtime.getReadonlyState().players.get("p1") ?? runtime.getReadonlyState().players.get("seed");
+    if (visitingHuman) { visitingHuman.x = 4600; visitingHuman.y = 7600; }
     runtime.tickBullets();
     runtime.tickBullets();
     const defenderBefore = Array.from(runtime.getReadonlyState().players.values())

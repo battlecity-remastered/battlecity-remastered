@@ -7,6 +7,7 @@ import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { notifyOrbVictory } from "../adapters/notifications/DiscordNotifier.js";
 import { loadBlockingTiles, loadPlacementBlockingTiles } from "../domain/map/MapService.js";
 import { loadConfiguredFakeCityIds } from "../domain/fake-cities/FakeCityService.js";
+import { initializeJoinedPlayer, seedCommandCenter } from "../domain/spawn/CityBootstrap.js";
 
 export type RuntimeServices = {
     runtime: GameRuntime;
@@ -24,11 +25,14 @@ export const makeRuntimeServices = (
     const blockingTiles = loadBlockingTiles();
     const buildBlockingTiles = loadPlacementBlockingTiles();
     const fakeCityIds = loadConfiguredFakeCityIds();
-    const runtime = new GameRuntime(broadcaster, resolvedConfig, createRuntimeState({
+    const initialState = createRuntimeState({
         blockingTiles,
         buildBlockingTiles,
         fakeCityIds
-    }), {
+    });
+    for (let city = 0; city < resolvedConfig.cityCount; city++) seedCommandCenter(initialState, city, resolvedConfig);
+    const runtime = new GameRuntime(broadcaster, resolvedConfig, initialState, {
+        initializeJoinedPlayer,
         userStore,
         notifyOrbVictory
     });

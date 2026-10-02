@@ -65,7 +65,7 @@ const resolveNearestEnemy = (
     let nearest: { x: number; y: number; distanceSq: number } | null = null;
 
     for (const player of state.players.values()) {
-        if (player.city === defense.cityId || player.health <= 0) {
+        if (player.city === defense.cityId || player.health <= 0 || (player.cloakedUntil??0)>Date.now()) {
             continue;
         }
         const targetX = player.x + DEFENSE_HALF;
@@ -135,7 +135,8 @@ const fireFromDefense = (
         city: defense.cityId,
         position: { x: muzzleX, y: muzzleY },
         direction: bulletDirection,
-        type: bulletType
+        type: bulletType,
+        speed: config.bulletSpeed
     });
     const cooldown = COOLDOWN_MS_BY_DEFENSE[defense.type] ?? 900;
     defense.nextShotAt = nowMs + cooldown;

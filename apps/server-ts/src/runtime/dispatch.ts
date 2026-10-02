@@ -26,10 +26,11 @@ import { asSpawnPayload, deployDefense } from "../domain/defense/DefenseService.
 import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
 import { handlePlayerBotDamage } from "./dispatch-combat.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
+import { eliminatePlayer } from "./player-elimination.js";
 import { logRuntime } from "../observability/RuntimeLogger.js";
 import type { RuntimePlayer } from "./types.js";
 
-type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
+type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; initializeJoinedPlayer?: (state: RuntimeState, city: number, playerId: string, config: RuntimeConfig) => void; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
 
@@ -150,7 +151,8 @@ const emitHydrationEntities = (
             },
             radius: hazard.radius,
             armed: hazard.armed,
-            active: hazard.active
+            active: hazard.active,
+            ...(Number.isFinite(hazard.remainingMs) ? {remainingMs: hazard.remainingMs} : {})
         });
     }
 
@@ -220,6 +222,7 @@ const handlers: HandlerMap = {
             payload.desiredCity,
             context.config
         ), (assignment) => {
+            if(!context.state.players.has(socketId))context.initializeJoinedPlayer?.(context.state, assignment.city, socketId, context.config);
             if (context.userStore) {
                 Effect.runSync(context.userStore.getOrCreate(userId, payload.callsign));
             }
@@ -243,6 +246,12 @@ const handlers: HandlerMap = {
         });
     },
     "lobby.leave.request": (socketId, _payload, context) => {
+        if (context.state.players.has(socketId)) {
+            eliminatePlayer(context.state, context.emitter, context.config, socketId, { emitDeathEvent: false });
+            emitPlayersSnapshot(context.state, context.emitter);
+            emitLobbyHighScoreSnapshot(context);
+            return;
+        }
         const released = leaveLobby(context.state, socketId);
         if (released) {
             context.emitter.emit("lobby.released", released);
@@ -322,7 +331,8 @@ const handlers: HandlerMap = {
                         y: bullet.y
                     },
                     direction: bullet.direction,
-                    type: bullet.type
+                    type: bullet.type,
+                    speed: bullet.speed
                 });
             },
             {

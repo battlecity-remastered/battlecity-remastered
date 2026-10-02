@@ -22,8 +22,11 @@ export const buildPlayersSnapshot = (state: RuntimeState): KnownEventPayloadByTy
                     x: player.x,
                     y: player.y
                 },
+                ...(state.botControllers.get(player.id)?.botRole ? { botRole: state.botControllers.get(player.id)!.botRole! } : {}),
                 health: player.health,
-                maxHealth: player.maxHealth
+                maxHealth: player.maxHealth,
+                ...(player.cloakedUntil ? {cloakedUntil:player.cloakedUntil}:{}),
+                ...(player.frozenUntil ? {frozenUntil:player.frozenUntil}:{})
             };
         })
     };

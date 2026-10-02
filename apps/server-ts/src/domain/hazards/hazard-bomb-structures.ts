@@ -1,3 +1,4 @@
+import { isBombStructureInRange } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeState } from "../../runtime/types.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "../../runtime/factory-destruction.js";
@@ -16,13 +17,7 @@ export const removeStructuresInBombRadius = (
     centerTileY: number
 ): void => {
     for (const [buildingId, building] of Array.from(state.buildings.entries())) {
-        const minTileX = building.tileX;
-        const maxTileX = building.tileX + BUILDING_FOOTPRINT_TILES - 1;
-        const minTileY = building.tileY;
-        const maxTileY = building.tileY + BUILDING_FOOTPRINT_TILES - 1;
-        const nearestX = Math.max(minTileX, Math.min(centerTileX, maxTileX));
-        const nearestY = Math.max(minTileY, Math.min(centerTileY, maxTileY));
-        if (!isWithinTileRadius(nearestX, nearestY, centerTileX, centerTileY, LEGACY_BOMB_STRUCTURE_TILE_RADIUS)) {
+        if (!isBombStructureInRange(building.tileX, building.tileY, centerTileX, centerTileY, BUILDING_FOOTPRINT_TILES)) {
             continue;
         }
         purgeFactoryOutputsForDestroyedBuilding(state, emitter, building);

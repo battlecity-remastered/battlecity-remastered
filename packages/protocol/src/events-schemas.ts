@@ -52,7 +52,10 @@ export const PlayersSnapshotEntry = Schema.Struct({
     direction: Schema.Number,
     offset: Vec2,
     health: Schema.optional(Schema.Number),
-    maxHealth: Schema.optional(Schema.Number)
+    maxHealth: Schema.optional(Schema.Number),
+    cloakedUntil: Schema.optional(Schema.Number),
+    frozenUntil: Schema.optional(Schema.Number),
+    botRole: Schema.optional(Schema.Literal("mayor", "shooter", "bomb_defuser", "miner"))
 });
 export const PlayersSnapshot = Schema.Struct({
     serverTime: Schema.Number,
@@ -82,11 +85,13 @@ export const BulletFired = Schema.Struct({
     city: Schema.Number,
     position: Vec2,
     direction: Schema.Number,
-    type: Schema.Number
+    type: Schema.Number,
+    speed: Schema.optional(Schema.Number)
 });
 export const BulletResolved = Schema.Struct({
     id: Schema.String,
     reason: Schema.Literal("out_of_bounds", "hit_terrain", "hit_player", "hit_building", "hit_hazard"),
+    position: Schema.optional(Vec2),
     hitPlayerId: Schema.optional(Schema.String),
     hitBuildingId: Schema.optional(Schema.String),
     hitHazardId: Schema.optional(Schema.String)
@@ -237,7 +242,8 @@ export const HazardSpawn = Schema.Struct({
     position: Vec2,
     radius: Schema.Number,
     armed: Schema.optional(Schema.Boolean),
-    active: Schema.optional(Schema.Boolean)
+    active: Schema.optional(Schema.Boolean),
+    remainingMs: Schema.optional(Schema.Number)
 });
 export const HazardRemove = Schema.Struct({
     id: Schema.String,

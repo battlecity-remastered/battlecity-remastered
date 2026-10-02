@@ -10,6 +10,7 @@ import { tickDefenderBots } from "../domain/bots/DefenderBotService.js";
 import { tickRogueBots } from "../domain/bots/RogueBotService.js";
 import { tickDefenseTurrets } from "../domain/defense/DefenseTurretService.js";
 import { tickHospitalHealing } from "../domain/health/HealingService.js";
+import { buildLobbySnapshot } from "../domain/lobby/LobbyService.js";
 import { emitPlayersSnapshot } from "./snapshot.js";
 
 export const tickRuntimeSystems = (
@@ -34,7 +35,8 @@ export const tickRuntimeSystems = (
     }
     state.botTickAccumulatorMs = 0;
     const now = Date.now();
-    tickFakeCityLifecycle(state, config, emitter, now);
+    const cityChanges = tickFakeCityLifecycle(state, config, emitter, now);
+    if (cityChanges.activated.length || cityChanges.deactivated.length) emitter.emit("lobby.snapshot", buildLobbySnapshot(state, config));
     tickDefenseTurrets(state, config, emitter, now);
     const defenderDirty = tickDefenderBots(state, config, emitter, now, config.botTickMs);
     const rogueDirty = tickRogueBots(state, config, emitter, now, config.botTickMs);

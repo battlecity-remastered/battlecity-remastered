@@ -1,3 +1,4 @@
+import citySpawns from "../../../data/citySpawns.json" with {type:"json"};
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import {
     BUILDING_FOOTPRINT_TILES,
@@ -101,7 +102,9 @@ export const canBuildInCity = (
     if (isOutOfBounds(tileX, tileY, config)) {
         return "collision";
     }
-    if (hasBlockingTerrainFootprint(state, tileX, tileY)) {
+    const spawn=(citySpawns as Record<string,{tileX:number;tileY:number}>)[String(cityId)];
+    const rebuildingCenter=buildingType===0 && spawn?.tileX===tileX && spawn?.tileY===tileY;
+    if (!rebuildingCenter && hasBlockingTerrainFootprint(state, tileX, tileY)) {
         return "collision";
     }
     if (hasBlockingBuildingFootprint(state, tileX, tileY)) {

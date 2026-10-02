@@ -35,7 +35,8 @@ export const useItem = (
         : player.health;
     state.players.set(socketId, {
         ...player,
-        health
+        health,
+        ...(payload.itemType===CLOAK_ITEM_TYPE?{cloakedUntil:Date.now()+10_000}:{})
     });
 
     return {

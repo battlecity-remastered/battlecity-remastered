@@ -110,7 +110,8 @@ export const deployHazard = (
             position: { x: hazard.x, y: hazard.y },
             radius: hazard.radius,
             armed: hazard.armed,
-            active: hazard.active
+            active: hazard.active,
+            ...(Number.isFinite(hazard.remainingMs) ? {remainingMs: hazard.remainingMs} : {})
         },
         inventory: consumed.value
     });

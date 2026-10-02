@@ -11,6 +11,7 @@ export type RuntimePlayer = PlayerState & {
     maxHealth: number;
     lastAcceptedUpdateAt?: number;
     lastHospitalHealAt?: number;
+    cloakedUntil?: number;
     frozenUntil?: number;
     frozenBy?: string;
     isBot?: boolean;
@@ -44,6 +45,7 @@ export type RuntimeFakeCityState = {
     buildingIds: string[];
     defenseIds: string[];
     hazardIds: string[];
+    defenderRoster?: Partial<Record<NonNullable<RuntimeBotController["botRole"]>, {id: string; respawnAt: number}>>;
     baseTileX?: number;
     baseTileY?: number;
 };
@@ -60,6 +62,10 @@ export type RuntimeBotController = {
     nextPathAt?: number;
     nextRetargetAt: number;
     nextShotAt: number;
+    nextHazardAt?: number;
+    patrolIndex?: number;
+    nextPatrolAt?: number;
+    stalledMs?: number;
 };
 
 export type RuntimeResearchState = {
@@ -205,7 +211,7 @@ export const LEGACY_PLAYER_SPEED_PX_PER_SECOND = 600;
 
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     defaultCity: 0,
-    cityCount: 8,
+    cityCount: 64,
     maxRecruitsPerCity: 3,
     mapMax: 24576,
     serverStepMs: 33,
@@ -236,7 +242,7 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     populationTickMs: 250,
     fakeCityPlayerThreshold: 20,
     fakeCityCooldownMs: 5 * 60 * 1000,
-    fakeCityDefendersPerCity: 2,
+    fakeCityDefendersPerCity: 4,
     botTickMs: 100,
     botDetectionRadius: 48 * 18,
     botShootIntervalMs: 1300,

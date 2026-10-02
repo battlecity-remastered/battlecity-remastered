@@ -23,6 +23,7 @@ import { eliminatePlayer } from "./player-elimination.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
 import { resolveBuildingBlockingHeightTiles } from "./blocking-height.js";
 
+type LocatedBulletStepResult = BulletStepResult & {position?: {x:number;y:number}};
 const PLAYER_SPRITE_HALF = 24;
 const MAX_CLIENT_SHOT_OFFSET = 96;
 const BULLET_TYPE_LASER = 0;
@@ -134,10 +135,11 @@ const handleOutOfBounds = (emitter: RuntimeEmitter, bulletId: string): void => {
     });
 };
 
-const handleTerrainHit = (emitter: RuntimeEmitter, bulletId: string): void => {
+const handleTerrainHit = (emitter: RuntimeEmitter, bulletId: string, position?: {x:number;y:number}): void => {
     emitter.emit("bullet.resolved", {
         id: bulletId,
-        reason: "hit_terrain"
+        reason: "hit_terrain",
+        ...(position?{position}:{})
     });
 };
 
@@ -145,13 +147,14 @@ const handlePlayerHit = (
     context: TickContext,
     bullet: BulletState,
     bulletId: string,
-    result: Extract<BulletStepResult, { kind: "hit_player" }>
+    result: Extract<LocatedBulletStepResult, { kind: "hit_player" }>
 ): boolean => {
     const { state, emitter } = context;
     emitter.emit("bullet.resolved", {
         id: bulletId,
         reason: "hit_player",
-        hitPlayerId: result.playerId
+        hitPlayerId: result.playerId,
+        ...(result.position?{position:result.position}:{})
     });
 
     const player = state.players.get(result.playerId);
@@ -187,13 +190,14 @@ const handleBuildingHit = (
     context: TickContext,
     bullet: BulletState,
     bulletId: string,
-    result: Extract<BulletStepResult, { kind: "hit_building" }>
+    result: Extract<LocatedBulletStepResult, { kind: "hit_building" }>
 ): void => {
     const { state, emitter } = context;
     emitter.emit("bullet.resolved", {
         id: bulletId,
         reason: "hit_building",
-        hitBuildingId: result.buildingId
+        hitBuildingId: result.buildingId,
+        ...(result.position?{position:result.position}:{})
     });
 
     const building = state.buildings.get(result.buildingId);
@@ -251,13 +255,14 @@ const handleBuildingHit = (
 const handleHazardHit = (
     context: TickContext,
     bulletId: string,
-    result: Extract<BulletStepResult, { kind: "hit_hazard" }>
+    result: Extract<LocatedBulletStepResult, { kind: "hit_hazard" }>
 ): void => {
     const { state, emitter } = context;
     emitter.emit("bullet.resolved", {
         id: bulletId,
         reason: "hit_hazard",
-        hitHazardId: result.hazardId
+        hitHazardId: result.hazardId,
+        ...(result.position?{position:result.position}:{})
     });
 
     const hazard = state.hazards.get(result.hazardId);
@@ -361,7 +366,7 @@ const stepBulletWithSweep = (
     buildings: Iterable<CombatBuildingState>,
     hazards: Iterable<CombatHazardState>,
     isBlockedTile: (tileX: number, tileY: number) => boolean
-): BulletStepResult => {
+): LocatedBulletStepResult => {
     const steps = resolveBulletSweepSteps(bullet, tickMs);
     const stepMs = tickMs / steps;
     let current = bullet;
@@ -377,7 +382,8 @@ const stepBulletWithSweep = (
             isBlockedTile
         );
         if (result.kind !== "none") {
-            return result;
+            const angle=current.direction*Math.PI/16;
+            return {...result,position:{x:current.x+Math.cos(angle)*current.speed*stepMs/1000,y:current.y+Math.sin(angle)*current.speed*stepMs/1000}};
         }
         current = result.bullet;
     }
@@ -391,7 +397,7 @@ const resolveBulletStep = (
     context: TickContext,
     bullet: BulletState,
     bulletId: string,
-    result: BulletStepResult
+    result: LocatedBulletStepResult
 ): boolean => {
     if (result.kind === "none") {
         context.state.bullets.set(bulletId, result.bullet);
@@ -406,7 +412,7 @@ const resolveBulletStep = (
     }
 
     if (result.kind === "hit_terrain") {
-        handleTerrainHit(context.emitter, bulletId);
+        handleTerrainHit(context.emitter, bulletId,result.position);
         return false;
     }
 

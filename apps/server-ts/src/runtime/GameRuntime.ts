@@ -25,6 +25,7 @@ import { releasePlayerInventory } from "../domain/inventory/InventoryService.js"
 import { lobbyHighScores } from "../domain/score/ScoreService.js";
 
 type RuntimeAdapterServices = {
+    initializeJoinedPlayer?: (state: RuntimeState, city: number, playerId: string, config: RuntimeConfig) => void;
     userStore?: UserStoreAdapter;
     notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
 };
@@ -187,6 +188,9 @@ export class GameRuntime {
         };
         if (this.services.userStore) {
             Object.assign(context, { userStore: this.services.userStore });
+        }
+        if (this.services.initializeJoinedPlayer) {
+            Object.assign(context, { initializeJoinedPlayer: this.services.initializeJoinedPlayer });
         }
         if (this.services.notifyOrbVictory) {
             Object.assign(context, { notifyOrbVictory: this.services.notifyOrbVictory });
