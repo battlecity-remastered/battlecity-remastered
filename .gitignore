@@ -2,3 +2,10 @@ node_modules/
 **/node_modules/
 coverage/
 **/coverage/
+.cache/
+.direnv/
+.venv/
+.yaaf-worktrees/
+apps/*/dist/
+**/__pycache__/
+*.blend1

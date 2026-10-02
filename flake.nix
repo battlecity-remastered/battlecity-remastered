@@ -16,6 +16,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             nodejs
+            pkgs.blender
             pkgs.esbuild
             pkgs.watchexec
             pkgs.pre-commit
