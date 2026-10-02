@@ -39,6 +39,20 @@ test("decodeTypedEnvelope rejects malformed known payloads", () => {
     assert.equal(decoded._tag, "Left");
 });
 
+test("movement frames and precise acknowledgements survive wire encoding as optional additions", () => {
+    const frames = [{ seq: 7, dtMs: 16.75, turn: 1, throttle: -1 }];
+    const update = makeTypedEnvelope("player.update", 4, { id: "p1", city: 0, direction: 8.625,
+        isMoving: true, offset: { x: 480, y: 480 }, inputFrames: frames });
+    const snapshot = makeTypedEnvelope("players.snapshot", 5, { serverTime: 1234, players: [{
+        id: "p1", city: 0, direction: 9, offset: { x: 480, y: 480 }, movementAck: { seq: 7, direction: 8.625 }
+    }] });
+    for (const event of [update, snapshot]) {
+        const decoded = decodeTypedEnvelope(JSON.parse(JSON.stringify(event)));
+        assert.equal(decoded._tag, "Right");
+        if (decoded._tag === "Right") assert.deepEqual(decoded.right.payload, event.payload);
+    }
+});
+
 test("decodeKnownEnvelope accepts known schema events", () => {
     const envelope = makeKnownEnvelope("player.dead", 3, {
         id: "p2",

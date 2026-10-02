@@ -12,6 +12,7 @@ import {
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { RuntimeConfig, RuntimePlayer, RuntimeState } from "./types.js";
 import { buildCollisionWorld } from "./collision-world.js";
+import { applyPlayerInputFrames } from "./player-input-runtime.js";
 
 const PLAYER_RADIUS = 12;
 const PLAYER_SPRITE_SIZE = 48;
@@ -125,6 +126,12 @@ export const upsertPlayerFromUpdate = (
     config: RuntimeConfig
 ): void => {
     const current = state.players.get(socketId) ?? makeDefaultPlayer(socketId, city, payload, config);
+    if (payload.inputFrames !== undefined) {
+        current.city = city;
+        applyPlayerInputFrames(state, current, payload.inputFrames, config);
+        state.players.set(socketId, current);
+        return;
+    }
     const nowMs = Date.now();
     const frozenUntil = Number.isFinite(current.frozenUntil) ? current.frozenUntil as number : 0;
     const isFrozen = frozenUntil > nowMs;

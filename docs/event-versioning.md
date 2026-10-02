@@ -50,3 +50,18 @@ join hydration send the current server value; older payloads remain valid. The
 client uses it only for the warning animation and waits for authoritative removal
 for live detonation. Damage, radius, fuse length and event envelope version are
 unchanged.
+
+### Sequenced driving inputs (2026-10-02)
+
+`player.update` optionally carries `inputFrames`, ordered simulation frames with
+`seq`, `dtMs`, `turn` and `throttle`. `players.snapshot` entries optionally carry
+`movementAck` with the last applied input sequence and fractional heading.
+Prediction and authority use the same collision and turning steps. The client
+replays unacknowledged frames from the acknowledged pose instead of chasing an
+older snapshot using wall-clock extrapolation. The server validates contiguous
+sequences, ignores duplicates and bounds simulation time against its own clock;
+client offsets never become authoritative. Existing clients/events retain the
+legacy movement path. New clients require a page refresh after deployment.
+
+Roundtrip tests cover 6–144 FPS, turning, reversing, tile collisions, delayed
+ordered packet bursts and different client/server clocks.

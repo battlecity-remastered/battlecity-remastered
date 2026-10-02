@@ -38,12 +38,17 @@ export const LobbyHighScoreEntry = Schema.Struct({
     updatedAt: Schema.optional(Schema.Number)
 });
 export const LobbyHighScores = Schema.Array(LobbyHighScoreEntry);
+export const MovementInputFrame = Schema.Struct({
+    seq: Schema.Number, dtMs: Schema.Number, turn: Schema.Number, throttle: Schema.Number
+});
+export const MovementAck = Schema.Struct({ seq: Schema.Number, direction: Schema.Number });
 export const PlayerUpdate = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,
     direction: Schema.Number,
     isMoving: Schema.Boolean,
     throttle: Schema.optional(Schema.Number),
+    inputFrames: Schema.optional(Schema.Array(MovementInputFrame)),
     offset: Vec2
 });
 export const PlayersSnapshotEntry = Schema.Struct({
@@ -51,6 +56,7 @@ export const PlayersSnapshotEntry = Schema.Struct({
     city: Schema.Number,
     direction: Schema.Number,
     offset: Vec2,
+    movementAck: Schema.optional(MovementAck),
     health: Schema.optional(Schema.Number),
     maxHealth: Schema.optional(Schema.Number),
     cloakedUntil: Schema.optional(Schema.Number),

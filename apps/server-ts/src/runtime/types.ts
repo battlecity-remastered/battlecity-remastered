@@ -10,6 +10,9 @@ export type RuntimePlayer = PlayerState & {
     health: number;
     maxHealth: number;
     lastAcceptedUpdateAt?: number;
+    lastMovementInputSeq?: number;
+    movementTimeCreditMs?: number;
+    lastMovementInputAt?: number;
     lastHospitalHealAt?: number;
     cloakedUntil?: number;
     frozenUntil?: number;
