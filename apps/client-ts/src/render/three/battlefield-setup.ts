@@ -2,8 +2,10 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { FACTORY_PRODUCTS } from "./industrial-demo.js";
 import { createOutdoorEnvironment } from "./surface-finish.js";
+import { enablePointLightCutoff } from "./point-light-cutoff.js";
 
 export const createBattlefieldRenderer = () => {
+    enablePointLightCutoff();
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x625b54);
     scene.fog = new THREE.FogExp2(0x625b54, 0.004);

@@ -791,3 +791,19 @@ measured 88.3 vs 88.8 ms and 124.1 vs 127.2 ms average steady frame time. These
 short runs show comparable steady performance, not a guaranteed FPS increase.
 Regression coverage checks shared resources, renderer-state restoration and the
 hydration/loading transition. Strict verification, lint and the client build pass.
+
+The dense-city follow-up registers live housing/support buildings with the same
+spatial batches used by factories, including unregistering before destruction.
+It also skips Three's point-light loop for fragments beyond a light's existing
+finite range. Attenuation is already exactly zero there; the shortcut avoids
+normalization and PBR work without changing light ranges, shadows or materials.
+Infinite-range lights retain their original path. A GPU reference comparison
+covered metallic/rough surfaces, finite and unbounded lights: all 1,048,576
+8-bit colour channels matched exactly. The installed Three shader layout and
+unchanged directional/spot/indirect portions have regression coverage.
+
+On the same public AI cities and Intel GPU, the sampled steady rates rose from
+11.3 to 17.6 FPS and 7.9 to 14.5 FPS with the same camera and quality settings.
+These are measurements on this GPU, not guarantees for other hardware. First-use
+shader preparation can take longer with an empty shader cache (12.3 seconds in
+the first optimized run); that work occurs in the joining transition.
