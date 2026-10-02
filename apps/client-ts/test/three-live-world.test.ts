@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { createClientState } from "../src/app/state.js";
 import { createLiveWorld } from "../src/render/three/live-world.js";
 import { createSupportBuilding } from "../src/render/three/support-buildings.js";
+import { createBuildingBatches } from "../src/render/three/building-batches.js";
 
 test("live entities appear, move, produce cargo and release presentation resources when removed",()=>{
     const state=createClientState(),scene=new THREE.Scene(),tank=new THREE.Group(),turret=new THREE.Group(),released:THREE.Object3D[]=[];
@@ -19,6 +20,28 @@ test("live entities appear, move, produce cargo and release presentation resourc
 
 test("hospital and housing are compact shared industrial models within their three-tile plot",()=>{
     for(const type of [200,300]){const model=createSupportBuilding(type),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());assert.ok(size.x<=3.01&&size.z<=3.01);assert.ok(size.y>0.8);let meshes=0;model.traverse(object=>{if(object instanceof THREE.Mesh)meshes++;});assert.ok(meshes<=8,`support building uses ${meshes} material draws`);const clone=createSupportBuilding(type);assert.notEqual(clone,model);assert.equal((clone.children[0] as THREE.Mesh).geometry,(model.children[0] as THREE.Mesh).geometry);}
+});
+
+test("live housing joins the spatial batches and demolition restores the surviving house", () => {
+    const state = createClientState(), scene = new THREE.Scene(), template = new THREE.Group();
+    const batches = createBuildingBatches(scene, []), registered: THREE.Object3D[] = [];
+    const world = createLiveWorld(scene, template, new Map(), template, () => template, () => {},
+        root => batches.unregister(root), undefined, root => { registered.push(root); batches.register(root); });
+    for (const [id, tileX] of [["house-a", 16], ["house-b", 20]] as const) {
+        state.buildings.set(id, { id, ownerId: "mayor", cityId: 0, type: 300, tileX, tileY: 16, health: 100, maxHealth: 100, population: 100 });
+    }
+    world.update(state, .016); batches.update();
+    assert.equal(registered.length, 2);
+    assert.ok(batches.count > 0, "housing must use the same batches as factories");
+    const expectedBounds = new THREE.Box3().setFromObject(registered[1]!);
+    world.update(state, .016);
+    assert.equal(registered.length, 2, "registration happens once per building, not every frame");
+    state.buildings.delete("house-a"); world.update(state, .016); batches.update();
+    assert.equal(batches.count, 0);
+    assert.equal(registered[0]!.parent, null);
+    registered[1]!.traverse(part => { if (part instanceof THREE.Mesh) assert.equal(part.visible, true); });
+    assert.deepEqual(new THREE.Box3().setFromObject(registered[1]!), expectedBounds);
+    batches.dispose();
 });
 
 test("enemy sleepers reveal at the classic range and unfold again; active enemy mines and DFG stay concealed",()=>{

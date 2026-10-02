@@ -207,7 +207,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         addDroppedCargo(type, state, template, placement);
         return true;
     }, (type, model) => machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model), { map: mapData.map, buildings: industrialBuildings, defenses }, !demoMode, type => actions?.deploy(type, true) ?? false);
-    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy);
+    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy, model => buildingBatches?.register(model));
     buildingBatches = createBuildingBatches(scene, batchableBuildings);
     // The color, AO and shadow passes consume the same prepared transforms.
     scene.matrixWorldAutoUpdate = false; scene.matrixAutoUpdate = false;

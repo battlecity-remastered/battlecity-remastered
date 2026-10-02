@@ -13,7 +13,7 @@ import { wrapSignedAngle } from "./turret-tracking.js";
 
 // World models follow authoritative collections. Geometry/materials are shared
 // with loaded templates; deleting an entity never disposes another one's assets.
-export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D, items: ReadonlyMap<number, THREE.Object3D>, turret: THREE.Object3D, industrial: (building: IndustrialBuilding) => THREE.Object3D, animateItem: (type: number, model: THREE.Object3D) => void, release: (model: THREE.Object3D) => void, destroy?: (model: THREE.Object3D) => boolean) => {
+export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D, items: ReadonlyMap<number, THREE.Object3D>, turret: THREE.Object3D, industrial: (building: IndustrialBuilding) => THREE.Object3D, animateItem: (type: number, model: THREE.Object3D) => void, release: (model: THREE.Object3D) => void, destroy?: (model: THREE.Object3D) => boolean, register?: (model: THREE.Object3D) => void) => {
     const players = new Map<string, THREE.Object3D>(), buildings = new Map<string, THREE.Object3D>(), hazards = new Map<string, THREE.Object3D>(), defenses = new Map<string, THREE.Object3D>(), outputs = new Map<string, THREE.Object3D>();
     const deployments = new Map<string, ReturnType<typeof createDeployedDefense>>();
     const destroyedIds = new Set<string>();
@@ -56,7 +56,7 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
         }, update(state: ClientState, dt: number): void {
             updatePlayers(state, dt);
             removeMissing(buildings, state.buildings);
-            for (const [id, building] of state.buildings) if (!buildings.has(id)) { const model = createBuilding(building); model.userData.renderTileX = building.tileX; model.userData.renderTileY = building.tileY; buildings.set(id, model); }
+            for (const [id, building] of state.buildings) if (!buildings.has(id)) { const model = createBuilding(building); model.userData.renderTileX = building.tileX; model.userData.renderTileY = building.tileY; register?.(model); buildings.set(id, model); }
             updateHazards(state);
             updateDefenses(state, dt);
             const outputIds = new Set<string>();
