@@ -19,7 +19,7 @@ for (const [width, height] of [[1024, 768], [1440, 960], [1920, 1080], [2560, 14
     test(`3D floor matches the Pixi viewport at ${width}×${height}`, () => {
         const viewport = resolveWorldViewport(width!, height!);
         const camera = createBattlefieldCamera(width!, height!);
-        const playerX = -223.6354, playerZ = -222.6146;
+        const playerX = -200.6354, playerZ = -200.6146;
         positionBattlefieldCamera(camera, playerX, playerZ);
         for (const [dx, dz] of [[0, 0], [1, 0], [0, 1], [-10, -7], [10, 7]]) {
             const point = screenPosition(camera, playerX + dx!, playerZ + dz!, width!, height!);
@@ -36,6 +36,21 @@ for (const [width, height] of [[1024, 768], [1440, 960], [1920, 1080], [2560, 14
         }
     });
 }
+
+test("the camera stays over the terrain when the tank reaches any map edge", () => {
+    const camera = createBattlefieldCamera(3440, 1440);
+    const ray = new THREE.Raycaster();
+    const floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    for (const x of [-255.5, 0, 255.5]) for (const z of [-255.5, 0, 255.5]) {
+        positionBattlefieldCamera(camera, x, z);
+        for (const u of [-1, 1]) for (const v of [-1, 1]) {
+            ray.setFromCamera(new THREE.Vector2(u, v), camera);
+            const corner = ray.ray.intersectPlane(floor, new THREE.Vector3())!;
+            assert.ok(Math.abs(corner.x) <= 256 + 1e-6 && Math.abs(corner.z) <= 256 + 1e-6,
+                `camera over (${x}, ${z}) exposes void at (${corner.x}, ${corner.z})`);
+        }
+    }
+});
 
 test("resizing and moving the camera preserve a one-tile 48px step", () => {
     const camera = createBattlefieldCamera(1024, 768);

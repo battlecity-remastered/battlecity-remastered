@@ -30,6 +30,13 @@ export const positionBattlefieldCamera = (
     playerX: number,
     playerZ: number
 ): void => {
+    // Keep the camera footprint within the finite map at its edges. The tank
+    // can reach the last tile without half the screen becoming scene background.
+    const halfWorld = 256;
+    playerX = THREE.MathUtils.clamp(playerX, -halfWorld - camera.left, halfWorld - camera.right);
+    playerZ = THREE.MathUtils.clamp(playerZ,
+        -halfWorld + camera.top / Math.sin(CAMERA_ELEVATION),
+        halfWorld + camera.bottom / Math.sin(CAMERA_ELEVATION));
     camera.position.set(playerX, CAMERA_HEIGHT, playerZ + CAMERA_SOUTH_OFFSET);
     camera.lookAt(playerX, 0, playerZ);
     camera.updateMatrixWorld();
