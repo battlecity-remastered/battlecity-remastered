@@ -77,7 +77,7 @@ image. The public host port remains 8021 by default, mapped to internal port 812
 The application does not copy a seed database over that mounted directory.
 
 Keep the existing Compose project name when updating: Docker prefixes the named
-volume with that project name. Before the eventual deploy, confirm the running
+volume with that project name. Before deploying, confirm the running
 container's actual volume and take a consistent SQLite backup. Never use
 `docker compose down -v` or delete the data volume during an app update. Keep a
 pre-upgrade backup and the old image for rollback. Schema upgrades add missing
@@ -85,6 +85,9 @@ columns in place; unrelated tables remain untouched.
 
 The GitHub release workflow publishes images on release tags and pushes to
 `feature/typescript`. It contains no deployment step; updating `master` alone
-does not redeploy the running service. Production web serving and the strict
-complexity/maintainability gate still need the release-hardening work described
-in `docs/rewrite-progress.md` before this image is promoted to the live site.
+does not redeploy the running service. The server serves the built Three.js
+client and its assets alongside `/health` and Socket.IO on the same port.
+Production clients connect to their page's origin. Pin the release image when
+deploying, preserve the existing host's routing and `PORT`, and enable SQL
+persistence with `BATTLECITY_ENABLE_SQL_STORE=true` and
+`BATTLECITY_SCORES_DB_PATH=/app/server/data/scores.db`.

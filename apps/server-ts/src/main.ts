@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import { createHttpApp } from "./http-app.js";
 import http from "node:http";
 import { Server } from "socket.io";
 import { makeEnvelope } from "@battlecity/protocol";
@@ -6,7 +6,7 @@ import { Effect } from "effect";
 import { buildRuntimeServices } from "./layers/RuntimeLayer.js";
 import { logRuntime } from "./observability/RuntimeLogger.js";
 
-const app = express();
+const app = createHttpApp();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -26,10 +26,6 @@ const { runtime, runtimeScope } = buildRuntimeServices({
         io.to(socketId).emit("event", makeEnvelope("event.rejected", 0, { reason }));
         io.to(socketId).emit("event:rejected", { reason });
     }
-});
-
-app.get("/health", (_req: Request, res: Response) => {
-    res.json({ ok: true, service: "server-ts" });
 });
 
 io.on("connection", (socket) => {
