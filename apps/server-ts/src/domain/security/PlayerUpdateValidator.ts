@@ -27,9 +27,21 @@ export const validatePlayerUpdate = (
     payload: KnownEventPayloadByType["player.update"],
     config: RuntimeConfig
 ): CommandResult<void> => {
+    if (![payload.direction, payload.offset.x, payload.offset.y].every(Number.isFinite)) {
+        return rejectResult("invalid_player_update");
+    }
+    if (payload.throttle !== undefined && (!Number.isFinite(payload.throttle) || Math.abs(payload.throttle) > 1)) {
+        return rejectResult("invalid_player_update");
+    }
     if (!existing) {
         return { ok: true, value: undefined };
     }
+
+    // Three.js sends explicit throttle intents with a locally predicted offset.
+    // The server integrates these from its own position and never adopts that
+    // offset. Rejecting prediction drift would discard legitimate WAN input and
+    // prevent its authoritative movement from catching up with the client.
+    if (payload.throttle !== undefined) return { ok: true, value: undefined };
 
     const nowMs = Date.now();
     const max = resolveAdaptiveDistanceAllowance(existing, config, nowMs);
