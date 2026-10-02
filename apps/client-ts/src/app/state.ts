@@ -1,4 +1,5 @@
 import { resolveCitySpawn } from "../world/city-spawn.js";
+import { createMovementState } from "./movement-state.js";
 import type { ClientState, DebugState, LocalState } from "./state-types.js";
 export { LEGACY_PLAYER_SPEED_PX_PER_SECOND } from "./player-constants.js";
 export { updateFromSnapshot } from "./snapshot-reconciliation.js";
@@ -138,7 +139,7 @@ export const createClientState = (): ClientState => {
             callsign: "Pilot",
             provider: "local"
         },
-        movement: { nextSeq: 1, lastAck: 0, lastSentSeq: 0, pending: [], visualOffsetX: 0, visualOffsetY: 0, correctionPx: 0, maxCorrectionPx: 0 },
+        movement: createMovementState(),
         chat: {
             history: [],
             rateLimitedUntil: null,

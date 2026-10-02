@@ -162,6 +162,9 @@ export type ClientState = {
         lastAck: number;
         lastSentSeq: number;
         pending: TankMovementInput[];
+        pendingMs: number;
+        retryAt: number;
+        serverClippedMs: number;
         visualOffsetX: number;
         visualOffsetY: number;
         correctionPx: number;

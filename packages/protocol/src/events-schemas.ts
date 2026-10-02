@@ -41,7 +41,7 @@ export const LobbyHighScores = Schema.Array(LobbyHighScoreEntry);
 export const MovementInputFrame = Schema.Struct({
     seq: Schema.Number, dtMs: Schema.Number, turn: Schema.Number, throttle: Schema.Number
 });
-export const MovementAck = Schema.Struct({ seq: Schema.Number, direction: Schema.Number });
+export const MovementAck = Schema.Struct({ seq: Schema.Number, direction: Schema.Number, clippedMs: Schema.optional(Schema.Number) });
 export const PlayerUpdate = Schema.Struct({
     id: Schema.String,
     city: Schema.Number,

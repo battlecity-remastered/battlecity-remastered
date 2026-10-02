@@ -36,3 +36,4 @@ Last updated: 2026-02-24
 | map bytes (`map.dat`) | `apps/client-ts/src/world/map-loader.ts`, `apps/server-ts/src/domain/map/MapService.ts` | terrain/building layout parity | pending |
 | city spawn data | `apps/server-ts/data/citySpawns.json` + client resolver | spawn and city marker parity | pending |
 | imported `.city` files | `city-import.ts`, `CityLayoutService.ts` | building layout parity | pending |
+- `player.update` / `players.snapshot`: bounded prediction, prefix retries and optional `movementAck.clippedMs` preserve input continuity through network bursts; existing envelopes remain compatible.

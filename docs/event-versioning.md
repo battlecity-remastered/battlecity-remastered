@@ -65,3 +65,11 @@ legacy movement path. New clients require a page refresh after deployment.
 
 Roundtrip tests cover 6–144 FPS, turning, reversing, tile collisions, delayed
 ordered packet bursts and different client/server clocks.
+
+The burst-recovery follow-up adds optional `movementAck.clippedMs`, the cumulative
+input time discarded by authority time-credit validation. Old snapshots remain
+valid. Prediction is bounded to two seconds; unacknowledged prefixes are retried
+after one second without acknowledgement progress. Authority retains three
+seconds of server-clock credit and permits a 70-message burst with a sustained
+35/s token refill. Sequence continuity, duplicate suppression, time validation
+and authoritative collision remain enforced; no envelope version bump is needed.

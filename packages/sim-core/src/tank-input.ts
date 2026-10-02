@@ -4,6 +4,7 @@ import { clampToWorld, collidesAt, findNearestSafePoint, type CollisionPoint, ty
 export type TankMovementInput = { seq: number; dtMs: number; turn: number; throttle: number };
 export type TankMovementPose = { x: number; y: number; direction: number };
 export const TANK_TURN_SPEED = 12;
+export const MAX_PENDING_TANK_INPUT_MS = 2000;
 const HALF = 24, RADIUS = 12;
 
 const slide = (world: CollisionWorld, current: CollisionPoint, desired: CollisionPoint): CollisionPoint => {

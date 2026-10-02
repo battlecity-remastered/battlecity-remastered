@@ -767,3 +767,12 @@ arrival-time simulation and local snapshot extrapolation for updated clients.
 The debug HUD reports acknowledged/pending inputs and correction distances.
 Roundtrip regression coverage checks low and high frame rates with WAN jitter,
 curved driving, reverse, terrain collisions and clock skew.
+
+October 2 live-browser burst repair: an approved capture from playbattlecity.com
+showed 1083–1217 ms of valid inputs arriving together and overflowing the old
+1000 ms authority credit cap. The authority now retains 3000 ms of credit; the
+client bounds outstanding prediction at 2000 ms and retries missing prefixes.
+A 70-command burst allowance retains the 35/s sustained rate limit. Tests replay
+the sanitized captured turning inputs, 1400 ms transport stalls at 6–144 FPS,
+and a five-second outage with dropped commands. The HUD exposes buffered and
+clipped input time. Camera edge clamps prevent views beyond the finite map.

@@ -10,11 +10,13 @@ export const createThreeGameRuntime = (state: ClientState, send: EventSender) =>
     let lastFrame: number | null = null;
     const sendMovement = (): void => {
         if (!state.local.id || !state.debug.socketConnected || state.local.health <= 0) return;
+        const inputFrames = takeUnsentMovementFrames(state);
+        if (!inputFrames.length) return;
         const throttle = document.hidden ? 0 : Number(state.controls.moveForward) - Number(state.controls.moveBackward);
         send("player.update", {
             id: state.local.id, city: state.local.city, direction: state.local.direction,
             isMoving: throttle !== 0, throttle, offset: { x: state.local.x, y: state.local.y },
-            inputFrames: takeUnsentMovementFrames(state)
+            inputFrames
         });
     };
     const timer = window.setInterval(sendMovement, 50);

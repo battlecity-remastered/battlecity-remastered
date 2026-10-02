@@ -174,6 +174,8 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         setDiagnostic("movementPending", String(state.movement.pending.length));
         setDiagnostic("movementCorrection", state.movement.correctionPx.toFixed(3));
         setDiagnostic("movementMaxCorrection", state.movement.maxCorrectionPx.toFixed(3));
+        setDiagnostic("movementBufferedMs", state.movement.pendingMs.toFixed(1));
+        setDiagnostic("movementServerClippedMs", state.movement.serverClippedMs.toFixed(1));
         setDiagnostic("remotePlayers", String(state.remotePlayers.size));
         setDiagnostic("liveBuildings", String(state.buildings.size));
         setDiagnostic("populationHouse", state.ui.selectedPopulationHouseId ?? "");

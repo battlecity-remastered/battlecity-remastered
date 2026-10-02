@@ -10,7 +10,7 @@ import { buildPlayersSnapshot } from "../../server-ts/src/runtime/snapshot.js";
 type Snapshot = KnownEventPayloadByType["players.snapshot"];
 type Packet = { at: number; frames: NonNullable<KnownEventPayloadByType["player.update"]["inputFrames"]> };
 
-for (const fps of [6, 10, 30, 60, 144]) test(`prediction stays aligned at ${fps} FPS with latency, jitter, turning, reverse and collisions`, context => {
+for (const stall of [450, 1400]) for (const fps of [6, 10, 30, 60, 144]) test(`prediction stays aligned at ${fps} FPS with ${stall}ms packet stalls, turning, reverse and collisions`, context => {
     let now = 10_000;
     context.mock.method(Date, "now", () => now);
     const client = createClientState();
@@ -40,7 +40,7 @@ for (const fps of [6, 10, 30, 60, 144]) test(`prediction stays aligned at ${fps}
         }
         if (time >= sendAt && time < 5500) {
             // Ordered TCP burst: periodic stalls then a fast queue drain.
-            lastPacketAt = Math.max(lastPacketAt + 1, time + 120 + (time % 1000 < 250 ? 450 : 0));
+            lastPacketAt = Math.max(lastPacketAt + 1, time + 120 + (time % 3000 < 250 ? stall : 0));
             packets.push({ at: lastPacketAt, frames: takeUnsentMovementFrames(client) });
             sendAt += 50;
         }
@@ -68,6 +68,7 @@ for (const fps of [6, 10, 30, 60, 144]) test(`prediction stays aligned at ${fps}
     }
     const authoritative = server.getReadonlyState().players.get("pilot")!;
     assert.deepEqual(rejected, []);
+    assert.equal(authoritative.movementClippedMs, 0, "legitimate buffered movement must not be clipped");
     assert.ok(maxCorrection < 1e-6, `prediction was pulled ${maxCorrection}px by delayed snapshots`);
     assert.ok(Math.hypot(client.local.x - authoritative.x, client.local.y - authoritative.y) < 1e-6);
     assert.equal(authoritative.lastMovementInputSeq, movementFrames);

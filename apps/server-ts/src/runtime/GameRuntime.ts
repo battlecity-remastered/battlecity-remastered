@@ -36,11 +36,14 @@ type InboundGuardState = {
     perTypeCount: Map<KnownEventType, number>;
     lastSeq: number;
     mutedUntil: number;
+    movementTokens: number;
+    movementRefillAt: number;
 };
 
 const INBOUND_WINDOW_MS = 1000;
 const INBOUND_TOTAL_LIMIT_PER_WINDOW = 90;
 const INBOUND_PLAYER_UPDATE_LIMIT_PER_WINDOW = 35;
+const INBOUND_PLAYER_UPDATE_BURST = 70;
 const INBOUND_JOIN_LIMIT_PER_WINDOW = 4;
 const INBOUND_ACTION_LIMIT_PER_WINDOW = 20;
 const INBOUND_MUTE_MS = 3000;
@@ -51,13 +54,15 @@ const createInboundGuardState = (now: number): InboundGuardState => {
         totalCount: 0,
         perTypeCount: new Map<KnownEventType, number>(),
         lastSeq: -1,
-        mutedUntil: 0
+        mutedUntil: 0,
+        movementTokens: INBOUND_PLAYER_UPDATE_BURST,
+        movementRefillAt: now
     };
 };
 
 const resolvePerTypeLimit = (eventType: KnownEventType): number => {
     if (eventType === "player.update") {
-        return INBOUND_PLAYER_UPDATE_LIMIT_PER_WINDOW;
+        return INBOUND_PLAYER_UPDATE_BURST;
     }
     if (eventType === "lobby.join.request") {
         return INBOUND_JOIN_LIMIT_PER_WINDOW;
@@ -66,6 +71,15 @@ const resolvePerTypeLimit = (eventType: KnownEventType): number => {
         return INBOUND_ACTION_LIMIT_PER_WINDOW;
     }
     return INBOUND_TOTAL_LIMIT_PER_WINDOW;
+};
+
+const acceptMovementBurst = (guard: InboundGuardState, now: number): boolean => {
+    guard.movementTokens = Math.min(INBOUND_PLAYER_UPDATE_BURST,
+        guard.movementTokens + Math.max(0, now - guard.movementRefillAt) * INBOUND_PLAYER_UPDATE_LIMIT_PER_WINDOW / 1000);
+    guard.movementRefillAt = now;
+    if (guard.movementTokens < 1) return false;
+    guard.movementTokens--;
+    return true;
 };
 
 export class GameRuntime {
@@ -220,6 +234,11 @@ export class GameRuntime {
             return "replay_detected";
         }
         guard.lastSeq = event.seq;
+
+        if (event.type === "player.update" && !acceptMovementBurst(guard, now)) {
+            guard.mutedUntil = now + INBOUND_MUTE_MS;
+            return "rate_limited";
+        }
 
         if ((now - guard.windowStartAt) >= INBOUND_WINDOW_MS) {
             guard.windowStartAt = now;

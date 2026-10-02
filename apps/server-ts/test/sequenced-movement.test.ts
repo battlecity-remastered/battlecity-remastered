@@ -4,6 +4,8 @@ import { makeEnvelope } from "@battlecity/protocol";
 import { GameRuntime } from "../src/runtime/GameRuntime.js";
 import { createRuntimeState } from "../src/runtime/types.js";
 import { buildPlayersSnapshot } from "../src/runtime/snapshot.js";
+import { stepTankInput } from "@battlecity/sim-core";
+import capturedBurst from "./fixtures/movement-burst.json" with { type: "json" };
 
 const harness = (now: number, blockingTiles = new Set<string>()) => {
     const state = createRuntimeState({ blockingTiles });
@@ -18,6 +20,21 @@ const harness = (now: number, blockingTiles = new Set<string>()) => {
     }));
     return { runtime, rejected, update, player: state.players.get("pilot")! };
 };
+
+test("the captured production burst retains every millisecond of travel and turning", context => {
+    let now = 10_000;
+    context.mock.method(Date, "now", () => now);
+    const { update, player, rejected } = harness(now);
+    let expected = { x: player.x, y: player.y, direction: player.direction };
+    for (const frame of capturedBurst) expected = stepTankInput(expected, frame, 600, { maxX: 24576, maxY: 24576, blocks: [] });
+    // Production delivered 1083.3 ms of input together. The old one-second
+    // credit cap discarded 83.3 ms but still acknowledged all fourteen frames.
+    now += 1100;
+    update(capturedBurst);
+    assert.equal(player.movementClippedMs, 0);
+    assert.deepEqual({ x: player.x, y: player.y, direction: player.direction }, expected);
+    assert.deepEqual(rejected, []);
+});
 
 test("sequenced inputs cannot teleport, duplicate travel or skip acknowledgements", context => {
     context.mock.method(Date, "now", () => 10_000);
@@ -35,7 +52,7 @@ test("sequenced inputs cannot teleport, duplicate travel or skip acknowledgement
     update([{ ...frame, seq: 2, throttle: 2 }]);
     assert.deepEqual(rejected, Array(4).fill("ValidationFailed"));
     const snapshot = buildPlayersSnapshot(runtime.getReadonlyState());
-    assert.deepEqual(snapshot.players[0]!.movementAck, { seq: 1, direction: pose.direction });
+    assert.deepEqual(snapshot.players[0]!.movementAck, { seq: 1, direction: pose.direction, clippedMs: 0 });
 });
 
 test("claimed frame durations remain bounded by elapsed server time", context => {

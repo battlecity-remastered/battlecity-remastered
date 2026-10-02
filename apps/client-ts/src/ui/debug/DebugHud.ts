@@ -60,6 +60,7 @@ export const createDebugHud = (
             lines.push(`GPU: ${(stats.gpuRenderer ?? "unavailable").slice(0, 100)}`);
             lines.push("Local movement: frame clock · F3 to hide");
             if (!demoMode) lines.push(`Input ack: ${state.movement.lastAck} / pending: ${state.movement.pending.length} / correction: ${state.movement.correctionPx.toFixed(2)} px (max ${state.movement.maxCorrectionPx.toFixed(2)})`);
+            if (!demoMode) lines.push(`Buffered input: ${Math.round(state.movement.pendingMs)} ms / server time clipped: ${state.movement.serverClippedMs.toFixed(1)} ms`);
         }
     };
     return {

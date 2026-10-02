@@ -12,6 +12,7 @@ export type RuntimePlayer = PlayerState & {
     lastAcceptedUpdateAt?: number;
     lastMovementInputSeq?: number;
     movementTimeCreditMs?: number;
+    movementClippedMs?: number;
     lastMovementInputAt?: number;
     lastHospitalHealAt?: number;
     cloakedUntil?: number;

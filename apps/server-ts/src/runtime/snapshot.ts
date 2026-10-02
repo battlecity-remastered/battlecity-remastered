@@ -24,7 +24,7 @@ export const buildPlayersSnapshot = (state: RuntimeState): KnownEventPayloadByTy
                 },
                 ...(state.botControllers.get(player.id)?.botRole ? { botRole: state.botControllers.get(player.id)!.botRole! } : {}),
                 health: player.health,
-                ...(player.lastMovementInputSeq === undefined ? {} : { movementAck: { seq: player.lastMovementInputSeq, direction: player.direction } }),
+                ...(player.lastMovementInputSeq === undefined ? {} : { movementAck: { seq: player.lastMovementInputSeq, direction: player.direction, clippedMs: player.movementClippedMs ?? 0 } }),
                 maxHealth: player.maxHealth,
                 ...(player.cloakedUntil ? {cloakedUntil:player.cloakedUntil}:{}),
                 ...(player.frozenUntil ? {frozenUntil:player.frozenUntil}:{})
