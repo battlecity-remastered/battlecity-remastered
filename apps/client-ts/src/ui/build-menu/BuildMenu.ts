@@ -128,11 +128,7 @@ const resolveAuthoritativeBuildStates = (state: ClientState): Map<number, number
 
 const resolveBuildUnlockStates = (state: ClientState): Map<number, number> => {
     const authoritative = resolveAuthoritativeBuildStates(state);
-    if (authoritative) {
-        return authoritative;
-    }
-
-    const unlockStates = BUILD_TREE.reduce<Map<number, number>>((acc, entry) => {
+    const unlockStates = authoritative ?? BUILD_TREE.reduce<Map<number, number>>((acc, entry) => {
         acc.set(entry.type, entry.initial);
         return acc;
     }, new Map());
@@ -145,6 +141,9 @@ const resolveBuildUnlockStates = (state: ClientState): Map<number, number> => {
             unlockStates.set(building.type, HAS_BUILT);
         }
     }
+
+    // Building events can arrive before finance refreshes its permission snapshot.
+    if (authoritative) return unlockStates;
 
     const research = state.research.get(state.local.city);
     const applyResearchState = (researchType: number, nextState: number): void => {

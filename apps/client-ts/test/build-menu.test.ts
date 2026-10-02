@@ -4,10 +4,29 @@ import fs from "node:fs";
 import { createClientState } from "../src/app/state.js";
 import {
     applyBuildMenuHotkey,
-    buildBuildMenuLines
+    buildBuildMenuLines,
+    resolveBuildMenuEntries
 } from "../src/ui/build-menu/BuildMenu.js";
+import { isGhostTileBlocked } from "../src/ui/build-menu/GhostPlacement.js";
+import { applyServerEvent } from "../src/app/network-events.js";
+import { makeEnvelope } from "@battlecity/protocol";
 
 const buildMenuPath = new URL("../src/ui/build-menu/BuildMenu.ts", import.meta.url);
+
+test("a placed building immediately disables duplicate construction before the finance snapshot catches up", () => {
+    const state = createClientState(); state.local.city = 3; state.ui.selectedBuildType = 112;
+    state.cityFinance.set(3, { cash: 1000, income: 0, score: 0, researchLevel: 1, canBuildStates: new Map([[112, 1], [300, 1]]) });
+    const placed = { id: "laser", ownerId: "mayor", cityId: 3, type: 112, tileX: 20, tileY: 20, health: 100, maxHealth: 100 };
+    applyServerEvent(state, makeEnvelope("building.placed", 1, { ...placed, id: "other-laser", cityId: 4 }));
+    assert.ok(resolveBuildMenuEntries(state).some(entry => entry.type === 112));
+    applyServerEvent(state, makeEnvelope("building.placed", 2, placed));
+    assert.equal(resolveBuildMenuEntries(state).some(entry => entry.type === 112), false);
+    assert.equal(isGhostTileBlocked(state, 30, 30), true, "stale placement selection is blocked too");
+    assert.equal(isGhostTileBlocked(state, 30, 30, 300), false, "housing remains repeatable");
+    applyServerEvent(state, makeEnvelope("building.demolished", 3, { id: "laser", cityId: 3 }));
+    assert.ok(resolveBuildMenuEntries(state).some(entry => entry.type === 112));
+    assert.equal(isGhostTileBlocked(state, 30, 30), false);
+});
 
 test("applyBuildMenuHotkey toggles visibility and updates selected build type", () => {
     const state = createClientState();

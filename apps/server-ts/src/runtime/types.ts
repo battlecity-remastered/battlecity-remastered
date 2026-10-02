@@ -195,6 +195,7 @@ export type RuntimeRejectReason =
     | "inventory_empty"
     | "not_mayor"
     | "building_collision"
+    | "building_already_exists"
     | "build_too_far"
     | "research_required"
     | "defense_blocked";

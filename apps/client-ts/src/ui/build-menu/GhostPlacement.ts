@@ -1,6 +1,7 @@
 import type { ClientState } from "../../app/state.js";
 import {
     BUILDING_FOOTPRINT_TILES,
+    hasUniqueBuildingConflict,
     hasDefenseInFootprint,
     hasOverlappingBuildingFootprint
 } from "@battlecity/sim-core";
@@ -58,9 +59,11 @@ const hasBlockingDefenseFootprint = (
 export const isGhostTileBlocked = (
     state: ClientState,
     tileX: number,
-    tileY: number
+    tileY: number,
+    buildingType = state.ui.selectedBuildType
 ): boolean => {
-    return hasBlockingTerrainFootprint(state, tileX, tileY)
+    return hasUniqueBuildingConflict(state.buildings.values(), state.local.city, buildingType)
+        || hasBlockingTerrainFootprint(state, tileX, tileY)
         || hasBlockingBuildingFootprint(state, tileX, tileY)
         || hasBlockingDefenseFootprint(state, tileX, tileY);
 };

@@ -7,7 +7,7 @@ import {
     type RuntimeBuilding,
     type RuntimeState
 } from "./types.js";
-import { canBuildInCity, validateBuildResearch } from "../domain/buildings/BuildingRulesService.js";
+import { canBuildInCity, resolveBuildTypeDenial } from "../domain/buildings/BuildingRulesService.js";
 import { spendCityCash } from "../domain/economy/CityEconomyService.js";
 import { registerBuildingPopulation, unregisterBuildingPopulation } from "../domain/population/PopulationService.js";
 
@@ -41,8 +41,9 @@ export const placeBuildingFromRequest = (
     if (placement === "too_far") {
         return rejectResult("build_too_far");
     }
-    if (!validateBuildResearch(state, city, payload.type)) {
-        return rejectResult("research_required");
+    const typeDenial = resolveBuildTypeDenial(state, city, payload.type);
+    if (typeDenial) {
+        return rejectResult(typeDenial);
     }
     if (!spendCityCash(state, city, config.buildingCost, config)) {
         return rejectResult("insufficient_funds");

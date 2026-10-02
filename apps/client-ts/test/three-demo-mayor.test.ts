@@ -10,6 +10,21 @@ test("demo mayor can build housing and access unlocked construction without a so
     const state=createClientState();initializeDemoMayor(state,[]);assert.equal(canOpenBuildMenu(state),true);assert.ok(resolveBuildMenuEntries(state).some(entry=>entry.type===300&&entry.state==="available"));assert.ok(resolveBuildMenuEntries(state).some(entry=>entry.type===105&&entry.state==="available"));
     assert.equal(placeDemoBuilding(state,300,40,40),true);const house=[...state.buildings.values()].find(building=>building.type===300)!;assert.equal(house.population,0);assert.equal(placeDemoBuilding(state,300,40,40),false);
 });
+
+test("demo construction and its fully unlocked menu still enforce unique city buildings", () => {
+    for (const type of [105, 112, 200, 401, 412]) {
+        const state = createClientState(); initializeDemoMayor(state, []);
+        assert.equal(placeDemoBuilding(state, type, 40, 40), true);
+        assert.equal(placeDemoBuilding(state, type, 44, 40), false);
+        assert.equal(resolveBuildMenuEntries(state).some(entry => entry.type === type), false);
+        assert.equal(placeDemoBuilding(state, 300, 44, 40), true);
+        assert.equal(placeDemoBuilding(state, 300, 48, 40), true);
+        const built = [...state.buildings.values()].find(building => building.type === type)!;
+        state.buildings.delete(built.id);
+        assert.ok(resolveBuildMenuEntries(state).some(entry => entry.type === type && entry.state === "available"));
+        assert.equal(placeDemoBuilding(state, type, 40, 40), true);
+    }
+});
 test("mayor appearance follows authoritative role assignment and promotion for each tank",()=>{
     const state=createClientState();initializeDemoMayor(state,[]);const root=createRoleTank(new THREE.Group(),new THREE.Group());updateTankRole(root,isMayorTank(state,state.local.id));assert.equal(root.children[0]!.visible,false);assert.equal(root.children[1]!.visible,true);
     state.lobby.assignments[0]!.mayorId="promoted";updateTankRole(root,isMayorTank(state,state.local.id));assert.equal(root.children[0]!.visible,true);assert.equal(root.children[1]!.visible,false);assert.equal(isMayorTank(state,"promoted"),true);

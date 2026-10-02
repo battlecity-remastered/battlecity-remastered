@@ -2,6 +2,7 @@ import citySpawns from "../../../data/citySpawns.json" with {type:"json"};
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import {
     BUILDING_FOOTPRINT_TILES,
+    hasUniqueBuildingConflict,
     hasDefenseInFootprint,
     hasOverlappingBuildingFootprint
 } from "@battlecity/sim-core";
@@ -137,10 +138,13 @@ export const canBuildInCity = (
     return hasChainAnchor ? "ok" : "too_far";
 };
 
-export const validateBuildResearch = (
+export const resolveBuildTypeDenial = (
     state: RuntimeState,
     cityId: number,
     buildingType: number
-): boolean => {
-    return hasResearchRequirementSatisfied(state, cityId, buildingType);
+): "building_already_exists" | "research_required" | null => {
+    if (hasUniqueBuildingConflict(state.buildings.values(), cityId, buildingType)) {
+        return "building_already_exists";
+    }
+    return hasResearchRequirementSatisfied(state, cityId, buildingType) ? null : "research_required";
 };

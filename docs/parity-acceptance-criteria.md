@@ -75,3 +75,4 @@ Accepted only if all hard requirements pass and `docs/parity-checklist.md` is fu
 - City entry: prepare shared city resources after hydration, preserve renderer targets and graphics settings, and verify steady GPU frame times against the same public world.
 - Graphics performance: preserve lava flow, bank relief, noise detail and effect trajectories; validate shader changes with fixed-time GPU reference captures and benchmark the same live city views.
 - Postprocessing: retain 4x scene MSAA, AO and bloom settings; verify resolved HDR copy and colour-only filter targets against the original pixels at multiple sizes, including resize.
+- Construction: one of each non-housing type per city; duplicate requests cannot spend cash, assign population or change stock. Permit rebuilding after demolition and independent city allowances. Count factory stock, allied inventories and deployed products toward the original per-item caps.

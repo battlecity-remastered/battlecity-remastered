@@ -14,7 +14,7 @@ export const initializeDemoMayor=(state:ClientState,buildings:ReadonlyArray<Indu
     place("demo-command",0,city.tileX,city.tileY);buildings.forEach((building,index)=>place(`demo-existing-${index}`,building.type,building.tileX,building.tileY));
 };
 export const placeDemoBuilding=(state:ClientState,type:number,tileX:number,tileY:number):boolean=>{
-    if(!BUILD_TREE.some(entry=>entry.type===type)||isGhostTileBlocked(state,tileX,tileY))return false;
+    if(!BUILD_TREE.some(entry=>entry.type===type)||isGhostTileBlocked(state,tileX,tileY,type))return false;
     const id=`demo-built-${type}-${tileX}-${tileY}`;
     state.buildings.set(id,{id,type,tileX,tileY,ownerId:state.local.id!,cityId:state.local.city,health:120,maxHealth:120,population:0});
     state.ui.buildGhostMode=false;state.ui.pendingBuildPlacement=null;return true;

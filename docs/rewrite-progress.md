@@ -861,3 +861,19 @@ Legacy sprite coordinates had placed it 8 pixels right and 6 pixels below the
 3D arrow pad. All thirteen product origins were checked against the exported
 factory apron geometry, with zero horizontal/depth error; centred U pickup and
 player-drop tile placement remain correct. This is a presentation change only.
+
+
+Construction again enforces the classic one-per-type-per-city rule for factories,
+research, hospitals and command centres. Housing remains repeatable. Server
+requests reject duplicates before charging cash or assigning population. Demo
+placement and the ghost share the rule; building events immediately hide built
+entries even before the next finance permission snapshot. Demolition permits a
+replacement. No existing buildings are removed by the validation rule.
+
+Regression coverage exercises every factory/research type, repeated requests,
+independent cities, rebuilding, stale menu permissions and demo placement.
+The thirteen factory stock limits were compared with v0.0.79 constants and match.
+Added tests include held/deployed stock totals, city isolation, replacement after
+one slot is released, and two players trying to collect the last orb. Existing
+pickup/drop, inventory-cap and factory-destruction regressions also pass.
+All 508 tests and strict structural/type checks pass, along with lint/build.

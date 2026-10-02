@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { tickFactories } from "../src/domain/factories/FactoryService.js";
 import { createRuntimeState, DEFAULT_RUNTIME_CONFIG } from "../src/runtime/types.js";
 import type { RuntimeEmitter } from "../src/runtime/emitter.js";
+import { pickupIcon } from "../src/domain/icons/IconDropService.js";
 
 const ITEM_TYPE_LASER = 12;
 const LASER_FACTORY_TYPE = 112;
@@ -147,4 +148,44 @@ test("factory production caps match classic per-item limits for all factory type
             `factory ${entry.buildingType} item ${entry.itemType} should cap at ${entry.cap}`
         );
     }
+});
+
+test("all factory caps include held and deployed items, isolate cities, and replace only a released slot", () => {
+    for (const { buildingType, itemType, cap } of FACTORY_CAP_MATRIX) {
+        const state = createRuntimeState(), emitter = createEmitter([]);
+        state.buildings.set("factory", { id: "factory", ownerId: "mayor", cityId: 1, type: buildingType, tileX: 10, tileY: 10, health: 100, maxHealth: 100, population: 50 });
+        state.socketCities.set("ally", 1); state.socketCities.set("enemy", 2);
+        state.playerInventory.set("ally", new Map([[itemType, 1]]));
+        state.playerInventory.set("enemy", new Map([[itemType, cap]]));
+        const deployed = cap > 1 ? 1 : 0, stock = cap - 1 - deployed;
+        state.factoryStock.set(1, new Map([[itemType, stock]]));
+        if (deployed) {
+            if (itemType >= 8 && itemType <= 11) state.defenses.set("deployed", { id: "deployed", cityId: 1, type: itemType, tileX: 20, tileY: 20, health: 100, maxHealth: 100 });
+            else state.hazards.set("deployed", { id: "deployed", cityId: 1, type: itemType, x: 960, y: 960, radius: 24, active: true });
+        }
+        const tick = (): void => tickFactories(state, DEFAULT_RUNTIME_CONFIG, emitter, DEFAULT_RUNTIME_CONFIG.factoryProductionTickMs);
+        tick(); tick();
+        assert.equal(state.factoryStock.get(1)!.get(itemType), stock, `held/deployed ${itemType} still counts toward its city cap`);
+        if (deployed) { state.defenses.clear(); state.hazards.clear(); }
+        else state.playerInventory.get("ally")!.delete(itemType);
+        tick(); tick();
+        assert.equal(state.factoryStock.get(1)!.get(itemType), stock + 1, `only one replacement ${itemType}; the other city's inventory is separate`);
+    }
+});
+
+test("two players cannot collect the same last factory item or consume stock with a rejected pickup", () => {
+    const state = createRuntimeState(), config = DEFAULT_RUNTIME_CONFIG;
+    state.buildings.set("factory", { id: "factory", ownerId: "first", cityId: 1, type: 105, tileX: 10, tileY: 10, health: 100, maxHealth: 100, population: 50 });
+    state.factoryStock.set(1, new Map([[5, 1]]));
+    for (const id of ["first", "second"]) {
+        state.players.set(id, { id, city: 1, x: 528, y: 576, direction: 0, speed: 0, health: 100, maxHealth: 100 });
+        state.socketCities.set(id, 1); state.playerInventory.set(id, new Map());
+    }
+    const request = { cityId: 1, itemType: 5, amount: 1 };
+    assert.equal(pickupIcon(state, "first", request, config).ok, true);
+    assert.deepEqual(pickupIcon(state, "second", request, config), { ok: false, reason: "factory_empty" });
+    assert.deepEqual(pickupIcon(state, "first", request, config), { ok: false, reason: "inventory_empty" });
+    assert.equal(state.factoryStock.get(1)!.get(5), 0);
+    assert.equal(state.playerInventory.get("first")!.get(5), 1);
+    assert.equal(state.playerInventory.get("second")!.get(5) ?? 0, 0);
 });

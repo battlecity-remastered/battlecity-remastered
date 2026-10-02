@@ -11,6 +11,7 @@ export type RuntimeDomainError =
             | "owner_mismatch"
             | "not_mayor"
             | "building_collision"
+            | "building_already_exists"
             | "build_too_far"
             | "research_required"
             | "defense_blocked";
@@ -37,12 +38,13 @@ const staticErrorByReason: Partial<Record<RuntimeRejectReason, RuntimeDomainErro
 
 const isValidationReason = (
     reason: RuntimeRejectReason
-): reason is "invalid_player_update" | "city_mismatch" | "owner_mismatch" | "not_mayor" | "building_collision" | "build_too_far" | "research_required" => {
+): reason is "invalid_player_update" | "city_mismatch" | "owner_mismatch" | "not_mayor" | "building_collision" | "building_already_exists" | "build_too_far" | "research_required" => {
     return reason === "invalid_player_update"
         || reason === "city_mismatch"
         || reason === "owner_mismatch"
         || reason === "not_mayor"
         || reason === "building_collision"
+        || reason === "building_already_exists"
         || reason === "build_too_far"
         || reason === "research_required"
         || reason === "defense_blocked";

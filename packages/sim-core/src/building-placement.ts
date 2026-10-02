@@ -7,6 +7,17 @@ export type PlacementBuilding = {
 const COMMAND_CENTER_BUILDING_TYPE = 0;
 const BUILDING_FOOTPRINT_TILES = 3;
 
+// Classic construction permits repeated housing; every other type is unique per city.
+export const hasUniqueBuildingConflict = (
+    buildings: Iterable<{ cityId: number; type: number }>, cityId: number, type: number
+): boolean => {
+    if (type === 300) return false;
+    for (const building of buildings) {
+        if (building.cityId === cityId && building.type === type) return true;
+    }
+    return false;
+};
+
 export const resolveBuildingBaseType = (buildingType: number): number => {
     const numeric = Number(buildingType);
     if (!Number.isFinite(numeric)) {
