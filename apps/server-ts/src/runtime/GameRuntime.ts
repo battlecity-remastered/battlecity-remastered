@@ -1,3 +1,4 @@
+import type { NotificationProfile, JoinNotification } from "../adapters/notifications/DiscordNotifier.js";
 import {
     decodeKnownEnvelope,
     type KnownEventType,
@@ -27,7 +28,8 @@ import { lobbyHighScores } from "../domain/score/ScoreService.js";
 type RuntimeAdapterServices = {
     initializeJoinedPlayer?: (state: RuntimeState, city: number, playerId: string, config: RuntimeConfig) => void;
     userStore?: UserStoreAdapter;
-    notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void>;
+    notifyPlayerJoin?: (details: JoinNotification) => Effect.Effect<void>;
+    notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number, profile?: NotificationProfile) => Effect.Effect<void>;
 };
 
 type InboundGuardState = {
@@ -207,6 +209,7 @@ export class GameRuntime {
         if (this.services.initializeJoinedPlayer) {
             Object.assign(context, { initializeJoinedPlayer: this.services.initializeJoinedPlayer });
         }
+        if (this.services.notifyPlayerJoin) Object.assign(context, { notifyPlayerJoin: this.services.notifyPlayerJoin });
         if (this.services.notifyOrbVictory) {
             Object.assign(context, { notifyOrbVictory: this.services.notifyOrbVictory });
         }

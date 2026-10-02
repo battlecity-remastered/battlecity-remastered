@@ -1,5 +1,9 @@
 # Visual Parity Rewrite Plan (LLM-Executable)
 
+## Discord notification parity — October 2026
+
+Restored existing `DISCORD_BOT_TOKEN` / `DISCORD_CHANNEL_ID` configuration, alongside optional webhook support. Human joins announce persisted callsign, rank, city and role once per assignment; orb victories announce named cities and awarded points. HTTP sends run asynchronously with timeouts, minimum-interval throttling, Discord rate-limit backoff and disabled mentions. Production credentials/channel were verified with a read-only request; notification content and failure behaviour are tested with mocked HTTP.
+
 ## Three.js gameplay port — October 2026
 
 The user has authorized completing the live game port while preserving the approved terrain, lava, buildings, inventory and radar. The default Three.js route is now connected, with ?demo=1 retained for the offline preview; the shared TypeScript server remains the source of gameplay authority. The earlier Pixi parity table below describes the prior renderer, not completion of this port.

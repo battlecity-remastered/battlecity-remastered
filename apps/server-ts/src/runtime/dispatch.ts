@@ -102,6 +102,7 @@ const handlers: HandlerMap = {
         if (payload.authToken && !account) {
             rejectSocket(context.broadcaster, socketId, "invalid_envelope"); return;
         }
+        const alreadyJoined = context.state.socketCities.has(socketId);
         const userId = bindSocketIdentity(context.state, socketId, payload);
         handleCommandResult(socketId, context.emitter, context.broadcaster, joinLobby(
             context.state,
@@ -114,6 +115,10 @@ const handlers: HandlerMap = {
                 const profile = Effect.runSync(context.userStore.getOrCreate(userId, account?.name ?? payload.callsign, account?.provider));
                 context.state.playerProfiles.set(socketId, { callsign: profile.name, rankTitle: profile.rank });
             }
+            const label = context.state.playerProfiles.get(socketId);
+            if (!alreadyJoined && label && context.notifyPlayerJoin) Effect.runFork(context.notifyPlayerJoin({
+                ...label, city: assignment.city, role: assignment.role === "mayor" ? "Mayor" : "Recruit"
+            }));
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
             emitLobbyHighScoreSnapshot(context);
@@ -469,7 +474,11 @@ const handlers: HandlerMap = {
             }
             if (context.notifyOrbVictory) {
                 const userId = resolveSocketUserId(context.state, socketId);
-                Effect.runFork(context.notifyOrbVictory(userId, cityOrbed.sourceCityId, cityOrbed.targetCityId));
+                Effect.runFork(context.notifyOrbVictory(userId, cityOrbed.sourceCityId, cityOrbed.targetCityId, {
+                    callsign: context.state.playerProfiles.get(socketId)?.callsign ?? "Unknown player",
+                    rankTitle: context.state.playerProfiles.get(socketId)?.rankTitle ?? "Unranked",
+                    points: context.config.orbScoreAward
+                }));
             }
         }, {
             eventType: "orb.drop.request",

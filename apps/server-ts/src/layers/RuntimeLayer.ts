@@ -4,7 +4,7 @@ import { RuntimeScope } from "../runtime/RuntimeScope.js";
 import type { Broadcaster } from "../runtime/emitter.js";
 import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../runtime/types.js";
 import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
-import { notifyOrbVictory } from "../adapters/notifications/DiscordNotifier.js";
+import { notifyOrbVictory, notifyPlayerJoin } from "../adapters/notifications/DiscordNotifier.js";
 import { loadBlockingTiles, loadPlacementBlockingTiles } from "../domain/map/MapService.js";
 import { loadConfiguredFakeCityIds } from "../domain/fake-cities/FakeCityService.js";
 import { initializeJoinedPlayer, seedCommandCenter } from "../domain/spawn/CityBootstrap.js";
@@ -34,7 +34,8 @@ export const makeRuntimeServices = (
     const runtime = new GameRuntime(broadcaster, resolvedConfig, initialState, {
         initializeJoinedPlayer,
         userStore,
-        notifyOrbVictory
+        notifyOrbVictory,
+        notifyPlayerJoin
     });
     const runtimeScope = RuntimeScope.open(runtime, resolvedConfig);
     return { runtime, runtimeScope };
