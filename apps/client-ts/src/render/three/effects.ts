@@ -88,7 +88,9 @@ export const createIndustrialEffects = () => {
             fragmentShader: fragmentShader1
         });
         const arc = new THREE.Line(geometry, material);
-        arc.frustumCulled = false;
+        // Include the shader's 0.025/0.028-unit jitter in its culling bounds.
+        geometry.computeBoundingSphere();
+        geometry.boundingSphere!.radius += 0.05;
         arc.userData.ownedEffect = true; root.add(arc);
     };
 
@@ -108,7 +110,9 @@ export const createIndustrialEffects = () => {
             fragmentShader: fragmentShader2
         });
         const steam = new THREE.Points(geometry, material);
-        steam.frustumCulled = false;
+        // Enclose both vents, their entire rising plume, and particle footprint.
+        // Raw vertex bounds only contain the stationary vent positions.
+        geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0.115, 2.99, 0.48), 2.1);
         steam.userData.ownedEffect = true; root.add(steam);
     };
 
@@ -146,7 +150,8 @@ export const createIndustrialEffects = () => {
                 fragmentShader: fragmentShader3
             });
             const motes = new THREE.Points(geometry, material);
-            motes.frustumCulled = false;
+            // Motes orbit up to 0.38 units out and rise from 0.18 to 0.78.
+            geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.48, 0), 0.7);
             motes.userData.ownedEffect = true; root.add(motes);
         },
         update: (seconds: number): void => {

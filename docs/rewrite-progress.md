@@ -807,3 +807,29 @@ On the same public AI cities and Intel GPU, the sampled steady rates rose from
 These are measurements on this GPU, not guarantees for other hardware. First-use
 shader preparation can take longer with an empty shader cache (12.3 seconds in
 the first optimized run); that work occurs in the joining transition.
+
+
+The next shader pass selects molten-floor or rocky-bank shading before computing
+procedural noise; it retains all noise octaves, flow, geometry, material settings
+and lighting. Texture fetches and relief derivatives stay outside divergent
+control flow. Eight GPU reference views/times compared 8,388,608 colour channels:
+one differed by one 8-bit rounding step, with no other differences. Three paired
+GPU-timer measurements of the terrain fixture averaged 4.82 ms before and 3.79 ms
+after (about 21% less terrain GPU time, not a whole-game FPS claim).
+
+Factory steam, research arcs and orb motes now have conservative bounds covering
+their complete shader animation, allowing distant effects to be frustum culled.
+A trajectory/frustum regression checks the bounds; twelve GPU reference captures,
+including screen edges, matched all 18,874,368 colour channels exactly. Point
+lights and nearby particle counts remain unchanged. In two public-server AI-city
+views at 1440x900 on Intel UHD, combined average frame times changed from
+57.21/57.37 ms to 56.13/56.29 ms. Around 230 draw calls per frame were removed;
+these are small incremental gains after the larger point-light optimization.
+
+Centred views deeper inside the same cities measured 69.38 to 65.75 ms and
+71.28 to 69.38 ms (14.4 to 15.2 FPS and 14.0 to 14.4 FPS respectively).
+No graphics settings, animation rates or effect densities were reduced. These
+short runs indicate roughly 3–6% additional FPS in those dense views; results
+remain dependent on hardware and the live scene.
+Strict verification passes all 502 tests and all structural/type checks; lint
+and the production client build pass.
