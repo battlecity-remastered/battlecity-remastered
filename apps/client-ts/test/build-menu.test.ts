@@ -1,14 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import path from "node:path";
 import { createClientState } from "../src/app/state.js";
 import {
     applyBuildMenuHotkey,
     buildBuildMenuLines
 } from "../src/ui/build-menu/BuildMenu.js";
 
-const buildMenuPath = path.resolve("apps/client-ts/src/ui/build-menu/BuildMenu.ts");
+const buildMenuPath = new URL("../src/ui/build-menu/BuildMenu.ts", import.meta.url);
 
 test("applyBuildMenuHotkey toggles visibility and updates selected build type", () => {
     const state = createClientState();

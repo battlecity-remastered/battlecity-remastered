@@ -34,6 +34,16 @@
         display: block;
       }
 
+      #app.three-demo-mode > :not(canvas):not([data-ui="three-demo-hud"]):not([data-ui="three-inventory"]):not([data-ui="debug-hud"]):not([data-ui="game-command"]):not([data-ui="construction"]):not([data-ui="city-infrastructure"]):not(.bc-field-manual):not(.bc-demo-sandbox) {
+        display: none !important;
+      }
+
+      body:has(#app.three-demo-mode) > [data-ui="orb-hint"],
+      body:has(#app.three-demo-mode) > #battlecity-chat-container,
+      body:has(#app.three-demo-mode) > #battlecity-chat-toggle {
+        display: none !important;
+      }
+
       #app:fullscreen {
         /* Already fullscreen-sized, just ensure no browser chrome */
       }

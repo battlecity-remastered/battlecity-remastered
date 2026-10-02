@@ -49,8 +49,26 @@ test("players snapshot reconciles local position only when drift is meaningful",
 
     assert.equal(state.local.x, 140);
     assert.equal(state.local.y, 140);
-    assert.equal(state.render.previousLocalX, 140);
-    assert.equal(state.render.previousLocalY, 140);
+    // Rest corrections below the hard-snap threshold retain the visual base.
+    assert.equal(state.render.previousLocalX, 90);
+    assert.equal(state.render.previousLocalY, 90);
+
+    state.render.projectedOffsetX = 4;
+    state.render.projectedOffsetY = 3;
+    state.render.lastResolvedAt = 1_000;
+    updateFromSnapshot(state, [{
+        id: "local_1",
+        city: 3,
+        direction: 10,
+        offset: { x: 240, y: 240 },
+        health: 78,
+        maxHealth: 100
+    }]);
+
+    assert.equal(state.local.x, 240);
+    assert.equal(state.local.y, 240);
+    assert.equal(state.render.previousLocalX, 240);
+    assert.equal(state.render.previousLocalY, 240);
     assert.equal(state.render.projectedOffsetX, 0);
     assert.equal(state.render.projectedOffsetY, 0);
     assert.equal(state.render.lastResolvedAt, null);

@@ -1,10 +1,11 @@
 import { io, type Socket } from "socket.io-client";
 import {
     type KnownEventPayloadByType,
+    type KnownTypedEventEnvelope,
     makeEnvelope,
 } from "@battlecity/protocol";
 import { Effect } from "effect";
-import type { ClientState } from "../app/state.js";
+import { isThreeDemoMode, type ClientState } from "../app/state.js";
 import { applyServerEvent } from "../app/network-events.js";
 import type { EventSender } from "./events.js";
 import { decodeServerEnvelope } from "./event-router.js";
@@ -21,6 +22,9 @@ const resolveServerUrl = (): string => {
     const configured = env?.VITE_SERVER_URL;
     if (typeof configured === "string" && configured.length > 0) {
         return configured;
+    }
+    if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+        return `${window.location.protocol}//${window.location.hostname}:8121`;
     }
     if (typeof window !== "undefined" && typeof window.location?.origin === "string") {
         return window.location.origin;
@@ -153,7 +157,7 @@ const runManualPing = (socket: Socket, state: ClientState): void => {
     });
 };
 
-const onServerEvent = (state: ClientState, raw: unknown): void => {
+const onServerEvent = (state: ClientState, raw: unknown, observe?: (event: KnownTypedEventEnvelope) => void): void => {
     const program = decodeServerEnvelope(raw).pipe(
         Effect.flatMap((decoded) => {
             if (!decoded) {
@@ -165,6 +169,7 @@ const onServerEvent = (state: ClientState, raw: unknown): void => {
             }
             return Effect.sync(() => {
                 recordDebugServerEvent(state);
+                observe?.(decoded);
                 applyServerEvent(state, decoded);
             });
         }),
@@ -242,7 +247,7 @@ const createStop = (
     };
 };
 
-export const createSocketRuntime = (state: ClientState): SocketRuntime => {
+export const createSocketRuntime = (state: ClientState, observe?: (event: KnownTypedEventEnvelope) => void): SocketRuntime => {
     const context = createSocketRuntimeContext();
     const nextSeq = (): number => {
         context.seq += 1;
@@ -250,15 +255,17 @@ export const createSocketRuntime = (state: ClientState): SocketRuntime => {
     };
 
     const socket = io(SERVER_URL, {
+        autoConnect: !isThreeDemoMode(),
         transports: ["websocket"]
     });
 
     const send: EventSender = (type, payload) => {
+        if (isThreeDemoMode()) return;
         recordDebugOutboundSend(state);
         socket.emit("event", makeEnvelope(type, nextSeq(), payload));
     };
 
-    const onEvent = (raw: unknown): void => onServerEvent(state, raw);
+    const onEvent = (raw: unknown): void => onServerEvent(state, raw, observe);
     registerConnectHandler(socket, send, state, context);
     registerDisconnectHandler(socket, state, context);
     socket.on("event", onEvent);

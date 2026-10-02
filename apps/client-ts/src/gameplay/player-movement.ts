@@ -37,7 +37,7 @@ const clampTopLeftToWorld = (x: number, y: number): { x: number; y: number } => 
     };
 };
 
-const buildCollisionWorld = (state: ClientState): CollisionWorld => {
+export const createPlayerCollisionWorld = (state: ClientState): CollisionWorld => {
     return {
         maxX: MAP_MAX,
         maxY: MAP_MAX,
@@ -45,8 +45,8 @@ const buildCollisionWorld = (state: ClientState): CollisionWorld => {
     };
 };
 
-export const moveLocalPlayer = (state: ClientState, direction: number, throttle: number, dtMs: number): void => {
-    const world = buildCollisionWorld(state);
+export const moveLocalPlayer = (state: ClientState, direction: number, throttle: number, dtMs: number, collisionWorld?: CollisionWorld): void => {
+    const world = collisionWorld ?? createPlayerCollisionWorld(state);
     const currentCenter = toCollisionPoint(state.local.x, state.local.y);
     const currentSafeCenter = resolveStuckPlayerPosition(world, currentCenter, PLAYER_RADIUS);
     const movementThrottle = Math.max(-1, Math.min(1, Number.isFinite(throttle) ? throttle : 0));

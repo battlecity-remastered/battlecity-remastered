@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createDeterministicParityFixture } from "./fixtures/parity/deterministic-render-fixture.js";
 
-const fixtureDir = resolve(process.cwd(), "apps/client-ts/test/fixtures/parity");
+const fixtureDir = fileURLToPath(new URL("./fixtures/parity/", import.meta.url));
 
 const readJson = <T>(name: string): T => {
     const path = resolve(fixtureDir, name);

@@ -47,7 +47,7 @@ const BUILD_MENU_ROW_ICON_AND_GAP = BUILDING_ICON_FRAME_SIZE + 4;
 
 const HOTKEY_DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as const;
 
-const BUILD_TREE: ReadonlyArray<BuildTreeEntry> = [
+export const BUILD_TREE: ReadonlyArray<BuildTreeEntry> = [
     { key: "CAN_BUILD_HOUSE", type: 300, label: "Housing", menuIcon: 0, parent: 0, initial: CAN_BUILD },
     { key: "CAN_BUILD_LASER_RESEARCH", type: 412, label: "Laser Research", menuIcon: 1, parent: 300, initial: CAN_BUILD },
     { key: "CAN_BUILD_LASER_FACTORY", type: 112, label: "Laser Factory", menuIcon: 1, parent: 412, initial: CANT_BUILD },
@@ -170,7 +170,7 @@ const resolveBuildUnlockStates = (state: ClientState): Map<number, number> => {
     return unlockStates;
 };
 
-const resolveBuildMenuEntries = (state: ClientState): ResolvedBuildMenuEntry[] => {
+export const resolveBuildMenuEntries = (state: ClientState): ResolvedBuildMenuEntry[] => {
     const unlockStates = resolveBuildUnlockStates(state);
     const visible = BUILD_TREE.filter((entry) => {
         const unlockState = unlockStates.get(entry.type) ?? CANT_BUILD;

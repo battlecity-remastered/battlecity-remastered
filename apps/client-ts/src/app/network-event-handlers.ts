@@ -151,6 +151,13 @@ export const handlers: {
         state.lobby.lastReleasedPlayerId = payload.id;
         if (payload.id === state.local.id) {
             state.local.id = null;
+            state.ui.selectedPopulationHouseId = null;
+            state.inventory.clear();
+            state.local.cloakedUntil = 0;
+            state.local.frozenUntil = 0;
+            state.controls.moveForward = false;
+            state.controls.moveBackward = false;
+            state.controls.shoot = false;
             state.ui.showBuildMenu = false;
             state.ui.buildGhostMode = false;
             state.ui.buildDemolishMode = false;
@@ -239,7 +246,7 @@ export const handlers: {
             x: payload.position.x,
             y: payload.position.y,
             direction: payload.direction,
-            speed: resolveBulletSpeed(payload.type),
+            speed: payload.speed ?? resolveBulletSpeed(payload.type),
             type: payload.type
         });
     },

@@ -22,6 +22,17 @@ test("toggleDebugMode flips the debug state", () => {
     assert.equal(state.ui.showBotDebug, false);
 });
 
+test("FPS averages measured frame intervals instead of reporting only the latest frame",()=>{
+    const state=createClientState();
+    for(const time of [1000,1016,1048,1064])recordDebugRenderTick(state,time);
+    assert.ok(Math.abs(state.debug.loop.renderHz!-46.875)<1e-8);
+    const lines=buildDebugHudLines(state,1064);
+    assert.ok(lines.some(line=>line.includes("FPS: 46.9 (avg)")));
+    assert.ok(lines.some(line=>line.includes("Frame: 21 ms avg / 32 ms p95")));
+    for(let i=0;i<100;i++)recordDebugRenderTick(state,1080+i*16);
+    assert.equal(state.debug.loop.renderIntervalsMs.length,60);
+});
+
 test("debug metrics capture loop/send/rejection state for HUD output", () => {
     const state = createClientState();
     recordDebugSocketState(state, true);

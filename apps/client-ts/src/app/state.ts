@@ -4,6 +4,8 @@ import { resolveCitySpawn } from "../world/city-spawn.js";
 import { logMovementDiag } from "./movement-diagnostics.js";
 
 export type LocalState = {
+    cloakedUntil?: number;
+    frozenUntil?: number;
     id: string | null;
     city: number;
     direction: number;
@@ -30,6 +32,9 @@ const DEFAULT_LOBBY_CITY_ID = 0;
 const DEFAULT_LOBBY_SPAWN = resolveCitySpawn(DEFAULT_LOBBY_CITY_ID);
 
 export type RemotePlayer = {
+    botRole?: "mayor" | "shooter" | "bomb_defuser" | "miner";
+    cloakedUntil?: number;
+    frozenUntil?: number;
     id: string;
     city: number;
     direction: number;
@@ -73,6 +78,7 @@ export type DebugLoopStats = {
     lastRenderDeltaMs: number | null;
     updateHz: number | null;
     renderHz: number | null;
+    renderIntervalsMs: number[];
     mismatchEvents: number;
 };
 
@@ -131,6 +137,7 @@ export type ClientState = {
         radius: number;
         armed?: boolean;
         active?: boolean;
+        fuseEndsAt?: number;
     }>;
     bullets: Map<string, BulletState>;
     buildings: Map<string, {
@@ -262,6 +269,8 @@ export type ClientState = {
         showMapModal: boolean;
         showOptionsModal: boolean;
         showBuildMenu: boolean;
+        showPopulationLinks: boolean;
+        selectedPopulationHouseId: string | null;
         buildMenuAnchorX: number;
         buildMenuAnchorY: number;
         buildGhostMode: boolean;
@@ -292,8 +301,11 @@ export type ClientState = {
     };
 };
 
+export const isThreeDemoMode = (): boolean => typeof window !== "undefined"
+    && new URLSearchParams(window.location.search).get("demo") === "1";
+
 const createLocalDefaults = (): LocalState => ({
-    id: null,
+    id: isThreeDemoMode() ? "local-three-demo" : null,
     city: DEFAULT_LOBBY_CITY_ID,
     direction: 0,
     x: DEFAULT_LOBBY_SPAWN?.x ?? 128,
@@ -320,6 +332,8 @@ const createUiDefaults = (): ClientState["ui"] => ({
     showMapModal: false,
     showOptionsModal: false,
     showBuildMenu: false,
+    showPopulationLinks: false,
+    selectedPopulationHouseId: null,
     buildMenuAnchorX: 56,
     buildMenuAnchorY: 56,
     buildGhostMode: false,
@@ -374,6 +388,7 @@ const createDebugDefaults = (): DebugState => ({
         lastRenderDeltaMs: null,
         updateHz: null,
         renderHz: null,
+        renderIntervalsMs: [],
         mismatchEvents: 0
     }
 });
@@ -471,7 +486,6 @@ export const createClientState = (): ClientState => {
 // Server authority plus WAN latency causes small drift; soften correction to avoid visible jitter.
 const LOCAL_SNAPSHOT_SOFT_RECONCILE_DISTANCE_PX = 22;
 const LOCAL_SNAPSHOT_HARD_RECONCILE_DISTANCE_PX = 84;
-const LOCAL_SNAPSHOT_SOFT_RECONCILE_GAIN = 0.231;
 const LOCAL_SNAPSHOT_MOVING_RECONCILE_DISTANCE_PX = 61;
 const LOCAL_SNAPSHOT_MOVING_RECONCILE_GAIN = 0.101;
 const LOCAL_SNAPSHOT_HISTORY_MAX = 10;
@@ -541,7 +555,8 @@ const pushAuthoritativeSnapshot = (
 const resolveAuthoritativeTarget = (
     state: ClientState,
     nowMs: number,
-    interpolationDelayMs: number
+    interpolationDelayMs: number,
+    allowExtrapolation=true
 ): { x: number; y: number; direction: number; } | null => {
     const history = state.render.authoritativeSnapshots;
     if (history.length === 0) {
@@ -573,10 +588,10 @@ const resolveAuthoritativeTarget = (
     const dt = Math.max(1, latest.serverTime - previous.serverTime);
     const vx = (latest.x - previous.x) / dt;
     const vy = (latest.y - previous.y) / dt;
-    const extrapolationMs = Math.max(0, Math.min(
+    const extrapolationMs = allowExtrapolation ? Math.max(0, Math.min(
         LOCAL_SNAPSHOT_MAX_EXTRAPOLATION_MS,
         targetTime - latest.serverTime
-    ));
+    )) : 0;
     return {
         x: latest.x + (vx * extrapolationMs),
         y: latest.y + (vy * extrapolationMs),
@@ -603,7 +618,8 @@ export const updateFromSnapshot = (
     for (const player of snapshot.players) {
         if (player.id === state.local.id) {
             pushAuthoritativeSnapshot(state, snapshot.serverTime, player);
-            const authoritative = resolveAuthoritativeTarget(state, nowMs, interpolationDelayMs);
+            const authoritative = resolveAuthoritativeTarget(state, nowMs, interpolationDelayMs,isLocallyMoving);
+            state.local.cloakedUntil=player.cloakedUntil??0;state.local.frozenUntil=player.frozenUntil??0;
             state.local.city = player.city;
             if (canApplyAuthoritativeDirection) {
                 state.local.direction = authoritative?.direction ?? player.direction;
@@ -708,7 +724,9 @@ export const updateFromSnapshot = (
         }
 
         const remote: RemotePlayer = {
+            ...(player.botRole ? {botRole:player.botRole} : {}),
             id: player.id,
+            cloakedUntil:player.cloakedUntil??0,frozenUntil:player.frozenUntil??0,
             city: player.city,
             direction: normalizeDirection32Step(player.direction),
             x: player.offset.x,

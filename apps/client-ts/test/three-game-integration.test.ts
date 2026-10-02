@@ -1,0 +1,31 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {makeEnvelope,type KnownTypedEventEnvelope} from "@battlecity/protocol";
+import {GameRuntime} from "../../server-ts/src/runtime/GameRuntime.js";
+import {createRuntimeState,DEFAULT_RUNTIME_CONFIG} from "../../server-ts/src/runtime/types.js";
+import {initializeJoinedPlayer,seedCommandCenter} from "../../server-ts/src/domain/spawn/CityBootstrap.js";
+import {createClientState} from "../src/app/state.js";
+import {applyServerEvent} from "../src/app/network-events.js";
+import {createThreeGameActions} from "../src/app/three-game-actions.js";
+import {createNetworkCombat} from "../src/render/three/network-combat.js";
+import type {EventSender} from "../src/network/events.js";
+
+test("live Three client consumes production, combat, orb victory and respawn events end to end",()=>{
+    const client=createClientState(),enemy=createClientState(),combat=createNetworkCombat();client.debug.socketConnected=enemy.debug.socketConnected=true;
+    const server=createRuntimeState(),config={...DEFAULT_RUNTIME_CONFIG,rogueMaxBots:0};seedCommandCenter(server,0,config);seedCommandCenter(server,1,config);
+    const deliver=(state:typeof client,event:KnownTypedEventEnvelope):void=>{if(state===client)combat.observe(event,state);applyServerEvent(state,event);};
+    const runtime=new GameRuntime({emitAll:event=>{deliver(client,event as KnownTypedEventEnvelope);deliver(enemy,event as KnownTypedEventEnvelope);},emitTo:(id,event)=>deliver(id==="pilot"?client:enemy,event as KnownTypedEventEnvelope),reject:(_id,reason)=>assert.fail(reason)},config,server,{initializeJoinedPlayer});
+    let sequence=0;const send:EventSender=(type,payload)=>runtime.handleRawEvent("pilot",makeEnvelope(type,++sequence,payload));
+    send("lobby.join.request",{desiredCity:0});runtime.handleRawEvent("enemy",makeEnvelope("lobby.join.request",1,{desiredCity:1}));assert.equal(client.local.id,"pilot");assert.equal(client.inventory.size,0);
+    const place=(type:number,tileX:number,tileY:number):void=>send("building.place.request",{ownerId:"pilot",cityId:0,type,tileX,tileY});
+    place(300,26,31);place(300,21,31);place(412,30,24);for(let tick=0;tick<150;tick++)runtime.tickBullets();assert.ok(client.research.get(0)?.completed.includes(412));
+    place(112,26,26);for(let tick=0;tick<150;tick++)runtime.tickBullets();assert.ok((client.factoryStock.get(0)?.get(12)??0)>0);
+    const pilot=server.players.get("pilot")!;pilot.x=client.local.x=26*48+56;pilot.y=client.local.y=26*48+102;
+    createThreeGameActions(client,send).collect();assert.equal(client.inventory.get(12),1);
+    const target=server.players.get("enemy")!;target.x=pilot.x+100;target.y=pilot.y;runtime.tickBullets();client.local.direction=pilot.direction=8;
+    createThreeGameActions(client,send).fire("laser");assert.equal(client.bullets.size,1);assert.equal([...client.bullets.values()][0]!.speed,config.bulletSpeed);
+    for(let tick=0;tick<3;tick++)runtime.tickBullets();assert.ok(enemy.local.health<100);assert.equal(client.bullets.size,0);const presentation=combat.frame(client);assert.equal(presentation.shots.length,1);assert.equal(presentation.impacts.length,1);
+    server.playerInventory.get("pilot")!.set(5,1);client.inventory.set(5,1);pilot.x=client.local.x=95*48+48;pilot.y=client.local.y=33*48;
+    assert.equal(createThreeGameActions(client,send).deploy(5),true);assert.equal(client.inventory.get(5)??0,0);assert.equal(client.events.lastOrbEvent?.targetCityId,1);assert.equal([...client.buildings.values()].some(building=>building.cityId===1),false);assert.ok((client.cityFinance.get(0)?.score??0)>0);
+    send("lobby.leave.request",{});assert.equal(client.local.id,null);assert.equal(server.players.has("pilot"),false);send("lobby.join.request",{desiredCity:0});assert.equal(client.local.id,"pilot");assert.equal(client.local.health,100);assert.equal(client.inventory.size,0);
+});

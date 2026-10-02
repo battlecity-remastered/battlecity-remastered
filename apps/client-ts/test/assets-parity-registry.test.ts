@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { TEXTURE_PATHS, parityTextureKeys } from "../src/render/parity/texture-paths.js";
 
-const publicDir = resolve(process.cwd(), "apps/client-ts/public");
+const publicDir = fileURLToPath(new URL("../public/", import.meta.url));
 
 test("classic texture registry exposes full parity texture key set", () => {
     const keys = parityTextureKeys();

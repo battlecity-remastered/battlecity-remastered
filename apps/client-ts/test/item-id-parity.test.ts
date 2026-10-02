@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { ITEM_TYPE_IDS } from "../src/render/parity/constants.js";
 
 test("canonical item type ids match classic ordering", () => {
@@ -24,14 +23,14 @@ test("canonical item type ids match classic ordering", () => {
 
 test("no local item id constant redefinitions remain in intents/inventory/render paths", () => {
     const targets = [
-        "apps/client-ts/src/app/intents-actions.ts",
-        "apps/client-ts/src/gameplay/items/IconInventoryService.ts",
-        "apps/client-ts/src/render/items/ItemRenderer.ts",
-        "apps/client-ts/src/render/scene.ts"
+        "../src/app/intents-actions.ts",
+        "../src/gameplay/items/IconInventoryService.ts",
+        "../src/render/three/inventory-model.ts",
+        "../src/render/three/industrial-demo.ts"
     ];
 
     for (const target of targets) {
-        const source = readFileSync(resolve(process.cwd(), target), "utf8");
+        const source = readFileSync(new URL(target, import.meta.url), "utf8");
         assert.equal(/const\s+ITEM_TYPE_[A-Z0-9_]+\s*=/.test(source), false, target);
     }
 });

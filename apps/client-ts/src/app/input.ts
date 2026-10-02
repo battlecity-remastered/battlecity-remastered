@@ -1,4 +1,4 @@
-import type { ClientState } from "./state.js";
+import { isThreeDemoMode, type ClientState } from "./state.js";
 import { isInteractiveKeyboardTarget } from "../input/interactive-target.js";
 
 const asLower = (value: string): string => value.toLowerCase();
@@ -61,7 +61,7 @@ const outputBuildings = (state: ClientState): void => {
     }
 };
 
-const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean): void => {
+const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: boolean, modernDriving = false): void => {
     if (isShiftEvent(event)) {
         state.controls.shift = value;
         state.controls.shoot = value;
@@ -76,6 +76,12 @@ const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: bo
     }
     const code = asLower(event.code);
     const key = asLower(event.key);
+    if (isThreeDemoMode() || modernDriving) {
+        if (code === "keys" || key === "s") {
+            state.controls.moveBackward = value;
+            return;
+        }
+    }
     if ((code === "keys" || key === "s") && value) {
         outputBuildings(state);
         return;
@@ -100,23 +106,30 @@ const setControlFromEvent = (state: ClientState, event: KeyboardEvent, value: bo
     state.controls[control] = value;
 };
 
-export const registerInputHandlers = (state: ClientState): (() => void) => {
+export const registerInputHandlers = (state: ClientState, modernDriving = false): (() => void) => {
     const onKeyDown = (event: KeyboardEvent): void => {
         if (isInteractiveKeyboardTarget(event)) {
             return;
         }
-        setControlFromEvent(state, event, true);
+        if ((isThreeDemoMode() || modernDriving) && ["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.code)) event.preventDefault();
+        setControlFromEvent(state, event, true, modernDriving);
     };
 
     const onKeyUp = (event: KeyboardEvent): void => {
-        setControlFromEvent(state, event, false);
+        setControlFromEvent(state, event, false, modernDriving);
     };
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    const onBlur = (): void => {
+        if (!isThreeDemoMode() && !modernDriving) return;
+        state.controls.shoot = state.controls.shift = state.controls.moveForward = state.controls.moveBackward = state.controls.turnLeft = state.controls.turnRight = false;
+    };
+    window.addEventListener("blur", onBlur);
 
     return () => {
         window.removeEventListener("keydown", onKeyDown);
         window.removeEventListener("keyup", onKeyUp);
+        window.removeEventListener("blur", onBlur);
     };
 };

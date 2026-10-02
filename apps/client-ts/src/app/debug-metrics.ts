@@ -70,7 +70,8 @@ export const recordDebugRenderTick = (state: ClientState, nowMs: number = Date.n
     loop.renderCount += 1;
     if (loop.lastRenderAt !== null) {
         const delta = Math.max(0, nowMs - loop.lastRenderAt);
-        loop.renderHz = resolveRateFromDelta(delta);
+        pushWindowedSample(loop.renderIntervalsMs,delta,60);
+        loop.renderHz = resolveRateFromDelta(computeAverage(loop.renderIntervalsMs));
     }
     if (loop.lastUpdateAt !== null) {
         loop.lastRenderDeltaMs = Math.max(0, nowMs - loop.lastUpdateAt);
@@ -171,7 +172,8 @@ const appendLoopLines = (lines: string[], state: ClientState): void => {
     const loop = state.debug.loop;
     const mismatch = loop.mismatchEvents > 0 ? `, stale updates ${loop.mismatchEvents}` : "";
     lines.push(`Render/update: ${loop.renderCount}/${loop.updateCount} (last render +${formatMs(loop.lastRenderDeltaMs)}${mismatch})`);
-    lines.push(`FPS: ${formatRate(loop.renderHz)}  Tick: ${formatRate(loop.updateHz)} Hz`);
+    lines.push(`FPS: ${formatRate(loop.renderHz)} (avg)  Tick: ${formatRate(loop.updateHz)} Hz`);
+    if(loop.renderIntervalsMs.length){const sorted=[...loop.renderIntervalsMs].sort((a,b)=>a-b);const p95=sorted[Math.max(0,Math.ceil(sorted.length*0.95)-1)]!;lines.push(`Frame: ${formatMs(computeAverage(sorted))} avg / ${formatMs(p95)} p95`);}
 };
 
 export const buildDebugHudLines = (state: ClientState, nowMs: number = Date.now()): string[] => {

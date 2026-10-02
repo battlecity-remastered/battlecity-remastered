@@ -1,5 +1,5 @@
 import { Application, Container, Sprite } from "pixi.js";
-import type { ClientState } from "../app/state.js";
+import { isThreeDemoMode, type ClientState } from "../app/state.js";
 import { renderGroundLayer } from "./layers/GroundLayer.js";
 import { renderTileLayer } from "./layers/TileLayer.js";
 import { renderChangingLayer } from "./layers/ChangingLayer.js";
@@ -14,6 +14,8 @@ import { resolveViewportFromState } from "../gameplay/world-viewport.js";
 import { resolveTileDrawRadius } from "./layers/terrain-parity-helpers.js";
 import { TILE } from "./parity/constants.js";
 import { recordDebugRenderTick } from "../app/debug-metrics.js";
+import { createThreeBattlefield } from "./three/ThreeBattlefield.js";
+import { createIndustrialDemoLayout, createDefenseDemoLayout } from "./three/industrial-demo.js";
 import { resolveLocalRenderPosition } from "../app/render-timing.js";
 import { renderSidePanel } from "./side-panel.js";
 import { renderGhostPlacement, renderWorldObjects, syncCommandCenterLabels } from "./scene-world-objects.js";
@@ -234,6 +236,7 @@ const initPixiApplication = async (): Promise<Application> => {
                     width: window.innerWidth,
                     height: window.innerHeight,
                     background: "#15241f",
+                    backgroundAlpha: 0,
                     antialias: false,
                     roundPixels: true,
                     preference
@@ -264,7 +267,7 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
     attachCanvasToRoot(app);
     const textures = createEmptyTextureSet();
     console.info("[scene.init] loading classic textures");
-    void loadTextureSet()
+    if (!isThreeDemoMode()) void loadTextureSet()
         .then((loadedTextures) => {
             Object.assign(textures, loadedTextures);
             const textureEntries = Object.entries(textures);
@@ -279,6 +282,49 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
         });
     const layers = createSceneLayers(app, textures);
     const mapData = await loadMapData();
+    const industrialBuildings = isThreeDemoMode() ? createIndustrialDemoLayout(mapData) : [];
+    const defenses = isThreeDemoMode() ? createDefenseDemoLayout(mapData) : [];
+    const battlefield = await createThreeBattlefield(mapData, industrialBuildings, defenses);
+    const root = document.getElementById("app");
+    root?.insertBefore(battlefield.canvas, app.canvas);
+    Object.assign(app.canvas.style, {
+        position: "absolute",
+        inset: "0",
+        zIndex: "1",
+        pointerEvents: "auto"
+    });
+    app.stage.visible = false;
+    if (new URLSearchParams(window.location.search).get("demo") === "1" && root) {
+        root.classList.add("three-demo-mode");
+        const demoHud = document.createElement("div");
+        demoHud.dataset.ui = "three-demo-hud";
+        demoHud.innerHTML = "<strong>BATTLECITY</strong><span>BALKH INDUSTRIAL DISTRICT</span><small>WASD / ARROWS TO DRIVE · SPACE / CLICK TO FIRE</small>";
+        Object.assign(demoHud.style, {
+            position: "absolute",
+            left: "24px",
+            top: "22px",
+            zIndex: "4",
+            display: "grid",
+            gap: "2px",
+            padding: "14px 18px",
+            border: "1px solid rgba(185, 222, 163, .32)",
+            borderRadius: "10px",
+            background: "linear-gradient(135deg, rgba(10, 22, 18, .88), rgba(20, 38, 31, .7))",
+            boxShadow: "0 18px 45px rgba(0, 0, 0, .24)",
+            backdropFilter: "blur(12px)",
+            pointerEvents: "none",
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            letterSpacing: ".08em"
+        });
+        const title = demoHud.querySelector("strong");
+        const subtitle = demoHud.querySelector("span");
+        const controls = demoHud.querySelector("small");
+        if (title instanceof HTMLElement) Object.assign(title.style, { color: "#e8ffc9", fontSize: "20px" });
+        if (subtitle instanceof HTMLElement) Object.assign(subtitle.style, { color: "#d6a94f", fontSize: "11px" });
+        if (controls instanceof HTMLElement) Object.assign(controls.style, { color: "#b9c9bd", fontSize: "10px", marginTop: "7px" });
+        root.appendChild(demoHud);
+    }
+    window.addEventListener("resize", battlefield.resize);
     console.info("[scene.init] map ready", {
         size: mapData.map.length,
         blockingTiles: mapData.blockingTiles.size,
@@ -300,7 +346,9 @@ export const createSceneRuntime = async (state: ClientState): Promise<SceneRunti
             if (Number.isFinite(rect.height) && rect.height > 0) {
                 state.pointer.surfaceHeight = rect.height;
             }
-            renderSceneFrame(state, mapData, layers);
+            if (!isThreeDemoMode()) renderSceneFrame(state, mapData, layers);
+            else recordDebugRenderTick(state);
+            battlefield.render(state);
             renderedFrames += 1;
             const nowMs = Date.now();
             if ((nowMs - lastDiagnosticAt) >= RENDER_DIAGNOSTIC_INTERVAL_MS) {

@@ -81,6 +81,7 @@ const buildLobbyCityRowModel = (
 };
 
 const buildLobbyCityMetaText = (model: LobbyCityRowModel): string => {
+    if (model.mayorId?.startsWith("fake_city_")) return "AI CITY • Defended opponent • Capture with an orb";
     const mayorLabel = model.mayorId ? model.mayorId : "(open)";
     const parts = [
         `Mayor: ${mayorLabel}`,

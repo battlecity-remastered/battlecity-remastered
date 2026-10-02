@@ -1,4 +1,4 @@
-import type { ClientState } from "../app/state.js";
+import { isThreeDemoMode, type ClientState } from "../app/state.js";
 import { PANEL_WIDTH } from "../gameplay/world-viewport.js";
 import { PANEL_BUTTONS, PANEL_INVENTORY_SLOTS, type PanelButtonKey } from "../render/panel/panel-visuals.js";
 import { ITEM_TYPE_BOMB } from "../render/parity/constants.js";
@@ -435,6 +435,10 @@ export const registerMouseInputHandlers = (
     const onMouseDown = (event: Event): void => {
         const pointerEvent = event as MouseEvent;
         updatePointerFromMouseEvent(state, surface, pointerEvent);
+        if (isThreeDemoMode()) {
+            if (pointerEvent.button === 0) { state.controls.shoot = true; pointerEvent.preventDefault(); }
+            return;
+        }
         const handled = tryHandleRightClick(state, pointerEvent)
             || tryHandleGhostBuildClick(state, pointerEvent)
             || tryHandleDemolishClick(state, pointerEvent)
@@ -489,6 +493,9 @@ export const registerMouseInputHandlers = (
         syncSurfaceMetrics(state, surface);
         syncCursor(state, surface);
     };
+    const onWindowMouseUp = (event: Event): void => {
+        if (isThreeDemoMode()) onMouseUp(event);
+    };
 
     surface.addEventListener("mousedown", onMouseDown);
     surface.addEventListener("mouseup", onMouseUp);
@@ -498,6 +505,7 @@ export const registerMouseInputHandlers = (
 
     if (windowSource) {
         windowSource.addEventListener("resize", onWindowResize);
+        windowSource.addEventListener("mouseup", onWindowMouseUp);
     }
 
     return () => {
@@ -508,6 +516,7 @@ export const registerMouseInputHandlers = (
         surface.removeEventListener("contextmenu", onContextMenu);
         if (windowSource) {
             windowSource.removeEventListener("resize", onWindowResize);
+            windowSource.removeEventListener("mouseup", onWindowMouseUp);
         }
         if (surface.style) {
             surface.style.cursor = "default";

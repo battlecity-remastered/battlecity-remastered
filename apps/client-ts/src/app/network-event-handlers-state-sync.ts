@@ -106,9 +106,15 @@ export const auxHandlers: {
         if (typeof payload.active === "boolean") {
             Object.assign(nextHazard, { active: payload.active });
         }
+        if(payload.type===3 && payload.armed && payload.active!==false)Object.assign(nextHazard,{fuseEndsAt:Date.now()+(payload.remainingMs??5000)});
         state.hazards.set(payload.id, nextHazard);
     },
     "hazard.remove": (state, payload) => {
+        const hazard=state.hazards.get(payload.id);
+        if(hazard && payload.reason==="detonated"){
+            state.events.effects.explosions.push({id:`hazard-${payload.id}`,x:hazard.x+24,y:hazard.y+24,variant:hazard.type===3?"large":"small",createdAt:Date.now()});
+            if(state.events.effects.explosions.length>24)state.events.effects.explosions.shift();
+        }
         state.hazards.delete(payload.id);
     },
     "score.promotion": (state, payload) => {
@@ -151,6 +157,11 @@ export const auxHandlers: {
         }
     },
     "defense.remove": (state, payload) => {
+        const defense=state.defenses.get(payload.id);
+        if(defense&&payload.reason==="destroyed"){
+            state.events.effects.explosions.push({id:`defense-${payload.id}`,x:defense.tileX*48+24,y:defense.tileY*48+24,variant:"large",createdAt:Date.now()});
+            if(state.events.effects.explosions.length>24)state.events.effects.explosions.shift();
+        }
         state.defenses.delete(payload.id);
     },
     "demolish.denied": (state, payload) => {

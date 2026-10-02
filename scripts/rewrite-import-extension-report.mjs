@@ -6,7 +6,7 @@ import path from "node:path";
 
 const STRICT = process.argv.includes("--strict");
 const IMPORT_RE = /(?:import|export)\s+(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g;
-const ALLOWED_SOURCE_EXTENSIONS = [".js", ".mjs", ".cjs", ".json"];
+const ALLOWED_SOURCE_EXTENSIONS = [".js", ".mjs", ".cjs", ".json", ".css"];
 const TARGETS = [
     "apps/client-ts/src",
     "apps/server-ts/src",

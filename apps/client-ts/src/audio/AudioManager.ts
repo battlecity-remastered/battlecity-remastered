@@ -125,8 +125,8 @@ export const createAudioManager = (state: ClientState): AudioRuntime => {
             }
         },
         dispose: () => {
-            if (context) {
-                void context.close();
+            if (context && context.state !== "closed") {
+                void context.close().catch(() => {});
             }
         }
     };

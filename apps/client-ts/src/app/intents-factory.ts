@@ -122,3 +122,9 @@ export const resolveFactoryPickupItemType = (state: ClientState): number | null 
 
     return resolveFactoryStockFallbackItemType(cityStock, selected);
 };
+
+// Three.js requests the icon actually underneath the tank. The legacy fallback
+// remains available to old intent callers, but must not hide an out-of-range U.
+export const resolveNearbyPickupItemType = (state: ClientState): number | null =>
+    resolveNearestHazardPickupItemType(state, state.local.city) ??
+    resolveNearestFactoryPickupItemType(state, state.local.city, state.factoryStock.get(state.local.city) ?? new Map());

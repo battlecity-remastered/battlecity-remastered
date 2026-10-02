@@ -27,6 +27,7 @@ const standardDeviation = (values: number[]): number => {
 
 test("resolveLocalRenderPosition extrapolates from the latest simulation step", () => {
     const state = createClientState();
+    state.controls.moveForward = true;
     state.render.previousLocalX = 100;
     state.render.previousLocalY = 200;
     state.render.lastResolvedAt = null;
@@ -43,6 +44,7 @@ test("resolveLocalRenderPosition extrapolates from the latest simulation step", 
 
 test("resolveLocalRenderPosition clamps extrapolation to one simulation step", () => {
     const state = createClientState();
+    state.controls.moveForward = true;
     state.render.previousLocalX = 0;
     state.render.previousLocalY = 0;
     state.render.lastResolvedAt = null;
@@ -55,8 +57,9 @@ test("resolveLocalRenderPosition clamps extrapolation to one simulation step", (
     assert.equal(view.y, 20);
 });
 
-test("resolveLocalRenderPosition eases stop transitions instead of snapping projected offset", () => {
+test("resolveLocalRenderPosition clears prediction when movement input is released", () => {
     const state = createClientState();
+    state.controls.moveForward = true;
     state.render.previousLocalX = 100;
     state.render.previousLocalY = 100;
     state.local.x = 120;
@@ -66,6 +69,7 @@ test("resolveLocalRenderPosition eases stop transitions instead of snapping proj
     const movingFrame = resolveLocalRenderPosition(state, 1_016);
     assert.ok(movingFrame.x > 120);
 
+    state.controls.moveForward = false;
     state.render.previousLocalX = 120;
     state.render.previousLocalY = 100;
     state.local.x = 120;
@@ -73,9 +77,11 @@ test("resolveLocalRenderPosition eases stop transitions instead of snapping proj
     state.debug.loop.lastUpdateAt = 1_033;
 
     const firstStopFrame = resolveLocalRenderPosition(state, 1_034);
-    assert.ok(firstStopFrame.x > 120, `expected eased hold above local, got ${firstStopFrame.x}`);
+    assert.equal(firstStopFrame.x, 120);
+    assert.equal(state.render.projectedOffsetX, 0);
+    assert.equal(state.render.projectedOffsetY, 0);
     const secondStopFrame = resolveLocalRenderPosition(state, 1_050);
-    assert.ok(secondStopFrame.x <= firstStopFrame.x);
+    assert.equal(secondStopFrame.x, 120);
 });
 
 test("extrapolated local sampling has lower frame-step jitter than tick-hold sampling", () => {

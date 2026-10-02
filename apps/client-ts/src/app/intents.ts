@@ -1,6 +1,6 @@
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
 import { normalizeHeading32, normalizeThrottle } from "@battlecity/sim-core";
-import type { ClientState } from "./state.js";
+import { isThreeDemoMode, type ClientState } from "./state.js";
 import { appendActionIntents, type Intent } from "./intents-actions.js";
 import {
     direction32ToBulletHeading,
@@ -17,7 +17,7 @@ export type TypedIntent<TType extends EnvelopeType = EnvelopeType> = {
     payload: TType extends keyof KnownEventPayloadByType ? KnownEventPayloadByType[TType] : unknown;
 };
 
-const TURN_SPEED_STEPS_PER_SECOND = 12;
+export const TURN_SPEED_STEPS_PER_SECOND = 12;
 const SHOT_COOLDOWN_MS = 1000;
 const FLARE_BURST_COOLDOWN_MS = 500;
 const BULLET_TYPE_FLARE = 3;
@@ -142,11 +142,11 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
     appendPlayerUpdateIntent(state, nextDirection, isMoving, throttle, intents);
 
     let shouldShoot = false;
-    if (appendFlareBurstIntents(state, nowMs, intents)) {
+    if (!isThreeDemoMode() && appendFlareBurstIntents(state, nowMs, intents)) {
         shouldShoot = true;
     }
     const shotBulletType = resolveShotBulletType(state, isMoving);
-    if (state.controls.shoot && shotBulletType !== null && nowMs - state.local.lastShotAt > SHOT_COOLDOWN_MS) {
+    if (!isThreeDemoMode() && state.controls.shoot && shotBulletType !== null && nowMs - state.local.lastShotAt > SHOT_COOLDOWN_MS) {
         state.local.lastShotAt = nowMs;
         intents.push(asBulletIntent(state, shotBulletType));
         shouldShoot = true;
