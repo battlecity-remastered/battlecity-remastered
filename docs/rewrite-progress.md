@@ -877,3 +877,19 @@ Added tests include held/deployed stock totals, city isolation, replacement afte
 one slot is released, and two players trying to collect the last orb. Existing
 pickup/drop, inventory-cap and factory-destruction regressions also pass.
 All 508 tests and strict structural/type checks pass, along with lint/build.
+
+
+Orb navigation now lives in a compact violet strip beneath the inventory radar,
+showing the nearest enemy city accepted by the existing orb-target selector,
+compass bearing and distance in tiles. It highlights when carrying an orb and
+opens the tactical map with a target reticle and bearing line. Both map markers
+clear when no eligible command centre remains. Home navigation stays visible.
+The selector exposes actual command-centre coordinates (including relocated
+cities) and continues respecting explicit non-orbable finance flags.
+
+The strip shares the radar's 10 Hz update, caches unchanged text, and updates
+full-map positions only while that map is open; it adds no WebGL draw calls or
+render targets. Isolated Intel GPU Chrome checks against playbattlecity.com
+passed at 1440x900 and 1024x768: target navigation, carrying highlight, map click,
+empty-state cleanup and panel bounds, with no browser errors. All 509 tests and
+strict structural/type checks pass.

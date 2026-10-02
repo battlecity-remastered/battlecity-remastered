@@ -10,6 +10,11 @@ export type NearestOrbableCity = {
     direction: string;
 };
 
+export type OrbableCityNavigation = NearestOrbableCity & {
+    position: { x: number; y: number };
+    bearing: number;
+};
+
 const resolveDirectionLabel = (dx: number, dy: number): string => {
     const threshold = TILE;
     let horizontal = "";
@@ -54,7 +59,7 @@ const resolveBuildingCenter = (tileX: number, tileY: number): { x: number; y: nu
     };
 };
 
-export const resolveNearestOrbableCity = (state: ClientState): NearestOrbableCity | null => {
+export const resolveNearestOrbableCity = (state: ClientState): OrbableCityNavigation | null => {
     const localCenterX = state.local.x + (TILE / 2);
     const localCenterY = state.local.y + (TILE / 2);
     let nearest: {
@@ -97,7 +102,9 @@ export const resolveNearestOrbableCity = (state: ClientState): NearestOrbableCit
         cityId: nearest.cityId,
         cityName: getCityDisplayName(nearest.cityId),
         distanceTiles: Math.max(0, Math.round(Math.sqrt(nearest.distanceSquared) / TILE)),
-        direction: formatDirectionLabel(resolveDirectionLabel(nearest.dx, nearest.dy))
+        direction: formatDirectionLabel(resolveDirectionLabel(nearest.dx, nearest.dy)),
+        position: { x: (localCenterX + nearest.dx) / TILE, y: (localCenterY + nearest.dy) / TILE },
+        bearing: (Math.atan2(nearest.dx, -nearest.dy) * 180 / Math.PI + 360) % 360
     };
 };
 

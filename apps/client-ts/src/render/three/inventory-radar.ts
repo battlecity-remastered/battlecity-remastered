@@ -2,6 +2,7 @@ import { isDefenseVisibleToLocalPlayer } from "../parity/defense-visibility.js";
 import type { ClientState } from "../../app/state.js";
 import { isInteractiveKeyboardTarget } from "../../input/interactive-target.js";
 import { projectRadarPoint, resolveRadarNavigation, type RadarMap } from "./radar-model.js";
+import { createInventoryOrbTarget } from "./inventory-orb-target.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const marker = (shape: string, attributes: Record<string, string>): SVGElement => {
@@ -65,7 +66,7 @@ export const createInventoryRadar = (inventory: HTMLElement, data: RadarMap) => 
         <path class="bc-map-home" d="M0 -5L5 0L0 5L-5 0Z" fill="#edcc84" stroke="#fff0c1"/>
         <path class="bc-map-player" d="M0 -6L4 5L0 3L-4 5Z" fill="#b8ffe2" stroke="#123c30"/>
         </svg><span class="bc-map-north">N ↑</span></div>
-        <div class="bc-map-legend"><span>◆ HOME</span><span>▲ YOU</span><span>● CITIES</span><span class="bc-map-lava-key">■ LAVA</span></div>
+        <div class="bc-map-legend"><span>◆ HOME</span><span>▲ YOU</span><span class="bc-map-orb-key">◎ ORB</span><span>● CITIES</span><span class="bc-map-lava-key">■ LAVA</span></div>
         <footer><strong></strong><span>M / ESC TO CLOSE</span></footer>`;
     inventory.append(overlay);
     const localSites = button.querySelector(".bc-radar-sites")!;
@@ -87,6 +88,7 @@ export const createInventoryRadar = (inventory: HTMLElement, data: RadarMap) => 
         overlay.hidden = !open; button.setAttribute("aria-expanded", String(open));
     };
     button.addEventListener("click", () => toggle());
+    const orbTarget = createInventoryOrbTarget(telemetry, button.querySelector("svg")!, overlay.querySelector("svg")!, () => toggle(true));
     overlay.querySelector("button")!.addEventListener("click", () => toggle(false));
     const onKey = (event: KeyboardEvent): void => {
         if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -106,6 +108,7 @@ export const createInventoryRadar = (inventory: HTMLElement, data: RadarMap) => 
             if (now - lastUpdate < 100) return;
             lastUpdate = now;
             const nav = resolveRadarNavigation(state.local.x, state.local.y, state.local.direction, state.local.city);
+            orbTarget.update(state, nav.player, !overlay.hidden);
             const home = projectRadarPoint(nav.home, nav.player);
             const scale = 42 / 24;
             const image = button.querySelector("image")!;
