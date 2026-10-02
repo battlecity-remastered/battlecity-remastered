@@ -1,36 +1,34 @@
 import type { KnownEventPayloadByType, KnownTypedEventEnvelope } from "@battlecity/protocol";
 import { Effect } from "effect";
-import { buildPlayersSnapshot, emitPlayersSnapshot } from "./snapshot.js";
-import type { Broadcaster, RuntimeEmitter } from "./emitter.js";
-import type { RuntimeConfig, RuntimeRejectReason, RuntimeState } from "./types.js";
-import { upsertPlayerFromUpdate } from "./player-runtime.js";
-import { createBulletFromRequest } from "./bullet-runtime.js";
-import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
-import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
-import { validatePlayerUpdate } from "../domain/security/PlayerUpdateValidator.js";
-import { buildCityFinancePayload, emitCityFinance, getOrCreateCity } from "../domain/economy/CityEconomyService.js";
-import { emitResearchState, startResearch } from "../domain/research/ResearchService.js";
-import { collectFactoryStock } from "../domain/factories/FactoryService.js";
-import { deployHazard } from "../domain/hazards/HazardService.js";
-import { dropOrb } from "../domain/orb/OrbService.js";
 import { addChatMessage, getChatHistoryForSocket } from "../domain/chat/ChatService.js";
+import { deployDefense } from "../domain/defense/DefenseService.js";
+import { emitCityFinance, getOrCreateCity } from "../domain/economy/CityEconomyService.js";
+import { collectFactoryStock } from "../domain/factories/FactoryService.js";
+import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
+import { deployHazard } from "../domain/hazards/HazardService.js";
+import { pickupIcon } from "../domain/icons/IconDropService.js";
+import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
 import { addInventoryItem, emitInventoryState } from "../domain/inventory/InventoryService.js";
 import { useItem } from "../domain/items/ItemUseService.js";
-import { pickupIcon } from "../domain/icons/IconDropService.js";
-import { rejectSocket } from "./rejections.js";
-import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.js";
-import type { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
-import { bindSocketIdentity, resolveSocketUserId } from "../domain/identity/IdentityService.js";
+import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
+import { dropOrb } from "../domain/orb/OrbService.js";
+import { emitResearchState, startResearch } from "../domain/research/ResearchService.js";
 import { awardOrbProfileScore, lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
-import { asSpawnPayload, deployDefense } from "../domain/defense/DefenseService.js";
-import { markFakeCityCooldown } from "../domain/fake-cities/FakeCityService.js";
-import { handlePlayerBotDamage } from "./dispatch-combat.js";
-import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
-import { eliminatePlayer } from "./player-elimination.js";
+import { validatePlayerUpdate } from "../domain/security/PlayerUpdateValidator.js";
 import { logRuntime } from "../observability/RuntimeLogger.js";
-import type { RuntimePlayer } from "./types.js";
+import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
+import { createBulletFromRequest } from "./bullet-runtime.js";
+import { handlePlayerBotDamage } from "./dispatch-combat.js";
+import type { DispatchContext } from "./dispatch-context.js";
+import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.js";
+import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
+import { emitJoinWorldHydration } from "./join-hydration.js";
+import { eliminatePlayer } from "./player-elimination.js";
+import { upsertPlayerFromUpdate } from "./player-runtime.js";
+import { rejectSocket } from "./rejections.js";
+import { emitPlayersSnapshot } from "./snapshot.js";
+import type { RuntimePlayer, RuntimeRejectReason } from "./types.js";
 
-type DispatchContext = { state: RuntimeState; config: RuntimeConfig; emitter: RuntimeEmitter; broadcaster: Broadcaster; nextSeq: () => number; userStore?: UserStoreAdapter; initializeJoinedPlayer?: (state: RuntimeState, city: number, playerId: string, config: RuntimeConfig) => void; notifyOrbVictory?: (playerId: string, sourceCityId: number, targetCityId: number) => Effect.Effect<void> };
 type RuntimeHandler<TType extends keyof KnownEventPayloadByType> = (socketId: string, payload: KnownEventPayloadByType[TType], context: DispatchContext) => void;
 type HandlerMap = { [K in keyof KnownEventPayloadByType]?: RuntimeHandler<K> };
 
@@ -98,121 +96,6 @@ const rejectWithContext = (
     });
 };
 
-const emitHydrationEntities = (
-    state: RuntimeState,
-    emitter: RuntimeEmitter,
-    socketId: string
-): void => {
-    for (const bullet of state.bullets.values()) {
-        emitter.emitTo(socketId, "bullet.fired", {
-            id: bullet.id,
-            ownerId: bullet.ownerId,
-            city: bullet.city,
-            position: {
-                x: bullet.x,
-                y: bullet.y
-            },
-            direction: bullet.direction,
-            type: bullet.type
-        });
-    }
-
-    for (const building of state.buildings.values()) {
-        emitter.emitTo(socketId, "building.placed", {
-            id: building.id,
-            ownerId: building.ownerId,
-            cityId: building.cityId,
-            type: building.type,
-            tileX: building.tileX,
-            tileY: building.tileY,
-            health: building.health,
-            maxHealth: building.maxHealth
-        });
-        emitter.emitTo(socketId, "population.update", {
-            id: building.id,
-            cityId: building.cityId,
-            type: building.type,
-            tileX: building.tileX,
-            tileY: building.tileY,
-            population: building.population,
-            attachedHouseId: building.attachedHouseId,
-            removed: false
-        });
-    }
-
-    for (const hazard of state.hazards.values()) {
-        emitter.emitTo(socketId, "hazard.spawn", {
-            id: hazard.id,
-            cityId: hazard.cityId,
-            type: hazard.type,
-            position: {
-                x: hazard.x,
-                y: hazard.y
-            },
-            radius: hazard.radius,
-            armed: hazard.armed,
-            active: hazard.active,
-            ...(Number.isFinite(hazard.remainingMs) ? {remainingMs: hazard.remainingMs} : {})
-        });
-    }
-
-    for (const defense of state.defenses.values()) {
-        emitter.emitTo(socketId, "defense.spawn", asSpawnPayload(defense));
-    }
-};
-
-const emitHydrationCityState = (
-    state: RuntimeState,
-    config: RuntimeConfig,
-    emitter: RuntimeEmitter,
-    socketId: string,
-    sortedCityIds: number[]
-): void => {
-    for (const cityId of sortedCityIds) {
-        getOrCreateCity(state, cityId, config);
-        emitter.emitTo(socketId, "city.finance", buildCityFinancePayload(state, cityId, config));
-        const research = state.research.get(cityId);
-        emitter.emitTo(socketId, "research.update", {
-            cityId,
-            active: research?.active
-                ? {
-                    researchType: research.active.researchType,
-                    remainingMs: research.active.remainingMs
-                }
-                : undefined,
-            completed: [...(research?.completed ?? [])]
-        });
-        const stock = state.factoryStock.get(cityId);
-        if (!stock) {
-            continue;
-        }
-        for (const [itemType, itemStock] of stock.entries()) {
-            emitter.emitTo(socketId, "factory.stock", {
-                cityId,
-                itemType,
-                stock: itemStock
-            });
-        }
-    }
-};
-
-const emitJoinWorldHydration = (context: DispatchContext, socketId: string): void => {
-    const { state, config, emitter } = context;
-    const cityIds = new Set<number>();
-    for (let cityId = 0; cityId < config.cityCount; cityId += 1) {
-        cityIds.add(cityId);
-    }
-    for (const cityId of state.cities.keys()) {
-        cityIds.add(cityId);
-    }
-    const sortedCityIds = [...cityIds].sort((left, right) => left - right);
-
-    emitHydrationEntities(state, emitter, socketId);
-    emitHydrationCityState(state, config, emitter, socketId, sortedCityIds);
-
-    emitter.emitTo(socketId, "players.snapshot", buildPlayersSnapshot(state));
-};
-
 const handlers: HandlerMap = {
     "lobby.join.request": (socketId, payload, context) => {
         const userId = bindSocketIdentity(context.state, socketId, payload);
@@ -222,7 +105,7 @@ const handlers: HandlerMap = {
             payload.desiredCity,
             context.config
         ), (assignment) => {
-            if(!context.state.players.has(socketId))context.initializeJoinedPlayer?.(context.state, assignment.city, socketId, context.config);
+            if (!context.state.players.has(socketId)) context.initializeJoinedPlayer?.(context.state, assignment.city, socketId, context.config);
             if (context.userStore) {
                 Effect.runSync(context.userStore.getOrCreate(userId, payload.callsign));
             }

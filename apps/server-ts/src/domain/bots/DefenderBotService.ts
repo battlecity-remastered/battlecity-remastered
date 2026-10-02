@@ -1,5 +1,6 @@
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeBotController, RuntimeConfig, RuntimePlayer, RuntimeState } from "../../runtime/types.js";
+import { createBotPathContext, findBotPath } from "./BotPathingService.js";
 import {
     botFireAtTarget,
     hasBotTerrainSight,
@@ -7,7 +8,6 @@ import {
     resolveCityCenter,
     stepBotAlongPath
 } from "./BotShared.js";
-import { createBotPathContext, findBotPath } from "./BotPathingService.js";
 import { pickDefenderTarget, resolveDefenderMovementFallback } from "./DefenderBotTargetingService.js";
 
 import { defenderPatrolGoal, maybeLayMinerTrap } from "./DefenderBotActivities.js";
@@ -103,20 +103,20 @@ const createDefender = (
     const id = `defender_${cityId}_${state.seq}`;
     const center = resolveCityCenter(cityId, config);
     const angle = Math.random() * (Math.PI * 2);
-    let safeSpawn: {x: number; y: number} | undefined;
+    let safeSpawn: { x: number; y: number } | undefined;
     const pathContext = createBotPathContext();
     for (let sample = 0; sample < 32 && !safeSpawn; sample++) {
         const heading = angle + sample * Math.PI / 16;
         const spawnRadius = config.tileSize * (sample % 2 ? 8 : 10);
         const candidate = {
-            x: Math.floor((center.x + Math.cos(heading)*spawnRadius - BOT_HALF)/config.tileSize)*config.tileSize,
-            y: Math.floor((center.y + Math.sin(heading)*spawnRadius - BOT_HALF)/config.tileSize)*config.tileSize
+            x: Math.floor((center.x + Math.cos(heading) * spawnRadius - BOT_HALF) / config.tileSize) * config.tileSize,
+            y: Math.floor((center.y + Math.sin(heading) * spawnRadius - BOT_HALF) / config.tileSize) * config.tileSize
         };
-        if (candidate.x<0 || candidate.y<0 || candidate.x+48>config.mapMax || candidate.y+48>config.mapMax) continue;
+        if (candidate.x < 0 || candidate.y < 0 || candidate.x + 48 > config.mapMax || candidate.y + 48 > config.mapMax) continue;
         if (!isBotTopLeftPositionValid(state, config, candidate.x, candidate.y)) continue;
-        if ([...state.players.values()].some(player => Math.hypot(player.x-candidate.x,player.y-candidate.y)<config.tileSize*2)) continue;
-        if (!findBotPath(state, config, candidate.x, candidate.y, center.x-24, center.y+config.tileSize,
-            {searchRadiusTiles:32, maxNodes:8000, context:pathContext})) continue;
+        if ([...state.players.values()].some(player => Math.hypot(player.x - candidate.x, player.y - candidate.y) < config.tileSize * 2)) continue;
+        if (!findBotPath(state, config, candidate.x, candidate.y, center.x - 24, center.y + config.tileSize,
+            { searchRadiusTiles: 32, maxNodes: 8000, context: pathContext })) continue;
         safeSpawn = candidate;
     }
     if (!safeSpawn) return undefined;
@@ -135,7 +135,7 @@ const createDefender = (
     };
     state.players.set(id, player);
     const city = state.fakeCities.get(cityId);
-    if (city) { city.defenderRoster ??= {}; city.defenderRoster[role] = {id, respawnAt: 0}; }
+    if (city) { city.defenderRoster ??= {}; city.defenderRoster[role] = { id, respawnAt: 0 }; }
     state.botControllers.set(id, {
         id,
         botType: DEFENDER_TYPE,
@@ -149,6 +149,20 @@ const createDefender = (
         nextShotAt: now + config.botShootIntervalMs
     });
     return player;
+};
+
+const populateDefenderRoles = (state: RuntimeState, config: RuntimeConfig, now: number, cityId: number, maxPerCity: number): boolean => {
+    let dirty = false;
+    const fakeCity = state.fakeCities.get(cityId)!;
+    for (const role of DEFENDER_ROLES.slice(0, maxPerCity)) {
+        if (countTotalDefenders(state) >= MAX_TOTAL_DEFENDERS) break;
+        const slot = fakeCity.defenderRoster?.[role];
+        if (slot && state.players.has(slot.id) && state.botControllers.has(slot.id)) continue;
+        if (slot && slot.respawnAt === 0) { slot.respawnAt = now + 20_000; continue; }
+        if (slot && now < slot.respawnAt) continue;
+        dirty = !!createDefender(state, config, now, fakeCity.cityId, role) || dirty;
+    }
+    return dirty;
 };
 
 const evaluateDefenderPopulation = (
@@ -183,17 +197,17 @@ const evaluateDefenderPopulation = (
             continue;
         }
 
-        for (const role of DEFENDER_ROLES.slice(0, maxPerCity)) {
-            if (countTotalDefenders(state) >= MAX_TOTAL_DEFENDERS) break;
-            const slot = fakeCity.defenderRoster?.[role];
-            if (slot && state.players.has(slot.id) && state.botControllers.has(slot.id)) continue;
-            if (slot && slot.respawnAt === 0) { slot.respawnAt = now + 20_000; continue; }
-            if (slot && now < slot.respawnAt) continue;
-            dirty = !!createDefender(state, config, now, fakeCity.cityId, role) || dirty;
-        }
+        dirty = populateDefenderRoles(state, config, now, fakeCity.cityId, maxPerCity) || dirty;
     }
 
     return dirty;
+};
+
+const resolveMovementTarget = (state: RuntimeState, config: RuntimeConfig, bot: RuntimePlayer, attackTarget: ReturnType<typeof pickDefenderTarget>, fallback: ReturnType<typeof defenderPatrolGoal>) => {
+    const clearShot = !attackTarget || hasBotTerrainSight(state, config, bot, attackTarget);
+    const movementTargetFallback = attackTarget && !clearShot
+        ? attackTarget : (resolveDefenderMovementFallback(config, bot, attackTarget) ?? fallback);
+    return movementTargetFallback;
 };
 
 const tickDefenderController = (
@@ -222,9 +236,7 @@ const tickDefenderController = (
     if ((bot.frozenUntil ?? 0) > now) return false;
     const fallback = defenderPatrolGoal(state, config, bot, controller, now);
     const attackTarget = pickDefenderTarget(state, config, bot, controller, detectionRadius, now);
-    const clearShot = !attackTarget || hasBotTerrainSight(state, config, bot, attackTarget);
-    const movementTargetFallback = attackTarget && !clearShot
-        ? attackTarget : (resolveDefenderMovementFallback(config, bot, attackTarget) ?? fallback);
+    const movementTargetFallback = resolveMovementTarget(state, config, bot, attackTarget, fallback);
     const fallbackPathTarget = attackTarget ? { x: attackTarget.x, y: attackTarget.y } : undefined;
     const updatedBot = stepBotAlongPath(
         state,

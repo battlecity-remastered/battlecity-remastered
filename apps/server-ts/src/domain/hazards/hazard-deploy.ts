@@ -29,6 +29,40 @@ export type HazardDeployResult = {
     inventory?: KnownEventPayloadByType["inventory.update"];
 };
 
+const resolveFuse = (payload: KnownEventPayloadByType["hazard.deploy.request"], config: RuntimeConfig, isBomb: boolean, active: boolean): number => {
+    const requestedFuseMs = typeof payload.fuseMs === "number" && Number.isFinite(payload.fuseMs)
+        ? Math.floor(payload.fuseMs)
+        : null;
+    const defaultFuseMs = isBomb ? LEGACY_BOMB_FUSE_MS : config.hazardDefaultFuseMs;
+    const remainingMs = active
+        ? Math.max(100, requestedFuseMs ?? defaultFuseMs)
+        : Number.POSITIVE_INFINITY;
+    return remainingMs;
+};
+
+const resolveDamage = (payload: KnownEventPayloadByType["hazard.deploy.request"], config: RuntimeConfig, isPassiveDrop: boolean, isMine: boolean, isBomb: boolean): number => {
+    const damage = isPassiveDrop
+        ? 0
+        : Math.max(1, Math.floor(
+            payload.damage
+            ?? (isMine ? LEGACY_MINE_DAMAGE : (isBomb ? LEGACY_BOMB_DAMAGE : config.hazardDefaultDamage))
+        ));
+    return damage;
+};
+
+const resolveHazardSettings = (type: number, payload: KnownEventPayloadByType["hazard.deploy.request"], config: RuntimeConfig) => {
+    const isPassiveDrop = PASSIVE_DROP_TYPES.has(type);
+    const isBomb = type === ITEM_TYPE_BOMB;
+    const isMine = type === ITEM_TYPE_MINE;
+    const isDfg = type === ITEM_TYPE_DFG;
+    const armed = isPassiveDrop ? false : (isBomb ? payload.armed !== false : true);
+    const active = !isPassiveDrop && armed;
+    const remainingMs = resolveFuse(payload, config, isBomb, active);
+    const damage = resolveDamage(payload, config, isPassiveDrop, isMine, isBomb);
+
+    return { isPassiveDrop, isMine, isDfg, armed, active, damage, remainingMs };
+};
+
 export const deployHazard = (
     state: RuntimeState,
     socketId: string,
@@ -62,25 +96,7 @@ export const deployHazard = (
         return consumed;
     }
 
-    const isPassiveDrop = PASSIVE_DROP_TYPES.has(type);
-    const isBomb = type === ITEM_TYPE_BOMB;
-    const isMine = type === ITEM_TYPE_MINE;
-    const isDfg = type === ITEM_TYPE_DFG;
-    const armed = isPassiveDrop ? false : (isBomb ? payload.armed !== false : true);
-    const active = !isPassiveDrop && armed;
-    const requestedFuseMs = typeof payload.fuseMs === "number" && Number.isFinite(payload.fuseMs)
-        ? Math.floor(payload.fuseMs)
-        : null;
-    const defaultFuseMs = isBomb ? LEGACY_BOMB_FUSE_MS : config.hazardDefaultFuseMs;
-    const remainingMs = active
-        ? Math.max(100, requestedFuseMs ?? defaultFuseMs)
-        : Number.POSITIVE_INFINITY;
-    const damage = isPassiveDrop
-        ? 0
-        : Math.max(1, Math.floor(
-            payload.damage
-            ?? (isMine ? LEGACY_MINE_DAMAGE : (isBomb ? LEGACY_BOMB_DAMAGE : config.hazardDefaultDamage))
-        ));
+    const { isPassiveDrop, isMine, isDfg, armed, active, damage, remainingMs } = resolveHazardSettings(type, payload, config);
 
     const hazard: RuntimeHazard = {
         id: `hazard_${nextSeq()}`,
@@ -111,7 +127,7 @@ export const deployHazard = (
             radius: hazard.radius,
             armed: hazard.armed,
             active: hazard.active,
-            ...(Number.isFinite(hazard.remainingMs) ? {remainingMs: hazard.remainingMs} : {})
+            ...(Number.isFinite(hazard.remainingMs) ? { remainingMs: hazard.remainingMs } : {})
         },
         inventory: consumed.value
     });

@@ -28,11 +28,13 @@ headings are tested for wall/turret/sleeper/plasma deployment. Towers and walls
 unfold without moving their one-tile footprint. Classic team visibility is shared
 with the Three world and radar; sleeper reveal triggers emergence.
 
-The strict rewrite gate passes typechecks, tests and event inventory, but its
-complexity limits flag the large Three scene/UI functions. Duplication and cycle
-checks pass. CSS imports are now explicitly allowed by the import-extension
-checker because Vite supports them. These maintainability failures are not
-waived or represented as a clean release gate.
+The strict rewrite gate now passes all checks after the October 2 CI repair.
+Complexity and function length use the TypeScript parser, measuring nested
+callbacks independently and ignoring comments, shader strings and optional type
+syntax as control flow. The limits remain a complexity of 15 per function, an average
+of 8 per file, 90 lines per function and 320 per file, with the existing legacy
+file limits unchanged. Large render, UI, snapshot and server functions were split
+into focused helpers; GLSL source moved without changing its rendering settings.
 
 Rendering quality remains fixed: original tile/camera scale, full display density, four-sample multisampling and per-frame shadows. No automatic resolution reduction.
 
@@ -745,3 +747,16 @@ without skips, including the existing-database restart case. Compose validation
 confirmed the retained data mount and public 8021-to-internal-8121 mapping. Lint
 and whitespace checks pass. The strict check passes tests/event inventory and
 stops at its existing complexity limits; it is not a clean strict release gate.
+
+
+October 2 CI repair validation: all 99 test files and the complete strict gate
+pass, including unused-code checks. Lint and the production client build pass.
+The parser has regression coverage for comments, GLSL text, optional types,
+concise arrows, methods/accessors, nested callbacks, malformed input and functions
+that exceed the unchanged limits. Reports now list every violating file, including
+average-complexity failures that previously fell outside the top-20 list.
+
+The GPU browser exercised researching/ready/restart states and the full armed
+bomb, explosion, building-collapse, debris and cleanup sequence with zero runtime
+errors. The relocated shader literals are byte-for-byte identical to the approved
+version. No production container, deployment settings or database was changed.
