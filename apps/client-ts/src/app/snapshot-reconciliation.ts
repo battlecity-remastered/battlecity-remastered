@@ -190,7 +190,14 @@ const reconcilePosition = (state: ClientState, targetX: number, targetY: number,
     }
 };
 
+const updateLocalIdentity = (state: ClientState, player: PlayersSnapshotEntry): void => {
+    state.local.isScoreLeader = player.isScoreLeader === true;
+    state.local.callsign = player.callsign ?? state.identity.callsign;
+    state.local.rankTitle = player.rankTitle ?? state.scoreProfile.rank ?? "Private";
+};
+
 const updateLocalSnapshot = (state: ClientState, player: PlayersSnapshotEntry, serverTime: number, nowMs: number, interpolationDelayMs: number, isLocallyMoving: boolean, isLocallyTurning: boolean, canApplyAuthoritativeDirection: boolean): void => {
+    updateLocalIdentity(state, player);
     state.local.cloakedUntil = player.cloakedUntil ?? 0; state.local.frozenUntil = player.frozenUntil ?? 0;
     state.local.city = player.city;
     state.local.speed = LEGACY_PLAYER_SPEED_PX_PER_SECOND;
@@ -251,6 +258,9 @@ export const updateFromSnapshot = (
         }
 
         const remote: RemotePlayer = {
+            isScoreLeader: player.isScoreLeader === true,
+            callsign: player.callsign ?? "Pilot",
+            rankTitle: player.rankTitle ?? "Private",
             ...(player.botRole ? { botRole: player.botRole } : {}),
             id: player.id,
             cloakedUntil: player.cloakedUntil ?? 0, frozenUntil: player.frozenUntil ?? 0,

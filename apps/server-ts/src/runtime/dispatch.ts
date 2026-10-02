@@ -75,7 +75,7 @@ const emitLobbyHighScoreSnapshot = (
     if (!context.userStore) {
         return;
     }
-    const payload = Effect.runSync(lobbyHighScores(context.userStore));
+    const payload = Effect.runSync(lobbyHighScores(context.userStore, context.state));
     if (targetSocketId) {
         context.emitter.emitTo(targetSocketId, "lobby.high_scores", payload);
         return;
@@ -111,7 +111,8 @@ const handlers: HandlerMap = {
         ), (assignment) => {
             if (!context.state.players.has(socketId)) context.initializeJoinedPlayer?.(context.state, assignment.city, socketId, context.config);
             if (context.userStore) {
-                Effect.runSync(context.userStore.getOrCreate(userId, account?.name ?? payload.callsign, account?.provider));
+                const profile = Effect.runSync(context.userStore.getOrCreate(userId, account?.name ?? payload.callsign, account?.provider));
+                context.state.playerProfiles.set(socketId, { callsign: profile.name, rankTitle: profile.rank });
             }
             context.emitter.emitTo(socketId, "lobby.assignment", assignment);
             context.emitter.emit("lobby.snapshot", buildLobbySnapshot(context.state, context.config));
@@ -459,6 +460,12 @@ const handlers: HandlerMap = {
                 ));
                 context.emitter.emitTo(socketId, "score.profile", profile);
                 emitLobbyHighScoreSnapshot(context);
+                for (const [id, identity] of context.state.socketUserIds) {
+                    if (identity === userId) {
+                        const label = context.state.playerProfiles.get(id);
+                        if (label) label.rankTitle = profile.rank;
+                    }
+                }
             }
             if (context.notifyOrbVictory) {
                 const userId = resolveSocketUserId(context.state, socketId);

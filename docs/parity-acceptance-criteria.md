@@ -77,3 +77,10 @@ Accepted only if all hard requirements pass and `docs/parity-checklist.md` is fu
 - Postprocessing: retain 4x scene MSAA, AO and bloom settings; verify resolved HDR copy and colour-only filter targets against the original pixels at multiple sizes, including resize.
 - Construction: one of each non-housing type per city; duplicate requests cannot spend cash, assign population or change stock. Permit rebuilding after demolition and independent city allowances. Count factory stock, allied inventories and deployed products toward the original per-item caps.
 - Orb navigation: preserve the existing eligibility selector, exclude the home city, use actual command-centre coordinates, clear destroyed/ineligible targets, and fit the existing inventory at 1024x768 and 1440x900 without adding battlefield draw calls.
+
+
+Persistent pilot identity: verified Google subjects reuse the existing user UUID,
+custom name and score; forged credentials/raw IDs cannot claim them. An orb award
+and a reconnect/server restart retain the updated score and provider on that one
+SQLite account. Gold follows #1 by the existing leaderboard ordering. Labels use
+that account's name/rank, hide with cloaked enemies and retain mayor identification.

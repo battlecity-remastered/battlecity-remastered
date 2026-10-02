@@ -143,6 +143,7 @@ export class GameRuntime {
             const released = leaveLobby(state, socketId);
             state.chatRateLimit.delete(socketId);
             state.socketUserIds.delete(socketId);
+            state.playerProfiles.delete(socketId);
             this.inboundGuards.delete(socketId);
             if (state.players.has(socketId)) {
                 this.emitter.emit("player.removed", { id: socketId });
@@ -151,7 +152,7 @@ export class GameRuntime {
                 this.emitter.emit("lobby.released", released);
                 this.emitter.emit("lobby.snapshot", buildLobbySnapshot(state, this.config));
                 if (this.services.userStore) {
-                    this.emitter.emit("lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore)));
+                    this.emitter.emit("lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore, state)));
                 }
             }
             const removedBulletIds = removePlayer(state, socketId);
@@ -170,7 +171,7 @@ export class GameRuntime {
         const state = readRuntimeState(this.stateRef);
         this.emitter.emitTo(socketId, "lobby.snapshot", buildLobbySnapshot(state, this.config));
         if (this.services.userStore) {
-            this.emitter.emitTo(socketId, "lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore)));
+            this.emitter.emitTo(socketId, "lobby.high_scores", Effect.runSync(lobbyHighScores(this.services.userStore, state)));
         }
     }
 

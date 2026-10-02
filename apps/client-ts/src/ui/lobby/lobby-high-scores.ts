@@ -2,15 +2,8 @@ import type { ClientState } from "../../app/state.js";
 
 export const renderLobbyHighScores = (state: ClientState, scoreList: HTMLElement): void => {
     scoreList.innerHTML = "";
-    const ranked = [...state.lobby.highScores]
-        .sort((a, b) => {
-            const scoreDiff = b.points - a.points;
-            if (scoreDiff !== 0) {
-                return scoreDiff;
-            }
-            return (a.updatedAt ?? 0) - (b.updatedAt ?? 0);
-        })
-        .slice(0, 20);
+    // Keep the server's score/orbs/assists/timestamp tie-break order.
+    const ranked = state.lobby.highScores.slice(0, 20);
 
     if (ranked.length === 0) {
         const empty = document.createElement("div");
@@ -40,6 +33,12 @@ export const renderLobbyHighScores = (state: ClientState, scoreList: HTMLElement
         const meta = document.createElement("div");
         meta.className = "lobby-highscore-meta";
         const details = [`Rank: ${entry.rankTitle}`];
+        if (index === 0 && entry.points > 0) {
+            details.unshift("★ Golden tank");
+            row.style.borderColor = "#b99548";
+            rank.style.color = "#f2cb70";
+            row.title = "The overall leaderboard leader pilots a golden tank.";
+        }
         if (typeof entry.orbs === "number" && Number.isFinite(entry.orbs) && entry.orbs > 0) {
             details.push(`Orbs: ${entry.orbs}`);
         }

@@ -24,11 +24,13 @@ import { createPopulationDisplay } from "./population-display.js";
 import { createProjectileCollider } from "./projectile-collider.js";
 import { createResearchDisplays } from "./research-display.js";
 import { createTankCloak } from "./tank-cloak.js";
+import { createTankNameplates } from "./tank-nameplates.js";
 import { resolveTankDropTarget } from "./tank-drop-target.js";
-import { isMayorTank, updateTankRole } from "./tank-role.js";
+import { isMayorTank, updateTankRole, updateTankTeam } from "./tank-role.js";
 import { createTerrain } from "./terrain.js";
 
 type FrameContext = {
+    tankNameplates: ReturnType<typeof createTankNameplates>;
     demoMode: boolean;
     scene: THREE.Scene;
     renderer: THREE.WebGLRenderer;
@@ -221,6 +223,8 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         tank.position.set(x, 0, z);
         tank.rotation.y = -heading;
         updateTankRole(tank, isMayorTank(state, state.local.id)); setDiagnostic("tankRole", String(tank.userData.tankRole));
+        updateTankTeam(tank, false, state.local.isScoreLeader);
+        setDiagnostic("tankFinish", state.local.isScoreLeader ? "gold" : "standard");
         tankCloak.update((state.local.cloakedUntil ?? 0) > Date.now());
         const weapon = inventory?.update(state) ?? "cannon";
         updateCargo(state, x, z);
@@ -230,6 +234,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         sun.position.set(x - 9, 25, z - 8);
         sun.target.position.set(x, 0, z);
         scene.updateMatrixWorld();
+        context.tankNameplates.update(state, camera, tank, liveWorld?.playerModels, window.innerWidth, window.innerHeight);
         finishStage("matrices");
         buildingBatches!.update(true);
         finishStage("batches");

@@ -107,3 +107,6 @@ Last updated: 2026-02-24
 - [x] HDR copying and colour-only AO/bloom buffers preserve all half-float pixels across viewport resizing; scene and AO depth remain intact.
 - [x] Factory outputs align with the 3D arrow pad; only housing can repeat within a city, with authoritative duplicate rejection and item-accounting regression coverage.
 - [x] Nearest orbable city appears in inventory navigation with bearing, range and matching radar/map markers; empty and ineligible targets clear correctly.
+
+- [x] Google sign-in restores original SQLite UUIDs/scores; signed sessions survive reconnects and deployments, and orb awards persist to the same account.
+- [x] Callsigns and persistent rank titles float above tanks with team/mayor cues and cloak-aware visibility; the overall leader receives gold armour.

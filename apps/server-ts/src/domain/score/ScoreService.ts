@@ -1,6 +1,7 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import { Effect } from "effect";
 import type { UserStoreAdapter } from "../../adapters/persistence/UserStoreAdapter.js";
+import type { RuntimeState } from "../../runtime/types.js";
 
 export const profileForSocket = (
     userStore: UserStoreAdapter,
@@ -35,9 +36,13 @@ export const awardOrbProfileScore = (
 
 export const lobbyHighScores = (
     userStore: UserStoreAdapter,
+    state: RuntimeState,
     limit = 20
 ): Effect.Effect<KnownEventPayloadByType["lobby.high_scores"]> => {
     return Effect.map(userStore.listTop(limit), (profiles) => {
+        // Refresh with the existing leaderboard work, never in the tick loop.
+        const leader = profiles[0];
+        state.scoreLeaderUserId = leader && leader.score > 0 ? leader.id : null;
         return profiles.map((profile) => ({
             userId: profile.id,
             name: profile.name,

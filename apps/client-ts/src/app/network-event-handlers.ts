@@ -92,6 +92,7 @@ export const handlers: {
         resetMovementPrediction(state);
         const spawn = resolveCitySpawn(payload.city);
         state.local.id = payload.id;
+        state.local.isScoreLeader = false;
         state.local.city = payload.city;
         state.ui.showBuildMenu = false;
         state.ui.buildGhostMode = false;
@@ -153,6 +154,7 @@ export const handlers: {
         state.lobby.lastReleasedPlayerId = payload.id;
         if (payload.id === state.local.id) {
             state.local.id = null;
+            state.local.isScoreLeader = false;
             state.ui.selectedPopulationHouseId = null;
             state.inventory.clear();
             state.local.cloakedUntil = 0;

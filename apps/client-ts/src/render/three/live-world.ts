@@ -33,7 +33,7 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
         const alpha = state.remotePlayers.size ? 1 - Math.exp(-dt * 14) : 0;
         for (const [id, player] of state.remotePlayers) {
             let model = players.get(id); if (!model) { model = tankTemplate.clone(true); scene.add(model); players.set(id, model); cloaks.set(id, createTankCloak(model)); model.position.set((player.x + 24) / 48 - 256, 0, (player.y + 24) / 48 - 256); model.rotation.y = -player.direction * Math.PI / 16; }
-            updateTankRole(model, isMayorTank(state, id)); updateTankTeam(model, player.city !== state.local.city);
+            updateTankRole(model, isMayorTank(state, id)); updateTankTeam(model, player.city !== state.local.city, player.isScoreLeader);
             const cloaked = (player.cloakedUntil ?? 0) > Date.now(); model.visible = !cloaked || player.city === state.local.city; cloaks.get(id)?.update(cloaked);
             model.position.x += ((player.x + 24) / 48 - 256 - model.position.x) * alpha; model.position.z += ((player.y + 24) / 48 - 256 - model.position.z) * alpha; const target = -player.direction * Math.PI / 16; model.rotation.y += wrapSignedAngle(target - model.rotation.y) * alpha;
         }
@@ -51,6 +51,7 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
         hydrated = true;
     };
     return {
+        playerModels: players as ReadonlyMap<string, THREE.Object3D>,
         observe(event: KnownTypedEventEnvelope): void {
             if (event.type === "building.demolished" || (event.type === "defense.remove" && event.payload.reason === "destroyed")) { destroyedIds.add(event.payload.id); if (destroyedIds.size > 256) destroyedIds.delete(destroyedIds.values().next().value!); }
         }, update(state: ClientState, dt: number): void {

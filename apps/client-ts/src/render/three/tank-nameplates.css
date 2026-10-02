@@ -1,0 +1,10 @@
+.bc-tank-labels { position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none;contain:strict; }
+.bc-tank-label { position:absolute;left:0;top:0;width:0;height:0; }
+.bc-tank-label[hidden] { display:none; }
+.bc-tank-label-body { position:absolute;bottom:0;left:0;transform:translateX(-50%);width:max-content;max-width:180px;text-align:center;padding:3px 10px 5px;color:#eff9f9;background:linear-gradient(90deg,transparent,rgba(6,14,18,.73) 24%,rgba(6,14,18,.73) 76%,transparent);text-shadow:0 1px 2px #000,0 0 4px #000;font:600 12px/1.3 "Segoe UI",sans-serif; }
+.bc-tank-label-body::after { content:"";position:absolute;bottom:0;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,var(--tank-label-color,#71cbd0),transparent); }
+.bc-tank-label-name { display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.bc-tank-label-rank { display:block;margin-top:1px;color:var(--tank-label-color,#9bc8ce);font:600 9px/1.4 "Segoe UI",sans-serif;letter-spacing:1.2px;text-transform:uppercase; }
+.bc-tank-label[data-team="enemy"] { --tank-label-color:#f19c82; }
+.bc-tank-label[data-leader="true"] { --tank-label-color:#f2cb70; }
+.bc-tank-label[data-leader="true"] .bc-tank-label-name { color:#fff1cb; }

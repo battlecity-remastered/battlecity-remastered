@@ -53,6 +53,9 @@ export const PlayerUpdate = Schema.Struct({
 });
 export const PlayersSnapshotEntry = Schema.Struct({
     id: Schema.String,
+    isScoreLeader: Schema.optional(Schema.Boolean),
+    callsign: Schema.optional(Schema.String),
+    rankTitle: Schema.optional(Schema.String),
     city: Schema.Number,
     direction: Schema.Number,
     offset: Vec2,

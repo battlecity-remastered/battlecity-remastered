@@ -37,3 +37,9 @@ Last updated: 2026-02-24
 | city spawn data | `apps/server-ts/data/citySpawns.json` + client resolver | spawn and city marker parity | pending |
 | imported `.city` files | `city-import.ts`, `CityLayoutService.ts` | building layout parity | pending |
 - `player.update` / `players.snapshot`: bounded prediction, prefix retries and optional `movementAck.clippedMs` preserve input continuity through network bursts; existing envelopes remain compatible.
+
+
+Pilot presentation extension: `players.snapshot` optionally includes server-owned
+`callsign`, `rankTitle` and `isScoreLeader`. `lobby.join.request.authToken` now
+connects the lobby's verified Google session to original SQLite score identities;
+`score.profile` and `lobby.high_scores` retain their existing payload semantics.

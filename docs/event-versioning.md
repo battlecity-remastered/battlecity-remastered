@@ -73,3 +73,14 @@ after one second without acknowledgement progress. Authority retains three
 seconds of server-clock credit and permits a 70-message burst with a sustained
 35/s token refill. Sequence continuity, duplicate suppression, time validation
 and authoritative collision remain enforced; no envelope version bump is needed.
+
+
+### Pilot identity and golden leaderboard leader (2026-10-02)
+
+`players.snapshot` entries add optional `callsign`, `rankTitle` and
+`isScoreLeader` fields. The server derives them from the verified score account
+and cached leaderboard, never a client cosmetic request. Omitted leader flags
+clear the client's gold appearance; older snapshots remain valid. Nameplates
+follow the existing enemy-cloak visibility rules. Envelope version stays at 1.
+The existing optional `lobby.join.request.authToken` now carries the signed
+session returned by `/api/auth/google`; a raw user ID grants no account access.

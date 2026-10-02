@@ -2,6 +2,9 @@ import type { KnownEventPayloadByType } from "@battlecity/protocol";
 import type { BulletState, TankMovementInput } from "@battlecity/sim-core";
 
 export type LocalState = {
+    callsign?: string;
+    rankTitle?: string;
+    isScoreLeader?: boolean;
     cloakedUntil?: number;
     frozenUntil?: number;
     id: string | null;
@@ -26,6 +29,9 @@ export type LocalState = {
 };
 
 export type RemotePlayer = {
+    callsign?: string;
+    rankTitle?: string;
+    isScoreLeader?: boolean;
     botRole?: "mayor" | "shooter" | "bomb_defuser" | "miner";
     cloakedUntil?: number;
     frozenUntil?: number;

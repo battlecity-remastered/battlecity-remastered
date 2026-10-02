@@ -52,6 +52,7 @@ type SocketRuntimeContext = {
 
 export const clearClientWorldForReconnect = (state: ClientState): void => {
     state.local.id = null;
+    state.local.isScoreLeader = false;
     state.local.health = 100;
     state.local.maxHealth = 100;
 

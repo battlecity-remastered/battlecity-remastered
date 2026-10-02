@@ -5,7 +5,7 @@ import { resolveCitySpawn } from "../world/city-spawn.js";
 import type { IndustrialBuilding } from "../render/three/industrial-demo.js";
 
 export const initializeDemoMayor=(state:ClientState,buildings:ReadonlyArray<IndustrialBuilding>):void=>{
-    state.local.id="local-three-demo";state.identity.callsign="Demo Mayor";
+    state.local.id="local-three-demo";state.identity.callsign="Demo Mayor";state.local.callsign="Demo Mayor";state.local.rankTitle="Private";
     state.lobby.assignments=[{city:state.local.city,mayorId:state.local.id,recruitCount:0}];
     state.cityFinance.set(state.local.city,{cash:100000,income:500,score:0,researchLevel:99,canBuildStates:new Map(BUILD_TREE.map(entry=>[entry.type,1]))});
     state.research.set(state.local.city,{completed:BUILD_TREE.filter(entry=>entry.type>=400).map(entry=>entry.type)});

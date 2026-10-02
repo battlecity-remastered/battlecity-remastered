@@ -895,7 +895,7 @@ empty-state cleanup and panel bounds, with no browser errors. All 509 tests and
 strict structural/type checks pass.
 
 
-### Restore persistent Google accounts (2026-10-02)
+### Persistent accounts, golden leader and pilot labels (2026-10-02)
 
 Restored Google sign-in in the lobby. The server verifies Google ID tokens with
 Google's auth library, looks up the original `users.provider_id`, and issues a
@@ -907,3 +907,25 @@ The session signing key lives beside `scores.db` in `.identity-secret` unless
 Previously generated guest scores cannot be safely attributed to old accounts
 by callsign alone and are not automatically merged.
 
+The overall positive-score leaderboard leader receives a metallic gold recruit
+or mayor tank. It follows authoritative account identity and the leaderboard's
+existing tie breaks, including when the leader is offline. No special account
+or callsign is hardcoded. Gold retains existing geometry, wear shaders and
+cloak behavior; enemy champion optics are red. A representative Intel GPU test
+used 97 draw calls and five shader programs for both normal and gold variants.
+
+Names and persistent rank titles now travel in snapshots and sit above the
+already-smoothed tank models. Small DOM nameplates use cached text/transforms,
+clip to the battlefield, and hide for dead/offscreen/cloaked enemy tanks. They
+add no WebGL text geometry, textures, lights or render passes. Mayor and #1
+accents remain distinct. The leaderboard marks the golden-tank holder.
+
+A disposable SQLite test awards an actual orb to a signed-in existing account
+(19,940 -> 20,190), reopens the store, reconnects on a new socket, and confirms
+one account and unchanged Google provider. GPU browser checks cover account
+login, session restoration, authoritative local gold, remote labels, enemy cloak
+and reveal, reconnect and 1440x900 / 1024x768 layouts. Browser sign-in uses an
+isolated credential-verifier fixture; real Google account consent is not automated.
+
+Release verification: all 518 tests, strict type/complexity/import/maintainability
+checks, lint and the production build pass.

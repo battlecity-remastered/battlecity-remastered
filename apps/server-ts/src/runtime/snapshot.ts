@@ -16,6 +16,8 @@ export const buildPlayersSnapshot = (state: RuntimeState): KnownEventPayloadByTy
         players: Array.from(state.players.values()).map((player) => {
             return {
                 id: player.id,
+                ...state.playerProfiles.get(player.id),
+                ...(player.isBot ? { callsign: player.botType === "rogue" ? "Rogue Tank" : "City Defender", rankTitle: "AI" } : {}),
                 city: player.city,
                 direction: normalizeDirection32Step(player.direction),
                 offset: {
@@ -24,6 +26,7 @@ export const buildPlayersSnapshot = (state: RuntimeState): KnownEventPayloadByTy
                 },
                 ...(state.botControllers.get(player.id)?.botRole ? { botRole: state.botControllers.get(player.id)!.botRole! } : {}),
                 health: player.health,
+                ...(!player.isBot && state.scoreLeaderUserId === state.socketUserIds.get(player.id) ? { isScoreLeader: true } : {}),
                 ...(player.lastMovementInputSeq === undefined ? {} : { movementAck: { seq: player.lastMovementInputSeq, direction: player.direction, clippedMs: player.movementClippedMs ?? 0 } }),
                 maxHealth: player.maxHealth,
                 ...(player.cloakedUntil ? {cloakedUntil:player.cloakedUntil}:{}),

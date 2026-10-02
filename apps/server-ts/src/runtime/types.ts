@@ -116,6 +116,8 @@ export type RuntimeState = {
     socketCities: Map<string, number>;
     socketRoles: Map<string, "mayor" | "recruit">;
     socketUserIds: Map<string, string>;
+    playerProfiles: Map<string, { callsign: string; rankTitle: string }>;
+    scoreLeaderUserId: string | null;
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
     blockingTiles: Set<string>;
@@ -288,6 +290,8 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         socketCities: new Map(),
         socketRoles: new Map(),
         socketUserIds: new Map(),
+        playerProfiles: new Map(),
+        scoreLeaderUserId: null,
         chatHistory: [],
         chatRateLimit: new Map(),
         blockingTiles: init.blockingTiles ?? new Set(),

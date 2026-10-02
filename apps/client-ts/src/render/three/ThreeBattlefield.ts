@@ -35,6 +35,7 @@ import { createResearchDisplays } from "./research-display.js";
 import { createSupportBuilding, setSupportBuildingTemplate } from "./support-buildings.js";
 import { applySurfaceFinish } from "./surface-finish.js";
 import { createTankCloak } from "./tank-cloak.js";
+import { createTankNameplates } from "./tank-nameplates.js";
 import { resolveTankDropTarget } from "./tank-drop-target.js";
 import { createRoleTank } from "./tank-role.js";
 import { createTerrain } from "./terrain.js";
@@ -94,6 +95,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     const tank = createRoleTank(tankAsset.scene, mayorAsset.scene);
     const remoteTankTemplate = tank.clone(true);
     const tankCloak = createTankCloak(tank);
+    const tankNameplates = createTankNameplates();
     const batchableBuildings: THREE.Object3D[] = [];
     scene.add(tank);
     addCommandCenters();
@@ -253,7 +255,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     const render = createBattlefieldFrame({
         demoMode, scene, renderer, setDiagnostic, heatPass, terrain, deployedPreview,
         cargo, demoFuses, machinery, industrialEffects, researchDisplays, projectileCollider, cannon, turrets,
-        dropReticle, ghost, liveWorld, orbVictory, populationDisplay, preview, collapsing, tank, camera,
+        dropReticle, ghost, liveWorld, orbVictory, populationDisplay, preview, collapsing, tank, camera, tankNameplates,
         displayFrustum, displayProjection, lavaEffects, buildingEffects, tankCloak, inventory, actions,
         storedCargo, networkCombat, sun, buildingBatches, composer
     });
@@ -282,6 +284,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
             populationDisplay.dispose();
             orbVictory.dispose();
             tankCloak.dispose();
+            tankNameplates.dispose();
             environment.dispose();
             researchDisplays.dispose();
             cannon?.dispose();
