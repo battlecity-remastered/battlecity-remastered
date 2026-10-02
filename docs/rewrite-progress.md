@@ -854,3 +854,10 @@ animation rate changed. Shadow-trigonometry, light-facing and transform-cache
 experiments were discarded after inconsistent city results.
 Strict verification passes all 503 tests and all structural/type checks; lint
 and the production client build pass.
+
+
+Live factory cargo now uses the same middle dispatch-tile centre as the demo.
+Legacy sprite coordinates had placed it 8 pixels right and 6 pixels below the
+3D arrow pad. All thirteen product origins were checked against the exported
+factory apron geometry, with zero horizontal/depth error; centred U pickup and
+player-drop tile placement remain correct. This is a presentation change only.

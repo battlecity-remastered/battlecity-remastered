@@ -59,8 +59,10 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
             for (const [id, building] of state.buildings) if (!buildings.has(id)) { const model = createBuilding(building); model.userData.renderTileX = building.tileX; model.userData.renderTileY = building.tileY; register?.(model); buildings.set(id, model); }
             updateHazards(state);
             updateDefenses(state, dt);
+            // The 3D arrow pad is centred on the middle tile of the dispatch row,
+            // matching demo cargo; legacy sprite offsets sit off-centre on this model.
             const outputIds = new Set<string>();
-            for (const [id, building] of state.buildings) { if (building.type < 100 || building.type > 112) continue; const type = building.type - 100, stock = state.factoryStock.get(building.cityId)?.get(type) ?? 0; if (stock <= 0) continue; outputIds.add(id); let model = outputs.get(id); if (!model) { model = itemModel(type); outputs.set(id, model); } model.position.set(building.tileX - 256 + 80 / 48, type === 5 ? 0.1 : 0.048, building.tileY - 256 + 126 / 48); }
+            for (const [id, building] of state.buildings) { if (building.type < 100 || building.type > 112) continue; const type = building.type - 100, stock = state.factoryStock.get(building.cityId)?.get(type) ?? 0; if (stock <= 0) continue; outputIds.add(id); let model = outputs.get(id); if (!model) { model = itemModel(type); outputs.set(id, model); } model.position.set(building.tileX - 256 + 1.5, type === 5 ? 0.1 : 0.048, building.tileY - 256 + 2.5); }
             removeMissing(outputs, outputIds);
         }
     };
