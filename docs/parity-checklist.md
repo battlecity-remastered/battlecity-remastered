@@ -17,12 +17,12 @@ Last updated: 2026-02-24
 - [x] Phase 11 - End-to-end parity validation
 
 ## A) Shared constants + IDs
-- [x] All item IDs match legacy (`cloak=0 ... laser=12`).
+- [x] All item IDs match classic (`cloak=0 ... laser=12`).
 - [x] No local duplicate item ID constants in render/input/intents.
 - [x] Panel/radar constants imported from one parity constants module.
 
 ## B) Assets
-- [x] `LegacyTextureRegistry` loads all required parity textures.
+- [x] `TextureRegistry` loads all required parity textures.
 - [x] `imgMiniMapColors` available for radar dead marker.
 - [x] `imgTurretHead` available for defense heads.
 - [x] `imgInventorySelection` used by panel inventory UI.
@@ -31,7 +31,7 @@ Last updated: 2026-02-24
 - [x] `imgLExplosion` available and used for large explosions.
 
 ## C) Map and terrain
-- [x] Client map decode orientation matches legacy axis transform.
+- [x] Client map decode orientation matches classic axis transform.
 - [x] Server map decode orientation matches client.
 - [x] Client and server blocking logic is explicitly aligned.
 - [x] Ground layer uses tile size `128` and modulo camera alignment.
@@ -76,8 +76,8 @@ Last updated: 2026-02-24
 - [x] Home arrow coordinates + frame selection parity.
 
 ## H) Radar
-- [x] Uses legacy relative projection formula (not world normalization).
-- [x] Uses legacy range clamp `2400`.
+- [x] Uses classic relative projection formula (not world normalization).
+- [x] Uses classic range clamp `2400`.
 - [x] Uses radar bounds clipping (`138x138` at offset `(28,8)`).
 - [x] Uses texture slices from radar/minimap color textures.
 

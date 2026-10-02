@@ -3,7 +3,7 @@
 Last updated: 2026-02-24
 
 ## Scope
-This defines objective acceptance for visual parity between legacy `master` and TypeScript client/server for UI, map, terrain, and building rendering.
+This defines objective acceptance for visual parity between classic `master` and TypeScript client/server for UI, map, terrain, and building rendering.
 
 ## Hard acceptance requirements
 
@@ -49,18 +49,18 @@ This defines objective acceptance for visual parity between legacy `master` and 
 2. Mine uses `32x32` frame with `+8,+8` offset.
 3. Bomb armed frame uses `(144,91,48,48)`.
 4. Orb uses animated row frame and `+4` x offset.
-5. Mine/wall ordering matches legacy (mine first, wall over mine).
+5. Mine/wall ordering matches classic (mine first, wall over mine).
 6. Bullets use animated `8x8` frames by row/type.
 
 ## 7) Tanks
 1. Local tank at viewport center of world area.
 2. Remote tank positions follow world transform formula.
-3. No anchor-based drift relative to legacy placement.
-4. Row selection (ally/enemy, mayor/recruit) matches legacy.
+3. No anchor-based drift relative to classic placement.
+4. Row selection (ally/enemy, mayor/recruit) matches classic.
 
 ## 8) Map modal
 1. Modal is canvas-based full map overlay.
-2. Terrain color mapping matches legacy palette.
+2. Terrain color mapping matches classic palette.
 3. Building markers, city markers, and player marker are present.
 4. Escape/overlay click/fullscreen transitions behave correctly.
 

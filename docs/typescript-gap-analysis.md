@@ -552,9 +552,9 @@ Example (`Annaba` anchor):
 - output tile: `(95,159)`
 - remastered type: `200`
 
-## 7.4 Legacy->remastered type conversion (used by map/city imports)
+## 7.4 Classic->remastered type conversion (used by map/city imports)
 
-| Legacy | Remastered |
+| Classic | Remastered |
 |---|---|
 | 1 | 200 |
 | 2 | 300 |
@@ -690,7 +690,7 @@ Priority order below is optimized for building + map/terrain parity first.
 5. `apps/client-ts/src/world/map-loader.ts` + server `apps/server-ts/src/domain/map/MapService.ts`
 - align blocking rules between client/server for terrain/building footprint (lava + 3x3 anchor expansion policy must match)
 
-6. `apps/client-ts/src/render/LegacyTextureRegistry.ts`
+6. `apps/client-ts/src/render/TextureRegistry.ts`
 - load missing parity assets listed in section 10
 
 7. `apps/client-ts/src/render/scene.ts`
@@ -758,7 +758,7 @@ Priority order below is optimized for building + map/terrain parity first.
 - `apps/client-ts/src/render/layers/TileLayer.ts`
 - `apps/client-ts/src/render/layers/ChangingLayer.ts`
 - `apps/client-ts/src/render/items/ItemRenderer.ts`
-- `apps/client-ts/src/render/LegacyTextureRegistry.ts`
+- `apps/client-ts/src/render/TextureRegistry.ts`
 - `apps/client-ts/src/world/map-loader.ts`
 - `apps/client-ts/src/world/city-spawn.ts`
 - `apps/client-ts/src/world/city-import.ts`

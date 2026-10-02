@@ -1,5 +1,41 @@
 # Visual Parity Rewrite Plan (LLM-Executable)
 
+## Three.js gameplay port — October 2026
+
+The user has authorized completing the live game port while preserving the approved terrain, lava, buildings, inventory and radar. The default Three.js route is now connected, with ?demo=1 retained for the offline preview; the shared TypeScript server remains the source of gameplay authority. The earlier Pixi parity table below describes the prior renderer, not completion of this port.
+
+- [x] Restore a green current-contract server test baseline.
+- [x] Live Three.js startup, identity/city joining, disconnect/reconnect and respawn.
+- [x] Frame-driven local driving, throttled network commands and remote player interpolation.
+- [x] Server-driven buildings, factory stock, pickups, hazards and defenses.
+- [x] Authoritative combat with the existing weapon, recoil, impact and explosion effects.
+- [x] Usable build/research/economy controls, placement previews and destruction.
+- [x] Inventory use/deployment, cloak, medkit, flares and city-orbing gameplay.
+- [x] Chat, identity, scores, role information and help.
+- [x] Multi-client end-to-end validation of construction, production, combat, respawn and orbing; build/type/test checks (strict complexity and maintainability thresholds remain below).
+
+Validation: all 92 test files passed with population growth, household attachments,
+mayor appearance, deployed-defense geometry and housing footprint coverage. Browser city joining and
+construction passed without runtime errors. Cross-client runtime tests cover
+production, pickups, authoritative combat, leaving/rejoining and city-orbing.
+Headless software GPU driving automation did not reliably reach its pickup
+waypoints; it is not evidence of hardware frame rate or a completed browser-only
+combat playthrough. Manual multiplayer play testing remains important.
+
+Precise drops reuse the original padded 32px tank footprint, greatest-overlap
+selection and centre-tile tie break. There is no adjacent-tile fallback. All 32
+headings are tested for wall/turret/sleeper/plasma deployment. Towers and walls
+unfold without moving their one-tile footprint. Classic team visibility is shared
+with the Three world and radar; sleeper reveal triggers emergence.
+
+The strict rewrite gate passes typechecks, tests and event inventory, but its
+complexity limits flag the large Three scene/UI functions. Duplication and cycle
+checks pass. CSS imports are now explicitly allowed by the import-extension
+checker because Vite supports them. These maintainability failures are not
+waived or represented as a clean release gate.
+
+Rendering quality remains fixed: original tile/camera scale, full display density, four-sample multisampling and per-frame shadows. No automatic resolution reduction.
+
 Last updated: 2026-02-24
 Owner: `feature/typescript`
 Primary gap source: `docs/typescript-gap-analysis.md`
@@ -44,7 +80,7 @@ Goal: lock current behavior and create deterministic comparison tooling.
 
 Steps:
 1. Create `scripts/parity/` with:
-   - `capture-master-notes.md` (manual expected values from legacy `master`).
+   - `capture-master-notes.md` (manual expected values from classic `master`).
    - `capture-ts-runtime.ts` (logs runtime coordinates/textures from TS render frame).
 2. Add deterministic render fixture in tests:
    - fixed surface size: `1024x768`
@@ -94,15 +130,15 @@ Gate:
 Goal: guarantee every required visual asset is loaded and available.
 
 Steps:
-1. Expand `apps/client-ts/src/render/LegacyTextureRegistry.ts` to load:
+1. Expand `apps/client-ts/src/render/TextureRegistry.ts` to load:
    - `imgTurretHead`, `imgMiniMapColors`, `imgArrows`, `imgArrowsRed`,
    - `imgMoneyBox`, `imgBlackNumbers`, `imgInventorySelection`, `imgLExplosion`, `imgBuildIcons`.
-2. Extend `LegacyTextures` type with parity aliases required by renderer.
+2. Extend `TextureSet` type with parity aliases required by renderer.
 3. Add fallback handling only for missing files; do not silently skip loaded assets.
 4. Add unit test verifying all expected texture keys exist when files exist.
 
 Files:
-- `apps/client-ts/src/render/LegacyTextureRegistry.ts`
+- `apps/client-ts/src/render/TextureRegistry.ts`
 - `apps/client-ts/test/assets-parity-registry.test.ts` (new)
 
 Gate:
@@ -110,7 +146,7 @@ Gate:
 - `npm run test`
 
 ## Phase 3: Map decode + blocking parity
-Goal: client/server map semantics match and match legacy expectations.
+Goal: client/server map semantics match and match classic expectations.
 
 Steps:
 1. Confirm decode transform remains:
@@ -133,13 +169,13 @@ Gate:
 - `npm run test`
 
 ## Phase 4: Ground + terrain tile parity
-Goal: match legacy terrain draw behavior exactly.
+Goal: match classic terrain draw behavior exactly.
 
 Steps:
 1. Update `apps/client-ts/src/render/layers/GroundLayer.ts`:
    - match tile size `128`, draw radius/window parity logic, camera modulo placement.
 2. Update `apps/client-ts/src/render/layers/TileLayer.ts` terrain section:
-   - ensure adjacency bitmask frame offset `*48` identical to legacy.
+   - ensure adjacency bitmask frame offset `*48` identical to classic.
    - out-of-bounds black tile fill.
 3. Add tests for:
    - frame offset bitmask cases (all 16 combinations).
@@ -227,7 +263,7 @@ Gate:
 Goal: exact right-panel behavior and coordinates.
 
 Steps:
-1. In `scene.ts`, change panel layout to fixed legacy coordinates:
+1. In `scene.ts`, change panel layout to fixed classic coordinates:
    - top at `(panelX,0)`, bottom at `(panelX,430)`.
 2. Add finance sprites and cash text exact coordinates.
 3. Add health masked bar exact coordinates and mask formula.
@@ -316,3 +352,364 @@ Rewrite is complete when all are true:
 3. `docs/parity-checklist.md` is 100% checked.
 4. Parity report has zero failed assertions.
 5. No unresolved TODO/FIXME markers in parity-related files.
+
+### Mayor sandbox and residential assets
+
+`?demo=1` now assigns the local player as mayor, exposes the live construction
+UI with all research unlocked, and supports actual housing placement. Right-click
+and B open construction in both routes. Demo-only self-orbing from the canonical
+NO PARKING apron plays the shared orb energy effect and a district collapse;
+RESET DEMO restores it. Enemy-only live orbing remains unchanged.
+
+The Blender mayor variant reproduces the original rounded teal command turret,
+within the existing one-tile footprint. Local and remote tanks follow lobby role
+assignments and mayor promotion. Housing now uses a dedicated Blender habitat,
+with twin residential wings, inset windows, balconies, skylights, service pods,
+chrome framing and dark DX armour. Both mayor and housing GLBs have explicit
+footprint regression coverage. Their export commands are documented under
+`scripts/blender/README.md`.
+
+### Population presentation and house selection
+
+The original six crew symbols are represented inside recessed glass staffing
+panels on the buildings. Houses show combined residents out of 100, other
+buildings show staff out of 50. Live values and household links come from
+`population.update`, including removal and reassignment. The floor tokens and
+apron labels from the first visual pass were removed. Housing roof reflections
+are softened without changing the shared factory/lava lighting.
+
+Clicking a friendly house raycasts its actual model, selects its household links,
+and suppresses firing for that click. Empty-ground clicks clear the selection;
+the POPULATION control shows all links. Moving light packets follow the visible
+routes. The offline mayor sandbox grows population by five per workplace per
+250ms tick, respects the original two-building household limit, and resets or
+reattaches buildings after demolition. Research remains unlocked in the sandbox.
+
+The full strict complexity/maintainability gate still flags oversized scene/UI
+functions; gameplay tests, typechecks and the production build are validated
+separately, without waiving those limits.
+
+Final verification: 92 test files pass, workspace typechecks and unused-symbol
+checks pass, and the production build passes. Import-extension, dependency-cycle
+and duplication checks pass. The isolated browser verified housing construction,
+roof-click selection with exactly two connected buildings and zero player shots,
+and reported zero runtime errors. The client was restarted on 8220 after its
+previous process stopped; the server health endpoint on 8121 remains healthy.
+The test browser is shut down after its final capture.
+
+## 2026-10-01 — AI opponents and tile navigation
+
+Live AI cities now activate when the first human joins, favour nearby unoccupied
+cities, and preserve existing battle damage when everyone returns to the lobby.
+They cannot overwrite human-owned cities or accept human ownership while active.
+The default lobby covers the original 64 cities; generated cities are labelled
+as AI opponents and occupancy updates when their lifecycle changes.
+
+Each engaged city supports mayor, shooter, bomb-defuser and miner defenders.
+Idle defenders patrol entrances throughout the city. Miners place bounded armed
+mine/DFG traps ahead of exposed enemies, with a cooldown, occupancy checks and
+space around tanks. Lost roles are replaced after twenty seconds. AI mayors use
+the mayor model through optional snapshot role metadata. Orbed cities clear bots
+and retain the original five-minute reconstruction cooldown.
+
+Routes remain on the tile grid: tanks reach each centre before turning, keep
+forward progress when paths are recalculated, stop when no route exists, and
+replan when blocked. Spawns must have collision clearance and a usable route into
+the city. Collision movement is swept in small increments. Defenders and rogues
+seek a route around obstructing terrain instead of firing into it from their
+usual standoff distance. Friendly/dead/cloaked targets are excluded and DFG
+freezes movement and fire. Patrol goals are cached until structures change.
+
+Validation: all 93 test files pass, including fifteen new AI scenarios covering
+all six configured cities on the actual map, minute-long patrol simulation,
+L-shaped wall routing, replanning, flanking, trap limits, ownership, role snapshots,
+replacement delay and city cooldowns. Workspace typechecks, unused-symbol checks
+and production client build pass. A full-suite runtime-file failure did not
+reproduce in its direct run, six repeated runtime runs, or the subsequent full
+suite. Difficulty and feel still require human multiplayer playtesting; this is
+an automated correctness check, not a claim of complete classic AI parity.
+
+## 2026-10-01 — Performance without reducing visual quality
+
+Prepare battlefield world transforms once for the color/AO/shadow passes, freeze
+static terrain transforms, and avoid uploading unchanged building instance
+buffers. Newly generated factories/research buildings now join the shared part
+batches; demolition unregisters them safely. Research specimen captures use a
+conservative camera-frustum bound to skip offscreen screens. Inventory headers
+and status text update only when their content changes, and live-world cleanup
+uses existing entity maps rather than allocating temporary membership sets.
+
+Antialiasing, pixel ratio, render-target samples, shadow size/cadence, terrain
+mesh density, materials, bloom, AO, and visible animation cadence are preserved.
+F3 now includes GPU backend and scene/update versus draw/driver timings in both
+live and demo routes. Draw submission timing includes driver stalls; it is not
+an isolated GPU measurement.
+
+Validation: all 93 test files, workspace typechecks and production build pass.
+Batch tests cover animated/nested transforms, float precision, visibility,
+removal and live registration. An isolated browser construction/house-selection
+check passed without runtime errors; its screenshot retained the approved scene.
+A synthetic 2,880-part transform benchmark including repeated render-pass matrix
+updates measured about 1.18 -> 0.47 ms for unchanged parts, and 1.11 -> 0.94 ms
+with animated parts. These are CPU subtask measurements, not claimed player FPS
+improvements. Actual hardware performance still needs F3 evidence from the
+player's browser; the isolated browser used software rendering.
+
+
+## 2026-10-02 — Profiled shell collision bottleneck and hardware browser testing
+
+The player's F3 screenshot reports Intel UHD Graphics (CML GT2), not software
+rendering. A stage breakdown and Chrome CPU profile identified triangle raycasts
+in demo combat as the large scene/update cost. F3 now separates world updates,
+animation, research captures, inventory UI, combat, matrices, batches and drawing;
+its main-thread timings include driver calls and are not GPU timings.
+
+Added three-mesh-bvh 0.9.15 for collision queries against rigid mesh geometry.
+Indirect trees retain the original vertex/index buffers and triangle order.
+Queries request the nearest surface and keep the original material groups,
+transforms, normals and instance identity. Rock instances use local proxies,
+without patching Three's global prototypes. Deforming geometry retains native
+raycasting. Tank bounds are prepared once per combat frame and refreshed after
+movement/recoil on the next frame. Visible geometry, materials, shadows, AA,
+resolution and animation settings are unchanged.
+
+An isolated software-rendered browser comparison sampled combat at about
+24.5 -> 1.7 ms, with the same 866 draws and 1,200,817 rendered triangles in the
+captured scene. Average scene/update submission fell from about 29.5 -> 6.8 ms.
+This demonstrates CPU work removed, not an FPS comparison on player hardware.
+Inventory thumbnails rendered correctly in the final capture.
+
+GPU diagnostics confirmed the YAAF-owned browser explicitly uses
+`--use-angle=swiftshader-webgl`, with software-only WebGL. The separate isolated
+Chrome test browser can access the player's Intel GPU using
+`--enable-gpu --use-angle=gl`. A warmed-up 32-frame run at 1920x1080, DPR 1,
+reported the same Intel UHD CML GT2 backend, approximately 8.6 FPS, 3.8 ms average
+scene/update and 18.1 ms average total render submission, without browser errors.
+A shorter 1280x800 run measured about 14.7 FPS. These are different-resolution
+measurements, not a controlled FPS before/after result. Full-resolution drawing
+still needs further GPU profiling; removing CPU work does not remove that limit.
+The test browser is closed after each run.
+
+Validation: all 94 test files, workspace typechecks, unused-symbol checks and
+production build pass. Collision checks cover native/accelerated hit equivalence,
+material groups, unchanged buffers, transformed rock instances, finite sweep
+length, deforming-mesh fallback and moving/recoiling tank cache invalidation.
+A recurring AI integration-test failure was traced to setup turret rounds
+sometimes destroying the newly inserted bomb before target selection. The
+fixture now clears those existing rounds and asserts the bomb remains active;
+bot gameplay logic was unchanged. The full suite passes after this correction.
+
+
+## 2026-10-02 — Preserve scene AA while simplifying post-processing buffers
+
+Reviewed the official Three.js render-target/post-processing guidance and MDN's
+WebGL best practices. In particular, resolved depth need not be copied when no
+later pass reads it: https://threejs.org/docs/pages/RenderTarget.html and
+https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices.
+
+GPU timer queries on the Intel UHD CML GT2 at 1920x1080 measured the original
+scene pass around 65 ms, GTAO 24.7 ms, bloom 9.0 ms, heat 7.3 ms and output 1.9 ms.
+The compositor was keeping four-sample color/depth attachments for fullscreen
+effects as well as geometry, repeatedly resolving unused depth.
+
+MultisampleScenePass now renders the geometry into a dedicated four-sample HDR
+target, resolves its color once, and copies that antialiased image into the
+composer. Subsequent fullscreen effects use single-sample HDR color targets
+without depth attachments. GTAO retains its own normal/depth target and all
+existing settings. Main resolution/DPR, geometry, textures, lighting, shadows,
+animation, four-sample scene AA and all effect strengths remain unchanged.
+
+The first matched idle hardware runs measured about 8.54 -> 10.22 FPS. GPU timing
+for GTAO/bloom/heat fell to approximately 17.4/4.7/1.8 ms respectively; the scene
+plus its new color copy remained around 64.2 ms. These are local measurements,
+not a guaranteed FPS uplift on every machine or under concurrent workloads.
+
+Verification rendered both original and optimized pipelines on the same scene
+state and read back the final frame: zero differing channels out of 8,294,400
+at 1920x1080. After resizing to 1280x800 and rotating the tank, the comparison
+again found zero differences across 4,096,000 channels. Both paths redrew the
+same shadows, and comparisons included the final tone mapping and color output.
+No browser errors. All 94 test files, workspace typechecks and production build
+pass. The captured checks are in /tmp/battlecity-post-verified.log; the temporary
+browser closes after the run.
+
+## 2026-10-02 — Share terrain vertices and fuse heat/output shading
+
+Terrain now indexes identical grid vertices directly while generating quads.
+Coordinates, triangle order, shoreline tessellation, material attributes and
+bank displacement remain unchanged. The loaded demo terrain retains all
+3,031,126 triangles while reducing stored vertices from 9,093,378 to 1,694,432
+(about 81%). The existing area/placement test now follows triangle indices and
+checks retained shoreline triangles, normals, terrain-kind attributes and
+frustum culling. Indexed geometry is documented at
+https://threejs.org/docs/pages/BufferGeometry.html.
+
+Opaque terrain renders after opaque buildings, allowing their depth to reject
+covered ground before its detailed surface shading. Terrain chunks, eight-tile
+building/rock batches and their bounding spheres remain independently cullable.
+Off-screen geometry intersecting the shadow camera can still cast visible
+shadows. No detail, viewport resolution, AA, shadow cadence or effect strength
+was reduced.
+
+Heat distortion, vignette, tone mapping and output colour conversion now share
+one OutputPass. It retains Three's exposure and colour-space handling. Explicit
+half-float truncation reproduces the former intermediate's rounding on the
+validated Intel GPU. Unheated pixels reuse their existing colour sample,
+skipping distortion sine calculations and a redundant texture fetch. Heated
+pixels retain the original formula; explicit LOD zero makes the conditional
+sample well-defined for the non-mipmapped HDR input. These packing and sampling
+operations are WebGL 2 / GLSL ES 3 built-ins:
+https://www.khronos.org/files/webgl20-reference-guide.pdf.
+
+Stable canvas diagnostics no longer repeat DOM attribute writes. Timing fields
+still publish every frame for FPS observers. Nearest-cargo diagnostics use
+squared distances without allocating temporary result objects; selected-house
+connection counting avoids temporary arrays and skips work when none is selected.
+
+Individual Intel UHD CML GT2 experiments at 1920x1080 measured the scene pass
+around 65.8 -> 62.8 ms for terrain draw order and around 63.3 ms for indexed
+terrain. These separate gains must not be added together. A paired session's
+separate heat/output passes cost about 5.45 ms together versus about 3.59 ms
+for the merged pass, before the additional unheated-pixel shortcut. Paired FPS
+samples for the original configuration were 7.66/7.96 versus 8.80/8.59 for
+indexed terrain plus merged shading. Shared GPU load caused substantial run-to-run
+variation; comparisons involving pixel readback are fidelity checks, not clean
+FPS benchmarks.
+
+The final retained pipeline was compared with the original terrain and separate
+heat/output passes in the same frame, including redrawn shadows. Zero differing
+channels out of 8,294,400 at 1920x1080; again zero out of 4,096,000 after resizing
+to 1280x800 and rotating the tank. No browser errors. Evidence is in
+/tmp/battlecity-all-kept-comparison.log. Lava-only shader branching and direct
+GPU texture copying were tested but not retained because they did not provide
+a reliable improvement. The isolated test browser closes after each run.
+
+Validation: all 94 test files, workspace typechecks, unused-symbol checks and
+production build pass. Existing large-bundle build warning remains.
+
+## 2026-10-02 — Remove avoidable distance and angle calculations
+
+Audited client presentation maths after the fast-inverse-square-root suggestion.
+The original Quake routine uses a 32-bit float bit reinterpretation plus a Newton
+iteration (https://github.com/id-Software/Quake-III-Arena/blob/master/code/game/q_math.c).
+V8 already provides a native Float64Sqrt intrinsic
+(https://github.com/v8/v8/blob/main/src/builtins/math.tq). A local V8 benchmark
+found the JavaScript Quake port roughly tied with native inverse square root
+across runs, while introducing up to 0.175% relative error in the sampled values.
+That approximation was not introduced.
+
+Client bullet/effect visibility, research-display range, population-panel range,
+demo pickup selection and turret activation now compare squared distances.
+These coordinates are finite and bounded by the game map. Turrets retain actual
+distance for predictive aiming when a target is in range; unrelated collision
+and movement calculations remain unchanged.
+
+Turret servo and remote-tank angle wrapping use bounded arithmetic for the common
+one-turn range, retaining native trigonometric argument reduction for larger or
+non-finite inputs. A regression compares 1,024 servo states with the original
+trajectory within 1e-12 radians, including wrap direction, pitch/yaw speed and
+large-angle cases. Existing turret firing/cover and live-world tests still pass.
+
+Remote-player interpolation computes its shared exponential once per frame.
+Turret glow computes shared intensity once per turret; orb illumination computes
+its shared pulse once per frame. Turret velocity measurement reuses its vector.
+All animation formulas, intensities and servo limits are retained.
+
+The isolated 500,000-operation median benchmark measured radius comparisons at
+35.7 -> 4.6 ms and servo calculations at 96.4 -> 24.0 ms (about 8x and 4x for
+those operations). These are arithmetic microbenchmarks, not whole-game FPS gains.
+Evidence: /tmp/battlecity-math-bench-clean.log.
+
+A terrain-shader prototype compared squared Voronoi/shoreline distances before
+taking square roots of the winning distances. It matched pixels exactly at both
+1920x1080 and 1280x800, but paired GPU measurements did not establish a reliable
+frame-time benefit. It was not retained; the validated terrain shader is unchanged.
+Evidence: /tmp/battlecity-squared-noise-paired.log.
+
+Validation: all 94 test files, workspace typechecks, unused-symbol checks and
+production build pass. No graphics quality setting was reduced.
+
+## 2026-10-02 — Restore compact construction and classic cargo controls
+
+Construction now opens at the right-click position, with compact DX icon rows,
+numbered choices and edge clamping that keeps it out of the inventory. The full
+sandbox tree occupies about 298×414 pixels at 1280×800; a normal early city uses
+one column. F4 / Ctrl+B opens construction, 0 selects demolition, Escape and an
+outside click dismiss it. The command HUD is smaller too. Menu positioning runs
+on opening, entry changes and resizing, without measuring layout every frame.
+
+Restored D (G alias) / Shift+X / Shift+H cargo drops, B armed bomb, V bomb arming,
+O orb, C cloak, H medkit, F1 help, F2 map and L leave. Arrow keys drive; W/A/S
+remain movement aliases and D keeps its classic cargo meaning. U now retries
+pickup every 800ms while held, so pressing it before reaching an icon works.
+Live pickup resolves nearby friendly items instead of silently requesting a
+remote factory's stock. Existing under-tank placement and blocked-drop behaviour
+remain intact. Text inputs and browser shortcuts do not trigger cargo actions.
+
+Bombs now have isolated red lamp materials and a shrinking, increasingly rapid
+fuse warning. An optional remainingMs on hazard.spawn carries the actual server
+fuse when joining mid-countdown. Bomb and destroyed-defense events produce blast
+feedback, with a brief shockwave, fire, sparks, smoke and ground scorching using
+bounded effects. Offline armed bombs now detonate, remove affected structures,
+clear their collisions and stop destroyed turrets firing. Disarmed bombs remain
+collectible. Server and demo share the unchanged five-second fuse, 25-damage
+constant and footprint/radius predicate; gameplay remains tile based, regardless
+of the rounded presentation. Live damage still comes exclusively from the server.
+
+Validation: all 96 test files passed with four-file concurrency (one AI file
+failed in the initial unrestricted run and passed alone and in the complete
+rerun). Typechecking, unused-symbol checks and production build passed. Isolated
+Intel GPU browser verified cursor/edge anchoring, numeric construction, F1/F2,
+D mine drop, U pickup, B armed drop and five-second building destruction with
+zero console/runtime errors. Approved terrain and rendering settings preserved.
+
+Follow-up arming fix: restored clicking the already-selected bomb to toggle its
+armed state. The inventory ARM/DISARM button now toggles that same state rather
+than immediately deploying a separate bomb, and works in demo and live modes.
+The next D/button drop carries armed=true; its fuse starts on deployment, not
+while selecting/arming in inventory. Browser confirmed inventory stayed at three
+bombs while arming, fell to two on drop, and the bomb then detonated. Added
+regressions for repeated-click arming and live request armed flags. Final full
+96-file run, typecheck and build passed; browser reported zero errors.
+
+## 2026-10-02 — Cinematic bomb blasts and physical structure breakup
+
+Replaced the enlarged impact puff with procedural HDR fire lobes, delayed rolling
+smoke, an outward ground-dust front, hot sparks, fading scorch/embers and a layered
+low-frequency detonation sound. Fire retains orange turbulent detail rather than
+summing into a white bloom blob. Billboard fire/smoke and ground decals use a
+separate camera layer excluded from GTAO's depth/normal pass. Their shaders compile
+asynchronously during loading to avoid compiling on the first bomb.
+
+Destroyed buildings/turrets now transfer to a visual collapse rig. The roof and
+substantial asset meshes become spinning ballistic fragments that bounce, darken
+and settle; the remaining structure buckles before disappearing into the smoke.
+The reusable original model keeps its geometry/transforms intact. Visual remnants
+lose live entity/selection IDs, use owned material clones, and never enter gameplay
+collision or targeting. Live effects start from authoritative demolition/removal
+notifications; reconnect/world clearing does not produce spurious blasts.
+Research screens and machinery effects detach before their resources are released.
+
+Resources are bounded to six collapse rigs, eighteen actual parts per rig and
+256 cloud instances in two draws. Offscreen structure effects beyond 35 tiles are
+skipped. Debris/clouds clean up within roughly 7.5 seconds; ground scorching fades
+by eighteen seconds. Bomb damage, fuse, tile blast footprint and under-tank
+placement are unchanged.
+
+Validation: all 97 test files passed; final targeted destruction/live-world/bomb
+regressions, typecheck, unused-symbol checks and production build passed. Timed
+Intel GPU browser captures verified command-centre roof breakup, orb-factory
+components, and an actual turret destruction (four firing turrets reduced to
+three). Final combined building/turret blast showed sixteen actual fragments and
+210 cloud instances; both returned to zero by 7.5 seconds. Seven captured phases,
+including cleanup at nineteen seconds, reported no runtime/console errors.
+
+### 2026-10-02 — Research progress and item-ready architecture
+
+Research terminals now show a contained amber plasma hourglass, a segmented progress dial, and a countdown while their own city/type is researching. Confirmed completion reveals the rotating item hologram, an ITEM READY caption and a teal confirmation mark. Waiting for crew and queued laboratories have explicit subdued states. The chamber rim, containment specimen and reactor use matching amber/teal lighting, making the state visible at normal map scale without adding a floating HUD or enlarging the building footprint.
+
+The renderer follows authoritative city research snapshots with a per-city deadline that continues outside the viewport; an expired countdown remains FINALISING until completion is received. A replacement snapshot updates the deadline without resetting observed progress, and reconnect/cleared state removes stale clocks. No gameplay, staffing, unlock or production rules changed. In the offline showroom only, the existing rocket research lab demonstrates a 14-second research / 10-second ready cycle while the mine lab stays ready and sandbox construction remains unlocked.
+
+Existing distance/frustum culling and 10 Hz item-view capture are retained. Status text uploads only when its caption/countdown changes; shader clocks animate between captures. Each lab adds one small transparent rim ring and owns its status materials/textures for cleanup. Stable research diagnostics use the display system's cached signature.
+
+Validation: focused research-state, population, mayor and live-world tests pass (four test files); monorepo typecheck and client production build pass. Isolated Intel GPU browser captures verified active, halfway, ready and restarted states with no console/runtime/shader errors; screenshots inspected at normal map scale and with the full research buildings in view.

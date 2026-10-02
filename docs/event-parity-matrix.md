@@ -3,17 +3,17 @@
 Last updated: 2026-02-24
 
 ## Legend
-- `Parity source`: behavior expected from legacy `master`
+- `Parity source`: behavior expected from classic `master`
 - `TS handler`: where TypeScript currently applies event
 - `Gap`: known mismatch affecting visual parity
 - `Status`: `pending`, `in_progress`, `done`
 
 | Event type | Parity source | TS handler | Visual impact | Gap | Status |
 |---|---|---|---|---|---|
-| `players.snapshot` | legacy player/tank positions and rows | `apps/client-ts/src/app/network-events.ts` | tank placement/heading | anchor drift risk in renderer | pending |
+| `players.snapshot` | classic player/tank positions and rows | `apps/client-ts/src/app/network-events.ts` | tank placement/heading | anchor drift risk in renderer | pending |
 | `player.health` | health panel/tank state | `network-events.ts` | panel health bar, labels | health bar coordinate/mask parity missing | pending |
 | `player.dead` | explosion + dead state | `network-events.ts` | explosion markers | large/small explosion texture parity incomplete | pending |
-| `bullet.fired` | bullet row/type animation | `network-events.ts` | bullets | TS uses non-legacy bullet frame logic | pending |
+| `bullet.fired` | bullet row/type animation | `network-events.ts` | bullets | TS uses non-classic bullet frame logic | pending |
 | `bullet.resolved` | cleanup + hit effects | `network-events.ts` | explosion placement | depends on bullet parity | pending |
 | `building.placed` | building appearance + overlays | `network-events.ts` | base + icons + labels | base/overlay animation not fully parity | pending |
 | `building.demolished` | remove building visuals | `network-events.ts` | map/building layer | depends on layer ordering parity | pending |

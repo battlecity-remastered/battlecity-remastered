@@ -3,7 +3,7 @@
 ## Quick Facts
 - Classic JavaScript app workspaces were removed.
 - Active runtime is TypeScript-only:
-  - `apps/client-ts` (Vite + Pixi.js)
+  - `apps/client-ts` (Vite + Three.js live client; ?demo=1 offline preview)
   - `apps/server-ts` (Express + Socket.IO)
   - `packages/protocol` (schema/event envelope)
   - `packages/sim-core` (shared simulation logic)

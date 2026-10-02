@@ -1,7 +1,7 @@
 # Master Capture Notes (Phase 0 Baseline)
 
 This baseline file captures parity reference values from existing rewrite docs.
-No separate legacy runtime artifact is used in this worktree.
+No separate classic runtime artifact is used in this worktree.
 
 ## Surface and panel baseline
 - Surface: `1024x768`

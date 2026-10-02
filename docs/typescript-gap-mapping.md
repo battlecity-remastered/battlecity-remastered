@@ -1,4 +1,4 @@
-# TypeScript Gap Mapping (Legacy `master` -> TS Rewrite)
+# TypeScript Gap Mapping (Classic `master` -> TS Rewrite)
 
 Last updated: 2026-02-24
 Source analysis: `docs/typescript-gap-analysis.md`
@@ -10,7 +10,7 @@ Source analysis: `docs/typescript-gap-analysis.md`
 4. Mark status only when tests pass.
 
 ## Mapping table
-| Area | Legacy contract | TS target files | Required tests | Status |
+| Area | Classic contract | TS target files | Required tests | Status |
 |---|---|---|---|---|
 | Panel static layout | top at `(maxMapX,0)`, bottom at `(maxMapX,430)` | `apps/client-ts/src/render/scene.ts` | `panel-radar-parity.test.ts` | pending |
 | Finance block | money box/up/down/cash text exact coordinates | `apps/client-ts/src/render/scene.ts` | `panel-radar-parity.test.ts` | pending |
@@ -19,7 +19,7 @@ Source analysis: `docs/typescript-gap-analysis.md`
 | Inventory panel icons | slot coordinates + item frames + selection texture | `apps/client-ts/src/render/scene.ts`, `apps/client-ts/src/gameplay/items/IconInventoryService.ts` | `panel-radar-parity.test.ts`, `item-id-parity.test.ts` | pending |
 | Home arrow | `imgArrows` 8 directions at `(maxMapX+5,160)` | `apps/client-ts/src/render/scene.ts` | `panel-radar-parity.test.ts` | pending |
 | Radar math | local-relative projection with range/bounds constants | `apps/client-ts/src/render/scene.ts`, `apps/client-ts/src/render/panel/panel-visuals.ts` | `panel-radar-parity.test.ts` | pending |
-| Radar textures | `imgRadarColors` + dead marker from `imgMiniMapColors` | `apps/client-ts/src/render/scene.ts`, `apps/client-ts/src/render/LegacyTextureRegistry.ts` | `assets-parity-registry.test.ts`, `panel-radar-parity.test.ts` | pending |
+| Radar textures | `imgRadarColors` + dead marker from `imgMiniMapColors` | `apps/client-ts/src/render/scene.ts`, `apps/client-ts/src/render/TextureRegistry.ts` | `assets-parity-registry.test.ts`, `panel-radar-parity.test.ts` | pending |
 | Tank origin/frame | top-left origin, frame `(col*48,row*48,48,48)` | `apps/client-ts/src/render/scene.ts` | `render-entity-parity.test.ts` | pending |
 | Ground layer | tile size 128 + modulo camera transform | `apps/client-ts/src/render/layers/GroundLayer.ts` | `terrain-parity.test.ts` | pending |
 | Terrain frames | adjacency bitmask -> `frameX = mask*48` | `apps/client-ts/src/render/layers/TileLayer.ts` | `terrain-parity.test.ts` | pending |
@@ -34,7 +34,7 @@ Source analysis: `docs/typescript-gap-analysis.md`
 | Item rendering | mine/bomb/orb frame rectangles + offsets | `apps/client-ts/src/render/items/ItemRenderer.ts` | `item-defense-bullet-parity.test.ts` | pending |
 | Bullet rendering | 8x8 animated frames by type/animation | `apps/client-ts/src/render/scene.ts` | `item-defense-bullet-parity.test.ts` | pending |
 | Item type IDs | canonical IDs (bomb=3, mine=4, orb=5, etc.) | `apps/client-ts/src/render/parity/constants.ts`, `apps/client-ts/src/app/intents-actions.ts`, `apps/client-ts/src/gameplay/items/IconInventoryService.ts`, `apps/client-ts/src/render/items/ItemRenderer.ts` | `item-id-parity.test.ts` | pending |
-| Asset registry completeness | all parity textures loaded | `apps/client-ts/src/render/LegacyTextureRegistry.ts` | `assets-parity-registry.test.ts` | pending |
+| Asset registry completeness | all parity textures loaded | `apps/client-ts/src/render/TextureRegistry.ts` | `assets-parity-registry.test.ts` | pending |
 | Map decode orientation | `sourceX=511-y`, `sourceY=511-x` | `apps/client-ts/src/world/map-loader.ts`, `apps/server-ts/src/domain/map/MapService.ts` | `map-loader.test.ts`, `map-services.test.ts` | pending |
 | Blocking tile parity | client/server consistent blocking policy | `apps/client-ts/src/world/map-loader.ts`, `apps/server-ts/src/domain/map/MapService.ts` | `map-loader.test.ts`, `map-services.test.ts`, `blocking-parity-contract.test.ts` | pending |
 | City spawn parity | full 0..63 spawn table, exact tile values | `apps/client-ts/src/world/city-spawn.ts` | `city-spawn.test.ts` | pending |

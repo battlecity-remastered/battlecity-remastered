@@ -13,7 +13,7 @@ Avoid breaking client/server compatibility while visual parity fields are introd
 5. Keep protocol schema and adapters in sync in the same commit.
 
 ## Compatibility modes
-- `legacy-compatible`: existing payload only.
+- `classic-compatible`: existing payload only.
 - `parity-extended`: existing payload + optional parity fields.
 
 ## Recommended rollout pattern
@@ -33,3 +33,20 @@ Avoid breaking client/server compatibility while visual parity fields are introd
 2. Server tests for emitter payload shape pass.
 3. Client event-router and network-event handling tests pass.
 4. Full root check passes: `npm run rewrite:check:strict`.
+
+## Three.js live port (October 2026)
+
+`players.snapshot` entries optionally include `cloakedUntil` and `frozenUntil`;
+clients fall back to zero. `bullet.fired` optionally includes authoritative
+`speed`; clients retain the legacy speed fallback. `bullet.resolved` optionally
+includes the impact `position`; older events use the predicted bullet position.
+All existing event names and required fields remain intact. The live presentation
+observes events before the state reducer removes resolved entities.
+
+### Hazard fuse presentation (2026-10-02)
+
+`hazard.spawn` accepts optional `remainingMs` for finite fuses. Deployment and
+join hydration send the current server value; older payloads remain valid. The
+client uses it only for the warning animation and waits for authoritative removal
+for live detonation. Damage, radius, fuse length and event envelope version are
+unchanged.
