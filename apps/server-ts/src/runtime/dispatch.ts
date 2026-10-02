@@ -130,7 +130,7 @@ const handlers: HandlerMap = {
             }
         }, {
             eventType: "lobby.join.request",
-            payload
+            payload: { desiredCity: payload.desiredCity }
         });
     },
     "lobby.leave.request": (socketId, _payload, context) => {

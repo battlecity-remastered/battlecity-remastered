@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { rejectSocket } from "../src/runtime/rejections.js";
+import { GameRuntime } from "../src/runtime/GameRuntime.js";
+import { makeEnvelope } from "@battlecity/protocol";
+import { issueAccountToken } from "../src/domain/identity/account-token.js";
 
 test("rejectSocket emits debug log with rejection context", () => {
     const rejects: Array<{ socketId: string; reason: string }> = [];
@@ -56,4 +59,18 @@ test("rejectSocket emits debug log with rejection context", () => {
     assert.equal(parsed.meta?.socketId, "socket-1");
     assert.equal(parsed.meta?.reason, "not_mayor");
     assert.equal(parsed.meta?.eventType, "building.place.request");
+});
+
+test("a full lobby never writes the player's signed account token to rejection logs", () => {
+    const lines: string[] = [], previousLog = console.log;
+    const token = issueAccountToken("account", "Pilot").authToken;
+    const runtime = new GameRuntime({ emitAll: () => {}, emitTo: () => {}, reject: () => {} }, { maxRecruitsPerCity: 0 });
+    runtime.handleRawEvent("mayor", makeEnvelope("lobby.join.request", 1, { desiredCity: 0 }));
+    try {
+        console.log = (value?: unknown) => { lines.push(String(value)); };
+        runtime.handleRawEvent("pilot", makeEnvelope("lobby.join.request", 1, { desiredCity: 0, authToken: token }));
+    } finally { console.log = previousLog; }
+    assert.ok(lines.some(line => line.includes("runtime.reject")));
+    assert.equal(lines.join("\n").includes(token), false);
+    assert.equal(lines.join("\n").includes("authToken"), false);
 });
