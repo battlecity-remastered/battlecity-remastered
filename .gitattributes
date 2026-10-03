@@ -1,3 +1,4 @@
 # Preserve verbatim command output, including TAP diagnostic whitespace.
 docs/gameplay/evidence/*.log -whitespace
 docs/gameplay/evidence/**/*.log -whitespace
+docs/gameplay/deployment/**/*.log -whitespace
