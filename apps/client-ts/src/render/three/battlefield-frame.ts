@@ -8,6 +8,7 @@ import { TILE_SIZE } from "../../gameplay/world-viewport.js";
 import { isGhostTileBlocked } from "../../ui/build-menu/GhostPlacement.js";
 import { createBombFuse } from "./bomb-fuse.js";
 import { createBuildingBatches } from "./building-batches.js";
+import { createOrbGroundShake } from "./orb-ground-shake.js";
 import { createBattlefieldCamera, positionBattlefieldCamera } from "./camera.js";
 import { createCannonEffects } from "./cannon-effects.js";
 import { createDefenseTurrets } from "./defense-turrets.js";
@@ -113,7 +114,21 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         const placement = state.ui.pendingBuildPlacement; ghost.visible = state.ui.buildGhostMode && Boolean(placement); if (placement) { ghost.position.set(placement.tileX - 256 + 1.5, 0.04, placement.tileY - 256 + 1.5); ghost.material.color.setHex(isGhostTileBlocked(state, placement.tileX, placement.tileY) ? 0xff675e : 0x75efb0); }
     };
     const updateCollapse = (state: ClientState, dt: number) => {
-        if (preview.collapse > 0) { preview.collapse += dt; for (const entry of collapsing) { const phase = THREE.MathUtils.clamp((preview.collapse - entry.delay) / 1.6, 0, 1); entry.root.scale.copy(entry.scale); entry.root.scale.y *= 1 - phase * .92; entry.root.position.y = entry.y - phase * 1.2; entry.root.rotation.z = Math.sin(phase * Math.PI) * .12; entry.root.visible = phase < 1; } if (preview.collapse > 3) { state.buildings.clear(); collapsing.length = 0; preview.collapse = 0; } }
+        if (preview.collapse <= 0) return;
+        preview.collapse += dt;
+        for (let i = collapsing.length - 1; i >= 0; i--) {
+            const entry = collapsing[i]!;
+            if (preview.collapse < entry.delay) continue;
+            releaseDestroyedModel(entry.root, Boolean(entry.root.userData.previewDefenseId));
+            cannon.blast({ x: entry.root.position.x, y: .3, z: entry.root.position.z });
+            collapsing.splice(i, 1);
+        }
+        if (preview.collapse > 3) {
+            const buildings = [...state.buildings.values()], defenses = [...state.defenses.keys()];
+            state.buildings.clear(); state.defenses.clear(); state.factoryStock.clear();
+            removeDestroyedCargo(state, { buildings, defenses, blasts: [], hazards: [] });
+            collapsing.length = 0; preview.collapse = 0;
+        }
     };
     const collectDemoCargo = (state: ClientState, x: number, z: number): void => {
         let nearest = -1, distanceSquared = 0.92 * 0.92;
@@ -187,6 +202,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         }
         setDiagnostic("populationConnections", String(connections));
     };
+    const shakeGround = createOrbGroundShake(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const render = (state: ClientState): void => {
         const renderStart = performance.now();
         let stageStart = renderStart;
@@ -208,6 +224,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         const x = (position.x + TILE_SIZE / 2) / TILE_SIZE - 256;
         const z = (position.y + TILE_SIZE / 2) / TILE_SIZE - 256;
         positionBattlefieldCamera(camera, x, z);
+        shakeGround(state, camera);
         camera.updateMatrixWorld();
         displayFrustum.setFromProjectionMatrix(displayProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
         finishStage("world");

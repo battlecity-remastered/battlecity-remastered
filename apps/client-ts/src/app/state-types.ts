@@ -199,6 +199,7 @@ export type ClientState = {
             by: string;
             awardedScore: number;
             at: number;
+            position?: { x: number; y: number };
         } | null;
         promotions: Array<{
             cityId: number;

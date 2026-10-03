@@ -53,7 +53,7 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
     return {
         playerModels: players as ReadonlyMap<string, THREE.Object3D>,
         observe(event: KnownTypedEventEnvelope): void {
-            if (event.type === "building.demolished" || (event.type === "defense.remove" && event.payload.reason === "destroyed")) { destroyedIds.add(event.payload.id); if (destroyedIds.size > 256) destroyedIds.delete(destroyedIds.values().next().value!); }
+            if (event.type === "building.demolished" || (event.type === "defense.remove" && (event.payload.reason === "destroyed" || event.payload.reason === "city_orbed"))) { destroyedIds.add(event.payload.id); if (destroyedIds.size > 256) destroyedIds.delete(destroyedIds.values().next().value!); }
         }, update(state: ClientState, dt: number): void {
             updatePlayers(state, dt);
             removeMissing(buildings, state.buildings);

@@ -271,15 +271,19 @@ export const handlers: {
         state.bullets.delete(payload.id);
     },
     "city.orbed": (state, payload) => {
+        const center = [...state.buildings.values()].find(building => building.cityId === payload.targetCityId && building.type === 0);
+        const spawn = resolveCitySpawn(payload.targetCityId);
+        const position = center ? { x: center.tileX * TILE_SIZE + BUILDING_CENTER_OFFSET, y: center.tileY * TILE_SIZE + BUILDING_CENTER_OFFSET } : spawn ? { x: spawn.tileX * TILE_SIZE + BUILDING_CENTER_OFFSET, y: spawn.tileY * TILE_SIZE + BUILDING_CENTER_OFFSET } : undefined;
         state.events.lastOrbedCityId = payload.targetCityId;
         state.events.lastOrbEvent = {
             sourceCityId: payload.sourceCityId,
             targetCityId: payload.targetCityId,
             by: payload.by,
             awardedScore: payload.awardedScore,
-            at: Date.now()
+            at: Date.now(),
+            ...(position ? { position } : {})
         };
-        pushExplosion(state, state.local.x, state.local.y, "large");
+        if (position) pushExplosion(state, position.x, position.y, "large");
         if (payload.by === state.local.id) {
             pushFloatingPoints(state, state.local.x, state.local.y, payload.awardedScore);
         }

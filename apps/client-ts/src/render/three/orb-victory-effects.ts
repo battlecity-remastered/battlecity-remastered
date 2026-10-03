@@ -17,7 +17,7 @@ export const createOrbVictoryEffects=(scene:THREE.Scene)=>{
     let lastEvent="",cursor=0;
     return{update(state:ClientState,dt:number):void{
         const event=state.events.lastOrbEvent,key=event?`${event.at}:${event.targetCityId}:${event.by}`:"";
-        if(event && key!==lastEvent){lastEvent=key;const city=resolveCitySpawn(event.targetCityId);if(city){const rig=rigs[cursor++%rigs.length]!;rig.root.position.set(city.tileX-256+1.5,0,city.tileY-256+1.5);rig.age=0;rig.root.visible=true;}}
+        if(event && key!==lastEvent){lastEvent=key;const city=resolveCitySpawn(event.targetCityId);if(city){const rig=rigs[cursor++%rigs.length]!;rig.root.position.set(event.position ? event.position.x / 48 - 256 : city.tileX-256+1.5,0,event.position ? event.position.y / 48 - 256 : city.tileY-256+1.5);rig.age=0;rig.root.visible=true;}}
         for(const rig of rigs){rig.age+=dt;const phase=Math.min(1,rig.age/3.2);rig.root.visible=phase<1;if(!rig.root.visible)continue;rig.material.uniforms.phase!.value=phase;rig.bubble.scale.setScalar(0.4+Math.pow(phase,.65)*7);rig.wave.scale.setScalar(0.3+phase*11);rig.ringMaterial.opacity=Math.pow(1-phase,2)*0.8;rig.light.intensity=8*Math.exp(-phase*9);}
     },dispose():void{sphere.dispose();ring.dispose();for(const rig of rigs){rig.material.dispose();rig.ringMaterial.dispose();rig.root.removeFromParent();}}};
 };
