@@ -52,3 +52,4 @@
 ## Three.js Performance Evidence
 - Read `docs/performance/REPORT.md`, `docs/performance/EXPERIMENTS.md`, and `docs/performance/README.md` before revisiting renderer performance work.
 - They record the moving gameplay benchmark, original/final measurements, visual comparisons, rejected experiments and reasons, hardware limitations, and reproduction commands. Keep visual fidelity as a constraint and compare warmed runs on the same hardware.
+- `docs/performance/DEPLOYMENT.md` records the v1.1.6 production release, verification evidence, data preservation and rollback location.

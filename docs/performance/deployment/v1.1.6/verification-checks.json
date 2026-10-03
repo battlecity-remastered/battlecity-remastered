@@ -1,0 +1,29 @@
+[
+  {
+    "command": [
+      "npx",
+      "eslint",
+      "docs/performance/deployment/v1.1.6/browser-smoke.mjs"
+    ],
+    "exitCode": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "docs/performance/deployment/v1.1.6/browser-smoke.mjs"
+    ],
+    "exitCode": 0,
+    "output": ""
+  },
+  {
+    "command": [
+      "python",
+      "-c",
+      "from pathlib import Path; p=Path(\"docs/performance/deployment/v1.1.6/deploy.py\"); compile(p.read_text(), str(p), \"exec\")"
+    ],
+    "exitCode": 0,
+    "output": ""
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "health": {
+    "ok": true,
+    "service": "server-ts"
+  },
+  "container": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.6 running healthy",
+  "public_index_identical_to_image": true,
+  "public_app_script_matches_image": true,
+  "public_bundle_bytes_match_image": true,
+  "bundle": "/assets/index-B7o210Td.js",
+  "bundle_bytes": 2635,
+  "bundle_sha256": "e39c2271bc8706aaaab6baf3171ec54d17e9ba710437e1e1480f5a47b4840a85"
+}
