@@ -1,0 +1,9 @@
+time="2026-10-03T21:19:09Z" level=warning msg="/home/ubuntu/battlecity-js-remake/docker-compose.pending.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+time="2026-10-03T21:19:09Z" level=warning msg="/home/ubuntu/battlecity-js-remake/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ battlecity Pulling 
+ battlecity Pulled 
+ Container battlecity-server  Recreate
+ Container battlecity-server  Recreated
+ Container battlecity-server  Starting
+ Container battlecity-server  Started
+{"deployed": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.7", "database_integrity": "ok", "existing_records_preserved": {"users": 42, "player_scores": 80}, "rollback": "/home/ubuntu/battlecity-backups/20261003-v1-1-7/rollback.sh", "revision": "9c5be7b098584d95c3576e8089f62aea9af41eac", "image_digest": ["ghcr.io/battlecity-remastered/battlecity-remastered@sha256:b3c7e6d341abfee4320a2ea000d43b1b557b038b7b3575c58c8fc79a91431529"], "volume": "battlecity-js-remake_battlecity_data"}

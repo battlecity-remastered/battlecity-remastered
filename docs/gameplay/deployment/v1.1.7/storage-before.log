@@ -1,0 +1,18 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       6.8G  6.7G   92M  99% /
+/dev/root       6.8G  6.7G   92M  99% /
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          6         1         1.727GB   1.467GB (84%)
+Containers      1         1         533kB     0B (0%)
+Local Volumes   1         1         75.32kB   0B (0%)
+Build Cache     0         0         0B        0B
+ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.6 a1690e330af1 395MB
+ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.5 7d3b636eb590 395MB
+ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.4 9bd1c7856401 395MB
+ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.2 45285d23759e 395MB
+battlecity-rollback:pre-three-v1 b473c35fcdf8 289MB
+ghcr.io/battlecity-remastered/battlecity-remastered:latest b473c35fcdf8 289MB
+ghcr.io/alan01252/battlecity-js-remake:latest 4c15888c3020 264MB
+108K	/var/lib/docker/buildkit
+136K	/var/lib/docker/containers
+1.6M	/home/ubuntu/battlecity-backups

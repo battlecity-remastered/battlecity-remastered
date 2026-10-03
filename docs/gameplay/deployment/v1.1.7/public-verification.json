@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "timestamp": "2026-10-03T21:21:40.798Z",
+  "health": {
+    "ok": true,
+    "service": "server-ts"
+  },
+  "htmlSha256": "dc72868acdd012e5dc7daf22defeb90d8d95dbee647ea71ac3b014552f54c6f6",
+  "entry": "/assets/index-CoxBChWH.js",
+  "entrySha256": "fc4ab3d1019976e671d78cbff5ed04f3fbfd172de2f9ae5e5534058d55a95073",
+  "entryBytes": 2635
+}
