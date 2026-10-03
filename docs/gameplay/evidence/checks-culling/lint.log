@@ -1,0 +1,4 @@
+
+> lint
+> npx eslint scripts/*.mjs scripts/test/*.mjs eslint.config.js
+

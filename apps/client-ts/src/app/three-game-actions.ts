@@ -1,11 +1,10 @@
-import { CLASSIC_SHOT_INTERVAL_MS } from "@battlecity/sim-core";
+import { CLASSIC_SHOT_INTERVAL_MS, classicPrimaryBulletType } from "@battlecity/sim-core";
 import type { ClientState } from "./state.js";
 import type { EventSender } from "../network/events.js";
 import { direction32ToBulletHeading, resolveTankMuzzlePosition } from "../gameplay/combat/shot-geometry.js";
 import { resolveNearbyPickupItemType } from "./intents-factory.js";
 import { resolveTankDropTarget } from "../render/three/tank-drop-target.js";
 import { listCitySpawns } from "../world/city-spawn.js";
-import type { DemoWeapon } from "../render/three/demo-combat.js";
 
 export const createThreeGameActions = (state: ClientState, send: EventSender, flushMovement: () => void = () => {}) => {
     let lastShot = -Infinity, lastAction = -Infinity;
@@ -15,10 +14,10 @@ export const createThreeGameActions = (state: ClientState, send: EventSender, fl
         lastAction = performance.now(); return true;
     };
     return {
-        fire(weapon: DemoWeapon): void {
+        fire(): void {
             if (!ready() || (state.local.frozenUntil ?? 0) > Date.now() || performance.now() - lastShot < CLASSIC_SHOT_INTERVAL_MS) return;
-            const type = weapon === "rocket" ? 1 : 0;
-            if ((state.inventory.get(type === 1 ? 1 : 12) ?? 0) <= 0) return;
+            const type = classicPrimaryBulletType(state.inventory, state.controls.moveForward !== state.controls.moveBackward);
+            if (type === null) return;
             lastShot = performance.now(); flushMovement();
             send("bullet.fire.request", { ownerId: state.local.id!, position: resolveTankMuzzlePosition(state.local.x, state.local.y, state.local.direction), direction: direction32ToBulletHeading(state.local.direction), type });
         },

@@ -1,0 +1,6319 @@
+{
+  "version": 1,
+  "mode": "live",
+  "frames": 240,
+  "warmup": 120,
+  "elapsedMs": 14626.100000143051,
+  "fps": 24.3439804435513,
+  "frameMs": {
+    "samples": 240,
+    "mean": 41.07791666686535,
+    "p50": 39.80000019073486,
+    "p95": 52,
+    "p99": 63.700000047683716,
+    "worst": 102
+  },
+  "cpuMs": {
+    "samples": 240,
+    "mean": 22.649166671435037,
+    "p50": 21,
+    "p95": 34.19999980926514,
+    "p99": 44.700000047683716,
+    "worst": 99.89999985694885
+  },
+  "gpuMs": {
+    "samples": 240,
+    "mean": 35.909347645833364,
+    "p50": 34.845416,
+    "p95": 42.423833,
+    "p99": 50.825748,
+    "worst": 53.951333
+  },
+  "gpu": "ANGLE (Intel, Mesa Intel(R) UHD Graphics (CML GT2), OpenGL 4.6)",
+  "viewport": [
+    1280,
+    720
+  ],
+  "pixelRatio": 1,
+  "framebuffer": [
+    1280,
+    720
+  ],
+  "drawCalls": {
+    "samples": 240,
+    "mean": 893.3,
+    "p50": 911,
+    "p95": 963,
+    "p99": 974,
+    "worst": 977
+  },
+  "triangles": {
+    "samples": 240,
+    "mean": 1619850.2583333333,
+    "p50": 1637486,
+    "p95": 1732430,
+    "p99": 1736472,
+    "worst": 1736520
+  },
+  "visibleObjects": {
+    "samples": 240,
+    "mean": 246.32916666666668,
+    "p50": 248,
+    "p95": 268,
+    "p99": 268,
+    "worst": 268
+  },
+  "memory": {
+    "geometries": 224,
+    "textures": 86
+  },
+  "programs": 118,
+  "stages": {
+    "movement": {
+      "samples": 240,
+      "mean": 0.5641666700442632,
+      "p50": 0.5,
+      "p95": 0.7999999523162842,
+      "p99": 1.3999998569488525,
+      "worst": 1.5999999046325684
+    },
+    "worldMatrices": {
+      "samples": 240,
+      "mean": 0.639166659116745,
+      "p50": 0.5999999046325684,
+      "p95": 1,
+      "p99": 2.3999998569488525,
+      "worst": 3.299999952316284
+    },
+    "MultisampleScenePass": {
+      "samples": 240,
+      "mean": 15.221250003576278,
+      "p50": 14.199999809265137,
+      "p95": 22.200000047683716,
+      "p99": 33.40000009536743,
+      "worst": 85
+    },
+    "_GTAOPass": {
+      "samples": 240,
+      "mean": 3.936666657527288,
+      "p50": 3.700000047683716,
+      "p95": 5.299999952316284,
+      "p99": 6.699999809265137,
+      "worst": 9.900000095367432
+    },
+    "_UnrealBloomPass": {
+      "samples": 240,
+      "mean": 0.19708333611488343,
+      "p50": 0.20000004768371582,
+      "p95": 0.2999999523162842,
+      "p99": 0.40000009536743164,
+      "worst": 0.5999999046325684
+    },
+    "OutputPass": {
+      "samples": 240,
+      "mean": 0.029999996225039165,
+      "p50": 0,
+      "p95": 0.10000014305114746,
+      "p99": 0.10000014305114746,
+      "worst": 0.19999980926513672
+    },
+    "battlefield": {
+      "samples": 240,
+      "mean": 22.078749999403954,
+      "p50": 20.40000009536743,
+      "p95": 33.5,
+      "p99": 44.09999990463257,
+      "worst": 99.20000004768372
+    }
+  },
+  "passesPerFrame": {
+    "shadow": {
+      "calls": 243.49166666666667,
+      "triangles": 524592.8666666667,
+      "cpuMs": 3.1033333271741865
+    },
+    "colorGeometry": {
+      "calls": 624.5416666666666,
+      "triangles": 1153055.0666666667,
+      "cpuMs": 15.202916674812634
+    },
+    "aoGeometry": {
+      "calls": 244.85,
+      "triangles": 463672.15,
+      "cpuMs": 2.740833337108294
+    },
+    "auxiliary": {
+      "calls": 23.908333333333335,
+      "triangles": 3123.0416666666665,
+      "cpuMs": 0.5245833218097686
+    }
+  },
+  "graph": {
+    "nodes": 6463,
+    "meshes": 5636,
+    "materials": 398,
+    "shadowCasters": 2971,
+    "shadowLights": 1,
+    "staticMatrices": 5603
+  },
+  "shaderEvents": [
+    {
+      "time": 16.666666666666668,
+      "kind": "blockingProgramLog",
+      "cpuMs": 21.40000009536743,
+      "cacheKey": "18,19,highp,srgb-linear,false,,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,,true,false,0,,1,16,0,0,1,0,1,0,0,0,0,1,0,0,0,0,8388608,8391681,srgb,onBeforeCompile() {\n  }"
+    },
+    {
+      "time": 216.66666666666666,
+      "kind": "blockingProgramLog",
+      "cpuMs": 38.299999952316284,
+      "cacheKey": "physical,STANDARD,,highp,srgb-linear,306,1024,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,,true,false,0,,1,16,0,0,1,0,1,0,0,0,0,1,0,0,0,0,8388624,8520707,srgb,onBeforeCompile() {\n  }"
+    },
+    {
+      "time": 1116.6666666666667,
+      "kind": "blockingProgramLog",
+      "cpuMs": 23.399999856948853,
+      "cacheKey": "8,20,highp,srgb-linear,false,,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,,true,false,0,,1,16,0,0,1,0,1,0,0,0,0,1,0,0,0,0,8388608,8391681,srgb,onBeforeCompile() {\n  }"
+    },
+    {
+      "time": 3016.6666666666665,
+      "kind": "blockingProgramLog",
+      "cpuMs": 31.200000047683716,
+      "cacheKey": "physical,STANDARD,,highp,srgb-linear,306,1024,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,,true,false,0,,1,16,0,0,1,0,1,0,0,0,0,1,0,0,0,0,8388624,8522755,srgb,onBeforeCompile() {\n  }-finish-false-false-false-true-v4"
+    }
+  ],
+  "rows": [
+    {
+      "frame": 120,
+      "intervalMs": 35.5,
+      "cpuMs": 17.299999952316284,
+      "calls": 737,
+      "triangles": 1351530,
+      "objects": 204,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214018630,
+      "x": 1824.666666666659,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 121,
+      "intervalMs": 35.799999952316284,
+      "cpuMs": 18.899999856948853,
+      "calls": 734,
+      "triangles": 1355546,
+      "objects": 203,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214018630,
+      "x": 1814.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 122,
+      "intervalMs": 36.40000009536743,
+      "cpuMs": 17.40000009536743,
+      "calls": 738,
+      "triangles": 1375018,
+      "objects": 205,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 217548756,
+      "x": 1804.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 123,
+      "intervalMs": 35.40000009536743,
+      "cpuMs": 15.700000047683716,
+      "calls": 738,
+      "triangles": 1396978,
+      "objects": 205,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 217548756,
+      "x": 1794.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 124,
+      "intervalMs": 36.09999990463257,
+      "cpuMs": 16.5,
+      "calls": 740,
+      "triangles": 1397018,
+      "objects": 206,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 221051007,
+      "x": 1784.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 125,
+      "intervalMs": 38,
+      "cpuMs": 20.799999952316284,
+      "calls": 754,
+      "triangles": 1401108,
+      "objects": 206,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 221051007,
+      "x": 1774.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 126,
+      "intervalMs": 37.5,
+      "cpuMs": 17.700000047683716,
+      "calls": 740,
+      "triangles": 1400506,
+      "objects": 206,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 224585547,
+      "x": 1764.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 127,
+      "intervalMs": 36.40000009536743,
+      "cpuMs": 15.899999856948853,
+      "calls": 742,
+      "triangles": 1400938,
+      "objects": 207,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 224585547,
+      "x": 1754.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 128,
+      "intervalMs": 36.799999952316284,
+      "cpuMs": 16.899999856948853,
+      "calls": 742,
+      "triangles": 1400938,
+      "objects": 207,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 228107257,
+      "x": 1744.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 129,
+      "intervalMs": 36.09999990463257,
+      "cpuMs": 18.199999809265137,
+      "calls": 744,
+      "triangles": 1406298,
+      "objects": 208,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 228107257,
+      "x": 1734.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 130,
+      "intervalMs": 36.299999952316284,
+      "cpuMs": 16.200000047683716,
+      "calls": 744,
+      "triangles": 1406298,
+      "objects": 208,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 204313952,
+      "x": 1724.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 131,
+      "intervalMs": 36.60000014305115,
+      "cpuMs": 16.5,
+      "calls": 762,
+      "triangles": 1421956,
+      "objects": 208,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 204313952,
+      "x": 1714.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 132,
+      "intervalMs": 36.299999952316284,
+      "cpuMs": 18,
+      "calls": 755,
+      "triangles": 1418482,
+      "objects": 211,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 207853643,
+      "x": 1704.6666666666597,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 133,
+      "intervalMs": 36.59999990463257,
+      "cpuMs": 20.800000190734863,
+      "calls": 755,
+      "triangles": 1418482,
+      "objects": 211,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 207853643,
+      "x": 1694.6666666666592,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 134,
+      "intervalMs": 54.80000019073486,
+      "cpuMs": 33.09999990463257,
+      "calls": 757,
+      "triangles": 1419562,
+      "objects": 212,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 211458961,
+      "x": 1684.6666666666595,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 135,
+      "intervalMs": 42.09999990463257,
+      "cpuMs": 25.09999990463257,
+      "calls": 757,
+      "triangles": 1423674,
+      "objects": 212,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 211458961,
+      "x": 1674.6666666666597,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 136,
+      "intervalMs": 40.799999952316284,
+      "cpuMs": 20.40000009536743,
+      "calls": 755,
+      "triangles": 1421114,
+      "objects": 211,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214968045,
+      "x": 1664.6666666666592,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 137,
+      "intervalMs": 41.90000009536743,
+      "cpuMs": 19.700000047683716,
+      "calls": 755,
+      "triangles": 1421114,
+      "objects": 211,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214968045,
+      "x": 1654.6666666666595,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 138,
+      "intervalMs": 40,
+      "cpuMs": 18.700000047683716,
+      "calls": 773,
+      "triangles": 1426108,
+      "objects": 213,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 218537549,
+      "x": 1644.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 139,
+      "intervalMs": 39.299999952316284,
+      "cpuMs": 17.300000190734863,
+      "calls": 769,
+      "triangles": 1428786,
+      "objects": 217,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 218537549,
+      "x": 1634.6666666666592,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 140,
+      "intervalMs": 37.5,
+      "cpuMs": 21.09999990463257,
+      "calls": 783,
+      "triangles": 1437690,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 222210102,
+      "x": 1624.6666666666595,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 141,
+      "intervalMs": 38.90000009536743,
+      "cpuMs": 18,
+      "calls": 783,
+      "triangles": 1437690,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 222210102,
+      "x": 1614.6666666666597,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 142,
+      "intervalMs": 48.39999985694885,
+      "cpuMs": 19.59999990463257,
+      "calls": 783,
+      "triangles": 1437690,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 225905410,
+      "x": 1604.6666666666592,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 143,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 21.100000143051147,
+      "calls": 783,
+      "triangles": 1437690,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 225905410,
+      "x": 1594.6666666666595,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 144,
+      "intervalMs": 39.59999990463257,
+      "cpuMs": 19.5,
+      "calls": 803,
+      "triangles": 1442348,
+      "objects": 224,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 202976894,
+      "x": 1584.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 145,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 18.899999856948853,
+      "calls": 786,
+      "triangles": 1442274,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 202976894,
+      "x": 1574.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 146,
+      "intervalMs": 40.60000014305115,
+      "cpuMs": 19.59999990463257,
+      "calls": 784,
+      "triangles": 1442242,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 206698548,
+      "x": 1564.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 147,
+      "intervalMs": 37.39999985694885,
+      "cpuMs": 17.399999856948853,
+      "calls": 784,
+      "triangles": 1442242,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 206698548,
+      "x": 1554.6666666666597,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 148,
+      "intervalMs": 37.700000047683716,
+      "cpuMs": 19.5,
+      "calls": 784,
+      "triangles": 1442242,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 210401256,
+      "x": 1544.6666666666592,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 149,
+      "intervalMs": 44.59999990463257,
+      "cpuMs": 21.899999856948853,
+      "calls": 784,
+      "triangles": 1442242,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 210401256,
+      "x": 1534.6666666666595,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 150,
+      "intervalMs": 39.30000019073486,
+      "cpuMs": 17.799999952316284,
+      "calls": 794,
+      "triangles": 1445812,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214152068,
+      "x": 1524.6666666666597,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 151,
+      "intervalMs": 38.19999980926514,
+      "cpuMs": 17.200000047683716,
+      "calls": 780,
+      "triangles": 1441722,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 214152068,
+      "x": 1514.6666666666592,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 152,
+      "intervalMs": 38.700000047683716,
+      "cpuMs": 18,
+      "calls": 780,
+      "triangles": 1441722,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 217946976,
+      "x": 1504.6666666666595,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 153,
+      "intervalMs": 38.60000014305115,
+      "cpuMs": 17.5,
+      "calls": 781,
+      "triangles": 1442802,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 217946976,
+      "x": 1494.6666666666597,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 154,
+      "intervalMs": 39.59999990463257,
+      "cpuMs": 37.299999952316284,
+      "calls": 781,
+      "triangles": 1442802,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 221637388,
+      "x": 1484.6666666666592,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 155,
+      "intervalMs": 56.59999990463257,
+      "cpuMs": 35.200000047683716,
+      "calls": 781,
+      "triangles": 1442802,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 223483360,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 156,
+      "intervalMs": 53.700000047683716,
+      "cpuMs": 17.299999952316284,
+      "calls": 799,
+      "triangles": 1447412,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 223483360,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 157,
+      "intervalMs": 38.40000009536743,
+      "cpuMs": 17.5,
+      "calls": 785,
+      "triangles": 1443322,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 227097404,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 158,
+      "intervalMs": 48.799999952316284,
+      "cpuMs": 37.39999985694885,
+      "calls": 785,
+      "triangles": 1443322,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 228907758,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 159,
+      "intervalMs": 46.40000009536743,
+      "cpuMs": 29.799999952316284,
+      "calls": 785,
+      "triangles": 1443322,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 228907758,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 160,
+      "intervalMs": 38.59999990463257,
+      "cpuMs": 21.800000190734863,
+      "calls": 785,
+      "triangles": 1443322,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 204959374,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 161,
+      "intervalMs": 38.5,
+      "cpuMs": 17.40000009536743,
+      "calls": 785,
+      "triangles": 1443322,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 204959374,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 162,
+      "intervalMs": 37.5,
+      "cpuMs": 18.299999952316284,
+      "calls": 781,
+      "triangles": 1442922,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 208527986,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 163,
+      "intervalMs": 38.5,
+      "cpuMs": 17.800000190734863,
+      "calls": 795,
+      "triangles": 1447012,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 208527986,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 164,
+      "intervalMs": 39,
+      "cpuMs": 18.40000009536743,
+      "calls": 781,
+      "triangles": 1442922,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 212151341,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 165,
+      "intervalMs": 37.40000009536743,
+      "cpuMs": 16.90000009536743,
+      "calls": 781,
+      "triangles": 1442922,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 212151341,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 166,
+      "intervalMs": 37.19999980926514,
+      "cpuMs": 17.40000009536743,
+      "calls": 781,
+      "triangles": 1442922,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 215724313,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 167,
+      "intervalMs": 37.700000047683716,
+      "cpuMs": 16.600000143051147,
+      "calls": 781,
+      "triangles": 1442922,
+      "objects": 220,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 215724313,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 168,
+      "intervalMs": 37.700000047683716,
+      "cpuMs": 17.200000047683716,
+      "calls": 788,
+      "triangles": 1443538,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 219290805,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 169,
+      "intervalMs": 36.90000009536743,
+      "cpuMs": 16.799999952316284,
+      "calls": 802,
+      "triangles": 1447628,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 219290805,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 170,
+      "intervalMs": 36.89999985694885,
+      "cpuMs": 17.199999809265137,
+      "calls": 788,
+      "triangles": 1443538,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 222912570,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 171,
+      "intervalMs": 37.299999952316284,
+      "cpuMs": 16.800000190734863,
+      "calls": 788,
+      "triangles": 1443538,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 222912570,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 172,
+      "intervalMs": 38.90000009536743,
+      "cpuMs": 17.600000143051147,
+      "calls": 788,
+      "triangles": 1443538,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 226487382,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 173,
+      "intervalMs": 37.5,
+      "cpuMs": 19.5,
+      "calls": 788,
+      "triangles": 1443538,
+      "objects": 223,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 226487382,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 174,
+      "intervalMs": 38.5,
+      "cpuMs": 20.200000047683716,
+      "calls": 786,
+      "triangles": 1443050,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 230086674,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 175,
+      "intervalMs": 40.5,
+      "cpuMs": 19.700000047683716,
+      "calls": 800,
+      "triangles": 1447140,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 230086674,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 176,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 21.700000047683716,
+      "calls": 786,
+      "triangles": 1443050,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 205359429,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 177,
+      "intervalMs": 38.09999990463257,
+      "cpuMs": 20,
+      "calls": 786,
+      "triangles": 1443050,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 205359429,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 178,
+      "intervalMs": 40,
+      "cpuMs": 23.40000009536743,
+      "calls": 786,
+      "triangles": 1443050,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 208929781,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 179,
+      "intervalMs": 40.700000047683716,
+      "cpuMs": 23.09999990463257,
+      "calls": 786,
+      "triangles": 1443050,
+      "objects": 222,
+      "geometries": 216,
+      "textures": 81,
+      "programs": 118,
+      "heap": 208929781,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 180,
+      "intervalMs": 39.59999990463257,
+      "cpuMs": 99.89999985694885,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216131172,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 181,
+      "intervalMs": 102,
+      "cpuMs": 34.90000009536743,
+      "calls": 974,
+      "triangles": 1736472,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216131172,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 182,
+      "intervalMs": 36.90000009536743,
+      "cpuMs": 38.5,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220955906,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 183,
+      "intervalMs": 40,
+      "cpuMs": 24.40000009536743,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220955906,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 184,
+      "intervalMs": 37,
+      "cpuMs": 20.299999952316284,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225633190,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 185,
+      "intervalMs": 41.59999990463257,
+      "cpuMs": 24.40000009536743,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225633190,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 186,
+      "intervalMs": 25.200000047683716,
+      "cpuMs": 22.799999952316284,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230317274,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 187,
+      "intervalMs": 23.5,
+      "cpuMs": 20.699999809265137,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230317274,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 188,
+      "intervalMs": 38,
+      "cpuMs": 24,
+      "calls": 970,
+      "triangles": 1735952,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 205839585,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 189,
+      "intervalMs": 41.5,
+      "cpuMs": 21.299999952316284,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 205839585,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 190,
+      "intervalMs": 40.299999952316284,
+      "cpuMs": 24.5,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210467213,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 191,
+      "intervalMs": 43.30000019073486,
+      "cpuMs": 23.09999990463257,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210467213,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 192,
+      "intervalMs": 42.799999952316284,
+      "cpuMs": 30.399999856948853,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215111545,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 193,
+      "intervalMs": 48.59999990463257,
+      "cpuMs": 30.90000009536743,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215111545,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 194,
+      "intervalMs": 41.60000014305115,
+      "cpuMs": 21.90000009536743,
+      "calls": 974,
+      "triangles": 1736472,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219814175,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 195,
+      "intervalMs": 38.5,
+      "cpuMs": 19.90000009536743,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219814175,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 196,
+      "intervalMs": 39.89999985694885,
+      "cpuMs": 20.09999990463257,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224448007,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 197,
+      "intervalMs": 40.10000014305115,
+      "cpuMs": 20.200000047683716,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224448007,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 198,
+      "intervalMs": 39.39999985694885,
+      "cpuMs": 19.90000009536743,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 229104951,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 199,
+      "intervalMs": 39.90000009536743,
+      "cpuMs": 21.40000009536743,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 229104951,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 200,
+      "intervalMs": 40.200000047683716,
+      "cpuMs": 29.700000047683716,
+      "calls": 970,
+      "triangles": 1735904,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 206320339,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 201,
+      "intervalMs": 41.59999990463257,
+      "cpuMs": 20.90000009536743,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 206320339,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 202,
+      "intervalMs": 40.5,
+      "cpuMs": 20.90000009536743,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210946382,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 203,
+      "intervalMs": 40.40000009536743,
+      "cpuMs": 20.700000047683716,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210946382,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 204,
+      "intervalMs": 40,
+      "cpuMs": 19.700000047683716,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215587846,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 205,
+      "intervalMs": 39.5,
+      "cpuMs": 20.799999952316284,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215587846,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 206,
+      "intervalMs": 39.799999952316284,
+      "cpuMs": 21.899999856948853,
+      "calls": 977,
+      "triangles": 1736520,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220265818,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 207,
+      "intervalMs": 39.700000047683716,
+      "cpuMs": 34.19999980926514,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222575478,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 208,
+      "intervalMs": 55,
+      "cpuMs": 22.199999809265137,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222575478,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 209,
+      "intervalMs": 44.299999952316284,
+      "cpuMs": 21.59999990463257,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 227208274,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 210,
+      "intervalMs": 40.299999952316284,
+      "cpuMs": 22.100000143051147,
+      "calls": 959,
+      "triangles": 1731910,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 227208274,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 211,
+      "intervalMs": 41.40000009536743,
+      "cpuMs": 23.299999952316284,
+      "calls": 959,
+      "triangles": 1731910,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231834054,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 212,
+      "intervalMs": 41.19999980926514,
+      "cpuMs": 24.59999990463257,
+      "calls": 959,
+      "triangles": 1731910,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231834054,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 213,
+      "intervalMs": 41.700000047683716,
+      "cpuMs": 23.399999856948853,
+      "calls": 973,
+      "triangles": 1736000,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 208912292,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 214,
+      "intervalMs": 42.200000047683716,
+      "cpuMs": 22,
+      "calls": 959,
+      "triangles": 1731910,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 208912292,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 215,
+      "intervalMs": 41.700000047683716,
+      "cpuMs": 19.90000009536743,
+      "calls": 959,
+      "triangles": 1731910,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213521924,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 216,
+      "intervalMs": 40.5,
+      "cpuMs": 19.799999952316284,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213521924,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 217,
+      "intervalMs": 39.39999985694885,
+      "cpuMs": 20.5,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218157186,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 218,
+      "intervalMs": 40.5,
+      "cpuMs": 22.09999990463257,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218157186,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 219,
+      "intervalMs": 40.60000014305115,
+      "cpuMs": 20.200000047683716,
+      "calls": 974,
+      "triangles": 1736472,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222843339,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 220,
+      "intervalMs": 40.59999990463257,
+      "cpuMs": 54.700000047683716,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225170815,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 221,
+      "intervalMs": 71.79999995231628,
+      "cpuMs": 37,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 227470463,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 222,
+      "intervalMs": 55.80000019073486,
+      "cpuMs": 33.60000014305115,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 229788354,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 223,
+      "intervalMs": 45.09999990463257,
+      "cpuMs": 20.100000143051147,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 229788354,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 224,
+      "intervalMs": 39.59999990463257,
+      "cpuMs": 21,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 206919823,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 225,
+      "intervalMs": 40.10000014305115,
+      "cpuMs": 29,
+      "calls": 970,
+      "triangles": 1735952,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 206919823,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 226,
+      "intervalMs": 41.799999952316284,
+      "cpuMs": 33,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211589685,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 227,
+      "intervalMs": 40.40000009536743,
+      "cpuMs": 24.40000009536743,
+      "calls": 956,
+      "triangles": 1731862,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211589685,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 228,
+      "intervalMs": 39.59999990463257,
+      "cpuMs": 23.40000009536743,
+      "calls": 963,
+      "triangles": 1732478,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216217856,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 229,
+      "intervalMs": 40.40000009536743,
+      "cpuMs": 20.800000190734863,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216217856,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 230,
+      "intervalMs": 39.69999980926514,
+      "cpuMs": 35.700000047683716,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220852593,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 231,
+      "intervalMs": 60.200000047683716,
+      "cpuMs": 24.699999809265137,
+      "calls": 974,
+      "triangles": 1736472,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220852593,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 232,
+      "intervalMs": 41.90000009536743,
+      "cpuMs": 25.5,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225484837,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 233,
+      "intervalMs": 41.700000047683716,
+      "cpuMs": 20.59999990463257,
+      "calls": 960,
+      "triangles": 1732382,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225484837,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 234,
+      "intervalMs": 44.39999985694885,
+      "cpuMs": 23.199999809265137,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230107348,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 235,
+      "intervalMs": 40.40000009536743,
+      "cpuMs": 20.799999952316284,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230107348,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 236,
+      "intervalMs": 40.39999985694885,
+      "cpuMs": 20.700000047683716,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207249851,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 237,
+      "intervalMs": 41.60000014305115,
+      "cpuMs": 23.299999952316284,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207249851,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 238,
+      "intervalMs": 42.59999990463257,
+      "cpuMs": 25.59999990463257,
+      "calls": 970,
+      "triangles": 1735904,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211872034,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 239,
+      "intervalMs": 46.90000009536743,
+      "cpuMs": 21.40000009536743,
+      "calls": 956,
+      "triangles": 1731814,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211872034,
+      "x": 1477.9999999999927,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 240,
+      "intervalMs": 43.39999985694885,
+      "cpuMs": 22.59999990463257,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216560125,
+      "x": 1487.9999999999925,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 241,
+      "intervalMs": 40.5,
+      "cpuMs": 21.200000047683716,
+      "calls": 963,
+      "triangles": 1732430,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216560125,
+      "x": 1497.999999999993,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 242,
+      "intervalMs": 41.700000047683716,
+      "cpuMs": 22.299999952316284,
+      "calls": 962,
+      "triangles": 1731350,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221320656,
+      "x": 1507.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 243,
+      "intervalMs": 43.10000014305115,
+      "cpuMs": 21.90000009536743,
+      "calls": 962,
+      "triangles": 1731350,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221320656,
+      "x": 1517.9999999999925,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 244,
+      "intervalMs": 43.89999985694885,
+      "cpuMs": 22.200000047683716,
+      "calls": 976,
+      "triangles": 1735440,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226116684,
+      "x": 1527.999999999993,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 245,
+      "intervalMs": 44.10000014305115,
+      "cpuMs": 22.09999990463257,
+      "calls": 962,
+      "triangles": 1731350,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226116684,
+      "x": 1537.9999999999927,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 246,
+      "intervalMs": 40.69999980926514,
+      "cpuMs": 34.200000047683716,
+      "calls": 958,
+      "triangles": 1730830,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230886480,
+      "x": 1547.9999999999932,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 247,
+      "intervalMs": 41.10000014305115,
+      "cpuMs": 22.09999990463257,
+      "calls": 958,
+      "triangles": 1730830,
+      "objects": 266,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230886480,
+      "x": 1557.999999999993,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 248,
+      "intervalMs": 40.799999952316284,
+      "cpuMs": 21.200000047683716,
+      "calls": 960,
+      "triangles": 1730862,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207515144,
+      "x": 1567.9999999999934,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 249,
+      "intervalMs": 43.40000009536743,
+      "cpuMs": 21.40000009536743,
+      "calls": 960,
+      "triangles": 1730862,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207515144,
+      "x": 1577.9999999999939,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 250,
+      "intervalMs": 43,
+      "cpuMs": 19.59999990463257,
+      "calls": 960,
+      "triangles": 1726750,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212247884,
+      "x": 1587.9999999999936,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 251,
+      "intervalMs": 44.89999985694885,
+      "cpuMs": 20.5,
+      "calls": 974,
+      "triangles": 1730840,
+      "objects": 267,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212247884,
+      "x": 1597.999999999994,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 252,
+      "intervalMs": 40.10000014305115,
+      "cpuMs": 21.200000047683716,
+      "calls": 961,
+      "triangles": 1727222,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216965172,
+      "x": 1607.9999999999945,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 253,
+      "intervalMs": 42.59999990463257,
+      "cpuMs": 25,
+      "calls": 961,
+      "triangles": 1727222,
+      "objects": 268,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216965172,
+      "x": 1617.9999999999943,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 254,
+      "intervalMs": 57.40000009536743,
+      "cpuMs": 23.700000047683716,
+      "calls": 952,
+      "triangles": 1718858,
+      "objects": 265,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221701519,
+      "x": 1627.9999999999948,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 255,
+      "intervalMs": 46.89999985694885,
+      "cpuMs": 23.699999809265137,
+      "calls": 944,
+      "triangles": 1717670,
+      "objects": 262,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221701519,
+      "x": 1637.9999999999952,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 256,
+      "intervalMs": 44.299999952316284,
+      "cpuMs": 20.600000143051147,
+      "calls": 927,
+      "triangles": 1709958,
+      "objects": 255,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226276950,
+      "x": 1647.999999999995,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 257,
+      "intervalMs": 40.60000014305115,
+      "cpuMs": 20.299999952316284,
+      "calls": 927,
+      "triangles": 1709958,
+      "objects": 255,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226276950,
+      "x": 1657.9999999999955,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 258,
+      "intervalMs": 39.799999952316284,
+      "cpuMs": 23.09999990463257,
+      "calls": 939,
+      "triangles": 1716088,
+      "objects": 254,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230826482,
+      "x": 1667.999999999996,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 259,
+      "intervalMs": 42.200000047683716,
+      "cpuMs": 21.200000047683716,
+      "calls": 925,
+      "triangles": 1711998,
+      "objects": 254,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230826482,
+      "x": 1677.9999999999957,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 260,
+      "intervalMs": 45.5,
+      "cpuMs": 23.799999952316284,
+      "calls": 925,
+      "triangles": 1707718,
+      "objects": 254,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207807643,
+      "x": 1687.9999999999961,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 261,
+      "intervalMs": 41.799999952316284,
+      "cpuMs": 22.100000143051147,
+      "calls": 923,
+      "triangles": 1706638,
+      "objects": 253,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 207807643,
+      "x": 1697.9999999999966,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 262,
+      "intervalMs": 41.5,
+      "cpuMs": 20,
+      "calls": 923,
+      "triangles": 1706638,
+      "objects": 253,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212366726,
+      "x": 1707.9999999999964,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 263,
+      "intervalMs": 38.799999952316284,
+      "cpuMs": 20.600000143051147,
+      "calls": 917,
+      "triangles": 1695038,
+      "objects": 252,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212366726,
+      "x": 1717.9999999999968,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 264,
+      "intervalMs": 38.5,
+      "cpuMs": 20,
+      "calls": 921,
+      "triangles": 1695558,
+      "objects": 254,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216909576,
+      "x": 1727.9999999999973,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 265,
+      "intervalMs": 39.60000014305115,
+      "cpuMs": 20.5,
+      "calls": 933,
+      "triangles": 1694288,
+      "objects": 253,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 216909576,
+      "x": 1737.999999999997,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 266,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 22.800000190734863,
+      "calls": 919,
+      "triangles": 1690198,
+      "objects": 253,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221484533,
+      "x": 1747.9999999999975,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 267,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 23.299999952316284,
+      "calls": 919,
+      "triangles": 1690198,
+      "objects": 253,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221484533,
+      "x": 1757.999999999998,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 268,
+      "intervalMs": 39.89999985694885,
+      "cpuMs": 22.40000009536743,
+      "calls": 915,
+      "triangles": 1689718,
+      "objects": 251,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225988048,
+      "x": 1767.9999999999977,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 269,
+      "intervalMs": 39.80000019073486,
+      "cpuMs": 23.5,
+      "calls": 913,
+      "triangles": 1685878,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225988048,
+      "x": 1777.9999999999982,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 270,
+      "intervalMs": 40.09999990463257,
+      "cpuMs": 24.5,
+      "calls": 909,
+      "triangles": 1685478,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230487978,
+      "x": 1787.9999999999986,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 271,
+      "intervalMs": 40,
+      "cpuMs": 26.800000190734863,
+      "calls": 919,
+      "triangles": 1667536,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230487978,
+      "x": 1797.9999999999984,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 272,
+      "intervalMs": 38.90000009536743,
+      "cpuMs": 20.700000047683716,
+      "calls": 909,
+      "triangles": 1663510,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 208141312,
+      "x": 1807.9999999999989,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 273,
+      "intervalMs": 41.799999952316284,
+      "cpuMs": 20.200000047683716,
+      "calls": 905,
+      "triangles": 1644038,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 208141312,
+      "x": 1817.9999999999993,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 274,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 20.200000047683716,
+      "calls": 905,
+      "triangles": 1639926,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212637307,
+      "x": 1827.999999999999,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 275,
+      "intervalMs": 40,
+      "cpuMs": 20.700000047683716,
+      "calls": 903,
+      "triangles": 1636870,
+      "objects": 245,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212637307,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 276,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 20.200000047683716,
+      "calls": 910,
+      "triangles": 1637486,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 217072225,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 277,
+      "intervalMs": 38.90000009536743,
+      "cpuMs": 22.09999990463257,
+      "calls": 910,
+      "triangles": 1637486,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 217072225,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 278,
+      "intervalMs": 53.69999980926514,
+      "cpuMs": 22,
+      "calls": 924,
+      "triangles": 1641576,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221526064,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 279,
+      "intervalMs": 38.700000047683716,
+      "cpuMs": 21,
+      "calls": 910,
+      "triangles": 1637486,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 221526064,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 280,
+      "intervalMs": 39.40000009536743,
+      "cpuMs": 20.200000047683716,
+      "calls": 910,
+      "triangles": 1637486,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225918240,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 281,
+      "intervalMs": 39.39999985694885,
+      "cpuMs": 20.40000009536743,
+      "calls": 910,
+      "triangles": 1637486,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 225918240,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 282,
+      "intervalMs": 40.80000019073486,
+      "cpuMs": 22.799999952316284,
+      "calls": 906,
+      "triangles": 1636966,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230304015,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 283,
+      "intervalMs": 37.19999980926514,
+      "cpuMs": 20.09999990463257,
+      "calls": 906,
+      "triangles": 1636966,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 230304015,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 284,
+      "intervalMs": 39.60000014305115,
+      "cpuMs": 20.700000047683716,
+      "calls": 906,
+      "triangles": 1636966,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 234683850,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 285,
+      "intervalMs": 38.700000047683716,
+      "cpuMs": 20.299999952316284,
+      "calls": 920,
+      "triangles": 1641056,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 234683850,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 286,
+      "intervalMs": 38,
+      "cpuMs": 20.200000047683716,
+      "calls": 906,
+      "triangles": 1636966,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210544861,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 287,
+      "intervalMs": 41.59999990463257,
+      "cpuMs": 19.5,
+      "calls": 906,
+      "triangles": 1636966,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210544861,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 288,
+      "intervalMs": 38.09999990463257,
+      "cpuMs": 20.09999990463257,
+      "calls": 910,
+      "triangles": 1637534,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 214892585,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 289,
+      "intervalMs": 38.5,
+      "cpuMs": 19.899999856948853,
+      "calls": 907,
+      "triangles": 1637438,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 214892585,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 290,
+      "intervalMs": 40.10000014305115,
+      "cpuMs": 19.700000047683716,
+      "calls": 907,
+      "triangles": 1637438,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219272000,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 291,
+      "intervalMs": 37,
+      "cpuMs": 20.09999990463257,
+      "calls": 921,
+      "triangles": 1641528,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219272000,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 292,
+      "intervalMs": 38.200000047683716,
+      "cpuMs": 23.700000047683716,
+      "calls": 907,
+      "triangles": 1637270,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 223639752,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 293,
+      "intervalMs": 41.299999952316284,
+      "cpuMs": 19.5,
+      "calls": 907,
+      "triangles": 1637270,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 223639752,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 294,
+      "intervalMs": 37.5,
+      "cpuMs": 19.600000143051147,
+      "calls": 905,
+      "triangles": 1636782,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228022572,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 295,
+      "intervalMs": 38.59999990463257,
+      "cpuMs": 20,
+      "calls": 905,
+      "triangles": 1636782,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228022572,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 296,
+      "intervalMs": 38.200000047683716,
+      "cpuMs": 20.700000047683716,
+      "calls": 905,
+      "triangles": 1636782,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 232427602,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 297,
+      "intervalMs": 39,
+      "cpuMs": 19.90000009536743,
+      "calls": 905,
+      "triangles": 1636782,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 232427602,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 298,
+      "intervalMs": 38,
+      "cpuMs": 19.800000190734863,
+      "calls": 919,
+      "triangles": 1640872,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 208685226,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 299,
+      "intervalMs": 63.700000047683716,
+      "cpuMs": 44.700000047683716,
+      "calls": 905,
+      "triangles": 1636782,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210904394,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 300,
+      "intervalMs": 45.700000047683716,
+      "cpuMs": 28.09999990463257,
+      "calls": 909,
+      "triangles": 1637302,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 210904394,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 301,
+      "intervalMs": 28.799999952316284,
+      "cpuMs": 23.399999856948853,
+      "calls": 909,
+      "triangles": 1637302,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215278962,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 302,
+      "intervalMs": 31,
+      "cpuMs": 26,
+      "calls": 909,
+      "triangles": 1637302,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215278962,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 303,
+      "intervalMs": 54.799999952316284,
+      "cpuMs": 22.40000009536743,
+      "calls": 909,
+      "triangles": 1637302,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219695934,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 304,
+      "intervalMs": 40.700000047683716,
+      "cpuMs": 25,
+      "calls": 909,
+      "triangles": 1637302,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 219695934,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 305,
+      "intervalMs": 44.09999990463257,
+      "cpuMs": 24.299999952316284,
+      "calls": 923,
+      "triangles": 1641392,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224087546,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 306,
+      "intervalMs": 38.700000047683716,
+      "cpuMs": 25.5,
+      "calls": 905,
+      "triangles": 1636902,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224087546,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 307,
+      "intervalMs": 41.200000047683716,
+      "cpuMs": 24.600000143051147,
+      "calls": 905,
+      "triangles": 1636902,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228449198,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 308,
+      "intervalMs": 41.5,
+      "cpuMs": 24.799999952316284,
+      "calls": 905,
+      "triangles": 1636902,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228449198,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 309,
+      "intervalMs": 41.59999990463257,
+      "cpuMs": 36,
+      "calls": 905,
+      "triangles": 1636902,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 232844888,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 310,
+      "intervalMs": 45.90000009536743,
+      "cpuMs": 25.09999990463257,
+      "calls": 905,
+      "triangles": 1636902,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 232844888,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 311,
+      "intervalMs": 44.89999985694885,
+      "cpuMs": 22.09999990463257,
+      "calls": 919,
+      "triangles": 1640992,
+      "objects": 246,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 209007720,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 312,
+      "intervalMs": 39.80000019073486,
+      "cpuMs": 23.40000009536743,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 209007720,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 313,
+      "intervalMs": 44,
+      "cpuMs": 22.40000009536743,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213384715,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 314,
+      "intervalMs": 39.299999952316284,
+      "cpuMs": 22.59999990463257,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213384715,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 315,
+      "intervalMs": 39.700000047683716,
+      "cpuMs": 21.5,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 217791647,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 316,
+      "intervalMs": 38.89999985694885,
+      "cpuMs": 22.399999856948853,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 217791647,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 317,
+      "intervalMs": 40.5,
+      "cpuMs": 19.59999990463257,
+      "calls": 912,
+      "triangles": 1637518,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222169627,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 318,
+      "intervalMs": 39.60000014305115,
+      "cpuMs": 19.800000190734863,
+      "calls": 924,
+      "triangles": 1641120,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222169627,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 319,
+      "intervalMs": 39.5,
+      "cpuMs": 19.40000009536743,
+      "calls": 910,
+      "triangles": 1637030,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226608803,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 320,
+      "intervalMs": 37.59999990463257,
+      "cpuMs": 20.200000047683716,
+      "calls": 910,
+      "triangles": 1637030,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226608803,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 321,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 19.09999990463257,
+      "calls": 910,
+      "triangles": 1637030,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231004088,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 322,
+      "intervalMs": 42.60000014305115,
+      "cpuMs": 19.09999990463257,
+      "calls": 910,
+      "triangles": 1637030,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231004088,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 323,
+      "intervalMs": 41.59999990463257,
+      "cpuMs": 19.299999952316284,
+      "calls": 908,
+      "triangles": 1636862,
+      "objects": 248,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 235371411,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 324,
+      "intervalMs": 37.90000009536743,
+      "cpuMs": 22.700000047683716,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 235371411,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 325,
+      "intervalMs": 43.799999952316284,
+      "cpuMs": 22.600000143051147,
+      "calls": 925,
+      "triangles": 1641424,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211491238,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 326,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 28,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 211491238,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 327,
+      "intervalMs": 46.700000047683716,
+      "cpuMs": 28.700000047683716,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215885484,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 328,
+      "intervalMs": 43.299999952316284,
+      "cpuMs": 19.700000047683716,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 215885484,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 329,
+      "intervalMs": 44.10000014305115,
+      "cpuMs": 19.40000009536743,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220256632,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 330,
+      "intervalMs": 43,
+      "cpuMs": 19.700000047683716,
+      "calls": 907,
+      "triangles": 1636814,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 220256632,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 331,
+      "intervalMs": 39.799999952316284,
+      "cpuMs": 26.5,
+      "calls": 921,
+      "triangles": 1640904,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224629004,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 332,
+      "intervalMs": 38.59999990463257,
+      "cpuMs": 22.399999856948853,
+      "calls": 907,
+      "triangles": 1636814,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 224629004,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 333,
+      "intervalMs": 39.30000019073486,
+      "cpuMs": 22.299999952316284,
+      "calls": 907,
+      "triangles": 1636814,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228991970,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 334,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 21.40000009536743,
+      "calls": 907,
+      "triangles": 1636814,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 228991970,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 335,
+      "intervalMs": 39.5,
+      "cpuMs": 19.300000190734863,
+      "calls": 907,
+      "triangles": 1636814,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 233321310,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    },
+    {
+      "frame": 336,
+      "intervalMs": 39.40000009536743,
+      "cpuMs": 19,
+      "calls": 914,
+      "triangles": 1637430,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 233321310,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 337,
+      "intervalMs": 41,
+      "cpuMs": 31.799999952316284,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 209504013,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 338,
+      "intervalMs": 39.69999980926514,
+      "cpuMs": 29.600000143051147,
+      "calls": 925,
+      "triangles": 1641424,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 209504013,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 339,
+      "intervalMs": 39.80000019073486,
+      "cpuMs": 20.799999952316284,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213881123,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 340,
+      "intervalMs": 39.89999985694885,
+      "cpuMs": 20.200000047683716,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 213881123,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 341,
+      "intervalMs": 41.700000047683716,
+      "cpuMs": 20.800000190734863,
+      "calls": 911,
+      "triangles": 1637334,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218224255,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 342,
+      "intervalMs": 38.5,
+      "cpuMs": 21,
+      "calls": 907,
+      "triangles": 1636934,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218224255,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 343,
+      "intervalMs": 39.700000047683716,
+      "cpuMs": 22.199999809265137,
+      "calls": 907,
+      "triangles": 1636934,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222557859,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 344,
+      "intervalMs": 40.39999985694885,
+      "cpuMs": 23.5,
+      "calls": 907,
+      "triangles": 1636934,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 222557859,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 345,
+      "intervalMs": 39,
+      "cpuMs": 21.300000190734863,
+      "calls": 921,
+      "triangles": 1641024,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226944448,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 346,
+      "intervalMs": 39.5,
+      "cpuMs": 20.09999990463257,
+      "calls": 907,
+      "triangles": 1636934,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 226944448,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 347,
+      "intervalMs": 38.80000019073486,
+      "cpuMs": 21.59999990463257,
+      "calls": 907,
+      "triangles": 1636934,
+      "objects": 247,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231353952,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 348,
+      "intervalMs": 38.69999980926514,
+      "cpuMs": 20.200000047683716,
+      "calls": 914,
+      "triangles": 1637550,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 231353952,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 349,
+      "intervalMs": 38.200000047683716,
+      "cpuMs": 19.59999990463257,
+      "calls": 914,
+      "triangles": 1637550,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 235703192,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 350,
+      "intervalMs": 37.700000047683716,
+      "cpuMs": 20.90000009536743,
+      "calls": 914,
+      "triangles": 1637550,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 235703192,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 351,
+      "intervalMs": 38.200000047683716,
+      "cpuMs": 22.899999856948853,
+      "calls": 928,
+      "triangles": 1641640,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 212096522,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 352,
+      "intervalMs": 52,
+      "cpuMs": 22.299999952316284,
+      "calls": 914,
+      "triangles": 1637550,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 214266010,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 353,
+      "intervalMs": 41.89999985694885,
+      "cpuMs": 20.200000047683716,
+      "calls": 914,
+      "triangles": 1637550,
+      "objects": 250,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 214266010,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 5
+    },
+    {
+      "frame": 354,
+      "intervalMs": 40.90000009536743,
+      "cpuMs": 21,
+      "calls": 912,
+      "triangles": 1637062,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218636038,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 355,
+      "intervalMs": 38.59999990463257,
+      "cpuMs": 23.5,
+      "calls": 912,
+      "triangles": 1637062,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 218636038,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 356,
+      "intervalMs": 39.60000014305115,
+      "cpuMs": 23.40000009536743,
+      "calls": 912,
+      "triangles": 1637062,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 223034068,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 357,
+      "intervalMs": 39.200000047683716,
+      "cpuMs": 19.899999856948853,
+      "calls": 912,
+      "triangles": 1637062,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 223034068,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 358,
+      "intervalMs": 38.5,
+      "cpuMs": 22.59999990463257,
+      "calls": 926,
+      "triangles": 1641152,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 227461063,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 4
+    },
+    {
+      "frame": 359,
+      "intervalMs": 39.09999990463257,
+      "cpuMs": 26.200000047683716,
+      "calls": 910,
+      "triangles": 1636894,
+      "objects": 249,
+      "geometries": 224,
+      "textures": 86,
+      "programs": 118,
+      "heap": 227461063,
+      "x": 1834.666666666666,
+      "y": 1392,
+      "projectiles": 3
+    }
+  ],
+  "gpuSamples": [
+    {
+      "frame": 120,
+      "ms": 31.03075
+    },
+    {
+      "frame": 121,
+      "ms": 31.933582
+    },
+    {
+      "frame": 122,
+      "ms": 33.57025
+    },
+    {
+      "frame": 123,
+      "ms": 32.652333
+    },
+    {
+      "frame": 124,
+      "ms": 31.986833
+    },
+    {
+      "frame": 125,
+      "ms": 32.315166
+    },
+    {
+      "frame": 126,
+      "ms": 32.077916
+    },
+    {
+      "frame": 127,
+      "ms": 31.872999
+    },
+    {
+      "frame": 128,
+      "ms": 32.548332
+    },
+    {
+      "frame": 129,
+      "ms": 32.10625
+    },
+    {
+      "frame": 130,
+      "ms": 32.240666
+    },
+    {
+      "frame": 131,
+      "ms": 42.686583
+    },
+    {
+      "frame": 132,
+      "ms": 39.496749
+    },
+    {
+      "frame": 133,
+      "ms": 34.356416
+    },
+    {
+      "frame": 134,
+      "ms": 36.1665
+    },
+    {
+      "frame": 135,
+      "ms": 34.748833
+    },
+    {
+      "frame": 136,
+      "ms": 33.636583
+    },
+    {
+      "frame": 137,
+      "ms": 33.455332
+    },
+    {
+      "frame": 138,
+      "ms": 33.673249
+    },
+    {
+      "frame": 139,
+      "ms": 43.977666
+    },
+    {
+      "frame": 140,
+      "ms": 34.480749
+    },
+    {
+      "frame": 141,
+      "ms": 33.79625
+    },
+    {
+      "frame": 142,
+      "ms": 33.761416
+    },
+    {
+      "frame": 143,
+      "ms": 34.129166
+    },
+    {
+      "frame": 144,
+      "ms": 33.611666
+    },
+    {
+      "frame": 145,
+      "ms": 33.155583
+    },
+    {
+      "frame": 146,
+      "ms": 39.18125
+    },
+    {
+      "frame": 147,
+      "ms": 34.158999
+    },
+    {
+      "frame": 148,
+      "ms": 34.04475
+    },
+    {
+      "frame": 149,
+      "ms": 34.166583
+    },
+    {
+      "frame": 150,
+      "ms": 34.118916
+    },
+    {
+      "frame": 151,
+      "ms": 34.003333
+    },
+    {
+      "frame": 152,
+      "ms": 42.423833
+    },
+    {
+      "frame": 153,
+      "ms": 41.401416
+    },
+    {
+      "frame": 154,
+      "ms": 33.531333
+    },
+    {
+      "frame": 155,
+      "ms": 42.426999
+    },
+    {
+      "frame": 156,
+      "ms": 36.834249
+    },
+    {
+      "frame": 157,
+      "ms": 34.625666
+    },
+    {
+      "frame": 158,
+      "ms": 34.118583
+    },
+    {
+      "frame": 159,
+      "ms": 33.132666
+    },
+    {
+      "frame": 160,
+      "ms": 34.333666
+    },
+    {
+      "frame": 161,
+      "ms": 33.889333
+    },
+    {
+      "frame": 162,
+      "ms": 33.840083
+    },
+    {
+      "frame": 163,
+      "ms": 32.910083
+    },
+    {
+      "frame": 164,
+      "ms": 33.466416
+    },
+    {
+      "frame": 165,
+      "ms": 33.357249
+    },
+    {
+      "frame": 166,
+      "ms": 32.974916
+    },
+    {
+      "frame": 167,
+      "ms": 32.927166
+    },
+    {
+      "frame": 168,
+      "ms": 32.926833
+    },
+    {
+      "frame": 169,
+      "ms": 33.693499
+    },
+    {
+      "frame": 170,
+      "ms": 34.021166
+    },
+    {
+      "frame": 171,
+      "ms": 33.996083
+    },
+    {
+      "frame": 172,
+      "ms": 34.527249
+    },
+    {
+      "frame": 173,
+      "ms": 35.143165
+    },
+    {
+      "frame": 174,
+      "ms": 33.654999
+    },
+    {
+      "frame": 175,
+      "ms": 34.498583
+    },
+    {
+      "frame": 176,
+      "ms": 34.914582
+    },
+    {
+      "frame": 177,
+      "ms": 34.107416
+    },
+    {
+      "frame": 178,
+      "ms": 33.317916
+    },
+    {
+      "frame": 179,
+      "ms": 32.399
+    },
+    {
+      "frame": 180,
+      "ms": 39.693583
+    },
+    {
+      "frame": 181,
+      "ms": 50.825748
+    },
+    {
+      "frame": 182,
+      "ms": 34.832666
+    },
+    {
+      "frame": 183,
+      "ms": 35.725332
+    },
+    {
+      "frame": 184,
+      "ms": 39.771083
+    },
+    {
+      "frame": 185,
+      "ms": 35.651166
+    },
+    {
+      "frame": 186,
+      "ms": 36.932583
+    },
+    {
+      "frame": 187,
+      "ms": 36.420166
+    },
+    {
+      "frame": 188,
+      "ms": 36.631249
+    },
+    {
+      "frame": 189,
+      "ms": 37.273833
+    },
+    {
+      "frame": 190,
+      "ms": 37.544166
+    },
+    {
+      "frame": 191,
+      "ms": 35.852916
+    },
+    {
+      "frame": 192,
+      "ms": 34.49225
+    },
+    {
+      "frame": 193,
+      "ms": 35.783166
+    },
+    {
+      "frame": 194,
+      "ms": 35.777083
+    },
+    {
+      "frame": 195,
+      "ms": 34.849165
+    },
+    {
+      "frame": 196,
+      "ms": 34.757916
+    },
+    {
+      "frame": 197,
+      "ms": 34.863416
+    },
+    {
+      "frame": 198,
+      "ms": 37.287666
+    },
+    {
+      "frame": 199,
+      "ms": 35.393333
+    },
+    {
+      "frame": 200,
+      "ms": 35.975416
+    },
+    {
+      "frame": 201,
+      "ms": 34.507916
+    },
+    {
+      "frame": 202,
+      "ms": 34.395833
+    },
+    {
+      "frame": 203,
+      "ms": 34.7925
+    },
+    {
+      "frame": 204,
+      "ms": 35.272083
+    },
+    {
+      "frame": 205,
+      "ms": 50.037083
+    },
+    {
+      "frame": 206,
+      "ms": 38.2435
+    },
+    {
+      "frame": 207,
+      "ms": 36.128499
+    },
+    {
+      "frame": 208,
+      "ms": 36.67575
+    },
+    {
+      "frame": 209,
+      "ms": 34.65475
+    },
+    {
+      "frame": 210,
+      "ms": 34.192333
+    },
+    {
+      "frame": 211,
+      "ms": 37.713083
+    },
+    {
+      "frame": 212,
+      "ms": 37.14525
+    },
+    {
+      "frame": 213,
+      "ms": 36.255083
+    },
+    {
+      "frame": 214,
+      "ms": 35.160499
+    },
+    {
+      "frame": 215,
+      "ms": 36.300666
+    },
+    {
+      "frame": 216,
+      "ms": 34.793
+    },
+    {
+      "frame": 217,
+      "ms": 35.389249
+    },
+    {
+      "frame": 218,
+      "ms": 53.951333
+    },
+    {
+      "frame": 219,
+      "ms": 43.303333
+    },
+    {
+      "frame": 220,
+      "ms": 35.220166
+    },
+    {
+      "frame": 221,
+      "ms": 34.351583
+    },
+    {
+      "frame": 222,
+      "ms": 34.90025
+    },
+    {
+      "frame": 223,
+      "ms": 34.919083
+    },
+    {
+      "frame": 224,
+      "ms": 36.00175
+    },
+    {
+      "frame": 225,
+      "ms": 35.257666
+    },
+    {
+      "frame": 226,
+      "ms": 36.040333
+    },
+    {
+      "frame": 227,
+      "ms": 34.50375
+    },
+    {
+      "frame": 228,
+      "ms": 50.781166
+    },
+    {
+      "frame": 229,
+      "ms": 35.797583
+    },
+    {
+      "frame": 230,
+      "ms": 35.671083
+    },
+    {
+      "frame": 231,
+      "ms": 39.880666
+    },
+    {
+      "frame": 232,
+      "ms": 35.979582
+    },
+    {
+      "frame": 233,
+      "ms": 35.953499
+    },
+    {
+      "frame": 234,
+      "ms": 36.108916
+    },
+    {
+      "frame": 235,
+      "ms": 35.937083
+    },
+    {
+      "frame": 236,
+      "ms": 41.179332
+    },
+    {
+      "frame": 237,
+      "ms": 36.872583
+    },
+    {
+      "frame": 238,
+      "ms": 36.37575
+    },
+    {
+      "frame": 239,
+      "ms": 35.76875
+    },
+    {
+      "frame": 240,
+      "ms": 35.734333
+    },
+    {
+      "frame": 241,
+      "ms": 38.145832
+    },
+    {
+      "frame": 242,
+      "ms": 38.762416
+    },
+    {
+      "frame": 243,
+      "ms": 36.384833
+    },
+    {
+      "frame": 244,
+      "ms": 36.7705
+    },
+    {
+      "frame": 245,
+      "ms": 36.433666
+    },
+    {
+      "frame": 246,
+      "ms": 38.963582
+    },
+    {
+      "frame": 247,
+      "ms": 37.892499
+    },
+    {
+      "frame": 248,
+      "ms": 39.528333
+    },
+    {
+      "frame": 249,
+      "ms": 35.937
+    },
+    {
+      "frame": 250,
+      "ms": 36.971416
+    },
+    {
+      "frame": 251,
+      "ms": 53.729166
+    },
+    {
+      "frame": 252,
+      "ms": 41.124583
+    },
+    {
+      "frame": 253,
+      "ms": 38.334666
+    },
+    {
+      "frame": 254,
+      "ms": 36.383916
+    },
+    {
+      "frame": 255,
+      "ms": 35.334749
+    },
+    {
+      "frame": 256,
+      "ms": 37.238832
+    },
+    {
+      "frame": 257,
+      "ms": 40.133999
+    },
+    {
+      "frame": 258,
+      "ms": 37.173166
+    },
+    {
+      "frame": 259,
+      "ms": 35.243999
+    },
+    {
+      "frame": 260,
+      "ms": 35.844833
+    },
+    {
+      "frame": 261,
+      "ms": 33.977666
+    },
+    {
+      "frame": 262,
+      "ms": 35.055
+    },
+    {
+      "frame": 263,
+      "ms": 34.848833
+    },
+    {
+      "frame": 264,
+      "ms": 34.743166
+    },
+    {
+      "frame": 265,
+      "ms": 34.975999
+    },
+    {
+      "frame": 266,
+      "ms": 35.368083
+    },
+    {
+      "frame": 267,
+      "ms": 35.266499
+    },
+    {
+      "frame": 268,
+      "ms": 35.292499
+    },
+    {
+      "frame": 269,
+      "ms": 34.806666
+    },
+    {
+      "frame": 270,
+      "ms": 36.798583
+    },
+    {
+      "frame": 271,
+      "ms": 34.816916
+    },
+    {
+      "frame": 272,
+      "ms": 35.104416
+    },
+    {
+      "frame": 273,
+      "ms": 34.324583
+    },
+    {
+      "frame": 274,
+      "ms": 34.220916
+    },
+    {
+      "frame": 275,
+      "ms": 49.564166
+    },
+    {
+      "frame": 276,
+      "ms": 34.071166
+    },
+    {
+      "frame": 277,
+      "ms": 34.805583
+    },
+    {
+      "frame": 278,
+      "ms": 34.738999
+    },
+    {
+      "frame": 279,
+      "ms": 35.356166
+    },
+    {
+      "frame": 280,
+      "ms": 33.801166
+    },
+    {
+      "frame": 281,
+      "ms": 34.429166
+    },
+    {
+      "frame": 282,
+      "ms": 34.002833
+    },
+    {
+      "frame": 283,
+      "ms": 33.130916
+    },
+    {
+      "frame": 284,
+      "ms": 35.134166
+    },
+    {
+      "frame": 285,
+      "ms": 34.738583
+    },
+    {
+      "frame": 286,
+      "ms": 33.763332
+    },
+    {
+      "frame": 287,
+      "ms": 33.841166
+    },
+    {
+      "frame": 288,
+      "ms": 33.445915
+    },
+    {
+      "frame": 289,
+      "ms": 33.352583
+    },
+    {
+      "frame": 290,
+      "ms": 35.63425
+    },
+    {
+      "frame": 291,
+      "ms": 33.750749
+    },
+    {
+      "frame": 292,
+      "ms": 33.6355
+    },
+    {
+      "frame": 293,
+      "ms": 33.705582
+    },
+    {
+      "frame": 294,
+      "ms": 33.971832
+    },
+    {
+      "frame": 295,
+      "ms": 33.426333
+    },
+    {
+      "frame": 296,
+      "ms": 38.634999
+    },
+    {
+      "frame": 297,
+      "ms": 36.530083
+    },
+    {
+      "frame": 298,
+      "ms": 34.748249
+    },
+    {
+      "frame": 299,
+      "ms": 34.508582
+    },
+    {
+      "frame": 300,
+      "ms": 49.858
+    },
+    {
+      "frame": 301,
+      "ms": 35.530832
+    },
+    {
+      "frame": 302,
+      "ms": 37.105166
+    },
+    {
+      "frame": 303,
+      "ms": 34.845416
+    },
+    {
+      "frame": 304,
+      "ms": 35.524916
+    },
+    {
+      "frame": 305,
+      "ms": 36.497916
+    },
+    {
+      "frame": 306,
+      "ms": 36.296416
+    },
+    {
+      "frame": 307,
+      "ms": 39.553749
+    },
+    {
+      "frame": 308,
+      "ms": 39.089333
+    },
+    {
+      "frame": 309,
+      "ms": 34.490333
+    },
+    {
+      "frame": 310,
+      "ms": 38.911416
+    },
+    {
+      "frame": 311,
+      "ms": 34.38425
+    },
+    {
+      "frame": 312,
+      "ms": 34.122666
+    },
+    {
+      "frame": 313,
+      "ms": 34.640999
+    },
+    {
+      "frame": 314,
+      "ms": 35.979166
+    },
+    {
+      "frame": 315,
+      "ms": 35.156332
+    },
+    {
+      "frame": 316,
+      "ms": 33.845582
+    },
+    {
+      "frame": 317,
+      "ms": 33.912
+    },
+    {
+      "frame": 318,
+      "ms": 33.976333
+    },
+    {
+      "frame": 319,
+      "ms": 37.44725
+    },
+    {
+      "frame": 320,
+      "ms": 36.275833
+    },
+    {
+      "frame": 321,
+      "ms": 33.501249
+    },
+    {
+      "frame": 322,
+      "ms": 38.333083
+    },
+    {
+      "frame": 323,
+      "ms": 34.035999
+    },
+    {
+      "frame": 324,
+      "ms": 41.077083
+    },
+    {
+      "frame": 325,
+      "ms": 34.664583
+    },
+    {
+      "frame": 326,
+      "ms": 38.830916
+    },
+    {
+      "frame": 327,
+      "ms": 37.8055
+    },
+    {
+      "frame": 328,
+      "ms": 34.33175
+    },
+    {
+      "frame": 329,
+      "ms": 34.061666
+    },
+    {
+      "frame": 330,
+      "ms": 34.49
+    },
+    {
+      "frame": 331,
+      "ms": 34.029916
+    },
+    {
+      "frame": 332,
+      "ms": 34.979916
+    },
+    {
+      "frame": 333,
+      "ms": 34.179083
+    },
+    {
+      "frame": 334,
+      "ms": 35.698999
+    },
+    {
+      "frame": 335,
+      "ms": 34.581666
+    },
+    {
+      "frame": 336,
+      "ms": 35.170832
+    },
+    {
+      "frame": 337,
+      "ms": 34.167416
+    },
+    {
+      "frame": 338,
+      "ms": 36.698582
+    },
+    {
+      "frame": 339,
+      "ms": 34.277583
+    },
+    {
+      "frame": 340,
+      "ms": 34.733249
+    },
+    {
+      "frame": 341,
+      "ms": 36.704332
+    },
+    {
+      "frame": 342,
+      "ms": 33.706666
+    },
+    {
+      "frame": 343,
+      "ms": 34.101583
+    },
+    {
+      "frame": 344,
+      "ms": 34.352916
+    },
+    {
+      "frame": 345,
+      "ms": 34.024166
+    },
+    {
+      "frame": 346,
+      "ms": 33.744
+    },
+    {
+      "frame": 347,
+      "ms": 33.620416
+    },
+    {
+      "frame": 348,
+      "ms": 33.801666
+    },
+    {
+      "frame": 349,
+      "ms": 47.671082
+    },
+    {
+      "frame": 350,
+      "ms": 36.894832
+    },
+    {
+      "frame": 351,
+      "ms": 35.439
+    },
+    {
+      "frame": 352,
+      "ms": 33.851582
+    },
+    {
+      "frame": 353,
+      "ms": 34.717666
+    },
+    {
+      "frame": 354,
+      "ms": 34.291166
+    },
+    {
+      "frame": 355,
+      "ms": 33.755499
+    },
+    {
+      "frame": 356,
+      "ms": 34.383083
+    },
+    {
+      "frame": 357,
+      "ms": 34.219999
+    },
+    {
+      "frame": 358,
+      "ms": 34.608582
+    },
+    {
+      "frame": 359,
+      "ms": 33.591999
+    }
+  ],
+  "diagnostics": {
+    "engine": "three.js r185",
+    "renderer": "three-battlefield",
+    "multiDraw": "true",
+    "gpuRenderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics (CML GT2), OpenGL 4.6)",
+    "cityPrepareMs": "0",
+    "dropTile": "[38,29]",
+    "dropBlocked": "false",
+    "orbAge": "0",
+    "researchStates": "[[30,24,\"ready\"],[36,26,\"ready\"]]",
+    "tankRole": "mayor",
+    "tankFinish": "standard",
+    "cargoDistance": "Infinity",
+    "cargoOffset": "[0,0]",
+    "weapon": "laser",
+    "cargo": "0",
+    "shotsFired": "30",
+    "impacts": "19",
+    "metalImpacts": "0",
+    "rockImpacts": "19",
+    "projectiles": "3",
+    "projectileTravel": "18.800",
+    "tankHeading": "8.00",
+    "turretShots": "0",
+    "tankHits": "0",
+    "sceneCpuMs": "0.00",
+    "renderStages": "{\"world\":0,\"animation\":0,\"research\":0,\"interface\":0,\"combat\":0,\"matrices\":0,\"batches\":0,\"sceneDraw\":0,\"previewDraw\":0}",
+    "drawSubmitMs": "0.00",
+    "renderCpuMs": "0.00",
+    "drawCalls": "910",
+    "triangles": "1636894",
+    "tankPosition": "[1834.666666666666,1392]",
+    "blastBursts": "0",
+    "collapsingBuildings": "0",
+    "blastDebris": "0",
+    "blastClouds": "0",
+    "movementClock": "frame",
+    "movementAck": "0",
+    "movementPending": "0",
+    "movementCorrection": "0.000",
+    "movementMaxCorrection": "0.000",
+    "movementBufferedMs": "0.0",
+    "movementServerClippedMs": "0.0",
+    "remotePlayers": "10",
+    "liveBuildings": "17",
+    "populationHouse": "",
+    "populationConnections": "0"
+  },
+  "gc": {
+    "events": 26,
+    "totalMs": 21.472999999999995,
+    "worstMs": 2.016
+  },
+  "browser": "Chrome/148.0.7778.178",
+  "errors": [],
+  "configuration": {
+    "url": "http://127.0.0.1:8221",
+    "parameters": {
+      "demo": "0",
+      "prepare": "1",
+      "transition": "ai"
+    },
+    "simulationHz": 60,
+    "seed": 1729
+  },
+  "geometry": [
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 43690.666666666664
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 23060
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 21845.333333333332
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 18052
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 12424
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 10922.666666666666
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 10922.666666666666
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 10922.666666666666
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 10922.666666666666
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 10888
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 10320
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 9438
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 7680
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 6768
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 6208
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 6028
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5572
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 5540
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5461.333333333333
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5461.333333333333
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 5120
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 5120
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5060
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 4724
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 4220
+    },
+    {
+      "name": "Orb_plasma_shell",
+      "material": "Orb plasma shell",
+      "type": "Mesh",
+      "triangles": 3968
+    },
+    {
+      "name": "Orb_plasma_shell",
+      "material": "Orb plasma shell",
+      "type": "Mesh",
+      "triangles": 3968
+    },
+    {
+      "name": "Orb_plasma_shell",
+      "material": "Orb plasma shell",
+      "type": "Mesh",
+      "triangles": 3968
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 3840
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 3840
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 3338,
+      "surface": "lava"
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Red apron paint",
+      "type": "Mesh",
+      "triangles": 3056
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 2880
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 2730.6666666666665
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 2730.6666666666665
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 2672
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_celestial_reticle",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 2560
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 2292
+    },
+    {
+      "name": "Mayor_teal_command_dome",
+      "material": "Mayor teal command dome",
+      "type": "Mesh",
+      "triangles": 2208
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1920,
+      "surface": "lava"
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1748
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1744
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1720
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1684
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1620
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1620
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1536
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 1456
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 1456
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 1365.3333333333333
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 1365.3333333333333
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1280,
+      "surface": "lava"
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 1144
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1080
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_cyan_armour",
+      "material": "DX cyan armour",
+      "type": "Mesh",
+      "triangles": 1068
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 960
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 896
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 896,
+      "surface": "lava"
+    },
+    {
+      "name": "Mayor_cyan_command_armour",
+      "material": "Mayor cyan command armour",
+      "type": "Mesh",
+      "triangles": 864
+    },
+    {
+      "name": "Red_apron_paint",
+      "material": "Red apron paint",
+      "type": "Mesh",
+      "triangles": 812
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 756
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 704
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 620
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 570
+    },
+    {
+      "name": "Orb_containment_glow",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 556
+    },
+    {
+      "name": "Orb_containment_glow",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 556
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 512,
+      "surface": "lava"
+    },
+    {
+      "name": "Orb_containment_glow_Orb_energy_orbit_-1",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Orb_containment_glow_Orb_energy_orbit_1",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Identification_paint",
+      "material": "Identification paint",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "Identification_paint",
+      "material": "Identification paint",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 224
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 192
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 180
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_energy_orbit_-1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 120
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_energy_orbit_1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 120
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Entrance_energy_core",
+      "material": "Entrance energy core",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Factory_furnace_glow",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Factory_furnace_glow",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 36
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 36
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 30
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "Spatial building batch",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 12
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 10
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 10
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 0
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 0
+    }
+  ]
+}

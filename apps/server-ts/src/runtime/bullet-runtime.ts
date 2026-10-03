@@ -205,6 +205,8 @@ const handleBuildingHit = (
 
     const building = state.buildings.get(result.buildingId);
     if (building) {
+        // Friendly structures still stop a defense shot, but take no damage.
+        if (bullet.isDefenseShot && building.cityId === bullet.city) return;
         const buildingPopulation = Number.isFinite(building.population) ? building.population : 0;
         const isStructureDamageBullet = bullet.type === BULLET_TYPE_LASER || bullet.type === BULLET_TYPE_ROCKET;
         const canDamageStructure = isStructureDamageBullet && buildingPopulation <= 0;
@@ -439,7 +441,7 @@ const resolveBulletStep = (
 export const tickBullets = (state: RuntimeState, config: RuntimeConfig, emitter: RuntimeEmitter): void => {
     const context: TickContext = { state, emitter, config };
     let snapshotDirty = false;
-    const blockedTileSet = state.blockingTiles;
+    const blockedTileSet = state.bulletBlockingTiles;
     const isBlockedTile = (tileX: number, tileY: number): boolean => {
         return blockedTileSet.has(`${tileX},${tileY}`);
     };

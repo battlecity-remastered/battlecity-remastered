@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/final-live-normal/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.06062427662037037,
+  "max_channel_error": 157,
+  "changed_pixel_fraction": 0.04712890625,
+  "pixel_fraction_above_8": 0.0011414930555555555,
+  "pixel_fraction_above_32": 0.0005088975694444444,
+  "rmse": 1.3367352975765385
+}

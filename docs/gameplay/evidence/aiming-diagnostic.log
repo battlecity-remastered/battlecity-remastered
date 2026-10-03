@@ -1,0 +1,32 @@
+[
+  {
+    "fps": 24,
+    "snapshotHz": 20,
+    "speedPixelsPerSecond": 220,
+    "latestReceivedPositionLagPixels": {
+      "mean": 11.553286242395767,
+      "min": 7.5593289936682595,
+      "max": 13.546342621558779
+    }
+  },
+  {
+    "fps": 60,
+    "snapshotHz": 20,
+    "speedPixelsPerSecond": 220,
+    "latestReceivedPositionLagPixels": {
+      "mean": 13.938162018335202,
+      "min": 10.850763477251348,
+      "max": 17.30339875913296
+    }
+  },
+  {
+    "fps": 120,
+    "snapshotHz": 20,
+    "speedPixelsPerSecond": 220,
+    "latestReceivedPositionLagPixels": {
+      "mean": 14.805774579135155,
+      "min": 10.850763477249984,
+      "max": 19.444604129736945
+    }
+  }
+]

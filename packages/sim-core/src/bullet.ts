@@ -5,6 +5,7 @@ export type BulletState = {
     id: string;
     ownerId: string;
     city: number;
+    isDefenseShot?: boolean;
     x: number;
     y: number;
     direction: number;

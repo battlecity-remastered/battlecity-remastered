@@ -1,4 +1,4 @@
-import { CLASSIC_SHOT_INTERVAL_MS, CLASSIC_FLARE_INTERVAL_MS } from "@battlecity/sim-core";
+import { CLASSIC_SHOT_INTERVAL_MS, CLASSIC_FLARE_INTERVAL_MS, classicPrimaryBulletType } from "@battlecity/sim-core";
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
 import { normalizeHeading32, normalizeThrottle } from "@battlecity/sim-core";
 import { isThreeDemoMode, type ClientState } from "./state.js";
@@ -8,7 +8,7 @@ import {
     normalizeDirection32,
     resolveTankMuzzlePosition
 } from "../gameplay/combat/shot-geometry.js";
-import { ITEM_TYPE_FLARE, ITEM_TYPE_LASER, ITEM_TYPE_ROCKET } from "../render/parity/constants.js";
+import { ITEM_TYPE_FLARE } from "../render/parity/constants.js";
 
 type EnvelopeType = EventEnvelope["type"];
 
@@ -93,15 +93,7 @@ const resolveMovementThrottle = (state: ClientState): number => {
 };
 
 const resolveShotBulletType = (state: ClientState, isMoving: boolean): number | null => {
-    const rocketCount = state.inventory.get(ITEM_TYPE_ROCKET) ?? 0;
-    if (!isMoving && rocketCount > 0) {
-        return 1;
-    }
-    const laserCount = state.inventory.get(ITEM_TYPE_LASER) ?? 0;
-    if (laserCount > 0) {
-        return 0;
-    }
-    return null;
+    return classicPrimaryBulletType(state.inventory, isMoving);
 };
 
 const appendPlayerUpdateIntent = (

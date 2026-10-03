@@ -20,7 +20,14 @@ let simulationMs = 0, seed = 1729;
 Object.defineProperty(performance, "now", { value: () => simulationMs });
 Date.now = () => 1800000000000 + simulationMs;
 Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-const shaderEvents: Array<{ time: number; kind: string; cpuMs: number }> = [];
+const shaderEvents: Array<{ time: number; kind: string; cpuMs: number; cacheKey?: string | undefined }> = [];
+let inspectedRenderer: THREE.WebGLRenderer | undefined;
+const originalProgramLog = WebGL2RenderingContext.prototype.getProgramInfoLog;
+WebGL2RenderingContext.prototype.getProgramInfoLog = function (program: WebGLProgram): string | null {
+    const start = realNow(), result = originalProgramLog.call(this, program), elapsed = realNow() - start;
+    if (elapsed > 10) shaderEvents.push({ time: simulationMs, kind: "blockingProgramLog", cpuMs: elapsed, cacheKey: inspectedRenderer?.info.programs?.find(candidate => candidate.program === program)?.cacheKey });
+    return result;
+};
 for (const method of ["compileShader", "linkProgram"] as const) {
     const original = WebGL2RenderingContext.prototype[method];
     WebGL2RenderingContext.prototype[method] = function (this: WebGL2RenderingContext, resource: WebGLShader & WebGLProgram): void {
@@ -40,6 +47,7 @@ let resources!: Parameters<NonNullable<Parameters<typeof createThreeBattlefield>
 const battlefield = await createThreeBattlefield(map, live ? [] : buildings, defenses, undefined, value => { resources = value; });
 document.getElementById("app")!.prepend(battlefield.canvas);
 const { renderer, scene, camera, composer } = resources;
+inspectedRenderer = renderer;
 const replayCombat = createCombatReplay(state, battlefield.observeServerEvent);
 const probe = parameters.get("probe");
 if (probe === "half-resolution") { renderer.setPixelRatio(.5); composer.setPixelRatio(.5); battlefield.resize(); }
@@ -91,6 +99,17 @@ const pollQueries = (): void => {
     }
 };
 const updateInputs = (frame: number): void => {
+    if (live && parameters.get("transition") === "ai" && frame === 180) {
+        for (let i = 6; i < 10; i++) state.remotePlayers.set(`enemy-${i}`, { id: `enemy-${i}`, city: 2, botRole: "shooter", x: (28 + i) * 48, y: 29 * 48, direction: 8, health: 20, maxHealth: 20 });
+        state.buildings.set("arrival-orb-factory", { id: "arrival-orb-factory", ownerId: "ai", cityId: 2, type: 105, tileX: 41, tileY: 35, health: 120, maxHealth: 120, population: 50 });
+        state.factoryStock.set(2, new Map([[5, 1]]));
+    }
+    if (live && parameters.get("transition") === "overflow" && frame === 180) {
+        for (let city = 10; city < 20; city++) {
+            state.buildings.set(`overflow-${city}`, { id: `overflow-${city}`, ownerId: "ai", cityId: city, type: 105, tileX: 41 + city, tileY: 35, health: 120, maxHealth: 120, population: 50 });
+            state.factoryStock.set(city, new Map([[5, 1]]));
+        }
+    }
     state.controls.moveForward = true;
     state.local.direction = Math.floor(frame / 120) % 2 === 0 ? 8 : 24;
     state.controls.shoot = !live;
@@ -160,6 +179,19 @@ const bench = {
         camera.zoom = name === "close" ? 2 : name === "wide" ? .55 : 1; camera.updateProjectionMatrix();
         if (name === "lava") { state.local.x = 47 * 48; state.local.y = 30 * 48; }
         for (let frame = 0; frame <= 180; frame++) step(frame);
+        if (name === "defenders") {
+            state.remotePlayers.clear(); state.controls.shoot = false;
+            state.local.x = 31 * 48; state.local.y = 29 * 48;
+            for (const [index, botRole] of (["mayor", "shooter", "bomb_defuser", "miner"] as const).entries()) state.remotePlayers.set(`defender-${index}`, { id: `defender-${index}`, city: 17, botRole, callsign: "City Defender", x: (28 + index * 2) * 48, y: 27 * 48, direction: 16, health: 20 - index * 5, maxHealth: 20 });
+            battlefield.render(state);
+        }
+        if (name === "pickup") {
+            const factory = [...state.buildings.values()].find(building => building.type === 105)!;
+            state.remotePlayers.clear(); state.controls.shoot = false;
+            for (const city of state.lobby.assignments) if (city.mayorId === state.local.id) city.mayorId = "other-mayor";
+            state.local.x = (factory.tileX + 1) * 48; state.local.y = (factory.tileY + 2) * 48;
+            camera.zoom = 2; camera.updateProjectionMatrix(); battlefield.render(state);
+        }
     },
     async prepare(): Promise<void> { await battlefield.prepare(state); },
     inspect(): unknown {

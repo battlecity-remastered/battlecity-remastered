@@ -209,14 +209,14 @@ export const heading32ToBulletHeading = (direction: number): number => {
     return normalizeHeading(direction - 8);
 };
 
-// A tank within firing range may still be separated by a lava bank or rock wall.
+// Projectiles cross lava; rock walls still obstruct a firing lane.
 export const hasBotTerrainSight = (
     state: RuntimeState, config: RuntimeConfig, bot: RuntimePlayer, target: {x: number; y: number}
 ): boolean => {
     const dx = target.x-bot.x, dy = target.y-bot.y, distance = Math.hypot(dx,dy);
     for (let step = 30; step < distance; step += 8) {
         const x = bot.x+24+dx*step/distance, y = bot.y+24+dy*step/distance;
-        if (state.blockingTiles.has(`${Math.floor(x/config.tileSize)},${Math.floor(y/config.tileSize)}`)) return false;
+        if (state.bulletBlockingTiles.has(`${Math.floor(x/config.tileSize)},${Math.floor(y/config.tileSize)}`)) return false;
     }
     return true;
 };
@@ -229,7 +229,7 @@ export const botFireAtTarget = (
     controller: RuntimeBotController,
     target: { x: number; y: number },
     now: number,
-    options: { shootRangeTiles: number; muzzleOffsetPx: number; shootIntervalMs: number; bulletCity: number }
+    options: { shootRangeTiles: number; muzzleOffsetPx: number; shootIntervalMs: number; bulletCity: number; aimSpreadSteps?: number; shotJitterMs?: number }
 ): void => {
     if (now < controller.nextShotAt) {
         return;
@@ -247,14 +247,16 @@ export const botFireAtTarget = (
         return;
     }
 
-    const direction = headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction);
+    const spread = options.aimSpreadSteps ?? 0;
+    const jitter = spread > 0 ? Math.floor(Math.random() * spread - spread / 2) : 0;
+    const direction = normalizeHeading(headingToTarget(botCenterX, botCenterY, targetCenterX, targetCenterY, bot.direction) + jitter);
     const bulletDirection = heading32ToBulletHeading(direction);
     const radians = (-normalizeHeading(direction) / 16) * Math.PI;
     const muzzleX = botCenterX + (Math.sin(radians) * -options.muzzleOffsetPx);
     const muzzleY = botCenterY + (Math.cos(radians) * -options.muzzleOffsetPx);
 
     bot.direction = direction;
-    controller.nextShotAt = now + options.shootIntervalMs;
+    controller.nextShotAt = now + options.shootIntervalMs + (options.shotJitterMs ? Math.random() * options.shotJitterMs : 0);
     state.seq += 1;
     const bulletId = `bullet_${state.seq}`;
     state.bullets.set(bulletId, {

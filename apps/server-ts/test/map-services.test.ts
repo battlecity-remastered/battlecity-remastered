@@ -48,6 +48,16 @@ test("buildBlockingTileSet includes lava/rock and expands command-center anchors
     assert.equal(blocking.has("16,16"), false);
 });
 
+test("classic projectile terrain crosses lava while movement remains blocked", () => {
+    const map = [[0, 1, 2, 3], [0, 0, 0, 0], [0, 0, 0, 0]];
+    const bullets = buildBlockingTileSet(map, false), movement = buildBlockingTileSet(map);
+    assert.equal(bullets.has("0,1"), false);
+    assert.equal(movement.has("0,1"), true);
+    assert.equal(bullets.has("0,2"), true);
+    assert.equal(bullets.has("2,4"), true);
+    assert.equal(bullets.has("0,5"), false);
+});
+
 test("buildPlacementBlockingTileSet includes lava/rock and expands command-center anchors to 3x3", () => {
     const map = Array.from({ length: MAP_SIZE }, () => new Array<number>(MAP_SIZE).fill(0));
     map[3]![4] = 1;

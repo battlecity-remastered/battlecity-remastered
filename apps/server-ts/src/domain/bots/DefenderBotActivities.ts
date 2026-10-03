@@ -50,6 +50,20 @@ const canPlaceTrap = (state: RuntimeState, config: RuntimeConfig, traps: Array<R
     return true;
 };
 
+const minerFactoryProducts = (state: RuntimeState, city: number): Set<number> => {
+    const products = new Set<number>();
+    for (const building of state.buildings.values()) {
+        if (building.cityId === city && building.health > 0 && (building.type === 104 || building.type === 107)) products.add(building.type - 100);
+    }
+    return products;
+};
+
+const chooseMinerProduct = (products: ReadonlySet<number>): 4 | 7 => {
+    if (!products.has(4)) return 7;
+    if (!products.has(7)) return 4;
+    return Math.random() < 0.6 ? 4 : 7;
+};
+
 export const maybeLayMinerTrap = (
     state: RuntimeState, config: RuntimeConfig, emitter: RuntimeEmitter,
     bot: RuntimePlayer, controller: RuntimeBotController, targetId: string | undefined, now: number
@@ -57,6 +71,8 @@ export const maybeLayMinerTrap = (
     if (controller.botRole !== "miner" || now < (controller.nextHazardAt ?? 0) || (bot.frozenUntil ?? 0) > now) return;
     const target = targetId ? state.players.get(targetId) : undefined;
     if (!target || !canTrapTarget(target, bot.city, now)) return;
+    const products = minerFactoryProducts(state, bot.city);
+    if (!products.size) return;
     const traps = [...state.hazards.values()].filter(hazard => hazard.active && (hazard.type === 4 || hazard.type === 7));
     if (traps.filter(hazard => hazard.ownerId === bot.id).length >= 6 || traps.filter(hazard => hazard.cityId === bot.city).length >= 32) return;
     controller.nextHazardAt = now + 9000;
@@ -66,7 +82,7 @@ export const maybeLayMinerTrap = (
         const tileX = tx + dx!, tileY = ty + dy!;
         const x = tileX * config.tileSize, y = tileY * config.tileSize;
         if (!canPlaceTrap(state, config, traps, tileX, tileY, x, y)) continue;
-        const type = Math.random() < 0.6 ? 4 : 7;
+        const type = chooseMinerProduct(products);
         const id = `miner_hazard_${++state.seq}`;
         state.hazards.set(id, {
             id, ownerId: bot.id, cityId: bot.city, type, x, y,

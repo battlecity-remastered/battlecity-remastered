@@ -4,10 +4,27 @@ import { createClientState } from "../src/app/state.js";
 import { createThreeGameActions } from "../src/app/three-game-actions.js";
 import type { EventSender } from "../src/network/events.js";
 
+for (const [forward, reverse, rockets, lasers, expected] of [
+    [false, false, 1, 1, 1], [true, false, 1, 1, 0], [false, true, 1, 1, 0],
+    [false, false, 0, 1, 0], [true, false, 1, 0, null], [true, true, 1, 1, 1]
+] as const) {
+    test(`classic primary fire: forward=${forward}, reverse=${reverse}, rockets=${rockets}, lasers=${lasers}`, () => {
+        const state = createClientState(), events: Array<{type: string; payload: unknown}> = [];
+        state.local.id = "pilot"; state.debug.socketConnected = true;
+        state.controls.moveForward = forward; state.controls.moveBackward = reverse;
+        state.inventory.set(1, rockets); state.inventory.set(12, lasers);
+        state.ui.selectedInventoryItemType = 3;
+        const send: EventSender = (type, payload) => events.push({type, payload});
+        createThreeGameActions(state, send).fire();
+        assert.equal(events.length, expected === null ? 0 : 1);
+        if (expected !== null) assert.equal((events[0]!.payload as {type: number}).type, expected);
+    });
+}
+
 test("live weapons require inventory and cooldown; inventory changes wait for server confirmation",()=>{
     const state=createClientState(),events:Array<{type:string;payload:unknown}>=[];state.local.id="pilot";state.debug.socketConnected=true;
     const send:EventSender=(type,payload)=>{events.push({type,payload});};const actions=createThreeGameActions(state,send);
-    actions.fire("laser");assert.equal(events.length,0);state.inventory.set(12,1);actions.fire("laser");actions.fire("laser");assert.equal(events.length,1);assert.equal(events[0]!.type,"bullet.fire.request");assert.equal(state.inventory.get(12),1);
+    actions.fire();assert.equal(events.length,0);state.inventory.set(12,1);actions.fire();actions.fire();assert.equal(events.length,1);assert.equal(events[0]!.type,"bullet.fire.request");assert.equal(state.inventory.get(12),1);
     const medkit=createThreeGameActions(state,send);state.inventory.set(2,1);assert.equal(medkit.deploy(2,true),true);assert.equal(events.at(-1)!.type,"item.use.request");assert.equal(state.inventory.get(2),1);
     state.debug.socketConnected=false;assert.equal(createThreeGameActions(state,send).deploy(2,true),false);
 });

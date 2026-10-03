@@ -3325,10 +3325,10 @@ test("rogue bots spawn against developed non-fake cities", () => {
 
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 1 }));
     const mutableState = runtime.getReadonlyState() as unknown as {
-        buildings: Map<string, { cityId: number; id: string }>;
+        buildings: Map<string, { cityId: number; id: string; tileX: number; tileY: number }>;
     };
-    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2 });
-    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2 });
+    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2, tileX: CITY_SPAWNS["2"]!.tileX!, tileY: CITY_SPAWNS["2"]!.tileY! });
+    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2, tileX: CITY_SPAWNS["2"]!.tileX! + 3, tileY: CITY_SPAWNS["2"]!.tileY! });
 
     runtime.tickBullets();
     runtime.tickBullets();
@@ -3360,10 +3360,10 @@ test("mine hazards damage and can destroy rogue bots", () => {
 
     runtime.handleRawEvent("owner", makeEnvelope("lobby.join.request", 1, { desiredCity: 2 }));
     const mutableState = runtime.getReadonlyState() as unknown as {
-        buildings: Map<string, { cityId: number; id: string }>;
+        buildings: Map<string, { cityId: number; id: string; tileX: number; tileY: number }>;
     };
-    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2 });
-    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2 });
+    mutableState.buildings.set("seed_a", { id: "seed_a", cityId: 2, tileX: CITY_SPAWNS["2"]!.tileX!, tileY: CITY_SPAWNS["2"]!.tileY! });
+    mutableState.buildings.set("seed_b", { id: "seed_b", cityId: 2, tileX: CITY_SPAWNS["2"]!.tileX! + 3, tileY: CITY_SPAWNS["2"]!.tileY! });
 
     runtime.tickBullets();
     runtime.tickBullets();

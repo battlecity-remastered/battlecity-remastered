@@ -10,6 +10,7 @@ import { createSupportBuilding } from "./support-buildings.js";
 import { createTankCloak } from "./tank-cloak.js";
 import { isMayorTank, updateTankRole, updateTankTeam } from "./tank-role.js";
 import { wrapSignedAngle } from "./turret-tracking.js";
+import { configureGroundPickupLayer } from "./ground-pickup-layer.js";
 
 // World models follow authoritative collections. Geometry/materials are shared
 // with loaded templates; deleting an entity never disposes another one's assets.
@@ -22,7 +23,7 @@ export const createLiveWorld = (scene: THREE.Scene, tankTemplate: THREE.Object3D
     const fuses = new Map<string, ReturnType<typeof createBombFuse>>();
     const cloaks = new Map<string, ReturnType<typeof createTankCloak>>();
     const removeMissing = (models: Map<string, THREE.Object3D>, ids: { has: (id: string) => boolean }): void => { for (const [id, model] of models) if (!ids.has(id)) { deployments.get(id)?.dispose(); deployments.delete(id); cloaks.get(id)?.dispose(); cloaks.delete(id); fuses.get(id)?.dispose(); fuses.delete(id); release(model); const destroyed = destroyedIds.delete(id); if (!destroyed || !destroy?.(model)) { if (model.userData.commandCenter) model.visible = false; else model.removeFromParent(); } models.delete(id); } };
-    const itemModel = (type: number): THREE.Object3D => { const model = items.get(type)?.clone(true) ?? new THREE.Group(); model.position.y = type === 5 ? 0.1 : 0.048; animateItem(type, model); scene.add(model); return model; };
+    const itemModel = (type: number): THREE.Object3D => { const model = items.get(type)?.clone(true) ?? new THREE.Group(); configureGroundPickupLayer(model); model.position.y = type === 5 ? 0.1 : 0.048; animateItem(type, model); scene.add(model); return model; };
     const createBuilding = (building: ClientState["buildings"] extends Map<string, infer B> ? B : never): THREE.Object3D => {
         if (building.type === 0) { const existing = scene.children.find(root => root.userData.renderTileX === building.tileX && root.userData.renderTileY === building.tileY); if (existing) { existing.visible = true; return existing; } return new THREE.Group(); }
         if (building.type >= 400 || (building.type >= 100 && building.type <= 112)) return industrial({ ...building, kind: building.type >= 400 ? "research" : building.type === 105 ? "orb-factory" : "factory" });

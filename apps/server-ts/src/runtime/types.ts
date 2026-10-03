@@ -1,3 +1,4 @@
+import type { RuntimeStateInit } from "./state-init.js";
 import type { BulletState, CombatBuildingState, PlayerState } from "@battlecity/sim-core";
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
 
@@ -125,12 +126,15 @@ export type RuntimeState = {
     chatHistory: RuntimeChatMessage[];
     chatRateLimit: Map<string, { team: number[]; global: number[] }>;
     blockingTiles: Set<string>;
+    bulletBlockingTiles: Set<string>;
     buildBlockingTiles: Set<string>;
     fakeCities: Map<number, RuntimeFakeCityState>;
     botControllers: Map<string, RuntimeBotController>;
     fakeCityEvaluationAt: number;
     defenderSpawnCheckAt: number;
     rogueSpawnCheckAt: number;
+    rogueWaveActive: boolean;
+    rogueNextWaveAt: number;
     economyTickAccumulatorMs: number;
     factoryTickAccumulatorMs: number;
     factoryProductionNextAtMs: Map<string, number>;
@@ -260,13 +264,8 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     rogueBuildingThreshold: 18
 };
 
-type RuntimeStateInit = {
-    blockingTiles?: Set<string>;
-    buildBlockingTiles?: Set<string>;
-    fakeCityIds?: number[];
-};
-
 export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState => {
+    const blockingTiles = init.blockingTiles ?? new Set<string>();
     const fakeCities = new Map<number, RuntimeFakeCityState>();
     for (const cityId of init.fakeCityIds ?? []) {
         fakeCities.set(cityId, {
@@ -296,13 +295,16 @@ export const createRuntimeState = (init: RuntimeStateInit = {}): RuntimeState =>
         scoreLeaderUserId: null,
         chatHistory: [],
         chatRateLimit: new Map(),
-        blockingTiles: init.blockingTiles ?? new Set(),
+        blockingTiles,
+        bulletBlockingTiles: init.bulletBlockingTiles ?? blockingTiles,
         buildBlockingTiles: init.buildBlockingTiles ?? init.blockingTiles ?? new Set(),
         fakeCities,
         botControllers: new Map(),
         fakeCityEvaluationAt: 0,
         defenderSpawnCheckAt: 0,
         rogueSpawnCheckAt: 0,
+        rogueWaveActive: false,
+        rogueNextWaveAt: 0,
         economyTickAccumulatorMs: 0,
         factoryTickAccumulatorMs: 0,
         factoryProductionNextAtMs: new Map<string, number>(),

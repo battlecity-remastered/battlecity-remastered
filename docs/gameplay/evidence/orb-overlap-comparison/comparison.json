@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-layer-orb-before-live-pickup/frame.png",
+  "current": "docs/performance/evidence/gameplay-layer-orb-live-pickup/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.15450882523148146,
+  "max_channel_error": 229,
+  "changed_pixel_fraction": 0.01865451388888889,
+  "pixel_fraction_above_8": 0.0023502604166666667,
+  "pixel_fraction_above_32": 0.002138671875,
+  "rmse": 3.8771734496064703
+}

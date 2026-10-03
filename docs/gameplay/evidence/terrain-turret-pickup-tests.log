@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: ground pickups retain shaders and depth testing without covering the tank
+ok 1 - ground pickups retain shaders and depth testing without covering the tank
+  ---
+  duration_ms: 3.455221
+  type: 'test'
+  ...
+# Subtest: reparenting a pickup retains its owned materials; permanent removal releases them
+ok 2 - reparenting a pickup retains its owned materials; permanent removal releases them
+  ---
+  duration_ms: 0.722129
+  type: 'test'
+  ...
+# Subtest: factory hit: city=17, defense=true preserves intended friendly-fire rules
+ok 3 - factory hit: city=17, defense=true preserves intended friendly-fire rules
+  ---
+  duration_ms: 2.121739
+  type: 'test'
+  ...
+# Subtest: factory hit: city=0, defense=true preserves intended friendly-fire rules
+ok 4 - factory hit: city=0, defense=true preserves intended friendly-fire rules
+  ---
+  duration_ms: 0.288037
+  type: 'test'
+  ...
+# Subtest: factory hit: city=17, defense=false preserves intended friendly-fire rules
+ok 5 - factory hit: city=17, defense=false preserves intended friendly-fire rules
+  ---
+  duration_ms: 0.242264
+  type: 'test'
+  ...
+# Subtest: laser hits an enemy defender across lava, while rocks still block bot sight
+ok 6 - laser hits an enemy defender across lava, while rocks still block bot sight
+  ---
+  duration_ms: 0.587195
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 789.336578

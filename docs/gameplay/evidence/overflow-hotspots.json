@@ -1,0 +1,102 @@
+[
+  {
+    "functionName": "getProgramParameter :0",
+    "selfMs": 22136.78800000175
+  },
+  {
+    "functionName": "(idle) :0",
+    "selfMs": 21337.390000000036
+  },
+  {
+    "functionName": "(program) :0",
+    "selfMs": 1309.6210000000021
+  },
+  {
+    "functionName": "getParameters http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:36175",
+    "selfMs": 1291.578
+  },
+  {
+    "functionName": "getProgramInfoLog :0",
+    "selfMs": 1221.8200000000006
+  },
+  {
+    "functionName": "getProgram http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:42322",
+    "selfMs": 667.2589999999996
+  },
+  {
+    "functionName": "getProgramCacheKey http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:36396",
+    "selfMs": 545.0250000000003
+  },
+  {
+    "functionName": "projectObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:42152",
+    "selfMs": 491.91000000000014
+  },
+  {
+    "functionName": "setValue http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:35394",
+    "selfMs": 441.8969999999999
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:41862",
+    "selfMs": 412.97599999999983
+  },
+  {
+    "functionName": "traverse http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:7201",
+    "selfMs": 409.60999999999996
+  },
+  {
+    "functionName": "setProgram http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:42425",
+    "selfMs": 391.49699999999996
+  },
+  {
+    "functionName": "setValueV3f http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:34869",
+    "selfMs": 298.8460000000001
+  },
+  {
+    "functionName": "renderObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:37526",
+    "selfMs": 276.64599999999996
+  },
+  {
+    "functionName": "(garbage collector) :0",
+    "selfMs": 249.22199999999992
+  },
+  {
+    "functionName": "collectBlockingRects http://127.0.0.1:8221/src/gameplay/collision/collision-helpers.ts:19",
+    "selfMs": 232.13999999999996
+  },
+  {
+    "functionName": "updateMatrixWorld http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:7265",
+    "selfMs": 224.59300000000007
+  },
+  {
+    "functionName": "applyMatrix4 http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:2342",
+    "selfMs": 162.39199999999997
+  },
+  {
+    "functionName": "uniform3f :0",
+    "selfMs": 134.60299999999998
+  },
+  {
+    "functionName": "getShaderInfoLog :0",
+    "selfMs": 134.2
+  },
+  {
+    "functionName": "traverseVisible http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:7216",
+    "selfMs": 132.01500000000001
+  },
+  {
+    "functionName": "upload http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=33ed0d16:35459",
+    "selfMs": 123.34800000000001
+  },
+  {
+    "functionName": "bindVertexArray :0",
+    "selfMs": 121.23199999999999
+  },
+  {
+    "functionName": "uniformMatrix4fv :0",
+    "selfMs": 118.37500000000001
+  },
+  {
+    "functionName": "getBoundingClientRect :0",
+    "selfMs": 115.64699999999993
+  }
+]

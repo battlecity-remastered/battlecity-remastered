@@ -1,0 +1,24 @@
+
+> typecheck
+> npm run rewrite:typecheck
+
+
+> rewrite:typecheck
+> npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts
+
+
+> @battlecity/protocol@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/sim-core@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/server-ts@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/client-ts@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+

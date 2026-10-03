@@ -1,0 +1,262 @@
+TAP version 13
+# Subtest: classic primary fire: forward=false, reverse=false, rockets=1, lasers=1
+ok 1 - classic primary fire: forward=false, reverse=false, rockets=1, lasers=1
+  ---
+  duration_ms: 4.489847
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=false, rockets=1, lasers=1
+ok 2 - classic primary fire: forward=true, reverse=false, rockets=1, lasers=1
+  ---
+  duration_ms: 0.4651
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=false, reverse=true, rockets=1, lasers=1
+ok 3 - classic primary fire: forward=false, reverse=true, rockets=1, lasers=1
+  ---
+  duration_ms: 0.292291
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=false, reverse=false, rockets=0, lasers=1
+ok 4 - classic primary fire: forward=false, reverse=false, rockets=0, lasers=1
+  ---
+  duration_ms: 0.252851
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=false, rockets=1, lasers=0
+ok 5 - classic primary fire: forward=true, reverse=false, rockets=1, lasers=0
+  ---
+  duration_ms: 0.36867
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=true, rockets=1, lasers=1
+ok 6 - classic primary fire: forward=true, reverse=true, rockets=1, lasers=1
+  ---
+  duration_ms: 0.259373
+  type: 'test'
+  ...
+# Subtest: live weapons require inventory and cooldown; inventory changes wait for server confirmation
+ok 7 - live weapons require inventory and cooldown; inventory changes wait for server confirmation
+  ---
+  duration_ms: 0.779213
+  type: 'test'
+  ...
+# Subtest: orbs can only be submitted from an enemy command centre apron
+ok 8 - orbs can only be submitted from an enemy command centre apron
+  ---
+  duration_ms: 0.642778
+  type: 'test'
+  ...
+# Subtest: U chooses the nearby stocked factory or dropped icon, without requesting remote stock
+ok 9 - U chooses the nearby stocked factory or dropped icon, without requesting remote stock
+  ---
+  duration_ms: 2.134734
+  type: 'test'
+  ...
+# Subtest: inventory arming is preserved in the subsequent under-tank bomb drop
+ok 10 - inventory arming is preserved in the subsequent under-tank bomb drop
+  ---
+  duration_ms: 1.558377
+  type: 'test'
+  ...
+# Subtest: pending movement reaches the server before the precise under-tank drop
+ok 11 - pending movement reaches the server before the precise under-tank drop
+  ---
+  duration_ms: 0.386352
+  type: 'test'
+  ...
+# Subtest: AI cities wait for players and never replace a human city
+ok 12 - AI cities wait for players and never replace a human city
+  ---
+  duration_ms: 2.308108
+  type: 'test'
+  ...
+# Subtest: generated cities reject human ownership, spawn four roles and advertise AI occupancy
+ok 13 - generated cities reject human ownership, spawn four roles and advertise AI occupancy
+  ---
+  duration_ms: 27.913393
+  type: 'test'
+  ...
+# Subtest: clearing defenders gives twenty seconds before replacement and preserves the missing role
+ok 14 - clearing defenders gives twenty seconds before replacement and preserves the missing role
+  ---
+  duration_ms: 25.04907
+  type: 'test'
+  ...
+# Subtest: defenders ignore allies, dead players and cloak but acquire exposed enemies
+ok 15 - defenders ignore allies, dead players and cloak but acquire exposed enemies
+  ---
+  duration_ms: 0.285472
+  type: 'test'
+  ...
+# Subtest: miners lay armed hidden hazards ahead of enemies, respect cooldown and cap growth
+ok 16 - miners lay armed hidden hazards ahead of enemies, respect cooldown and cap growth
+  ---
+  duration_ms: 0.658267
+  type: 'test'
+  ...
+# Subtest: miners cannot place traps on terrain or underneath players
+ok 17 - miners cannot place traps on terrain or underneath players
+  ---
+  duration_ms: 0.27703
+  type: 'test'
+  ...
+# Subtest: destroying the DFG factory clears its city traps and miners cannot recreate them
+ok 18 - destroying the DFG factory clears its city traps and miners cannot recreate them
+  ---
+  duration_ms: 1.179783
+  type: 'test'
+  ...
+# Subtest: bots settle at their destination and respect DFG freeze
+ok 19 - bots settle at their destination and respect DFG freeze
+  ---
+  duration_ms: 1.673605
+  type: 'test'
+  ...
+# Subtest: orbed AI cities remain empty through cooldown and rebuild after it
+ok 20 - orbed AI cities remain empty through cooldown and rebuild after it
+  ---
+  duration_ms: 31.343589
+  type: 'test'
+  ...
+# Subtest: real-map generated city defenders patrol safely over a minute of simulation
+ok 21 - real-map generated city defenders patrol safely over a minute of simulation
+  ---
+  duration_ms: 1444.021636
+  type: 'test'
+  ...
+# Subtest: tile waypoints route around an L-shaped wall without cutting corners
+ok 22 - tile waypoints route around an L-shaped wall without cutting corners
+  ---
+  duration_ms: 13.295267
+  type: 'test'
+  ...
+# Subtest: periodic replanning preserves forward progress on a clear tile corridor
+ok 23 - periodic replanning preserves forward progress on a clear tile corridor
+  ---
+  duration_ms: 11.267002
+  type: 'test'
+  ...
+# Subtest: an unreachable route stops rather than pressing against the blocking tile
+ok 24 - an unreachable route stops rather than pressing against the blocking tile
+  ---
+  duration_ms: 0.385433
+  type: 'test'
+  ...
+# Subtest: all configured AI cities spawn tile-aligned defenders with usable real-map patrols
+ok 25 - all configured AI cities spawn tile-aligned defenders with usable real-map patrols
+  ---
+  duration_ms: 1673.671215
+  type: 'test'
+  ...
+# Subtest: defenders use reachable city entrances when a generated layout isolates the centre
+ok 26 - defenders use reachable city entrances when a generated layout isolates the centre
+  ---
+  duration_ms: 6002.169349
+  type: 'test'
+  ...
+# Subtest: defenders flank a rock wall instead of stopping at firing range and firing into it
+ok 27 - defenders flank a rock wall instead of stopping at firing range and firing into it
+  ---
+  duration_ms: 5.490636
+  type: 'test'
+  ...
+# Subtest: AI city progress survives the last player dying or returning to the lobby
+ok 28 - AI city progress survives the last player dying or returning to the lobby
+  ---
+  duration_ms: 4.425188
+  type: 'test'
+  ...
+# Subtest: enemy mayor defender loses hull on every laser hit and dies after four hits
+ok 29 - enemy mayor defender loses hull on every laser hit and dies after four hits
+  ---
+  duration_ms: 3.438929
+  type: 'test'
+  ...
+# Subtest: enemy shooter defender loses hull on every laser hit and dies after four hits
+ok 30 - enemy shooter defender loses hull on every laser hit and dies after four hits
+  ---
+  duration_ms: 0.563719
+  type: 'test'
+  ...
+# Subtest: enemy bomb_defuser defender loses hull on every laser hit and dies after four hits
+ok 31 - enemy bomb_defuser defender loses hull on every laser hit and dies after four hits
+  ---
+  duration_ms: 0.602376
+  type: 'test'
+  ...
+# Subtest: enemy miner defender loses hull on every laser hit and dies after four hits
+ok 32 - enemy miner defender loses hull on every laser hit and dies after four hits
+  ---
+  duration_ms: 0.31014
+  type: 'test'
+  ...
+# Subtest: decodeMapBuffer matches classic axis-flipped indexing
+ok 33 - decodeMapBuffer matches classic axis-flipped indexing
+  ---
+  duration_ms: 15.705898
+  type: 'test'
+  ...
+# Subtest: buildBlockingTileSet includes lava/rock and expands command-center anchors to 3x2
+ok 34 - buildBlockingTileSet includes lava/rock and expands command-center anchors to 3x2
+  ---
+  duration_ms: 12.311413
+  type: 'test'
+  ...
+# Subtest: classic projectile terrain crosses lava while movement remains blocked
+ok 35 - classic projectile terrain crosses lava while movement remains blocked
+  ---
+  duration_ms: 0.593972
+  type: 'test'
+  ...
+# Subtest: buildPlacementBlockingTileSet includes lava/rock and expands command-center anchors to 3x3
+ok 36 - buildPlacementBlockingTileSet includes lava/rock and expands command-center anchors to 3x3
+  ---
+  duration_ms: 13.629158
+  type: 'test'
+  ...
+# Subtest: loadBlockingTiles reads map bytes from file
+ok 37 - loadBlockingTiles reads map bytes from file
+  ---
+  duration_ms: 12.168623
+  type: 'test'
+  ...
+# Subtest: loadPlacementBlockingTiles reads map bytes from file
+ok 38 - loadPlacementBlockingTiles reads map bytes from file
+  ---
+  duration_ms: 7.901105
+  type: 'test'
+  ...
+# Subtest: convertBuildingType maps classic ids to remastered ids
+ok 39 - convertBuildingType maps classic ids to remastered ids
+  ---
+  duration_ms: 0.449729
+  type: 'test'
+  ...
+# Subtest: loadCityFile parses and offsets against base spawn
+ok 40 - loadCityFile parses and offsets against base spawn
+  ---
+  duration_ms: 3.387931
+  type: 'test'
+  ...
+# Subtest: loadCityFile keeps 511-raw parity transform for edge coordinates
+ok 41 - loadCityFile keeps 511-raw parity transform for edge coordinates
+  ---
+  duration_ms: 0.717677
+  type: 'test'
+  ...
+# Subtest: loadCityLayoutsFromDirectory reads .city files using spawn lookup
+ok 42 - loadCityLayoutsFromDirectory reads .city files using spawn lookup
+  ---
+  duration_ms: 1.539765
+  type: 'test'
+  ...
+1..42
+# tests 42
+# suites 0
+# pass 42
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10684.329989

@@ -23,7 +23,7 @@ test("live Three client consumes production, combat, orb victory and respawn eve
     const pilot=server.players.get("pilot")!;pilot.x=client.local.x=26*48+56;pilot.y=client.local.y=26*48+102;
     createThreeGameActions(client,send).collect();assert.equal(client.inventory.get(12),1);
     const target=server.players.get("enemy")!;target.x=pilot.x+100;target.y=pilot.y;runtime.tickBullets();client.local.direction=pilot.direction=8;
-    createThreeGameActions(client,send).fire("laser");assert.equal(client.bullets.size,1);assert.equal([...client.bullets.values()][0]!.speed,config.bulletSpeed);
+    createThreeGameActions(client,send).fire();assert.equal(client.bullets.size,1);assert.equal([...client.bullets.values()][0]!.speed,config.bulletSpeed);
     for(let tick=0;tick<3;tick++)runtime.tickBullets();assert.ok(enemy.local.health<40);assert.equal(client.bullets.size,0);const presentation=combat.frame(client);assert.equal(presentation.shots.length,1);assert.equal(presentation.impacts.length,1);
     server.cities.get(1)!.hadOrbFactory=true;for(let tick=0;tick<10;tick++)runtime.tickBullets();
     server.playerInventory.get("pilot")!.set(5,1);client.inventory.set(5,1);pilot.x=client.local.x=95*48+48;pilot.y=client.local.y=33*48;

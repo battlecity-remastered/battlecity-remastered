@@ -11,6 +11,7 @@ import { createBotPathContext } from "../src/domain/bots/BotPathingService.js";
 import { tickFakeCityLifecycle, markFakeCityCooldown } from "../src/domain/fake-cities/FakeCityService.js";
 import { buildBlockingTileSet, loadMapData } from "../src/domain/map/MapService.js";
 import { joinLobby, buildLobbySnapshot } from "../src/domain/lobby/LobbyService.js";
+import { purgeFactoryOutputsForDestroyedBuilding } from "../src/runtime/factory-destruction.js";
 
 const config = {...DEFAULT_RUNTIME_CONFIG, cityCount:64, rogueMaxBots: 0};
 const human = (id = "human", city = 0): RuntimePlayer => ({id,city,x:4600,y:7600,direction:16,speed:600,health:100,maxHealth:100});
@@ -20,6 +21,9 @@ const harness = () => {
     const events: Array<{type:string;payload:unknown}> = [];
     const emitter = createRuntimeEmitter(state,{emitAll:event=>events.push(event),emitTo:()=>{},reject:()=>{}});
     return {state,events,emitter};
+};
+const minerFactories = (state: ReturnType<typeof createRuntimeState>): void => {
+    for (const type of [104, 107]) state.buildings.set(`factory_${type}`, { id: `factory_${type}`, ownerId: "fake_city_17", cityId: 17, type, tileX: 70, tileY: 150, health: 100, maxHealth: 100, population: 0 });
 };
 
 test("AI cities wait for players and never replace a human city", () => {
@@ -67,6 +71,7 @@ test("defenders ignore allies, dead players and cloak but acquire exposed enemie
 
 test("miners lay armed hidden hazards ahead of enemies, respect cooldown and cap growth", () => {
     const {state,emitter,events}=harness();const ctl=controller(),bot={...human("miner",17),x:4300};
+    minerFactories(state);
     state.players.set("human",human());state.players.set(bot.id,bot);
     maybeLayMinerTrap(state,config,emitter,bot,ctl,"human",1000);
     assert.equal(state.hazards.size,1);
@@ -81,9 +86,26 @@ test("miners lay armed hidden hazards ahead of enemies, respect cooldown and cap
 
 test("miners cannot place traps on terrain or underneath players", () => {
     const {state,emitter}=harness();const ctl=controller(),bot={...human("miner",17),x:4300};
+    minerFactories(state);
     state.players.set("human",human());
     for(let x=90;x<105;x++)for(let y=150;y<170;y++)state.blockingTiles.add(`${x},${y}`);
     maybeLayMinerTrap(state,config,emitter,bot,ctl,"human",1000);assert.equal(state.hazards.size,0);
+});
+
+test("destroying the DFG factory clears its city traps and miners cannot recreate them", context => {
+    const {state,emitter}=harness(), ctl=controller(), bot={...human("miner",17),x:4300};
+    minerFactories(state); state.players.set("human",human()); state.players.set(bot.id,bot);
+    context.mock.method(Math,"random",()=>0.9);
+    maybeLayMinerTrap(state,config,emitter,bot,ctl,"human",1000);
+    assert.equal([...state.hazards.values()][0]?.type,7);
+    const factory=state.buildings.get("factory_107")!;
+    state.buildings.delete(factory.id); purgeFactoryOutputsForDestroyedBuilding(state,emitter,factory);
+    assert.equal(state.hazards.size,0);
+    maybeLayMinerTrap(state,config,emitter,bot,ctl,"human",11000);
+    assert.deepEqual([...state.hazards.values()].map(hazard=>hazard.type),[4]);
+    state.buildings.delete("factory_104"); state.hazards.clear();
+    maybeLayMinerTrap(state,config,emitter,bot,ctl,"human",21000);
+    assert.equal(state.hazards.size,0);
 });
 
 const moveOptions = {fallbackPathTarget:undefined,searchRadiusTiles:12,maxNodes:3000,pathfindIntervalMs:1000,pathContext:createBotPathContext(),waypointReachedDistancePx:8,moveSpeed:220};

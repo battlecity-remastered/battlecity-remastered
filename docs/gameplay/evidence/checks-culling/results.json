@@ -1,0 +1,178 @@
+[
+  {
+    "name": "focused-tests",
+    "command": [
+      "node",
+      "--test",
+      "--import",
+      "tsx",
+      "apps/client-ts/test/three-bombs.test.ts",
+      "apps/client-ts/test/three-building-animation.test.ts",
+      "apps/client-ts/test/three-building-batches.test.ts",
+      "apps/client-ts/test/three-camera-scale.test.ts",
+      "apps/client-ts/test/three-cannon.test.ts",
+      "apps/client-ts/test/three-city-preparation.test.ts",
+      "apps/client-ts/test/three-collision-acceleration.test.ts",
+      "apps/client-ts/test/three-defense-deployment.test.ts",
+      "apps/client-ts/test/three-defense-turrets.test.ts",
+      "apps/client-ts/test/three-demo-mayor.test.ts",
+      "apps/client-ts/test/three-demo-movement.test.ts",
+      "apps/client-ts/test/three-destruction.test.ts",
+      "apps/client-ts/test/three-game-actions.test.ts",
+      "apps/client-ts/test/three-game-integration.test.ts",
+      "apps/client-ts/test/three-ground-pickups.test.ts",
+      "apps/client-ts/test/three-industrial-demo.test.ts",
+      "apps/client-ts/test/three-industrial-effects.test.ts",
+      "apps/client-ts/test/three-inventory-controls.test.ts",
+      "apps/client-ts/test/three-inventory.test.ts",
+      "apps/client-ts/test/three-light-warmup.test.ts",
+      "apps/client-ts/test/three-live-movement.test.ts",
+      "apps/client-ts/test/three-live-world.test.ts",
+      "apps/client-ts/test/three-multisample-pass.test.ts",
+      "apps/client-ts/test/three-performance-architecture.test.ts",
+      "apps/client-ts/test/three-point-light-cutoff.test.ts",
+      "apps/client-ts/test/three-population-display.test.ts",
+      "apps/client-ts/test/three-radar.test.ts",
+      "apps/client-ts/test/three-research-status.test.ts",
+      "apps/client-ts/test/three-terrain-scale.test.ts"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 2659
+  },
+  {
+    "name": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 11405
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 5046
+  },
+  {
+    "name": "full-tests",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 23361
+  },
+  {
+    "name": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 881
+  },
+  {
+    "name": "benchmark-lint",
+    "command": [
+      "npx",
+      "eslint",
+      "scripts/performance/cdp.mjs",
+      "scripts/performance/checks.mjs",
+      "scripts/performance/profile.mjs",
+      "scripts/performance/report.mjs",
+      "scripts/performance/run-baseline.mjs",
+      "scripts/performance/run-final.mjs",
+      "scripts/performance/run.mjs",
+      "scripts/performance/source.mjs"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 650
+  },
+  {
+    "name": "event-inventory",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:event-inventory:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 204
+  },
+  {
+    "name": "complexity",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:complexity:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 1027
+  },
+  {
+    "name": "duplication",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:duplication:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 266
+  },
+  {
+    "name": "cycles",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:cycles:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 186
+  },
+  {
+    "name": "imports",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:imports:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 194
+  },
+  {
+    "name": "maintainability",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:maintainability:strict"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 1037
+  },
+  {
+    "name": "unused",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:unused"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 10277
+  },
+  {
+    "name": "movement-simulation",
+    "command": [
+      "npm",
+      "run",
+      "rewrite:movement:sim"
+    ],
+    "exitCode": 0,
+    "elapsedMs": 289
+  }
+]

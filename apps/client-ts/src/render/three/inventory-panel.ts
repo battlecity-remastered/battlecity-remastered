@@ -1,4 +1,5 @@
 import { tankHullRatio } from "./tank-hull-meter.js";
+import { classicPrimaryBulletType } from "@battlecity/sim-core";
 import * as THREE from "three";
 import type { ClientState } from "../../app/state.js";
 import { createThreeInventoryControls } from "../../input/three-inventory-controls.js";
@@ -158,10 +159,17 @@ export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment:
         audioButton.textContent = state.ui.audioEnabled ? "SOUND ON" : "SOUND OFF";
         audioButton.setAttribute("aria-pressed", String(!state.ui.audioEnabled)); audioButton.setAttribute("aria-label", state.ui.audioEnabled ? "Mute sound" : "Enable sound");
     };
+    const refreshWeapon = (): string => {
+        if (!online || !state) return weapon.toUpperCase();
+        const primary = classicPrimaryBulletType(state.inventory, state.controls.moveForward !== state.controls.moveBackward);
+        weapon = primary === 1 ? "rocket" : "laser";
+        return primary === null ? "UNARMED" : weapon.toUpperCase();
+    };
     const refresh = (): void => {
         if (!state) return;
+        const weaponLabel = refreshWeapon();
         const selected = state.ui.selectedInventoryItemType ?? 5, item = INVENTORY_ITEMS[selected] ?? INVENTORY_ITEMS[5]!;
-        const snapshot = JSON.stringify([selected, [...state.inventory], weapon, state.ui.bombArmed, state.local.health, state.local.maxHealth, state.ui.audioEnabled, state.local.city, state.debug.socketConnected]);
+        const snapshot = JSON.stringify([selected, [...state.inventory], weaponLabel, state.ui.bombArmed, state.local.health, state.local.maxHealth, state.ui.audioEnabled, state.local.city, state.debug.socketConnected]);
         if (snapshot === lastSnapshot) return; lastSnapshot = snapshot;
         if (online) { root.querySelector(".bc-telemetry-bottom")!.textContent = `CITY ${state.local.city + 1} · ${state.debug.socketConnected ? "ONLINE" : "OFFLINE"}`; root.querySelector(".bc-command small")!.textContent = `COMMAND LINK / ${String(state.local.city + 1).padStart(2, "0")}`; root.querySelector(".bc-command strong")!.textContent = nextCityName(state.local.city); action.innerHTML = "DROP ITEM" + " <kbd>D</kbd>"; }
 
@@ -171,7 +179,7 @@ export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment:
         fields.get("name")!.textContent = item.name; fields.get("category")!.textContent = item.category;
         fields.get("description")!.textContent = selected === 3 ? `${item.description} ${state.ui.bombArmed ? "ARMED" : "DISARMED"} · V toggles.` : item.description;
         fields.get("stock")!.textContent = `×${state.inventory.get(selected) ?? 0}`;
-        fields.get("weapon")!.textContent = weapon.toUpperCase();
+        fields.get("weapon")!.textContent = weaponLabel;
         fields.get("health")!.textContent = `${Math.round((tankHullRatio(state.local) ?? 0) * 100)}%`;
         root.querySelector<HTMLElement>(".bc-health span")!.style.width = `${(tankHullRatio(state.local) ?? 0) * 100}%`;
         root.querySelector(".bc-specimen-id")!.textContent = `BC / ${String(item.type).padStart(2, "0")}`;

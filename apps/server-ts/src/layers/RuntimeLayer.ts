@@ -5,7 +5,7 @@ import type { Broadcaster } from "../runtime/emitter.js";
 import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "../runtime/types.js";
 import { UserStoreAdapter } from "../adapters/persistence/UserStoreAdapter.js";
 import { notifyOrbVictory, notifyPlayerJoin } from "../adapters/notifications/DiscordNotifier.js";
-import { loadBlockingTiles, loadPlacementBlockingTiles } from "../domain/map/MapService.js";
+import { loadBlockingTiles, loadBulletBlockingTiles, loadPlacementBlockingTiles } from "../domain/map/MapService.js";
 import { loadConfiguredFakeCityIds } from "../domain/fake-cities/FakeCityService.js";
 import { initializeJoinedPlayer, seedCommandCenter } from "../domain/spawn/CityBootstrap.js";
 
@@ -27,6 +27,7 @@ export const makeRuntimeServices = (
     const fakeCityIds = loadConfiguredFakeCityIds();
     const initialState = createRuntimeState({
         blockingTiles,
+        bulletBlockingTiles: loadBulletBlockingTiles(),
         buildBlockingTiles,
         fakeCityIds
     });

@@ -1,7 +1,7 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
-const output = "docs/performance/evidence/checks";
+const output = process.env.PERF_CHECK_OUTPUT ?? "docs/performance/evidence/checks";
 await mkdir(output, { recursive: true });
 const focused = (await readdir("apps/client-ts/test")).filter(file => file.startsWith("three-") && file.endsWith(".test.ts")).map(file => `apps/client-ts/test/${file}`);
 const benchmarkScripts = (await readdir("scripts/performance")).filter(file => file.endsWith(".mjs")).map(file => `scripts/performance/${file}`);

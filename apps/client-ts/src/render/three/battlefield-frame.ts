@@ -30,6 +30,7 @@ import { createTankNameplates } from "./tank-nameplates.js";
 import { resolveTankDropTarget } from "./tank-drop-target.js";
 import { isMayorTank, updateTankRole, updateTankTeam } from "./tank-role.js";
 import { createTerrain } from "./terrain.js";
+import { createLightVariantWarmup } from "./light-variant-warmup.js";
 
 type FrameContext = {
     tankNameplates: ReturnType<typeof createTankNameplates>;
@@ -69,6 +70,7 @@ type FrameContext = {
     sun: THREE.DirectionalLight;
     buildingBatches: ReturnType<typeof createBuildingBatches>;
     composer: EffectComposer;
+    lightWarmup: ReturnType<typeof createLightVariantWarmup>;
 };
 
 export const createBattlefieldFrame = (context: FrameContext) => {
@@ -161,7 +163,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         projectileCollider.beginFrame();
         if (cannon) {
             preview.audioEnabled = state.ui.audioEnabled;
-            if (!demoMode && state.controls.shoot) actions?.fire(weapon);
+            if (!demoMode && state.controls.shoot) actions?.fire();
             const stats = cannon.update(dt, demoMode && state.controls.shoot, state.local.direction, weapon, demoMode ? undefined : networkCombat.frame(state));
             setDiagnostic("weapon", weapon);
             setDiagnostic("cargo", String(cargo.length));
@@ -262,7 +264,9 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         renderer.shadowMap.needsUpdate = true;
         const drawStart = performance.now();
         renderer.domElement.dataset.sceneCpuMs = (drawStart - renderStart).toFixed(2);
+        context.lightWarmup.update();
         composer.render();
+        context.lightWarmup.afterRender();
         finishStage("sceneDraw");
         inventory?.render(seconds);
         finishStage("previewDraw");

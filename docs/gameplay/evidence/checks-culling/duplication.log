@@ -1,0 +1,150 @@
+
+> rewrite:duplication:strict
+> node scripts/rewrite-duplication-report.mjs --strict
+
+{
+    "generatedAt": "2026-10-03T20:15:28.371Z",
+    "summary": {
+        "filesScanned": 276,
+        "duplicateBlocks": 9,
+        "windowSize": 8,
+        "maxAllowedDuplicateBlocks": 12
+    },
+    "topDuplicates": [
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "id: bullet.id,\nownerId: bullet.ownerId,\ncity: bullet.city,\nposition: {\nx: bullet.x,\ny: bullet.y\n},\ndirection: bullet.direction,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/runtime/join-hydration.ts",
+                    "line": 16
+                },
+                {
+                    "file": "apps/server-ts/src/runtime/dispatch.ts",
+                    "line": 221
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "const updatedBot = stepBotAlongPath(\nstate,\nconfig,\nnow,\ndeltaMs,\ncontroller,\nbot,\nmovementTargetFallback,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 225
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 160
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "state,\nconfig,\nnow,\ndeltaMs,\ncontroller,\nbot,\nmovementTargetFallback,\n{",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 226
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 161
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "config,\nnow,\ndeltaMs,\ncontroller,\nbot,\nmovementTargetFallback,\n{\nfallbackPathTarget,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 227
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 162
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "now,\ndeltaMs,\ncontroller,\nbot,\nmovementTargetFallback,\n{\nfallbackPathTarget,\nsearchRadiusTiles: PATH_SEARCH_RADIUS_TILES,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 228
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 163
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "deltaMs,\ncontroller,\nbot,\nmovementTargetFallback,\n{\nfallbackPathTarget,\nsearchRadiusTiles: PATH_SEARCH_RADIUS_TILES,\nmaxNodes: PATH_MAX_NODES,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 229
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 164
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "controller,\nbot,\nmovementTargetFallback,\n{\nfallbackPathTarget,\nsearchRadiusTiles: PATH_SEARCH_RADIUS_TILES,\nmaxNodes: PATH_MAX_NODES,\npathfindIntervalMs: PATHFIND_INTERVAL_MS,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 230
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 165
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "bot,\nmovementTargetFallback,\n{\nfallbackPathTarget,\nsearchRadiusTiles: PATH_SEARCH_RADIUS_TILES,\nmaxNodes: PATH_MAX_NODES,\npathfindIntervalMs: PATHFIND_INTERVAL_MS,\npathContext,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 231
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 166
+                }
+            ]
+        },
+        {
+            "occurrences": 2,
+            "files": 2,
+            "sample": "movementTargetFallback,\n{\nfallbackPathTarget,\nsearchRadiusTiles: PATH_SEARCH_RADIUS_TILES,\nmaxNodes: PATH_MAX_NODES,\npathfindIntervalMs: PATHFIND_INTERVAL_MS,\npathContext,\nwaypointReachedDistancePx: WAYPOINT_REACHED_DISTANCE_PX,",
+            "locations": [
+                {
+                    "file": "apps/server-ts/src/domain/bots/DefenderBotService.ts",
+                    "line": 232
+                },
+                {
+                    "file": "apps/server-ts/src/domain/bots/RogueBotService.ts",
+                    "line": 167
+                }
+            ]
+        }
+    ]
+}

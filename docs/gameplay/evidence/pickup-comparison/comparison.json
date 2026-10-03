@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-layer-turret-before-live-pickup/frame.png",
+  "current": "docs/performance/evidence/gameplay-layer-turret-live-pickup/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.08959780092592591,
+  "max_channel_error": 207,
+  "changed_pixel_fraction": 0.024457465277777778,
+  "pixel_fraction_above_8": 0.0017903645833333333,
+  "pixel_fraction_above_32": 0.0010970052083333333,
+  "rmse": 2.4420775512263537
+}

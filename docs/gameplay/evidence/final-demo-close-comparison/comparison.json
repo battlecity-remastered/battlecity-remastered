@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/final-demo-close/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-demo-close/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.14421549479166668,
+  "max_channel_error": 172,
+  "changed_pixel_fraction": 0.19732313368055557,
+  "pixel_fraction_above_8": 0.0005316840277777777,
+  "pixel_fraction_above_32": 7.161458333333333e-05,
+  "rmse": 0.6670807633200546
+}

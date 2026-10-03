@@ -1,0 +1,751 @@
+TAP version 13
+# Subtest: bomb structure range retains the original square tile boundary and footprint intersection
+ok 1 - bomb structure range retains the original square tile boundary and footprint intersection
+  ---
+  duration_ms: 3.189796
+  type: 'test'
+  ...
+# Subtest: demo armed bomb waits five seconds, destroys touching structures, clears collisions and spares distant structures
+ok 2 - demo armed bomb waits five seconds, destroys touching structures, clears collisions and spares distant structures
+  ---
+  duration_ms: 2.62124
+  type: 'test'
+  ...
+# Subtest: unarmed bombs never detonate and fuse materials do not change the factory template
+ok 3 - unarmed bombs never detonate and fuse materials do not change the factory template
+  ---
+  duration_ms: 5.763578
+  type: 'test'
+  ...
+# Subtest: live hazard removal produces a blast only for detonation, and joins retain remaining fuse time
+ok 4 - live hazard removal produces a blast only for detonation, and joins retain remaining fuse time
+  ---
+  duration_ms: 0.631092
+  type: 'test'
+  ...
+# Subtest: exported command center animates its machinery without moving the NO PARKING apron
+ok 5 - exported command center animates its machinery without moving the NO PARKING apron
+  ---
+  duration_ms: 65.630952
+  type: 'test'
+  ...
+# Subtest: unchanged building parts keep their GPU buffers while exact animated transforms update
+ok 6 - unchanged building parts keep their GPU buffers while exact animated transforms update
+  ---
+  duration_ms: 9.223769
+  type: 'test'
+  ...
+# Subtest: hidden and removed building ancestors vanish from batches and can reappear
+ok 7 - hidden and removed building ancestors vanish from batches and can reappear
+  ---
+  duration_ms: 1.971775
+  type: 'test'
+  ...
+# Subtest: new live buildings share batches and demolition restores the remaining original mesh
+ok 8 - new live buildings share batches and demolition restores the remaining original mesh
+  ---
+  duration_ms: 1.876114
+  type: 'test'
+  ...
+# Subtest: one prepared scene transform matches independent world updates for nested animated parts
+ok 9 - one prepared scene transform matches independent world updates for nested animated parts
+  ---
+  duration_ms: 1.426114
+  type: 'test'
+  ...
+# Subtest: 3D floor matches the Pixi viewport at 1024×768
+ok 10 - 3D floor matches the Pixi viewport at 1024×768
+  ---
+  duration_ms: 4.178052
+  type: 'test'
+  ...
+# Subtest: 3D floor matches the Pixi viewport at 1440×960
+ok 11 - 3D floor matches the Pixi viewport at 1440×960
+  ---
+  duration_ms: 0.751813
+  type: 'test'
+  ...
+# Subtest: 3D floor matches the Pixi viewport at 1920×1080
+ok 12 - 3D floor matches the Pixi viewport at 1920×1080
+  ---
+  duration_ms: 0.709208
+  type: 'test'
+  ...
+# Subtest: 3D floor matches the Pixi viewport at 2560×1440
+ok 13 - 3D floor matches the Pixi viewport at 2560×1440
+  ---
+  duration_ms: 0.55931
+  type: 'test'
+  ...
+# Subtest: 3D floor matches the Pixi viewport at 3440×1440
+ok 14 - 3D floor matches the Pixi viewport at 3440×1440
+  ---
+  duration_ms: 0.873227
+  type: 'test'
+  ...
+# Subtest: the camera stays over the terrain when the tank reaches any map edge
+ok 15 - the camera stays over the terrain when the tank reaches any map edge
+  ---
+  duration_ms: 4.353623
+  type: 'test'
+  ...
+# Subtest: resizing and moving the camera preserve a one-tile 48px step
+ok 16 - resizing and moving the camera preserve a one-tile 48px step
+  ---
+  duration_ms: 0.334254
+  type: 'test'
+  ...
+# Subtest: the exported tank stays inside a 48px silhouette at every legacy heading
+ok 17 - the exported tank stays inside a 48px silhouette at every legacy heading
+  ---
+  duration_ms: 126.89555
+  type: 'test'
+  ...
+# Subtest: held fire has a cooldown; releasing stops new shots and old shells expire
+ok 18 - held fire has a cooldown; releasing stops new shots and old shells expire
+  ---
+  duration_ms: 3.231717
+  type: 'test'
+  ...
+# Subtest: ballistics remain consistent across frame rates and preserve tank heading
+ok 19 - ballistics remain consistent across frame rates and preserve tank heading
+  ---
+  duration_ms: 1.714408
+  type: 'test'
+  ...
+# Subtest: rendering stalls do not slow the fire cooldown or create catch-up bursts
+ok 20 - rendering stalls do not slow the fire cooldown or create catch-up bursts
+  ---
+  duration_ms: 0.280641
+  type: 'test'
+  ...
+# Subtest: swept collisions find the closest actual surface across spatial buckets
+ok 21 - swept collisions find the closest actual surface across spatial buckets
+  ---
+  duration_ms: 8.345093
+  type: 'test'
+  ...
+# Subtest: a protruding barrel cannot fire through cover
+ok 22 - a protruding barrel cannot fire through cover
+  ---
+  duration_ms: 1.365133
+  type: 'test'
+  ...
+# Subtest: instanced rock surfaces use the transformed face normal; shells fly above lava
+ok 23 - instanced rock surfaces use the transformed face normal; shells fly above lava
+  ---
+  duration_ms: 2.611236
+  type: 'test'
+  ...
+# Subtest: Blender's muzzle socket matches cannon geometry at every legacy heading
+ok 24 - Blender's muzzle socket matches cannon geometry at every legacy heading
+  ---
+  duration_ms: 56.368725
+  type: 'test'
+  ...
+# Subtest: turret sweeps share tank bounds within a frame and refresh after driving or recoil
+ok 25 - turret sweeps share tank bounds within a frame and refresh after driving or recoil
+  ---
+  duration_ms: 5.109211
+  type: 'test'
+  ...
+# Subtest: standalone collider sweeps keep tracking targets without an explicit frame cache
+ok 26 - standalone collider sweeps keep tracking targets without an explicit frame cache
+  ---
+  duration_ms: 1.373547
+  type: 'test'
+  ...
+# Subtest: city preparation shares uploads across clones, including hidden batch sources
+ok 27 - city preparation shares uploads across clones, including hidden batch sources
+  ---
+  duration_ms: 5.16551
+  type: 'test'
+  ...
+# Subtest: preparation restores the render target and shadow state if an upload fails
+ok 28 - preparation restores the render target and shadow state if an upload fails
+  ---
+  duration_ms: 12.855058
+  type: 'test'
+  ...
+# Subtest: accelerated rigid surfaces retain native nearest hits, normals, material groups and triangle order
+ok 29 - accelerated rigid surfaces retain native nearest hits, normals, material groups and triangle order
+  ---
+  duration_ms: 41.778797
+  type: 'test'
+  ...
+# Subtest: accelerated rock instances retain transformed hits and the correct instance identity
+ok 30 - accelerated rock instances retain transformed hits and the correct instance identity
+  ---
+  duration_ms: 12.802947
+  type: 'test'
+  ...
+# Subtest: deforming vertices keep the native collision path
+ok 31 - deforming vertices keep the native collision path
+  ---
+  duration_ms: 1.407134
+  type: 'test'
+  ...
+# Subtest: deployment unfolds in place and plasma keeps its DX receiver on the raised tower
+ok 32 - deployment unfolds in place and plasma keeps its DX receiver on the raised tower
+  ---
+  duration_ms: 7.715458
+  type: 'test'
+  ...
+# Subtest: all defense drops keep the original padded tank tile irrespective of heading; blocked tiles never relocate
+ok 33 - all defense drops keep the original padded tank tile irrespective of heading; blocked tiles never relocate
+  ---
+  duration_ms: 12.242181
+  type: 'test'
+  ...
+# Subtest: turret servos take the short path across angle wrap without exceeding their speed
+ok 34 - turret servos take the short path across angle wrap without exceeding their speed
+  ---
+  duration_ms: 1.62019
+  type: 'test'
+  ...
+# Subtest: angle shortcuts preserve the original servo trajectory and large-angle handling
+ok 35 - angle shortcuts preserve the original servo trajectory and large-angle handling
+  ---
+  duration_ms: 4.670664
+  type: 'test'
+  ...
+# Subtest: the articulated turret stays within a one-tile footprint while tracking
+ok 36 - the articulated turret stays within a one-tile footprint while tracking
+  ---
+  duration_ms: 56.590505
+  type: 'test'
+  ...
+# Subtest: aligned turrets fire toward a visible tank, and cover suppresses their shots
+ok 37 - aligned turrets fire toward a visible tank, and cover suppresses their shots
+  ---
+  duration_ms: 126.807315
+  type: 'test'
+  ...
+# Subtest: turret rounds hit the moving tank mesh while the player's own shots ignore it
+ok 38 - turret rounds hit the moving tank mesh while the player's own shots ignore it
+  ---
+  duration_ms: 21.745568
+  type: 'test'
+  ...
+# Subtest: demo mayor can build housing and access unlocked construction without a socket
+ok 39 - demo mayor can build housing and access unlocked construction without a socket
+  ---
+  duration_ms: 3.298427
+  type: 'test'
+  ...
+# Subtest: demo construction and its fully unlocked menu still enforce unique city buildings
+ok 40 - demo construction and its fully unlocked menu still enforce unique city buildings
+  ---
+  duration_ms: 1.918617
+  type: 'test'
+  ...
+# Subtest: mayor appearance follows authoritative role assignment and promotion for each tank
+ok 41 - mayor appearance follows authoritative role assignment and promotion for each tank
+  ---
+  duration_ms: 2.302169
+  type: 'test'
+  ...
+# Subtest: exported mayor tank and housing preserve their legacy footprints and housing has roof-visible glazing
+ok 42 - exported mayor tank and housing preserve their legacy footprints and housing has roof-visible glazing
+  ---
+  duration_ms: 80.748996
+  type: 'test'
+  ...
+# Subtest: AI mayor appearance follows snapshot bot role without a human lobby assignment
+ok 43 - AI mayor appearance follows snapshot bot role without a human lobby assignment
+  ---
+  duration_ms: 0.626902
+  type: 'test'
+  ...
+# Subtest: actual frame movement eliminates the 30 Hz rendered-position staircase
+ok 44 - actual frame movement eliminates the 30 Hz rendered-position staircase
+  ---
+  duration_ms: 53.077454
+  type: 'test'
+  ...
+# 60 FPS motion-step deviation: old 7.642 px, frame clock 0.000000 px
+# Subtest: distance, reverse and continuous steering remain consistent at 30, 60 and 144 FPS
+ok 45 - distance, reverse and continuous steering remain consistent at 30, 60 and 144 FPS
+  ---
+  duration_ms: 68.592947
+  type: 'test'
+  ...
+# Subtest: frame substeps preserve collision, apron travel and background-resume behavior
+ok 46 - frame substeps preserve collision, apron travel and background-resume behavior
+  ---
+  duration_ms: 7.314056
+  type: 'test'
+  ...
+# Subtest: destroyed structures retain an animated remnant and actual roof parts, then release bounded visual resources
+ok 47 - destroyed structures retain an animated remnant and actual roof parts, then release bounded visual resources
+  ---
+  duration_ms: 28.583422
+  type: 'test'
+  ...
+# Subtest: simultaneous detonations cap collapse rigs and fire/smoke rather than accumulating a whole city
+ok 48 - simultaneous detonations cap collapse rigs and fire/smoke rather than accumulating a whole city
+  ---
+  duration_ms: 42.914548
+  type: 'test'
+  ...
+# Subtest: debris never retains live building/defense IDs that could be destroyed or selected again
+ok 49 - debris never retains live building/defense IDs that could be destroyed or selected again
+  ---
+  duration_ms: 6.529392
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=false, reverse=false, rockets=1, lasers=1
+ok 50 - classic primary fire: forward=false, reverse=false, rockets=1, lasers=1
+  ---
+  duration_ms: 4.326781
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=false, rockets=1, lasers=1
+ok 51 - classic primary fire: forward=true, reverse=false, rockets=1, lasers=1
+  ---
+  duration_ms: 2.301377
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=false, reverse=true, rockets=1, lasers=1
+ok 52 - classic primary fire: forward=false, reverse=true, rockets=1, lasers=1
+  ---
+  duration_ms: 0.308948
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=false, reverse=false, rockets=0, lasers=1
+ok 53 - classic primary fire: forward=false, reverse=false, rockets=0, lasers=1
+  ---
+  duration_ms: 0.242003
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=false, rockets=1, lasers=0
+ok 54 - classic primary fire: forward=true, reverse=false, rockets=1, lasers=0
+  ---
+  duration_ms: 0.356268
+  type: 'test'
+  ...
+# Subtest: classic primary fire: forward=true, reverse=true, rockets=1, lasers=1
+ok 55 - classic primary fire: forward=true, reverse=true, rockets=1, lasers=1
+  ---
+  duration_ms: 0.247538
+  type: 'test'
+  ...
+# Subtest: live weapons require inventory and cooldown; inventory changes wait for server confirmation
+ok 56 - live weapons require inventory and cooldown; inventory changes wait for server confirmation
+  ---
+  duration_ms: 3.518775
+  type: 'test'
+  ...
+# Subtest: orbs can only be submitted from an enemy command centre apron
+ok 57 - orbs can only be submitted from an enemy command centre apron
+  ---
+  duration_ms: 0.71271
+  type: 'test'
+  ...
+# Subtest: U chooses the nearby stocked factory or dropped icon, without requesting remote stock
+ok 58 - U chooses the nearby stocked factory or dropped icon, without requesting remote stock
+  ---
+  duration_ms: 6.004947
+  type: 'test'
+  ...
+# Subtest: inventory arming is preserved in the subsequent under-tank bomb drop
+ok 59 - inventory arming is preserved in the subsequent under-tank bomb drop
+  ---
+  duration_ms: 4.15735
+  type: 'test'
+  ...
+# Subtest: pending movement reaches the server before the precise under-tank drop
+ok 60 - pending movement reaches the server before the precise under-tank drop
+  ---
+  duration_ms: 0.610791
+  type: 'test'
+  ...
+# {"ts":"2026-10-03T18:38:45.041Z","level":"debug","message":"build.request","meta":{"socketId":"pilot","payload":{"ownerId":"pilot","cityId":0,"type":300,"tileX":26,"tileY":31},"assignedCity":0,"role":"mayor"}}
+# {"ts":"2026-10-03T18:38:45.044Z","level":"debug","message":"build.accepted","meta":{"socketId":"pilot","building":{"id":"building_281","ownerId":"pilot","cityId":0,"type":300,"tileX":26,"tileY":31,"health":120,"maxHealth":120,"population":0}}}
+# {"ts":"2026-10-03T18:38:45.044Z","level":"debug","message":"build.request","meta":{"socketId":"pilot","payload":{"ownerId":"pilot","cityId":0,"type":300,"tileX":21,"tileY":31},"assignedCity":0,"role":"mayor"}}
+# {"ts":"2026-10-03T18:38:45.045Z","level":"debug","message":"build.accepted","meta":{"socketId":"pilot","building":{"id":"building_286","ownerId":"pilot","cityId":0,"type":300,"tileX":21,"tileY":31,"health":120,"maxHealth":120,"population":0}}}
+# {"ts":"2026-10-03T18:38:45.045Z","level":"debug","message":"build.request","meta":{"socketId":"pilot","payload":{"ownerId":"pilot","cityId":0,"type":412,"tileX":30,"tileY":24},"assignedCity":0,"role":"mayor"}}
+# {"ts":"2026-10-03T18:38:45.045Z","level":"debug","message":"build.accepted","meta":{"socketId":"pilot","building":{"id":"building_290","ownerId":"pilot","cityId":0,"type":412,"tileX":30,"tileY":24,"health":120,"maxHealth":120,"population":0,"attachedHouseId":"building_281"}}}
+# {"ts":"2026-10-03T18:38:45.075Z","level":"debug","message":"build.request","meta":{"socketId":"pilot","payload":{"ownerId":"pilot","cityId":0,"type":112,"tileX":26,"tileY":26},"assignedCity":0,"role":"mayor"}}
+# {"ts":"2026-10-03T18:38:45.075Z","level":"debug","message":"build.accepted","meta":{"socketId":"pilot","building":{"id":"building_1448","ownerId":"pilot","cityId":0,"type":112,"tileX":26,"tileY":26,"health":120,"maxHealth":120,"population":0,"attachedHouseId":"building_286"}}}
+# Subtest: live Three client consumes production, combat, orb victory and respawn events end to end
+ok 61 - live Three client consumes production, combat, orb victory and respawn events end to end
+  ---
+  duration_ms: 73.969263
+  type: 'test'
+  ...
+# Subtest: ground pickups retain shaders and depth testing without covering the tank
+ok 62 - ground pickups retain shaders and depth testing without covering the tank
+  ---
+  duration_ms: 8.522476
+  type: 'test'
+  ...
+# Subtest: reparenting a pickup retains its owned materials; permanent removal releases them
+ok 63 - reparenting a pickup retains its owned materials; permanent removal releases them
+  ---
+  duration_ms: 0.996692
+  type: 'test'
+  ...
+# Subtest: industrial demo fits the actual map and leaves the spawn, apron and factory pickups reachable
+ok 64 - industrial demo fits the actual map and leaves the spawn, apron and factory pickups reachable
+  ---
+  duration_ms: 145.478368
+  type: 'test'
+  ...
+# Subtest: exported factory has moving machinery inside its legacy footprint
+ok 65 - exported factory has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 119.136018
+  type: 'test'
+  ...
+# Subtest: exported rocket-factory has moving machinery inside its legacy footprint
+ok 66 - exported rocket-factory has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 48.237544
+  type: 'test'
+  ...
+# Subtest: exported mine-factory has moving machinery inside its legacy footprint
+ok 67 - exported mine-factory has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 40.27988
+  type: 'test'
+  ...
+# Subtest: exported weapon-factory has moving machinery inside its legacy footprint
+ok 68 - exported weapon-factory has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 26.294911
+  type: 'test'
+  ...
+# Subtest: exported orb-factory has moving machinery inside its legacy footprint
+ok 69 - exported orb-factory has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 27.721613
+  type: 'test'
+  ...
+# Subtest: exported research-center has moving machinery inside its legacy footprint
+ok 70 - exported research-center has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 13.494437
+  type: 'test'
+  ...
+# Subtest: exported orb-item has moving machinery inside its legacy footprint
+ok 71 - exported orb-item has moving machinery inside its legacy footprint
+  ---
+  duration_ms: 13.826266
+  type: 'test'
+  ...
+# Subtest: DX cloak pickup fits inside one legacy tile
+ok 72 - DX cloak pickup fits inside one legacy tile
+  ---
+  duration_ms: 6.841266
+  type: 'test'
+  ...
+# Subtest: DX rocket pickup fits inside one legacy tile
+ok 73 - DX rocket pickup fits inside one legacy tile
+  ---
+  duration_ms: 7.301464
+  type: 'test'
+  ...
+# Subtest: DX medkit pickup fits inside one legacy tile
+ok 74 - DX medkit pickup fits inside one legacy tile
+  ---
+  duration_ms: 3.473205
+  type: 'test'
+  ...
+# Subtest: DX bomb pickup fits inside one legacy tile
+ok 75 - DX bomb pickup fits inside one legacy tile
+  ---
+  duration_ms: 2.88173
+  type: 'test'
+  ...
+# Subtest: DX mine pickup fits inside one legacy tile
+ok 76 - DX mine pickup fits inside one legacy tile
+  ---
+  duration_ms: 3.679597
+  type: 'test'
+  ...
+# Subtest: DX orb pickup fits inside one legacy tile
+ok 77 - DX orb pickup fits inside one legacy tile
+  ---
+  duration_ms: 3.382338
+  type: 'test'
+  ...
+# Subtest: DX flare pickup fits inside one legacy tile
+ok 78 - DX flare pickup fits inside one legacy tile
+  ---
+  duration_ms: 1.752722
+  type: 'test'
+  ...
+# Subtest: DX dfg pickup fits inside one legacy tile
+ok 79 - DX dfg pickup fits inside one legacy tile
+  ---
+  duration_ms: 4.7559
+  type: 'test'
+  ...
+# Subtest: DX wall pickup fits inside one legacy tile
+ok 80 - DX wall pickup fits inside one legacy tile
+  ---
+  duration_ms: 4.474308
+  type: 'test'
+  ...
+# Subtest: DX turret pickup fits inside one legacy tile
+ok 81 - DX turret pickup fits inside one legacy tile
+  ---
+  duration_ms: 2.965754
+  type: 'test'
+  ...
+# Subtest: DX sleeper pickup fits inside one legacy tile
+ok 82 - DX sleeper pickup fits inside one legacy tile
+  ---
+  duration_ms: 3.289227
+  type: 'test'
+  ...
+# Subtest: DX plasma pickup fits inside one legacy tile
+ok 83 - DX plasma pickup fits inside one legacy tile
+  ---
+  duration_ms: 8.797378
+  type: 'test'
+  ...
+# Subtest: DX laser pickup fits inside one legacy tile
+ok 84 - DX laser pickup fits inside one legacy tile
+  ---
+  duration_ms: 3.509043
+  type: 'test'
+  ...
+# Subtest: industrial effect bounds include animated vertices and cull distant cities
+ok 85 - industrial effect bounds include animated vertices and cull distant cities
+  ---
+  duration_ms: 102.923601
+  type: 'test'
+  ...
+# Subtest: U collects on press and retries while held, without browser repeats doubling requests
+ok 86 - U collects on press and retries while held, without browser repeats doubling requests
+  ---
+  duration_ms: 3.011937
+  type: 'test'
+  ...
+# Subtest: classic D/Shift+X/Shift+H drops, B armed bomb, V arm toggle, and O orb keep their meanings
+ok 87 - classic D/Shift+X/Shift+H drops, B armed bomb, V arm toggle, and O orb keep their meanings
+  ---
+  duration_ms: 2.230339
+  type: 'test'
+  ...
+# Subtest: chat typing and browser/build modifiers do not deploy cargo or latch pickup
+ok 88 - chat typing and browser/build modifiers do not deploy cargo or latch pickup
+  ---
+  duration_ms: 0.561037
+  type: 'test'
+  ...
+# Subtest: demo cargo uses every original DX item ID, preserves existing inventory and rejects empty selection
+ok 89 - demo cargo uses every original DX item ID, preserves existing inventory and rejects empty selection
+  ---
+  duration_ms: 3.456726
+  type: 'test'
+  ...
+# Subtest: equipped weapons keep independent flight profiles; switching cannot transform rounds already flying
+ok 90 - equipped weapons keep independent flight profiles; switching cannot transform rounds already flying
+  ---
+  duration_ms: 1.394038
+  type: 'test'
+  ...
+# Subtest: fast laser pulses still sweep thin cover and report energy impacts
+ok 91 - fast laser pulses still sweep thin cover and report energy impacts
+  ---
+  duration_ms: 0.381054
+  type: 'test'
+  ...
+# Subtest: offline stocked inventory does not duplicate local shots through legacy network intents or audio
+ok 92 - offline stocked inventory does not duplicate local shots through legacy network intents or audio
+  ---
+  duration_ms: 1.556585
+  type: 'test'
+  ...
+# Subtest: clicking the selected bomb toggles arming; switching cargo clears it
+ok 93 - clicking the selected bomb toggles arming; switching cargo clears it
+  ---
+  duration_ms: 0.422738
+  type: 'test'
+  ...
+# Subtest: AI light arrival prepares variants asynchronously while retaining the old light count
+ok 94 - AI light arrival prepares variants asynchronously while retaining the old light count
+  ---
+  duration_ms: 21.944813
+  type: 'test'
+  ...
+# Subtest: shadow preparation matches native depth packing and excludes world fog
+ok 95 - shadow preparation matches native depth packing and excludes world fog
+  ---
+  duration_ms: 2.925346
+  type: 'test'
+  ...
+# Subtest: stopping uses the last authoritative position without extrapolating old movement
+ok 96 - stopping uses the last authoritative position without extrapolating old movement
+  ---
+  duration_ms: 3.786075
+  type: 'test'
+  ...
+# Subtest: live entities appear, move, produce cargo and release presentation resources when removed
+ok 97 - live entities appear, move, produce cargo and release presentation resources when removed
+  ---
+  duration_ms: 17.511761
+  type: 'test'
+  ...
+# Subtest: hospital and housing are compact shared industrial models within their three-tile plot
+ok 98 - hospital and housing are compact shared industrial models within their three-tile plot
+  ---
+  duration_ms: 66.303487
+  type: 'test'
+  ...
+# Subtest: live housing joins the spatial batches and demolition restores the surviving house
+ok 99 - live housing joins the spatial batches and demolition restores the surviving house
+  ---
+  duration_ms: 8.348043
+  type: 'test'
+  ...
+# Subtest: enemy sleepers reveal at the classic range and unfold again; active enemy mines and DFG stay concealed
+ok 100 - enemy sleepers reveal at the classic range and unfold again; active enemy mines and DFG stay concealed
+  ---
+  duration_ms: 2.079293
+  type: 'test'
+  ...
+# Subtest: authoritative destruction transfers a model to collapse effects; clearing a city does not explode its buildings
+ok 101 - authoritative destruction transfers a model to collapse effects; clearing a city does not explode its buildings
+  ---
+  duration_ms: 0.827256
+  type: 'test'
+  ...
+# Subtest: scene resolves directly into the 4x HDR composer buffer across frames and resize
+ok 102 - scene resolves directly into the 4x HDR composer buffer across frames and resize
+  ---
+  duration_ms: 37.055961
+  type: 'test'
+  ...
+# Subtest: mixed geometry batches retain original vertex coordinates and articulated world transforms
+ok 103 - mixed geometry batches retain original vertex coordinates and articulated world transforms
+  ---
+  duration_ms: 12.923513
+  type: 'test'
+  ...
+# Subtest: building materials share only matching static finishes and retain shader variants
+ok 104 - building materials share only matching static finishes and retain shader variants
+  ---
+  duration_ms: 2.342115
+  type: 'test'
+  ...
+# Subtest: terrain culling preserves offscreen shadow casters and skips immutable matrix work
+ok 105 - terrain culling preserves offscreen shadow casters and skips immutable matrix work
+  ---
+  duration_ms: 2.047305
+  type: 'test'
+  ...
+# Subtest: frame statistics include tail latency and use a stable nearest-rank percentile
+ok 106 - frame statistics include tail latency and use a stable nearest-rank percentile
+  ---
+  duration_ms: 0.280528
+  type: 'test'
+  ...
+# Subtest: static building transforms retain animation descendants and thaw for destruction
+ok 107 - static building transforms retain animation descendants and thaw for destruction
+  ---
+  duration_ms: 0.651046
+  type: 'test'
+  ...
+# Subtest: failed shader preparation restores every original material and render target
+ok 108 - failed shader preparation restores every original material and render target
+  ---
+  duration_ms: 1.65243
+  type: 'test'
+  ...
+# Subtest: static mixed geometry keeps local shading coordinates, world positions and lifecycle visibility
+ok 109 - static mixed geometry keeps local shading coordinates, world positions and lifecycle visibility
+  ---
+  duration_ms: 14.579943
+  type: 'test'
+  ...
+# Subtest: live performance replay presents moving projectiles and impacts through production network events
+ok 110 - live performance replay presents moving projectiles and impacts through production network events
+  ---
+  duration_ms: 4.127937
+  type: 'test'
+  ...
+# Subtest: finite-light cutoff guards only the point-light loop and retains the original shading
+ok 111 - finite-light cutoff guards only the point-light loop and retains the original shading
+  ---
+  duration_ms: 1.556665
+  type: 'test'
+  ...
+# Subtest: population readout preserves six crew symbols and authoritative household links
+ok 112 - population readout preserves six crew symbols and authoritative household links
+  ---
+  duration_ms: 2.089287
+  type: 'test'
+  ...
+# Subtest: demo households support two buildings, fill in classic ticks, and reattach after demolition
+ok 113 - demo households support two buildings, fill in classic ticks, and reattach after demolition
+  ---
+  duration_ms: 2.046449
+  type: 'test'
+  ...
+# Subtest: radar uses tank sprite center and original command center footprint
+ok 114 - radar uses tank sprite center and original command center footprint
+  ---
+  duration_ms: 2.309389
+  type: 'test'
+  ...
+# Subtest: home bearing and tile distance stay correct in all cardinal directions
+ok 115 - home bearing and tile distance stay correct in all cardinal directions
+  ---
+  duration_ms: 0.412327
+  type: 'test'
+  ...
+# Subtest: distant home pins to the radar rim while preserving its bearing
+ok 116 - distant home pins to the radar rim while preserving its bearing
+  ---
+  duration_ms: 0.261476
+  type: 'test'
+  ...
+# Subtest: home follows the player's city and heading wraps across a full rotation
+ok 117 - home follows the player's city and heading wraps across a full rotation
+  ---
+  duration_ms: 0.295327
+  type: 'test'
+  ...
+# Subtest: research panel counts down across offscreen frames but waits for authoritative completion
+ok 118 - research panel counts down across offscreen frames but waits for authoritative completion
+  ---
+  duration_ms: 7.737314
+  type: 'test'
+  ...
+# Subtest: research status follows the correct city/type, workers and replacement snapshots
+ok 119 - research status follows the correct city/type, workers and replacement snapshots
+  ---
+  duration_ms: 0.670976
+  type: 'test'
+  ...
+# Subtest: offline research showcase demonstrates progress and completion on a bounded cycle
+ok 120 - offline research showcase demonstrates progress and completion on a bounded cycle
+  ---
+  duration_ms: 0.287192
+  type: 'test'
+  ...
+# Subtest: 3D terrain preserves tile area and lava placement across chunk boundaries
+ok 121 - 3D terrain preserves tile area and lava placement across chunk boundaries
+  ---
+  duration_ms: 26.055109
+  type: 'test'
+  ...
+# Subtest: rock batches preserve every rock while keeping distant cells separately cullable
+ok 122 - rock batches preserve every rock while keeping distant cells separately cullable
+  ---
+  duration_ms: 10.596569
+  type: 'test'
+  ...
+1..122
+# tests 122
+# suites 0
+# pass 122
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3239.882593

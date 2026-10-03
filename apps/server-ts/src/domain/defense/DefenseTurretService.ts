@@ -124,6 +124,7 @@ const fireFromDefense = (
         id: bulletId,
         ownerId: defense.id,
         city: defense.cityId,
+        isDefenseShot: true,
         x: muzzleX,
         y: muzzleY,
         direction: bulletDirection,

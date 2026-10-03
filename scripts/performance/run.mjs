@@ -20,6 +20,7 @@ await cdp.send("Emulation.setDeviceMetricsOverride", { width: 1280, height: 720,
 const parameters = new URLSearchParams({ demo: mode === "demo" ? "1" : "0", prepare: process.env.PERF_PREPARE ?? "1" });
 if (probe || process.env.PERF_PROBE) parameters.set("probe", probe || process.env.PERF_PROBE);
 if (gpuPass || process.env.PERF_GPU_PASS) parameters.set("gpuPass", gpuPass || process.env.PERF_GPU_PASS);
+if (process.env.PERF_TRANSITION) parameters.set("transition", process.env.PERF_TRANSITION);
 await cdp.send("Page.navigate", { url: `${url}/performance.html?${parameters}` });
 for (let i = 0; i < 180; i++) {
     if (await evaluate(cdp, "Boolean(window.benchmark?.ready)")) break;
@@ -32,6 +33,10 @@ if (capture) {
     const shot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
     await writeFile(`${output}/frame.png`, Buffer.from(shot.data, "base64"));
     result = await evaluate(cdp, "({viewport:[innerWidth,innerHeight],diagnostics:{...document.querySelector('canvas[data-renderer]').dataset}})");
+    if (capture === "defenders") {
+        result.labels = await evaluate(cdp, "[...document.querySelectorAll('.bc-tank-label')].filter(label=>!label.hidden&&label.textContent.includes('City Defender')).map(label=>({text:label.textContent,team:label.dataset.team,hidden:label.querySelector('.bc-tank-hull').hidden,display:getComputedStyle(label.querySelector('.bc-tank-hull')).display,fill:label.querySelector('.bc-tank-hull-fill').style.transform}))");
+        if (result.labels.length !== 4 || result.labels.some(label => label.hidden || label.display === "none" || label.team !== "enemy")) throw new Error(`Defender health bars missing: ${JSON.stringify(result.labels)}`);
+    }
 } else {
     await cdp.send("Tracing.start", { categories: "devtools.timeline,v8,disabled-by-default-v8.gc,blink.user_timing", options: "record-as-much-as-possible" });
     await cdp.send("Profiler.enable"); await cdp.send("Profiler.start");

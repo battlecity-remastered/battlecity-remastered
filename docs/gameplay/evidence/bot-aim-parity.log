@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: classic rogue aim spread at random=0 emits the same heading and muzzle trajectory
+ok 1 - classic rogue aim spread at random=0 emits the same heading and muzzle trajectory
+  ---
+  duration_ms: 1.552801
+  type: 'test'
+  ...
+# Subtest: classic rogue aim spread at random=0.25 emits the same heading and muzzle trajectory
+ok 2 - classic rogue aim spread at random=0.25 emits the same heading and muzzle trajectory
+  ---
+  duration_ms: 0.187671
+  type: 'test'
+  ...
+# Subtest: classic rogue aim spread at random=0.5 emits the same heading and muzzle trajectory
+ok 3 - classic rogue aim spread at random=0.5 emits the same heading and muzzle trajectory
+  ---
+  duration_ms: 0.163607
+  type: 'test'
+  ...
+# Subtest: classic rogue aim spread at random=0.999 emits the same heading and muzzle trajectory
+ok 4 - classic rogue aim spread at random=0.999 emits the same heading and muzzle trajectory
+  ---
+  duration_ms: 0.203527
+  type: 'test'
+  ...
+# Subtest: defender defaults retain direct aim and fixed cadence
+ok 5 - defender defaults retain direct aim and fixed cadence
+  ---
+  duration_ms: 0.225148
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 806.295907

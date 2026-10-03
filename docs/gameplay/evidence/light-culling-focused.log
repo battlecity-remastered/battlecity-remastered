@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: AI light arrival prepares variants asynchronously while retaining the old light count
+ok 1 - AI light arrival prepares variants asynchronously while retaining the old light count
+  ---
+  duration_ms: 11.683886
+  type: 'test'
+  ...
+# Subtest: shadow preparation matches native depth packing and excludes world fog
+ok 2 - shadow preparation matches native depth packing and excludes world fog
+  ---
+  duration_ms: 1.539883
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 295.310272

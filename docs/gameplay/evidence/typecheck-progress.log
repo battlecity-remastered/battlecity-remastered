@@ -1,0 +1,35 @@
+
+> typecheck
+> npm run rewrite:typecheck
+
+
+> rewrite:typecheck
+> npm run typecheck --workspace @battlecity/protocol && npm run typecheck --workspace @battlecity/sim-core && npm run typecheck --workspace @battlecity/server-ts && npm run typecheck --workspace @battlecity/client-ts
+
+
+> @battlecity/protocol@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/sim-core@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/server-ts@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+
+> @battlecity/client-ts@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json
+
+src/performance/main.ts(28,41): error TS2379: Argument of type '{ time: number; kind: string; cpuMs: number; cacheKey: string | undefined; }' is not assignable to parameter of type '{ time: number; kind: string; cpuMs: number; cacheKey?: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'cacheKey' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+npm error Lifecycle script `typecheck` failed with error:
+npm error code 2
+npm error path /home/alan/Workspace/alan/battlecity-remastered/apps/client-ts
+npm error workspace @battlecity/client-ts@0.1.0
+npm error location /home/alan/Workspace/alan/battlecity-remastered/apps/client-ts
+npm error command failed
+npm error command sh -c tsc --noEmit -p tsconfig.json

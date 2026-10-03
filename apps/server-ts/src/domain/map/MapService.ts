@@ -68,7 +68,7 @@ export const loadMapData = (mapDataPath = DEFAULT_MAP_DATA_PATH): number[][] => 
     }
 };
 
-export const buildBlockingTileSet = (map: number[][]): Set<string> => {
+export const buildBlockingTileSet = (map: number[][], blockLava = true): Set<string> => {
     const blockingTiles = new Set<string>();
     for (let tileX = 0; tileX < MAP_SIZE; tileX += 1) {
         const column = map[tileX];
@@ -77,7 +77,7 @@ export const buildBlockingTileSet = (map: number[][]): Set<string> => {
         }
         for (let tileY = 0; tileY < MAP_SIZE; tileY += 1) {
             const value = column[tileY] ?? 0;
-            if (value === MAP_SQUARE_LAVA || value === MAP_SQUARE_ROCK) {
+            if ((blockLava && value === MAP_SQUARE_LAVA) || value === MAP_SQUARE_ROCK) {
                 blockingTiles.add(`${tileX},${tileY}`);
                 continue;
             }
@@ -134,6 +134,10 @@ export const loadBlockingTiles = (mapDataPath?: string): Set<string> => {
     const map = loadMapData(mapDataPath ?? DEFAULT_MAP_DATA_PATH);
     return buildBlockingTileSet(map);
 };
+
+// Bullets cross lava; tanks and construction still cannot cross/use it.
+export const loadBulletBlockingTiles = (mapDataPath?: string): Set<string> =>
+    buildBlockingTileSet(loadMapData(mapDataPath ?? DEFAULT_MAP_DATA_PATH), false);
 
 export const loadPlacementBlockingTiles = (mapDataPath?: string): Set<string> => {
     const map = loadMapData(mapDataPath ?? DEFAULT_MAP_DATA_PATH);

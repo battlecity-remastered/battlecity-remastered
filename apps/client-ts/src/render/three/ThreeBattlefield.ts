@@ -1,37 +1,32 @@
 import { LEGACY_BOMB_FUSE_MS } from "@battlecity/sim-core";
 import * as THREE from "three";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { isThreeDemoMode, type ClientState } from "../../app/state.js";
 import type { createThreeGameActions } from "../../app/three-game-actions.js";
-import { TILE_SIZE } from "../../gameplay/world-viewport.js";
 import { resolveCitySpawn } from "../../world/city-spawn.js";
 import type { LoadedMap } from "../../world/map-loader.js";
+import type { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { createBattlefieldPostprocessing } from "./battlefield-postprocessing.js";
 import { createBattlefieldFrame } from "./battlefield-frame.js";
 import { createBattlefieldRenderer, createProductNameplates, loadBattlefieldAssets } from "./battlefield-setup.js";
 import { createBombFuse } from "./bomb-fuse.js";
 import { createBuildingBatches } from "./building-batches.js";
 import { createMaterialBatches } from "./material-batches.js";
 import { createBuildingMaterialPool } from "./material-pool.js";
+import { configureGroundPickupLayer } from "./ground-pickup-layer.js";
 import { freezeBuildingTransforms, thawBuildingTransforms } from "./building-transforms.js";
-import { createBattlefieldCamera, positionBattlefieldCamera, resizeBattlefieldCamera } from "./camera.js";
+import { createBattlefieldCamera, positionBattlefieldCamera } from "./camera.js";
 import { createCannonEffects } from "./cannon-effects.js";
 import { createDefenseTurrets } from "./defense-turrets.js";
 import { createDeployedDefense } from "./deployed-defense.js";
 import { createBuildingEffects, createIndustrialEffects, createLavaEffects } from "./effects.js";
-import { createHeatOutputPass } from "./heat-pass.js";
 import { FACTORY_PRODUCTS, factoryProduct, type DemoDefense, type IndustrialBuilding } from "./industrial-demo.js";
 import { transferInventoryItem } from "./inventory-model.js";
 import { createInventoryPanel } from "./inventory-panel.js";
 import { createLiveWorld } from "./live-world.js";
-import { MultisampleScenePass } from "./multisample-scene-pass.js";
 import { createNetworkCombat } from "./network-combat.js";
 import { createOrbVictoryEffects } from "./orb-victory-effects.js";
 import { createPlacementPreviews } from "./placement-previews.js";
 import { createPopulationDisplay } from "./population-display.js";
-import { configurePostprocessTargets } from "./postprocess-targets.js";
-import { specialiseOrthographicAO } from "./orthographic-ao.js";
 import { prepareCityModels } from "./prepare-city-models.js";
 import { prepareRenderPasses } from "./prepare-render-passes.js";
 import { createProjectileCollider } from "./projectile-collider.js";
@@ -140,6 +135,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         const itemAsset = industrialAssets.get(itemName);
         if (itemAsset && demoMode) {
             const item = itemAsset.scene.clone(true);
+            configureGroundPickupLayer(item);
             item.position.set(building.tileX - 256 + 1.5, product === "orb" ? 0.10 : 0.048, building.tileY - 256 + 2.5);
             scene.add(item);
             cargo.push({ type: building.type - 100, model: item, factoryTileX: building.tileX, factoryTileY: building.tileY });
@@ -188,6 +184,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     const deployedPreview: ReturnType<typeof createDeployedDefense>[] = [];
     const addDroppedCargo = (type: number, state: ClientState, template: THREE.Object3D, placement: NonNullable<ReturnType<typeof resolveTankDropTarget>>): void => {
         const recycled = storedCargo.get(type)?.pop(), model = recycled ?? template.clone(true);
+        if (!recycled) configureGroundPickupLayer(model);
         model.position.set(placement.tileX - 256 + 0.5, type === 5 ? 0.10 : 0.048, placement.tileY - 256 + 0.5); model.visible = true;
         if (!recycled) { scene.add(model); machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }
         const hazardId = `demo-cargo-${++hazardSequence}`;
@@ -213,51 +210,15 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     scene.matrixWorldAutoUpdate = false; scene.matrixAutoUpdate = false;
     const { ghost, dropReticle } = createPlacementPreviews(scene);
     const camera = createBattlefieldCamera(window.innerWidth, window.innerHeight); camera.layers.enable(1);
-    const createPostprocessing = () => {
-        const renderTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4, depthBuffer: true, resolveDepthBuffer: false });
-        const composer = new EffectComposer(renderer, renderTarget);
-        // Scene -> MSAA read buffer -> AO writes plain buffer -> bloom -> screen.
-        // AO and OutputPass swap twice, returning to the same scene buffer.
-        composer.writeBuffer.samples = 0; composer.writeBuffer.depthBuffer = false;
-        composer.addPass(new MultisampleScenePass(scene, camera));
-        const ambientOcclusion = new GTAOPass(scene, camera, 1, 1);
-        terrain.configureDepthMaterial(ambientOcclusion.normalMaterial);
-        // Fire/smoke billboards contribute colour, never flat planes to AO depth.
-        const renderOcclusion = ambientOcclusion.render.bind(ambientOcclusion);
-        ambientOcclusion.render = (...args) => { const mask = camera.layers.mask; camera.layers.disable(1); try { renderOcclusion(...args); } finally { camera.layers.mask = mask; } };
-        ambientOcclusion.updateGtaoMaterial({ radius: 0.48, thickness: 0.35, distanceExponent: 2, distanceFallOff: 1, scale: 1 });
-        ambientOcclusion.blendIntensity = 0.72;
-        ambientOcclusion.updatePdMaterial({ radius: 2 });
-        specialiseOrthographicAO(ambientOcclusion);
-        composer.addPass(ambientOcclusion);
-        const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.30, 0.18, 0.72);
-        configurePostprocessTargets(ambientOcclusion, bloom);
-        composer.addPass(bloom);
-        const heatPass = createHeatOutputPass();
-        composer.addPass(heatPass);
-        const resize = (): void => {
-            const width = Math.max(1, window.innerWidth), height = Math.max(1, window.innerHeight);
-            renderer.setSize(width, height);
-            composer.setSize(width, height);
-            ambientOcclusion.setSize(Math.max(1, Math.floor(width * renderer.getPixelRatio() * 0.5)), Math.max(1, Math.floor(height * renderer.getPixelRatio() * 0.5)));
-            heatPass.uniforms.heatResolution!.value.set(width * renderer.getPixelRatio(), height * renderer.getPixelRatio());
-            resizeBattlefieldCamera(camera, width, height);
-            const shadowRadius = Math.max(width, height) / TILE_SIZE / 2 + 6;
-            sun.shadow.camera.left = sun.shadow.camera.bottom = -shadowRadius;
-            sun.shadow.camera.right = sun.shadow.camera.top = shadowRadius;
-            sun.shadow.camera.updateProjectionMatrix();
-        };
-        return { composer, heatPass, resize, ambientOcclusion };
-    };
     const displayFrustum = new THREE.Frustum(), displayProjection = new THREE.Matrix4();
-    const { composer, heatPass, resize, ambientOcclusion } = createPostprocessing();
+    const { composer, heatPass, resize, ambientOcclusion, lightWarmup } = createBattlefieldPostprocessing(renderer, scene, camera, terrain, sun);
     resize();
     inspect?.({ renderer, scene, camera, composer, cannon });
     await cannon.prepareDestruction(renderer, camera);
     const render = createBattlefieldFrame({
         demoMode, scene, renderer, setDiagnostic, heatPass, terrain, deployedPreview,
         cargo, demoFuses, machinery, industrialEffects, researchDisplays, projectileCollider, cannon, turrets,
-        dropReticle, ghost, liveWorld, orbVictory, populationDisplay, preview, collapsing, tank, camera, tankNameplates,
+        dropReticle, ghost, liveWorld, orbVictory, populationDisplay, preview, collapsing, tank, camera, tankNameplates, lightWarmup,
         displayFrustum, displayProjection, lavaEffects, buildingEffects, tankCloak, inventory, actions,
         storedCargo, networkCombat, sun, buildingBatches, composer
     });
@@ -265,12 +226,13 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
     return {
         canvas: renderer.domElement, render, resize,
         prepare: async state => {
+            lightWarmup.reset();
             const start = performance.now();
             const x = (state.local.x + 24) / 48 - 256, z = (state.local.y + 24) / 48 - 256;
             positionBattlefieldCamera(camera, x, z); tank.position.set(x, 0, z);
             sun.position.set(x - 9, 25, z - 8); sun.target.position.set(x, 0, z);
-            liveWorld?.update(state, 0); scene.updateMatrixWorld(); buildingBatches!.update(true);
-            await prepareCityModels(renderer, scene, camera, [tank, centerAsset.scene, ...[...industrialAssets.values()].map(asset => asset.scene), ...scene.children.filter(root => root.userData.renderTileX !== undefined)]);
+            liveWorld?.update(state, 0); lightWarmup.update(); scene.updateMatrixWorld(); buildingBatches!.update(true);
+            await prepareCityModels(renderer, scene, camera, [tank, mayorAsset.scene, centerAsset.scene, ...[...industrialAssets.values()].map(asset => asset.scene), ...scene.children.filter(root => root.userData.renderTileX !== undefined)]);
             await researchDisplays.prepare();
             await inventory.prepare();
             await prepareRenderPasses(renderer, scene, camera, ambientOcclusion.normalMaterial, composer);
@@ -291,7 +253,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
             populationDisplay.dispose();
             orbVictory.dispose();
             tankCloak.dispose();
-            tankNameplates.dispose();
+            tankNameplates.dispose(); lightWarmup.dispose();
             environment.dispose();
             researchDisplays.dispose();
             cannon?.dispose();

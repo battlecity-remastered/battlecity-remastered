@@ -11,6 +11,7 @@ import {
 } from "./BotShared.js";
 import { createBotPathContext } from "./BotPathingService.js";
 import { chooseRogueTargetCity } from "./RogueBotTargetingService.js";
+import { rogueSpawnRadii, rogueWaveSize } from "./rogue-spawn-rules.js";
 
 const ROGUE_TYPE: RuntimeBotController["botType"] = "rogue";
 const SPAWN_INTERVAL_MS = 5000;
@@ -22,8 +23,6 @@ const SHOOT_INTERVAL_MS = 1400;
 const SHOOT_RANGE_TILES = 12;
 const STANDOFF_FACTOR = 0.5;
 const MIN_TARGET_BUFFER_TILES = 1;
-const SPAWN_MIN_RADIUS_TILES = 24;
-const SPAWN_MAX_RADIUS_TILES = 40;
 const SPAWN_ANGLE_SAMPLES = 64;
 const MOVE_SPEED_MULTIPLIER = 0.85;
 const BOT_HALF = 24;
@@ -46,8 +45,7 @@ const resolveRogueSpawn = (
     targetCityId: number
 ): { x: number; y: number } | null => {
     const center = resolveCityCenter(targetCityId, config);
-    const minRadius = config.tileSize * SPAWN_MIN_RADIUS_TILES;
-    const maxRadius = Math.max(minRadius + config.tileSize, config.tileSize * SPAWN_MAX_RADIUS_TILES);
+    const { min: minRadius, max: maxRadius } = rogueSpawnRadii(state, config, targetCityId);
     const minDistanceSq = minRadius * minRadius;
     const baseAngle = Math.random() * (Math.PI * 2);
     const minTopLeft = 0;
@@ -181,7 +179,9 @@ const tickRogueController = (
         shootRangeTiles: SHOOT_RANGE_TILES,
         muzzleOffsetPx: MUZZLE_OFFSET_PX,
         shootIntervalMs: Math.max(SHOOT_INTERVAL_MS, config.botShootIntervalMs),
-        bulletCity: -1
+        bulletCity: -1,
+        aimSpreadSteps: 4,
+        shotJitterMs: 800
     });
     return true;
 };
@@ -229,21 +229,29 @@ const ensureRoguePopulation = (
     config: RuntimeConfig,
     now: number
 ): boolean => {
+    const count = countRogues(state);
+    if (count > 0) return false;
+    if (state.rogueWaveActive) {
+        state.rogueWaveActive = false;
+        state.rogueNextWaveAt = now + 60000 + Math.random() * 60000;
+    }
+    if (now < state.rogueNextWaveAt) return false;
     if (now < state.rogueSpawnCheckAt) {
         return false;
     }
     state.rogueSpawnCheckAt = now + SPAWN_INTERVAL_MS;
-
-    if (countRogues(state) >= config.rogueMaxBots) {
-        return false;
-    }
 
     const targetCityId = chooseRogueTargetCity(state, config);
     if (targetCityId === null) {
         return false;
     }
 
-    return spawnRogue(state, config, now, targetCityId);
+    let spawned = false;
+    for (let i = 0; i < rogueWaveSize(state, config, targetCityId); i++) {
+        spawned = spawnRogue(state, config, now, targetCityId) || spawned;
+    }
+    state.rogueWaveActive = spawned;
+    return spawned;
 };
 
 export const tickRogueBots = (

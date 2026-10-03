@@ -1,0 +1,98 @@
+{
+  "output": "docs/performance/evidence/gameplay-final-demo-close",
+  "errors": 0
+}
+{
+  "baseline": "docs/performance/evidence/final-demo-close/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-demo-close/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.14421549479166668,
+  "max_channel_error": 172,
+  "changed_pixel_fraction": 0.19732313368055557,
+  "pixel_fraction_above_8": 0.0005316840277777777,
+  "pixel_fraction_above_32": 7.161458333333333e-05,
+  "rmse": 0.6670807633200546
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-demo-normal",
+  "errors": 0
+}
+{
+  "baseline": "docs/performance/evidence/final-demo-normal/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.13775173611111113,
+  "max_channel_error": 157,
+  "changed_pixel_fraction": 0.17131510416666668,
+  "pixel_fraction_above_8": 0.0012879774305555557,
+  "pixel_fraction_above_32": 0.0004991319444444444,
+  "rmse": 1.3768332686048217
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-demo-wide",
+  "errors": 0
+}
+{
+  "baseline": "docs/performance/evidence/final-demo-wide/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-demo-wide/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.10274667245370368,
+  "max_channel_error": 177,
+  "changed_pixel_fraction": 0.13502821180555555,
+  "pixel_fraction_above_8": 0.001162109375,
+  "pixel_fraction_above_32": 0.00024739583333333335,
+  "rmse": 1.0584040740793554
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-demo-lava",
+  "errors": 0
+}
+{
+  "baseline": "docs/performance/evidence/final-demo-lava/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-demo-lava/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.012719545717592593,
+  "max_channel_error": 50,
+  "changed_pixel_fraction": 0.03084526909722222,
+  "pixel_fraction_above_8": 6.293402777777778e-05,
+  "pixel_fraction_above_32": 3.2552083333333335e-06,
+  "rmse": 0.16233409443980829
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-live-normal",
+  "errors": 0
+}
+{
+  "baseline": "docs/performance/evidence/final-live-normal/frame.png",
+  "current": "docs/performance/evidence/gameplay-final-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.06062427662037037,
+  "max_channel_error": 157,
+  "changed_pixel_fraction": 0.04712890625,
+  "pixel_fraction_above_8": 0.0011414930555555555,
+  "pixel_fraction_above_32": 0.0005088975694444444,
+  "rmse": 1.3367352975765385
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-live-defenders",
+  "errors": 0
+}
+{
+  "output": "docs/performance/evidence/gameplay-final-live-pickup",
+  "errors": 0
+}
