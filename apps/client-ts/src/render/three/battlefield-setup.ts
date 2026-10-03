@@ -12,8 +12,9 @@ export const createBattlefieldRenderer = () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     // Stable diagnostics should not issue repeated DOM attribute mutations.
     // Frame timing fields still publish every frame for performance observers.
+    const diagnostics = new Map<string, string>();
     const setDiagnostic = (name: string, value: string): void => {
-        if (renderer.domElement.dataset[name] !== value) renderer.domElement.dataset[name] = value;
+        if (diagnostics.get(name) !== value) { diagnostics.set(name, value); renderer.domElement.dataset[name] = value; }
     };
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.shadowMap.enabled = true;
@@ -24,6 +25,7 @@ export const createBattlefieldRenderer = () => {
     renderer.toneMappingExposure = 0.88;
     renderer.info.autoReset = false;
     setDiagnostic("renderer", "three-battlefield");
+    setDiagnostic("multiDraw", String(renderer.extensions.has("WEBGL_multi_draw")));
     const gl = renderer.getContext(), gpuInfo = gl.getExtension("WEBGL_debug_renderer_info");
     setDiagnostic("gpuRenderer", String(gl.getParameter(gpuInfo?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER)));
     Object.assign(renderer.domElement.style, { position: "absolute", inset: "0", zIndex: "0" });

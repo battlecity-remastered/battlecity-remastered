@@ -1,0 +1,1797 @@
+{
+  "viewport": [
+    1280,
+    720
+  ],
+  "diagnostics": {
+    "engine": "three.js r185",
+    "renderer": "three-battlefield",
+    "multiDraw": "true",
+    "gpuRenderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics (CML GT2), OpenGL 4.6)",
+    "dropTile": "[31,29]",
+    "dropBlocked": "false",
+    "orbAge": "0",
+    "researchStates": "[[30,24,\"researching\"],[36,26,\"ready\"]]",
+    "tankRole": "mayor",
+    "tankFinish": "standard",
+    "cargoDistance": "3.921",
+    "cargoOffset": "[-3.791666666666515,-1]",
+    "weapon": "cannon",
+    "cargo": "13",
+    "shotsFired": "5",
+    "impacts": "7",
+    "metalImpacts": "5",
+    "rockImpacts": "0",
+    "projectiles": "1",
+    "projectileTravel": "0.000",
+    "tankHeading": "24.00",
+    "turretShots": "3",
+    "tankHits": "2",
+    "turrets": "4",
+    "turretsTracking": "3",
+    "turretsVisible": "1",
+    "sceneCpuMs": "0.00",
+    "renderStages": "{\"world\":0,\"animation\":0,\"research\":0,\"interface\":0,\"combat\":0,\"matrices\":0,\"batches\":0,\"sceneDraw\":0,\"previewDraw\":0}",
+    "drawSubmitMs": "0.00",
+    "renderCpuMs": "0.00",
+    "drawCalls": "897",
+    "triangles": "1182058",
+    "tankPosition": "[1477.9999999999927,1392]",
+    "blastBursts": "0",
+    "collapsingBuildings": "0",
+    "blastDebris": "0",
+    "blastClouds": "0",
+    "movementClock": "frame",
+    "movementAck": "0",
+    "movementPending": "0",
+    "movementCorrection": "0.000",
+    "movementMaxCorrection": "0.000",
+    "movementBufferedMs": "0.0",
+    "movementServerClippedMs": "0.0",
+    "remotePlayers": "0",
+    "liveBuildings": "16",
+    "populationHouse": "",
+    "populationConnections": "0"
+  },
+  "browser": "Chrome/148.0.7778.178",
+  "errors": [],
+  "geometry": [
+    {
+      "name": "Repeated factory parts",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 16332
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 10888
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 10888
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 10888
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 9438
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 9108
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 8676
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 7680
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 6920
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 6768
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 6584
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 6500
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 6208
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5784
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5784
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5784
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 5444
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5360
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 5120
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 5120
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 5120
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 5060
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 5052
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 4740
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 4416
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 4220
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 4112
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 4112
+    },
+    {
+      "name": "Orb_plasma_shell",
+      "material": "Orb plasma shell",
+      "type": "Mesh",
+      "triangles": 3968
+    },
+    {
+      "name": "Orb_plasma_shell",
+      "material": "Orb plasma shell",
+      "type": "Mesh",
+      "triangles": 3968
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 3840
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 3840
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 3394
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 3368
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 3368
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 3368
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 3338,
+      "surface": "lava"
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 3084
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 3084
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2644
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_celestial_reticle",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 2560
+    },
+    {
+      "name": "Red_apron_paint",
+      "material": "Red apron paint",
+      "type": "Mesh",
+      "triangles": 2436
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2320
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 2292
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 2292
+    },
+    {
+      "name": "Mayor_teal_command_dome",
+      "material": "Mayor teal command dome",
+      "type": "Mesh",
+      "triangles": 2208
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2160
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2160
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2056
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2056
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2056
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 2056
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 2048
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 2008
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 2008
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 1920
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 1920
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1920,
+      "surface": "lava"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1920,
+      "surface": "lava"
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1912
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1912
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1912
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1912
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1720
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1720
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1684
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1620
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1620
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1536
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1536
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 1528
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 1456
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 1456
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1196
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1196
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1160
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1160
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1160
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 1160
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 1144
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1140
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1140
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 1080
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1056
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1056
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1056
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 1056
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_-1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_-1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_-1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "Brushed_steel_Factory_intake_turbine_1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 1028
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 960
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 896
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 896,
+      "surface": "lava"
+    },
+    {
+      "name": "Mayor_cyan_command_armour",
+      "material": "Mayor cyan command armour",
+      "type": "Mesh",
+      "triangles": 864
+    },
+    {
+      "name": "Red_apron_paint",
+      "material": "Red apron paint",
+      "type": "Mesh",
+      "triangles": 812
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 764
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 760
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 704
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 704
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 704
+    },
+    {
+      "name": "DX_dark_machinery_Lamp_iris_left",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 648
+    },
+    {
+      "name": "DX_dark_machinery_Lamp_iris_right",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 648
+    },
+    {
+      "name": "Red_apron_paint",
+      "material": "Red apron paint",
+      "type": "Mesh",
+      "triangles": 620
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 620
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 596
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 570
+    },
+    {
+      "name": "DX_chrome_Turret_elevation_trunnion",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 568
+    },
+    {
+      "name": "DX_chrome_Turret_elevation_trunnion",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 568
+    },
+    {
+      "name": "DX_chrome_Turret_elevation_trunnion",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 568
+    },
+    {
+      "name": "DX_chrome_Turret_elevation_trunnion",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 568
+    },
+    {
+      "name": "Orb_containment_glow",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 556
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 540
+    },
+    {
+      "name": "Brushed_steel_Orb_containment_gimbal_-1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Brushed_steel_Orb_containment_gimbal_1",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_containment_gimbal_-1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_containment_gimbal_1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Orb_containment_glow_Orb_energy_orbit_-1",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Orb_containment_glow_Orb_energy_orbit_1",
+      "material": "Orb containment glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "Command_glow",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 512
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 512,
+      "surface": "lava"
+    },
+    {
+      "name": "Command_glow_Tracking_turret_head",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 448
+    },
+    {
+      "name": "Command_glow_Tracking_turret_head",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 448
+    },
+    {
+      "name": "Command_glow_Tracking_turret_head",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 448
+    },
+    {
+      "name": "Command_glow_Tracking_turret_head",
+      "material": "Command glow",
+      "type": "Mesh",
+      "triangles": 448
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "Identification_paint",
+      "material": "Identification paint",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "Identification_paint",
+      "material": "Identification paint",
+      "type": "Mesh",
+      "triangles": 432
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Research_reactor_glow",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 380
+    },
+    {
+      "name": "Brushed_steel_Tracking_turret_head",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Brushed_steel_Tracking_turret_head",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Brushed_steel_Tracking_turret_head",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Brushed_steel_Tracking_turret_head",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 324
+    },
+    {
+      "name": "Brushed_steel_Turret_barrel_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Brushed_steel_Turret_barrel_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Brushed_steel_Turret_barrel_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Brushed_steel_Turret_barrel_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "DX_dark_machinery_Turret_barrel_recoil",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "DX_dark_machinery_Turret_barrel_recoil",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "DX_dark_machinery_Turret_barrel_recoil",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "DX_dark_machinery_Turret_barrel_recoil",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Track_rubber_Turret_barrel_recoil",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Track_rubber_Turret_barrel_recoil",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Track_rubber_Turret_barrel_recoil",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Track_rubber_Turret_barrel_recoil",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 284
+    },
+    {
+      "name": "Warning_red",
+      "material": "Warning red",
+      "type": "Mesh",
+      "triangles": 224
+    },
+    {
+      "name": "Research_reactor_glow_Research_induction_scanner",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 224
+    },
+    {
+      "name": "Research_reactor_glow_Research_induction_scanner",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 224
+    },
+    {
+      "name": "Pale_stone_apron",
+      "material": "Pale stone apron",
+      "type": "Mesh",
+      "triangles": 220
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Brushed_steel",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "DX_dark_machinery_Tracking_turret_head",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "DX_dark_machinery_Tracking_turret_head",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "DX_dark_machinery_Tracking_turret_head",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "DX_dark_machinery_Tracking_turret_head",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Amber_circular_lamps",
+      "material": "Amber circular lamps",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Command_gold",
+      "material": "Command gold",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "Track_rubber",
+      "material": "Track rubber",
+      "type": "Mesh",
+      "triangles": 216
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 192
+    },
+    {
+      "name": "Brushed_steel_Cannon_recoil",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 188
+    },
+    {
+      "name": "Research_reactor_glow_Research_levitating_specimen",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 184
+    },
+    {
+      "name": "Research_reactor_glow_Research_levitating_specimen",
+      "material": "Research reactor glow",
+      "type": "Mesh",
+      "triangles": 184
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_energy_orbit_1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 120
+    },
+    {
+      "name": "Orb_cyan_filament_glow_Orb_energy_orbit_-1",
+      "material": "Orb cyan filament glow",
+      "type": "Mesh",
+      "triangles": 120
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Armour_panel_joints",
+      "material": "Armour panel joints",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_dark_machinery",
+      "material": "DX dark machinery",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome_Tracking_turret_head",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome_Tracking_turret_head",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome_Tracking_turret_head",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome_Tracking_turret_head",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour_Tracking_turret_head",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour_Tracking_turret_head",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour_Tracking_turret_head",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour_Tracking_turret_head",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Brushed_steel_Research_induction_scanner",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Brushed_steel_Research_induction_scanner",
+      "material": "Brushed steel",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_teal_armour",
+      "material": "DX teal armour",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "DX_chrome",
+      "material": "DX chrome",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Entrance_energy_core",
+      "material": "Entrance energy core",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Factory_furnace_glow",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "Factory_furnace_glow",
+      "material": "Factory furnace glow",
+      "type": "Mesh",
+      "triangles": 108
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 64,
+      "surface": "ground"
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 60
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 48
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 48
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 48
+    },
+    {
+      "name": "DX_mine_copper_shell",
+      "material": "DX mine copper shell",
+      "type": "Mesh",
+      "triangles": 48
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 36
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 36
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 32
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 30
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 24
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "Repeated factory parts",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 20
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 16
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 10
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 10
+    },
+    {
+      "name": "Lettering_charcoal",
+      "material": "Lettering charcoal",
+      "type": "Mesh",
+      "triangles": 10
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 2
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 0
+    },
+    {
+      "name": "",
+      "material": "",
+      "type": "Mesh",
+      "triangles": 0
+    }
+  ]
+}

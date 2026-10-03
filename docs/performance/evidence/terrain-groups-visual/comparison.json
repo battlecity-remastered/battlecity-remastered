@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-normal/frame.png",
+  "current": "docs/performance/evidence/terrain-groups-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.09868381076388888,
+  "max_channel_error": 145,
+  "changed_pixel_fraction": 0.16143012152777778,
+  "pixel_fraction_above_8": 0.0003385416666666667,
+  "pixel_fraction_above_32": 1.4105902777777777e-05,
+  "rmse": 0.45107694883816457
+}

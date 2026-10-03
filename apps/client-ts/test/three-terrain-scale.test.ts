@@ -17,7 +17,8 @@ test("3D terrain preserves tile area and lava placement across chunk boundaries"
     let lavaVertices = 0;
     let lavaTriangles = 0;
     const lavaCells = new Set<string>();
-    for (const child of scene.children) {
+    const objects: THREE.Object3D[] = []; scene.traverse(object => objects.push(object));
+    for (const child of objects) {
         if (!(child instanceof THREE.Mesh) || child instanceof THREE.InstancedMesh) continue;
         const positions = child.geometry.getAttribute("position");
         const indices = child.geometry.getIndex()!;
@@ -59,7 +60,7 @@ test("rock batches preserve every rock while keeping distant cells separately cu
     const map=Array.from({length:64},()=>Array<number>(64).fill(0));
     for(const [x,y] of [[4,4],[28,28],[36,36]])map[x!]![y!]=2;
     const scene=new THREE.Scene();createTerrain({map,blockingTiles:new Set(),buildBlockingTiles:new Set()},scene,new THREE.Texture());
-    const batches=scene.children.filter((object):object is THREE.InstancedMesh=>object instanceof THREE.InstancedMesh);
+    const batches: THREE.InstancedMesh[] = []; scene.traverse(object => { if (object instanceof THREE.InstancedMesh) batches.push(object); });
     assert.equal(batches.reduce((count,batch)=>count+batch.count,0),9);
     assert.equal(batches.length,3,"distant cells cannot share one large culling sphere");
     for(const batch of batches){assert.ok(batch.boundingSphere!.radius<2);assert.ok(batch.castShadow&&batch.receiveShadow);assert.equal(batch.userData.ballisticSurface,"rock");}

@@ -1,0 +1,756 @@
+
+> test
+> npm run rewrite:test
+
+
+> rewrite:test
+> node --test --import tsx packages/protocol/test/*.test.ts packages/sim-core/test/*.test.ts apps/server-ts/test/*.test.ts apps/client-ts/test/*.test.ts scripts/test/*.test.mjs
+
+TAP version 13
+# Subtest: apps/client-ts/test/assets-manifest.test.ts
+ok 1 - apps/client-ts/test/assets-manifest.test.ts
+  ---
+  duration_ms: 472.726786
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/assets-parity-registry.test.ts
+ok 2 - apps/client-ts/test/assets-parity-registry.test.ts
+  ---
+  duration_ms: 490.944751
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/audio-manager.test.ts
+ok 3 - apps/client-ts/test/audio-manager.test.ts
+  ---
+  duration_ms: 587.298072
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/build-menu.test.ts
+ok 4 - apps/client-ts/test/build-menu.test.ts
+  ---
+  duration_ms: 2658.855694
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/building-overlay-parity.test.ts
+ok 5 - apps/client-ts/test/building-overlay-parity.test.ts
+  ---
+  duration_ms: 535.412495
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/bullet-client-service.test.ts
+ok 6 - apps/client-ts/test/bullet-client-service.test.ts
+  ---
+  duration_ms: 554.423248
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/changing-layer-parity.test.ts
+ok 7 - apps/client-ts/test/changing-layer-parity.test.ts
+  ---
+  duration_ms: 586.652758
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/changing-layer.test.ts
+ok 8 - apps/client-ts/test/changing-layer.test.ts
+  ---
+  duration_ms: 560.292732
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/chat-manager.test.ts
+ok 9 - apps/client-ts/test/chat-manager.test.ts
+  ---
+  duration_ms: 666.218076
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/city-import.test.ts
+ok 10 - apps/client-ts/test/city-import.test.ts
+  ---
+  duration_ms: 743.568477
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/city-spawn.test.ts
+ok 11 - apps/client-ts/test/city-spawn.test.ts
+  ---
+  duration_ms: 595.000213
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/debug-metrics.test.ts
+ok 12 - apps/client-ts/test/debug-metrics.test.ts
+  ---
+  duration_ms: 547.654229
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/defense-damage.test.ts
+ok 13 - apps/client-ts/test/defense-damage.test.ts
+  ---
+  duration_ms: 543.848622
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/defense-visibility.test.ts
+ok 14 - apps/client-ts/test/defense-visibility.test.ts
+  ---
+  duration_ms: 736.915198
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/dirty-flags.test.ts
+ok 15 - apps/client-ts/test/dirty-flags.test.ts
+  ---
+  duration_ms: 691.014952
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/entity-cache.test.ts
+ok 16 - apps/client-ts/test/entity-cache.test.ts
+  ---
+  duration_ms: 598.004604
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/event-router.test.ts
+ok 17 - apps/client-ts/test/event-router.test.ts
+  ---
+  duration_ms: 2171.68245
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/ghost-placement.test.ts
+ok 18 - apps/client-ts/test/ghost-placement.test.ts
+  ---
+  duration_ms: 750.241069
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/golden-tank.test.ts
+ok 19 - apps/client-ts/test/golden-tank.test.ts
+  ---
+  duration_ms: 3097.674919
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/help-map-modal.test.ts
+ok 20 - apps/client-ts/test/help-map-modal.test.ts
+  ---
+  duration_ms: 732.397855
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/hud-lines.test.ts
+ok 21 - apps/client-ts/test/hud-lines.test.ts
+  ---
+  duration_ms: 668.978251
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/icon-inventory-service.test.ts
+ok 22 - apps/client-ts/test/icon-inventory-service.test.ts
+  ---
+  duration_ms: 932.43805
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/identity-manager.test.ts
+ok 23 - apps/client-ts/test/identity-manager.test.ts
+  ---
+  duration_ms: 822.896136
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/input-mapping.test.ts
+ok 24 - apps/client-ts/test/input-mapping.test.ts
+  ---
+  duration_ms: 758.949408
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/intro-tutorial.test.ts
+ok 25 - apps/client-ts/test/intro-tutorial.test.ts
+  ---
+  duration_ms: 805.149703
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/item-bullet-intents.test.ts
+ok 26 - apps/client-ts/test/item-bullet-intents.test.ts
+  ---
+  duration_ms: 932.596538
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/item-defense-bullet-parity.test.ts
+ok 27 - apps/client-ts/test/item-defense-bullet-parity.test.ts
+  ---
+  duration_ms: 688.756582
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/item-id-parity.test.ts
+ok 28 - apps/client-ts/test/item-id-parity.test.ts
+  ---
+  duration_ms: 724.765519
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/lobby-manager.test.ts
+ok 29 - apps/client-ts/test/lobby-manager.test.ts
+  ---
+  duration_ms: 981.130062
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/map-loader.test.ts
+ok 30 - apps/client-ts/test/map-loader.test.ts
+  ---
+  duration_ms: 941.428998
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/map-modal-parity.test.ts
+ok 31 - apps/client-ts/test/map-modal-parity.test.ts
+  ---
+  duration_ms: 838.482721
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/modal-hotkeys.test.ts
+ok 32 - apps/client-ts/test/modal-hotkeys.test.ts
+  ---
+  duration_ms: 604.38919
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/mouse-input.test.ts
+ok 33 - apps/client-ts/test/mouse-input.test.ts
+  ---
+  duration_ms: 651.991615
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/movement-recovery.test.ts
+ok 34 - apps/client-ts/test/movement-recovery.test.ts
+  ---
+  duration_ms: 2653.634018
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/movement-roundtrip.test.ts
+ok 35 - apps/client-ts/test/movement-roundtrip.test.ts
+  ---
+  duration_ms: 8386.944317
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/network-events.test.ts
+ok 36 - apps/client-ts/test/network-events.test.ts
+  ---
+  duration_ms: 3101.738494
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/network-handler-coverage.test.ts
+ok 37 - apps/client-ts/test/network-handler-coverage.test.ts
+  ---
+  duration_ms: 687.076175
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/notification-manager.test.ts
+ok 38 - apps/client-ts/test/notification-manager.test.ts
+  ---
+  duration_ms: 1016.600214
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/options-modal.test.ts
+ok 39 - apps/client-ts/test/options-modal.test.ts
+  ---
+  duration_ms: 845.984989
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/orb-ground-shake.test.ts
+ok 40 - apps/client-ts/test/orb-ground-shake.test.ts
+  ---
+  duration_ms: 2704.712079
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/orb-hint-banner.test.ts
+ok 41 - apps/client-ts/test/orb-hint-banner.test.ts
+  ---
+  duration_ms: 666.006018
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/orb-target.test.ts
+ok 42 - apps/client-ts/test/orb-target.test.ts
+  ---
+  duration_ms: 691.485249
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/pacing.test.ts
+ok 43 - apps/client-ts/test/pacing.test.ts
+  ---
+  duration_ms: 521.083496
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/panel-radar-parity.test.ts
+ok 44 - apps/client-ts/test/panel-radar-parity.test.ts
+  ---
+  duration_ms: 717.938594
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/panel-visuals.test.ts
+ok 45 - apps/client-ts/test/panel-visuals.test.ts
+  ---
+  duration_ms: 555.599311
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/parity-baseline-fixtures.test.ts
+ok 46 - apps/client-ts/test/parity-baseline-fixtures.test.ts
+  ---
+  duration_ms: 700.852515
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/player-movement.test.ts
+ok 47 - apps/client-ts/test/player-movement.test.ts
+  ---
+  duration_ms: 535.683021
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/render-timing.test.ts
+ok 48 - apps/client-ts/test/render-timing.test.ts
+  ---
+  duration_ms: 1036.799245
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/serialization-bench.test.ts
+ok 49 - apps/client-ts/test/serialization-bench.test.ts
+  ---
+  duration_ms: 2656.644632
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/shot-geometry.test.ts
+ok 50 - apps/client-ts/test/shot-geometry.test.ts
+  ---
+  duration_ms: 698.185041
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/socket-reconnect.test.ts
+ok 51 - apps/client-ts/test/socket-reconnect.test.ts
+  ---
+  duration_ms: 2853.431114
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/state-defaults.test.ts
+ok 52 - apps/client-ts/test/state-defaults.test.ts
+  ---
+  duration_ms: 613.528514
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/tank-hull-meter.test.ts
+ok 53 - apps/client-ts/test/tank-hull-meter.test.ts
+  ---
+  duration_ms: 756.176988
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/terrain-parity.test.ts
+ok 54 - apps/client-ts/test/terrain-parity.test.ts
+  ---
+  duration_ms: 678.120694
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-bombs.test.ts
+ok 55 - apps/client-ts/test/three-bombs.test.ts
+  ---
+  duration_ms: 1177.556951
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-building-animation.test.ts
+ok 56 - apps/client-ts/test/three-building-animation.test.ts
+  ---
+  duration_ms: 1257.419794
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-building-batches.test.ts
+ok 57 - apps/client-ts/test/three-building-batches.test.ts
+  ---
+  duration_ms: 1142.901357
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-camera-scale.test.ts
+ok 58 - apps/client-ts/test/three-camera-scale.test.ts
+  ---
+  duration_ms: 1166.141356
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-cannon.test.ts
+ok 59 - apps/client-ts/test/three-cannon.test.ts
+  ---
+  duration_ms: 1330.504531
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-city-preparation.test.ts
+ok 60 - apps/client-ts/test/three-city-preparation.test.ts
+  ---
+  duration_ms: 1147.393038
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-collision-acceleration.test.ts
+ok 61 - apps/client-ts/test/three-collision-acceleration.test.ts
+  ---
+  duration_ms: 1130.177539
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-defense-deployment.test.ts
+ok 62 - apps/client-ts/test/three-defense-deployment.test.ts
+  ---
+  duration_ms: 1001.60247
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-defense-turrets.test.ts
+ok 63 - apps/client-ts/test/three-defense-turrets.test.ts
+  ---
+  duration_ms: 1360.956712
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-demo-mayor.test.ts
+ok 64 - apps/client-ts/test/three-demo-mayor.test.ts
+  ---
+  duration_ms: 1227.663889
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-demo-movement.test.ts
+ok 65 - apps/client-ts/test/three-demo-movement.test.ts
+  ---
+  duration_ms: 688.950504
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-destruction.test.ts
+ok 66 - apps/client-ts/test/three-destruction.test.ts
+  ---
+  duration_ms: 855.022055
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-game-actions.test.ts
+ok 67 - apps/client-ts/test/three-game-actions.test.ts
+  ---
+  duration_ms: 710.29362
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-game-integration.test.ts
+ok 68 - apps/client-ts/test/three-game-integration.test.ts
+  ---
+  duration_ms: 3131.995766
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-industrial-demo.test.ts
+ok 69 - apps/client-ts/test/three-industrial-demo.test.ts
+  ---
+  duration_ms: 1195.396356
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-industrial-effects.test.ts
+ok 70 - apps/client-ts/test/three-industrial-effects.test.ts
+  ---
+  duration_ms: 911.182216
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-inventory-controls.test.ts
+ok 71 - apps/client-ts/test/three-inventory-controls.test.ts
+  ---
+  duration_ms: 665.609708
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-inventory.test.ts
+ok 72 - apps/client-ts/test/three-inventory.test.ts
+  ---
+  duration_ms: 745.13674
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-live-movement.test.ts
+ok 73 - apps/client-ts/test/three-live-movement.test.ts
+  ---
+  duration_ms: 614.235322
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-live-world.test.ts
+ok 74 - apps/client-ts/test/three-live-world.test.ts
+  ---
+  duration_ms: 1092.012582
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-multisample-pass.test.ts
+ok 75 - apps/client-ts/test/three-multisample-pass.test.ts
+  ---
+  duration_ms: 748.576418
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-performance-architecture.test.ts
+ok 76 - apps/client-ts/test/three-performance-architecture.test.ts
+  ---
+  duration_ms: 909.606873
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-point-light-cutoff.test.ts
+ok 77 - apps/client-ts/test/three-point-light-cutoff.test.ts
+  ---
+  duration_ms: 727.021994
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-population-display.test.ts
+ok 78 - apps/client-ts/test/three-population-display.test.ts
+  ---
+  duration_ms: 877.231667
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-radar.test.ts
+ok 79 - apps/client-ts/test/three-radar.test.ts
+  ---
+  duration_ms: 630.347094
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-research-status.test.ts
+ok 80 - apps/client-ts/test/three-research-status.test.ts
+  ---
+  duration_ms: 785.813535
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/three-terrain-scale.test.ts
+ok 81 - apps/client-ts/test/three-terrain-scale.test.ts
+  ---
+  duration_ms: 965.738966
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/world-bounds.test.ts
+ok 82 - apps/client-ts/test/world-bounds.test.ts
+  ---
+  duration_ms: 589.908994
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/world-preparation.test.ts
+ok 83 - apps/client-ts/test/world-preparation.test.ts
+  ---
+  duration_ms: 512.20112
+  type: 'test'
+  ...
+# Subtest: apps/client-ts/test/world-viewport.test.ts
+ok 84 - apps/client-ts/test/world-viewport.test.ts
+  ---
+  duration_ms: 532.126526
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/account-signin.test.ts
+not ok 85 - apps/server-ts/test/account-signin.test.ts
+  ---
+  duration_ms: 3883.335316
+  type: 'test'
+  location: '/home/alan/Workspace/alan/battlecity-remastered/apps/server-ts/test/account-signin.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: apps/server-ts/test/ai-opponents.test.ts
+ok 86 - apps/server-ts/test/ai-opponents.test.ts
+  ---
+  duration_ms: 14412.585265
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/behavior-parity.test.ts
+ok 87 - apps/server-ts/test/behavior-parity.test.ts
+  ---
+  duration_ms: 4062.934831
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/blocking-parity-contract.test.ts
+ok 88 - apps/server-ts/test/blocking-parity-contract.test.ts
+  ---
+  duration_ms: 795.100552
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/bot-pathing-service.test.ts
+ok 89 - apps/server-ts/test/bot-pathing-service.test.ts
+  ---
+  duration_ms: 598.255153
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/building-limits.test.ts
+ok 90 - apps/server-ts/test/building-limits.test.ts
+  ---
+  duration_ms: 4157.557405
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/city-bootstrap.test.ts
+ok 91 - apps/server-ts/test/city-bootstrap.test.ts
+  ---
+  duration_ms: 3054.035456
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/city-import.test.ts
+ok 92 - apps/server-ts/test/city-import.test.ts
+  ---
+  duration_ms: 3541.905701
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/defense-turret-service.test.ts
+ok 93 - apps/server-ts/test/defense-turret-service.test.ts
+  ---
+  duration_ms: 2362.536259
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/discord-notifier.test.ts
+ok 94 - apps/server-ts/test/discord-notifier.test.ts
+  ---
+  duration_ms: 2822.400426
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/discord-runtime.test.ts
+ok 95 - apps/server-ts/test/discord-runtime.test.ts
+  ---
+  duration_ms: 4627.664306
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/dispatch-coverage.test.ts
+ok 96 - apps/server-ts/test/dispatch-coverage.test.ts
+  ---
+  duration_ms: 2553.127219
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/factory-service.test.ts
+ok 97 - apps/server-ts/test/factory-service.test.ts
+  ---
+  duration_ms: 900.439064
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/game-runtime.test.ts
+ok 98 - apps/server-ts/test/game-runtime.test.ts
+  ---
+  duration_ms: 4749.91565
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/golden-tank.test.ts
+ok 99 - apps/server-ts/test/golden-tank.test.ts
+  ---
+  duration_ms: 2582.29286
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/hazard-service.test.ts
+ok 100 - apps/server-ts/test/hazard-service.test.ts
+  ---
+  duration_ms: 799.046365
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/http-app.test.ts
+not ok 101 - apps/server-ts/test/http-app.test.ts
+  ---
+  duration_ms: 1512.046223
+  type: 'test'
+  location: '/home/alan/Workspace/alan/battlecity-remastered/apps/server-ts/test/http-app.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: apps/server-ts/test/item-parity-review.test.ts
+ok 102 - apps/server-ts/test/item-parity-review.test.ts
+  ---
+  duration_ms: 3032.606859
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/map-services.test.ts
+ok 103 - apps/server-ts/test/map-services.test.ts
+  ---
+  duration_ms: 700.855497
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/medkit-parity.test.ts
+ok 104 - apps/server-ts/test/medkit-parity.test.ts
+  ---
+  duration_ms: 3103.721388
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/movement-input.test.ts
+ok 105 - apps/server-ts/test/movement-input.test.ts
+  ---
+  duration_ms: 2726.182952
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/orb-parity.test.ts
+ok 106 - apps/server-ts/test/orb-parity.test.ts
+  ---
+  duration_ms: 3831.663415
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/rank-service.test.ts
+ok 107 - apps/server-ts/test/rank-service.test.ts
+  ---
+  duration_ms: 748.28756
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/rejections-logging.test.ts
+ok 108 - apps/server-ts/test/rejections-logging.test.ts
+  ---
+  duration_ms: 3247.864001
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/runtime-defaults.test.ts
+ok 109 - apps/server-ts/test/runtime-defaults.test.ts
+  ---
+  duration_ms: 872.152045
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/runtime-layer.test.ts
+ok 110 - apps/server-ts/test/runtime-layer.test.ts
+  ---
+  duration_ms: 3308.15575
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/security-guard.test.ts
+ok 111 - apps/server-ts/test/security-guard.test.ts
+  ---
+  duration_ms: 3483.244056
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/sequenced-movement.test.ts
+ok 112 - apps/server-ts/test/sequenced-movement.test.ts
+  ---
+  duration_ms: 3342.624704
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/serialization-bench.test.ts
+ok 113 - apps/server-ts/test/serialization-bench.test.ts
+  ---
+  duration_ms: 2819.844186
+  type: 'test'
+  ...
+# Subtest: apps/server-ts/test/user-store-adapter.test.ts
+ok 114 - apps/server-ts/test/user-store-adapter.test.ts
+  ---
+  duration_ms: 3139.339956
+  type: 'test'
+  ...
+# Subtest: packages/protocol/test/envelope.test.ts
+ok 115 - packages/protocol/test/envelope.test.ts
+  ---
+  duration_ms: 2841.720008
+  type: 'test'
+  ...
+# Subtest: packages/protocol/test/known-event-types.test.ts
+ok 116 - packages/protocol/test/known-event-types.test.ts
+  ---
+  duration_ms: 2532.37652
+  type: 'test'
+  ...
+# Subtest: packages/protocol/test/serialization-bench.test.ts
+ok 117 - packages/protocol/test/serialization-bench.test.ts
+  ---
+  duration_ms: 2203.215405
+  type: 'test'
+  ...
+# Subtest: packages/sim-core/test/collision-world.test.ts
+ok 118 - packages/sim-core/test/collision-world.test.ts
+  ---
+  duration_ms: 817.996523
+  type: 'test'
+  ...
+# Subtest: packages/sim-core/test/combat.test.ts
+ok 119 - packages/sim-core/test/combat.test.ts
+  ---
+  duration_ms: 924.896393
+  type: 'test'
+  ...
+# Subtest: packages/sim-core/test/motion.test.ts
+ok 120 - packages/sim-core/test/motion.test.ts
+  ---
+  duration_ms: 745.528345
+  type: 'test'
+  ...
+# Subtest: scripts/test/source-metrics.test.mjs
+ok 121 - scripts/test/source-metrics.test.mjs
+  ---
+  duration_ms: 1624.616444
+  type: 'test'
+  ...
+1..121
+# tests 121
+# suites 0
+# pass 119
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22269.000857

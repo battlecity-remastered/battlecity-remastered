@@ -1,0 +1,27 @@
+
+> rewrite:movement:sim
+> node scripts/movement-quality-sim.mjs
+
+## Current Profile
+| scenario | rttMs | jitterMs | lossPct | inputToVisibleMs | stopSettlingMs | idleDriftPx | pathErrorMeanPx | pathErrorP95Px | correctionCount | correctionGt24 | correctionMaxPx | invalidRejections |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rtt20_j0_l0 | 20 | 0 | 0 | 0 | 54 | 16.09 | 4.03 | 11.45 | 18 | 0 | 7.94 | 0 |
+| rtt60_j10_l0 | 60 | 10 | 0 | 0 | 54 | 26.31 | 18.99 | 66.6 | 29 | 1 | 79.2 | 0 |
+| rtt100_j25_l0.5 | 100 | 25 | 0.5 | 0 | 54 | 78.68 | 33.07 | 67.2 | 38 | 2 | 81.14 | 0 |
+| rtt160_j40_l1 | 160 | 40 | 1 | 0 | 54 | 98 | 285.47 | 434.5 | 65 | 13 | 82 | 22 |
+
+## Candidate Profile
+| scenario | rttMs | jitterMs | lossPct | inputToVisibleMs | stopSettlingMs | idleDriftPx | pathErrorMeanPx | pathErrorP95Px | correctionCount | correctionGt24 | correctionMaxPx | invalidRejections |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rtt20_j0_l0 | 20 | 0 | 0 | 0 | 54 | 75.6 | 22.32 | 70.97 | 32 | 2 | 81.77 | 0 |
+| rtt60_j10_l0 | 60 | 10 | 0 | 0 | 54 | 74.42 | 28.81 | 72.11 | 33 | 2 | 79.2 | 0 |
+| rtt100_j25_l0.5 | 100 | 25 | 0.5 | 0 | 54 | 66.26 | 30.38 | 67.2 | 36 | 2 | 83.52 | 0 |
+| rtt160_j40_l1 | 160 | 40 | 1 | 0 | 54 | 82.74 | 350.05 | 485.5 | 45 | 12 | 88.51 | 23 |
+
+## Candidate - Current Delta (negative is better)
+| scenario | d_inputToVisibleMs | d_stopSettlingMs | d_idleDriftPx | d_pathErrorMeanPx | d_pathErrorP95Px | d_correctionCount | d_correctionGt24 | d_correctionMaxPx | d_invalidRejections |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rtt20_j0_l0 | 0 | 0 | 59.51 | 18.29 | 59.52 | 14 | 2 | 73.83 | 0 |
+| rtt60_j10_l0 | 0 | 0 | 48.11 | 9.82 | 5.51 | 4 | 1 | 0 | 0 |
+| rtt100_j25_l0.5 | 0 | 0 | -12.42 | -2.69 | 0 | -2 | 0 | 2.38 | 0 |
+| rtt160_j40_l1 | 0 | 0 | -15.26 | 64.58 | 51 | -20 | -1 | 6.51 | 1 |

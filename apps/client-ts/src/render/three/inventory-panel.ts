@@ -6,17 +6,13 @@ import { getCityDisplayName as nextCityName } from "../../world/city-spawn.js";
 import type { DemoWeapon } from "./demo-combat.js";
 import { clickInventoryItem, INVENTORY_ITEMS, INVENTORY_ORDER, seedDemoInventory, selectedWeapon, selectInventoryItem } from "./inventory-model.js";
 import "./inventory-panel.css";
+import { prepareScreenScene } from "./prepare-render-passes.js";
 import { createInventoryRadar } from "./inventory-radar.js";
 import type { RadarMap } from "./radar-model.js";
 
 // One renderer supplies the battlefield, static cargo icons and the live specimen.
 // The live view is a small scissored viewport, avoiding GPU readback each frame.
-export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment: THREE.Texture, templates: ReadonlyMap<number, THREE.Object3D>, drop: (type: number, state: ClientState) => boolean, animate: (type: number, model: THREE.Object3D) => void, navigation: RadarMap, online = false, arm?: (type: number) => boolean) => {
-    const root = document.createElement("aside");
-    root.dataset.ui = "three-inventory";
-    root.className = "bc-inventory";
-    root.setAttribute("aria-label", "BattleCity inventory");
-    root.innerHTML = `
+const INVENTORY_MARKUP = `
         <header class="bc-command"><span class="bc-sigil">B<span>C</span></span><div><small>COMMAND LINK / 01</small><strong>BALKH</strong></div><i title="Offline demo connected"></i></header>
         <section class="bc-telemetry"><div><span>HULL INTEGRITY</span><b data-field="health">100%</b></div><div class="bc-health"><span></span></div><div class="bc-telemetry-bottom"><span>PRIVATE · RAIDER</span><span>OFFLINE DEMO</span></div></section>
         <div class="bc-inventory-scroll">
@@ -28,6 +24,13 @@ export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment:
             <section class="bc-fire-control"><div><span>FIRE CONTROL</span><b data-field="weapon">CANNON</b></div><button type="button" class="bc-cannon">Cannon</button><span class="bc-fire-hint">SPACE / HOLD CLICK</span></section>
         </div>
         <footer class="bc-inventory-footer"><div class="bc-cargo-status" role="status" aria-live="polite">ALL SYSTEMS READY</div><div><button type="button" class="bc-collect"><kbd>U</kbd> COLLECT</button><span><kbd>D</kbd> DROP</span><button type="button" class="bc-audio" aria-label="Mute sound" aria-pressed="false">SOUND ON</button></div></footer>`;
+
+export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment: THREE.Texture, templates: ReadonlyMap<number, THREE.Object3D>, drop: (type: number, state: ClientState) => boolean, animate: (type: number, model: THREE.Object3D) => void, navigation: RadarMap, online = false, arm?: (type: number) => boolean) => {
+    const root = document.createElement("aside");
+    root.dataset.ui = "three-inventory";
+    root.className = "bc-inventory";
+    root.setAttribute("aria-label", "BattleCity inventory");
+    root.innerHTML = INVENTORY_MARKUP;
     document.getElementById("app")!.append(root);
     const radar = createInventoryRadar(root, navigation);
     const grid = root.querySelector<HTMLElement>(".bc-item-grid")!;
@@ -178,6 +181,7 @@ export const createInventoryPanel = (renderer: THREE.WebGLRenderer, environment:
         for (const [type, button] of buttons) { const count = state.inventory.get(type) ?? 0; button.querySelector("b")!.textContent = `${count}`; button.classList.toggle("is-selected", type === selected); button.disabled = count <= 0; button.setAttribute("aria-pressed", String(type === selected)); button.setAttribute("aria-label", `${INVENTORY_ITEMS[type]!.name}, ${count} available`); }
     };
     return {
+        prepare: (): Promise<void> => prepareScreenScene(renderer, specimen, camera),
         update: (next: ClientState): DemoWeapon => { if (!state && !online) { seedDemoInventory(next); } state = next; radar.update(next); refresh(); if (performance.now() > statusUntil) { const message = online ? (next.debug.socketConnected ? "COMMAND LINK ONLINE" : "RECONNECTING…") : "OFFLINE CARGO · LIVE PREVIEW"; if (status.textContent !== message) status.textContent = message; } return weapon; },
         collectRequested: (): boolean => controls.collectRequested(performance.now()),
         notify,

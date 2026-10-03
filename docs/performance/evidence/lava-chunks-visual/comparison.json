@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-normal/frame.png",
+  "current": "docs/performance/evidence/lava-chunks-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.0895529513888889,
+  "max_channel_error": 145,
+  "changed_pixel_fraction": 0.14579861111111111,
+  "pixel_fraction_above_8": 0.00021375868055555555,
+  "pixel_fraction_above_32": 2.712673611111111e-05,
+  "rmse": 0.46314082231681575
+}

@@ -28,6 +28,7 @@ export const startThreeDemo = async (): Promise<void> => {
         return false;
     }};
     battlefield=await createThreeBattlefield(map,buildings,defenses,actions);
+    await battlefield.prepare(state);
     const send:EventSender=(type)=>{if(type==="lobby.leave.request"||type==="building.place.request")window.location.reload();};
     const population=createDemoPopulation(state);
     const gameConsole=createGameConsole(state,send,root,true);

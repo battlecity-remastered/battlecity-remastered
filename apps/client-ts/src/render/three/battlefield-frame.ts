@@ -8,6 +8,7 @@ import { TILE_SIZE } from "../../gameplay/world-viewport.js";
 import { isGhostTileBlocked } from "../../ui/build-menu/GhostPlacement.js";
 import { createBombFuse } from "./bomb-fuse.js";
 import { createBuildingBatches } from "./building-batches.js";
+import { thawBuildingTransforms } from "./building-transforms.js";
 import { createOrbGroundShake } from "./orb-ground-shake.js";
 import { createBattlefieldCamera, positionBattlefieldCamera } from "./camera.js";
 import { createCannonEffects } from "./cannon-effects.js";
@@ -76,6 +77,7 @@ export const createBattlefieldFrame = (context: FrameContext) => {
     const stageTimes: Record<string, number> = {};
     let lastProfileAt = -Infinity;
     const releaseDestroyedModel = (model: THREE.Object3D, defense = false): void => {
+        thawBuildingTransforms(model);
         projectileCollider.unregister(model);
         if (defense) {
             if (!cannon.destroy(model)) model.visible = false;
@@ -251,6 +253,8 @@ export const createBattlefieldFrame = (context: FrameContext) => {
         sun.position.set(x - 9, 25, z - 8);
         sun.target.position.set(x, 0, z);
         scene.updateMatrixWorld();
+        sun.shadow.updateMatrices(sun);
+        terrain.updateVisibility(displayFrustum, sun.shadow.getFrustum());
         context.tankNameplates.update(state, camera, tank, liveWorld?.playerModels, window.innerWidth, window.innerHeight);
         finishStage("matrices");
         buildingBatches!.update(true);

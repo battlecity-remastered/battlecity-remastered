@@ -1,0 +1,1835 @@
+[
+  {
+    "name": "allocations-demo",
+    "capture": false,
+    "fps": 27.23816369379764,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.71319444444445,
+      "p50": 35.799999952316284,
+      "p95": 43.60000014305115,
+      "p99": 49.799999952316284,
+      "worst": 115.89999985694885
+    },
+    "cpuMeanMs": 15.653194444378217,
+    "gpuMeanMs": 31.55673517500001,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 904,
+      "totalMs": 111.99200000000006,
+      "worstMs": 1.645
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-combat-2-live",
+    "capture": false,
+    "fps": 26.200301303555914,
+    "frameMs": {
+      "samples": 720,
+      "mean": 38.167499999867545,
+      "p50": 37.299999952316284,
+      "p95": 45.89999985694885,
+      "p99": 55.59999990463257,
+      "worst": 63.799999952316284
+    },
+    "cpuMeanMs": 15.832499998145634,
+    "gpuMeanMs": 33.203775129166644,
+    "calls": 845.2236111111112,
+    "triangles": 1408415.536111111,
+    "programs": 81,
+    "shaderEvents": 72,
+    "gc": {
+      "events": 17,
+      "totalMs": 14.911,
+      "worstMs": 2.533
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-combat-3-live",
+    "capture": false,
+    "fps": 25.86197607057684,
+    "frameMs": {
+      "samples": 720,
+      "mean": 38.6668055554231,
+      "p50": 37.59999990463257,
+      "p95": 46.799999952316284,
+      "p99": 59.59999990463257,
+      "worst": 89.70000004768372
+    },
+    "cpuMeanMs": 16.27944444715977,
+    "gpuMeanMs": 33.54107743750002,
+    "calls": 845.2236111111112,
+    "triangles": 1408415.536111111,
+    "programs": 81,
+    "shaderEvents": 72,
+    "gc": {
+      "events": 17,
+      "totalMs": 15.591,
+      "worstMs": 2.655
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-combat-live-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "baseline-demo",
+    "capture": false,
+    "fps": 15.224980810165084,
+    "frameMs": {
+      "samples": 720,
+      "mean": 65.68152777784401,
+      "p50": 56.700000047683716,
+      "p95": 128.59999990463257,
+      "p99": 160.70000004768372,
+      "worst": 190.79999995231628
+    },
+    "cpuMeanMs": 23.56124999721845,
+    "gpuMeanMs": 55.93442475277781,
+    "calls": 868.8277777777778,
+    "triangles": 1250077.1361111111,
+    "programs": 75,
+    "shaderEvents": 189,
+    "gc": {
+      "events": 3344,
+      "totalMs": 846.5099999999858,
+      "worstMs": 36.43
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "hotspots.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-demo-close",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-demo-lava",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-demo-wide",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-detail-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-live",
+    "capture": false,
+    "fps": 15.695609807123878,
+    "frameMs": {
+      "samples": 720,
+      "mean": 63.71208333339956,
+      "p50": 55.90000009536743,
+      "p95": 135.20000004768372,
+      "p99": 170,
+      "worst": 197.20000004768372
+    },
+    "cpuMeanMs": 22.965555558602016,
+    "gpuMeanMs": 54.92377686666671,
+    "calls": 841.0027777777777,
+    "triangles": 1407978.0472222222,
+    "programs": 78,
+    "shaderEvents": 198,
+    "gc": {
+      "events": 686,
+      "totalMs": 187.1720000000002,
+      "worstMs": 5.471
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-live-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "baseline-repeat-2-demo",
+    "capture": false,
+    "fps": 27.33547461232641,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.58249999980132,
+      "p50": 35.799999952316284,
+      "p95": 42.799999952316284,
+      "p99": 49.5,
+      "worst": 61
+    },
+    "cpuMeanMs": 15.59166666832235,
+    "gpuMeanMs": 31.576736537499947,
+    "calls": 868.8277777777778,
+    "triangles": 1250077.1361111111,
+    "programs": 75,
+    "shaderEvents": 189,
+    "gc": {
+      "events": 16,
+      "totalMs": 16.317,
+      "worstMs": 3.679
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "0"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-repeat-2-live",
+    "capture": false,
+    "fps": 26.254662937486483,
+    "frameMs": {
+      "samples": 720,
+      "mean": 38.08847222228845,
+      "p50": 37.299999952316284,
+      "p95": 45.69999980926514,
+      "p99": 51.40000009536743,
+      "worst": 61.200000047683716
+    },
+    "cpuMeanMs": 15.38708334532049,
+    "gpuMeanMs": 33.222978158333305,
+    "calls": 841.0027777777777,
+    "triangles": 1407978.0472222222,
+    "programs": 80,
+    "shaderEvents": 69,
+    "gc": {
+      "events": 17,
+      "totalMs": 15.610999999999999,
+      "worstMs": 2.565
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-repeat-3-demo",
+    "capture": false,
+    "fps": 27.30986455050972,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.61680555575424,
+      "p50": 35.799999952316284,
+      "p95": 43.5,
+      "p99": 49.90000009536743,
+      "worst": 66.89999985694885
+    },
+    "cpuMeanMs": 15.6108333296246,
+    "gpuMeanMs": 31.51937357916672,
+    "calls": 868.8277777777778,
+    "triangles": 1250077.1361111111,
+    "programs": 75,
+    "shaderEvents": 189,
+    "gc": {
+      "events": 16,
+      "totalMs": 14.916,
+      "worstMs": 2.081
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "0"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "baseline-repeat-3-live",
+    "capture": false,
+    "fps": 25.88652354770367,
+    "frameMs": {
+      "samples": 720,
+      "mean": 38.630138888955116,
+      "p50": 37.5,
+      "p95": 47.700000047683716,
+      "p99": 57.60000014305115,
+      "worst": 69.70000004768372
+    },
+    "cpuMeanMs": 15.84583333267106,
+    "gpuMeanMs": 33.58367210138884,
+    "calls": 841.0027777777777,
+    "triangles": 1407978.0472222222,
+    "programs": 80,
+    "shaderEvents": 69,
+    "gc": {
+      "events": 17,
+      "totalMs": 13.353,
+      "worstMs": 1.381
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "batches-unsorted-demo",
+    "capture": false,
+    "fps": 28.390383546409012,
+    "frameMs": {
+      "samples": 720,
+      "mean": 35.22319444417953,
+      "p50": 34.5,
+      "p95": 42.59999990463257,
+      "p99": 48.5,
+      "worst": 94.80000019073486
+    },
+    "cpuMeanMs": 15.29444444610013,
+    "gpuMeanMs": 30.13443703333336,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 27,
+      "totalMs": 18.625999999999998,
+      "worstMs": 2.076
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "direct-resolve-demo",
+    "capture": false,
+    "fps": 27.61922297899144,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.206666666931575,
+      "p50": 35.299999952316284,
+      "p95": 44.19999980926514,
+      "p99": 50,
+      "worst": 72.90000009536743
+    },
+    "cpuMeanMs": 15.414305559794109,
+    "gpuMeanMs": 31.049005540277804,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 28,
+      "totalMs": 21.382,
+      "worstMs": 2.203
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "direct-resolve-live",
+    "capture": false,
+    "fps": 26.440842287813034,
+    "frameMs": {
+      "samples": 720,
+      "mean": 37.82027777764532,
+      "p50": 37.200000047683716,
+      "p95": 44.59999990463257,
+      "p99": 51.200000047683716,
+      "worst": 59.299999952316284
+    },
+    "cpuMeanMs": 15.061527775062455,
+    "gpuMeanMs": 33.040583444444465,
+    "calls": 674.4611111111111,
+    "triangles": 1250083.9805555556,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 30,
+      "totalMs": 19.901000000000003,
+      "worstMs": 1.622
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-1-demo",
+    "capture": false,
+    "fps": 28.826520398766863,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.69027777777778,
+      "p50": 34.09999990463257,
+      "p95": 41.30000019073486,
+      "p99": 45.700000047683716,
+      "worst": 55.59999990463257
+    },
+    "cpuMeanMs": 13.684722222884496,
+    "gpuMeanMs": 29.723032408333328,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 16.134,
+      "worstMs": 1.97
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-2-demo",
+    "capture": false,
+    "fps": 28.522532800858844,
+    "frameMs": {
+      "samples": 720,
+      "mean": 35.060000000066225,
+      "p50": 34.299999952316284,
+      "p95": 41.5,
+      "p99": 48.40000009536743,
+      "worst": 72.40000009536743
+    },
+    "cpuMeanMs": 13.810277770294084,
+    "gpuMeanMs": 29.84987487222221,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 21,
+      "totalMs": 16.011999999999997,
+      "worstMs": 1.584
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-2-live",
+    "capture": false,
+    "fps": 27.169811320754715,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.80555555555556,
+      "p50": 36.10000014305115,
+      "p95": 43.799999952316284,
+      "p99": 49.90000009536743,
+      "worst": 63
+    },
+    "cpuMeanMs": 13.983472222089768,
+    "gpuMeanMs": 31.688187040277803,
+    "calls": 674.9277777777778,
+    "triangles": 1278411.1472222223,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 23,
+      "totalMs": 17.477000000000004,
+      "worstMs": 2.18
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-3-demo",
+    "capture": false,
+    "fps": 28.693146721717778,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.85152777764532,
+      "p50": 34.200000047683716,
+      "p95": 41,
+      "p99": 47.5,
+      "worst": 55.200000047683716
+    },
+    "cpuMeanMs": 13.97305555873447,
+    "gpuMeanMs": 29.740475105555547,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 17.518,
+      "worstMs": 1.721
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-3-live",
+    "capture": false,
+    "fps": 27.133360466791316,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.854999999867545,
+      "p50": 36.10000014305115,
+      "p95": 44.299999952316284,
+      "p99": 51.799999952316284,
+      "worst": 62.39999985694885
+    },
+    "cpuMeanMs": 14.030416663818889,
+    "gpuMeanMs": 31.786762161111092,
+    "calls": 674.9277777777778,
+    "triangles": 1278411.1472222223,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 23,
+      "totalMs": 17.268000000000004,
+      "worstMs": 1.97
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-check-demo",
+    "capture": false,
+    "fps": 28.68811634624963,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.857638888888886,
+      "p50": 34.299999952316284,
+      "p95": 40.700000047683716,
+      "p99": 45.39999985694885,
+      "worst": 49.10000014305115
+    },
+    "cpuMeanMs": 13.739166664083799,
+    "gpuMeanMs": 29.87020750833332,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 17.799999999999997,
+      "worstMs": 1.735
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-check-live",
+    "capture": false,
+    "fps": 26.990654486029,
+    "frameMs": {
+      "samples": 720,
+      "mean": 37.04986111091243,
+      "p50": 36.09999990463257,
+      "p95": 44.60000014305115,
+      "p99": 53.09999990463257,
+      "worst": 63
+    },
+    "cpuMeanMs": 14.479166670309173,
+    "gpuMeanMs": 31.807566808333327,
+    "calls": 674.9277777777778,
+    "triangles": 1278411.1472222223,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 23,
+      "totalMs": 18.311999999999998,
+      "worstMs": 2.004
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-combat-2-live",
+    "capture": false,
+    "fps": 27.068585027410002,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.94319444431199,
+      "p50": 36,
+      "p95": 45,
+      "p99": 52.89999985694885,
+      "worst": 59.39999985694885
+    },
+    "cpuMeanMs": 14.480277770757676,
+    "gpuMeanMs": 31.74675707916666,
+    "calls": 679.1486111111111,
+    "triangles": 1278848.6361111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 16.643,
+      "worstMs": 1.465
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-combat-3-live",
+    "capture": false,
+    "fps": 26.91588785046729,
+    "frameMs": {
+      "samples": 720,
+      "mean": 37.15277777777778,
+      "p50": 36.10000014305115,
+      "p95": 45.5,
+      "p99": 55.799999952316284,
+      "worst": 69.60000014305115
+    },
+    "cpuMeanMs": 14.71138888531261,
+    "gpuMeanMs": 31.84298423888889,
+    "calls": 679.1486111111111,
+    "triangles": 1278848.6361111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 23,
+      "totalMs": 19.107,
+      "worstMs": 2.64
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "final-demo-close",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "final-demo-lava",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "final-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "final-demo-wide",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "final-live-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "final-type-confirm-live-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "0",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz"
+    ]
+  },
+  {
+    "name": "fused-ao-demo",
+    "capture": false,
+    "fps": 27.292783333058978,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.63972222242091,
+      "p50": 35.5,
+      "p95": 45.60000014305115,
+      "p99": 55,
+      "worst": 84.70000004768372
+    },
+    "cpuMeanMs": 16.03694444133176,
+    "gpuMeanMs": 31.22396965694447,
+    "calls": 701.2861111111112,
+    "triangles": 1092182.0694444445,
+    "programs": 95,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 28,
+      "totalMs": 53.10600000000001,
+      "worstMs": 23.01
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "gpu-color-demo",
+    "capture": false,
+    "fps": 27.18458332084576,
+    "frameMs": {
+      "samples": 360,
+      "mean": 36.7855555554231,
+      "p50": 36.299999952316284,
+      "p95": 41.5,
+      "p99": 49.90000009536743,
+      "worst": 58.39999985694885
+    },
+    "cpuMeanMs": 15.347499995761448,
+    "gpuMeanMs": 31.856466083333327,
+    "calls": 699.2638888888889,
+    "triangles": 1104319.5055555555,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 16,
+      "totalMs": 12.209999999999999,
+      "worstMs": 1.231
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "instanced-only-demo",
+    "capture": false,
+    "fps": 29.053345169881364,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.419444444444444,
+      "p50": 33.700000047683716,
+      "p95": 40.5,
+      "p99": 46.700000047683716,
+      "worst": 59.700000047683716
+    },
+    "cpuMeanMs": 12.66416666507721,
+    "gpuMeanMs": 29.40308296666664,
+    "calls": 871.0027777777777,
+    "triangles": 1146447.802777778,
+    "programs": 86,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 15,
+      "totalMs": 12.777,
+      "worstMs": 1.706
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "lava-chunks-demo",
+    "capture": false,
+    "fps": 19.37603776164525,
+    "frameMs": {
+      "samples": 720,
+      "mean": 51.610138889153795,
+      "p50": 46.90000009536743,
+      "p95": 97.09999990463257,
+      "p99": 149.79999995231628,
+      "worst": 185.10000014305115
+    },
+    "cpuMeanMs": 24.060138887498113,
+    "gpuMeanMs": 44.11849166527781,
+    "calls": 871.0027777777777,
+    "triangles": 1146447.802777778,
+    "programs": 75,
+    "shaderEvents": 189,
+    "gc": {
+      "events": 1102,
+      "totalMs": 301.3570000000001,
+      "worstMs": 11.322
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "lava-chunks-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "material-batches-demo",
+    "capture": false,
+    "fps": 21.869143549570715,
+    "frameMs": {
+      "samples": 720,
+      "mean": 45.72652777797646,
+      "p50": 39.700000047683716,
+      "p95": 74.5,
+      "p99": 97.30000019073486,
+      "worst": 135.79999995231628
+    },
+    "cpuMeanMs": 35.0087500055631,
+    "gpuMeanMs": 38.02046109861111,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 85,
+    "shaderEvents": 219,
+    "gc": {
+      "events": 1112,
+      "totalMs": 246.05199999999957,
+      "worstMs": 4.403
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "hotspots.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "material-batches-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "material-pool-fixed-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "orthographic-ao-demo",
+    "capture": false,
+    "fps": 29.77076510872199,
+    "frameMs": {
+      "samples": 720,
+      "mean": 33.589999999933774,
+      "p50": 32.700000047683716,
+      "p95": 41.60000014305115,
+      "p99": 49.40000009536743,
+      "worst": 84
+    },
+    "cpuMeanMs": 15.621527782413695,
+    "gpuMeanMs": 28.378236687499975,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 28,
+      "totalMs": 22.10799999999999,
+      "worstMs": 2.308
+    },
+    "errors": 1,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "orthographic-fixed-demo",
+    "capture": false,
+    "fps": 28.55409215838644,
+    "frameMs": {
+      "samples": 720,
+      "mean": 35.02124999993377,
+      "p50": 34.5,
+      "p95": 41.69999980926514,
+      "p99": 47.09999990463257,
+      "worst": 53.09999990463257
+    },
+    "cpuMeanMs": 15.013749998807906,
+    "gpuMeanMs": 30.15501343055553,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 28,
+      "totalMs": 21.587000000000003,
+      "worstMs": 1.634
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "pass-bloom-demo",
+    "capture": false,
+    "fps": 27.474624131878194,
+    "frameMs": {
+      "samples": 360,
+      "mean": 36.397222222222226,
+      "p50": 35.5,
+      "p95": 43.40000009536743,
+      "p99": 49.799999952316284,
+      "worst": 75
+    },
+    "cpuMeanMs": 15.431111117204031,
+    "gpuMeanMs": 1.4284387861111116,
+    "calls": 699.2638888888889,
+    "triangles": 1104319.5055555555,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 16,
+      "totalMs": 12.097000000000001,
+      "worstMs": 1.429
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "gpuPass": "_UnrealBloomPass"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "pass-color-demo",
+    "capture": false,
+    "fps": 26.607932120302497,
+    "frameMs": {
+      "samples": 360,
+      "mean": 37.582777777645326,
+      "p50": 36.700000047683716,
+      "p95": 45.799999952316284,
+      "p99": 54.200000047683716,
+      "worst": 68.20000004768372
+    },
+    "cpuMeanMs": 16.695277779632143,
+    "gpuMeanMs": 21.64100917500002,
+    "calls": 699.2638888888889,
+    "triangles": 1104319.5055555555,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 17,
+      "totalMs": 16.118,
+      "worstMs": 3.556
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "gpuPass": "MultisampleScenePass"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "prepared-demo",
+    "capture": false,
+    "fps": 27.278100231913132,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.65944444437822,
+      "p50": 35.799999952316284,
+      "p95": 44.700000047683716,
+      "p99": 51.19999980926514,
+      "worst": 62
+    },
+    "cpuMeanMs": 15.568888886438476,
+    "gpuMeanMs": 31.550443047222178,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 940,
+      "totalMs": 125.47000000000011,
+      "worstMs": 1.866
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "hotspots.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "probe-ao-demo",
+    "capture": false,
+    "fps": 27.073368829430937,
+    "frameMs": {
+      "samples": 360,
+      "mean": 36.93666666679912,
+      "p50": 36.299999952316284,
+      "p95": 44.09999990463257,
+      "p99": 50.39999985694885,
+      "worst": 60.5
+    },
+    "cpuMeanMs": 15.845555557807286,
+    "gpuMeanMs": 7.516510558333339,
+    "calls": 699.2638888888889,
+    "triangles": 1104319.5055555555,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 17,
+      "totalMs": 14.788,
+      "worstMs": 2.563
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "gpuPass": "_GTAOPass"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "probe-fill-demo",
+    "capture": false,
+    "fps": 57.61382731855645,
+    "frameMs": {
+      "samples": 360,
+      "mean": 17.356944444444444,
+      "p50": 16.799999952316284,
+      "p95": 20.299999952316284,
+      "p99": 29.100000143051147,
+      "worst": 32.700000047683716
+    },
+    "cpuMeanMs": 14.631666674216588,
+    "gpuMeanMs": 13.126743819444439,
+    "calls": 699.2638888888889,
+    "triangles": 1104319.5055555555,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 16,
+      "totalMs": 14.901,
+      "worstMs": 2.099
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "probe": "half-resolution"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "probe-no-ao-demo",
+    "capture": false,
+    "fps": 34.100919777278165,
+    "frameMs": {
+      "samples": 360,
+      "mean": 29.324722222487132,
+      "p50": 28.699999809265137,
+      "p95": 36.10000014305115,
+      "p99": 40.5,
+      "worst": 44.700000047683716
+    },
+    "cpuMeanMs": 10.25888889696863,
+    "gpuMeanMs": 24.229586908333346,
+    "calls": 476.24444444444447,
+    "triangles": 773561.838888889,
+    "programs": 94,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 10,
+      "totalMs": 9.343,
+      "worstMs": 2.32
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "probe": "no-ao"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "source-manifest.json",
+      "source.json.gz",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "probe-order-demo",
+    "capture": false,
+    "fps": 27.440802186167108,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.44208333326711,
+      "p50": 35.700000047683716,
+      "p95": 42.89999985694885,
+      "p99": 49.39999985694885,
+      "worst": 98
+    },
+    "cpuMeanMs": 16.770555558800698,
+    "gpuMeanMs": 31.48273703750001,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 33,
+      "totalMs": 26.470000000000002,
+      "worstMs": 2.034
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "probe": "opaque-front"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "probe-shadow-demo",
+    "capture": false,
+    "fps": 30.311450150781067,
+    "frameMs": {
+      "samples": 360,
+      "mean": 32.99083333280351,
+      "p50": 32.09999990463257,
+      "p95": 40.89999985694885,
+      "p99": 48.799999952316284,
+      "worst": 60.30000019073486
+    },
+    "cpuMeanMs": 12.35694444179535,
+    "gpuMeanMs": 27.555102438888916,
+    "calls": 485.4888888888889,
+    "triangles": 692758.35,
+    "programs": 91,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 13,
+      "totalMs": 19.351,
+      "worstMs": 10.026
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1",
+        "probe": "no-shadows"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "shader-math-demo",
+    "capture": false,
+    "fps": 27.462153719555285,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.41374999980132,
+      "p50": 35.799999952316284,
+      "p95": 43,
+      "p99": 47.80000019073486,
+      "worst": 55.200000047683716
+    },
+    "cpuMeanMs": 15.224166667792533,
+    "gpuMeanMs": 31.39197719722224,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 96,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 28,
+      "totalMs": 20.525999999999996,
+      "worstMs": 2.765
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "shader-math-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "shared-shadow-demo",
+    "capture": false,
+    "fps": 28.869286287089015,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.638888888888886,
+      "p50": 34,
+      "p95": 41,
+      "p99": 46.799999952316284,
+      "worst": 55.5
+    },
+    "cpuMeanMs": 13.381805557012559,
+    "gpuMeanMs": 29.607184022222253,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 23.351000000000003,
+      "worstMs": 6.947
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "static-buildings-demo",
+    "capture": false,
+    "fps": 27.065837650132345,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.94694444437822,
+      "p50": 36,
+      "p95": 45.30000019073486,
+      "p99": 50.299999952316284,
+      "worst": 78.09999990463257
+    },
+    "cpuMeanMs": 15.788055556350285,
+    "gpuMeanMs": 31.685591638888905,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 85,
+    "shaderEvents": 219,
+    "gc": {
+      "events": 1072,
+      "totalMs": 136.36600000000016,
+      "worstMs": 2.189
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "static-merge-demo",
+    "capture": false,
+    "fps": 28.8366802572322,
+    "frameMs": {
+      "samples": 720,
+      "mean": 34.67805555562178,
+      "p50": 34.10000014305115,
+      "p95": 40,
+      "p99": 46.09999990463257,
+      "worst": 57.10000014305115
+    },
+    "cpuMeanMs": 13.701944444245763,
+    "gpuMeanMs": 29.730368513888916,
+    "calls": 702.7527777777777,
+    "triangles": 1120510.236111111,
+    "programs": 97,
+    "shaderEvents": 0,
+    "gc": {
+      "events": 22,
+      "totalMs": 15.938,
+      "worstMs": 1.998
+    },
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "cpu.cpuprofile",
+      "hotspots.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "static-merge-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "configuration": {
+      "url": "http://127.0.0.1:8221",
+      "parameters": {
+        "demo": "1",
+        "prepare": "1"
+      },
+      "simulationHz": 60,
+      "seed": 1729
+    },
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  },
+  {
+    "name": "terrain-groups-demo",
+    "capture": false,
+    "fps": 27.18745751964658,
+    "frameMs": {
+      "samples": 720,
+      "mean": 36.78166666660044,
+      "p50": 35.90000009536743,
+      "p95": 43.89999985694885,
+      "p99": 49.09999990463257,
+      "worst": 57.90000009536743
+    },
+    "cpuMeanMs": 17.22680555416478,
+    "gpuMeanMs": 32.026283912499935,
+    "calls": 702.2861111111112,
+    "triangles": 1092183.0694444445,
+    "programs": 85,
+    "shaderEvents": 219,
+    "gc": {
+      "events": 1208,
+      "totalMs": 157.63300000000015,
+      "worstMs": 3.575
+    },
+    "errors": 0,
+    "artifacts": [
+      "cpu.cpuprofile",
+      "gc-pauses.json",
+      "hotspots.json",
+      "result.json",
+      "trace.json"
+    ]
+  },
+  {
+    "name": "terrain-groups-demo-normal",
+    "capture": true,
+    "errors": 0,
+    "artifacts": [
+      "frame.png",
+      "result.json"
+    ]
+  }
+]

@@ -1,0 +1,202 @@
+[
+  {
+    "functionName": "(idle) :0",
+    "selfMs": 7061.555999999983
+  },
+  {
+    "functionName": "projectObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:42152",
+    "selfMs": 3812.7210000000086
+  },
+  {
+    "functionName": "getParameters http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:36175",
+    "selfMs": 2021.7539999999992
+  },
+  {
+    "functionName": "(program) :0",
+    "selfMs": 1932.0710000000004
+  },
+  {
+    "functionName": "getProgramInfoLog :0",
+    "selfMs": 1506.9839999999983
+  },
+  {
+    "functionName": "renderObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:37526",
+    "selfMs": 1404.200000000001
+  },
+  {
+    "functionName": "applyMatrix4 http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:2342",
+    "selfMs": 1332.7269999999999
+  },
+  {
+    "functionName": "copy http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:2162",
+    "selfMs": 1277.5630000000008
+  },
+  {
+    "functionName": "updateMatrixWorld http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:7265",
+    "selfMs": 1133.7540000000004
+  },
+  {
+    "functionName": "WebGLRenderer.renderBufferDirect http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:41862",
+    "selfMs": 1060.246
+  },
+  {
+    "functionName": "getProgram http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:42322",
+    "selfMs": 950.9780000000007
+  },
+  {
+    "functionName": "traverse http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:7201",
+    "selfMs": 909.2600000000015
+  },
+  {
+    "functionName": "getProgramCacheKey http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:36396",
+    "selfMs": 686.8760000000003
+  },
+  {
+    "functionName": "copy http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:10366",
+    "selfMs": 666.4540000000001
+  },
+  {
+    "functionName": "setProgram http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:42425",
+    "selfMs": 664.7270000000003
+  },
+  {
+    "functionName": "bindVertexArray :0",
+    "selfMs": 469.25600000000037
+  },
+  {
+    "functionName": "collectBlockingRects http://127.0.0.1:8221/src/gameplay/collision/collision-helpers.ts:19",
+    "selfMs": 369.22800000000046
+  },
+  {
+    "functionName": "renderObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:42304",
+    "selfMs": 357.1370000000001
+  },
+  {
+    "functionName": "texSubImage2D :0",
+    "selfMs": 340.685
+  },
+  {
+    "functionName": "multiplyMatrices http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:5551",
+    "selfMs": 310.34400000000005
+  },
+  {
+    "functionName": "uniformMatrix4fv :0",
+    "selfMs": 307.508
+  },
+  {
+    "functionName": "getBoundingClientRect :0",
+    "selfMs": 289.33499999999987
+  },
+  {
+    "functionName": "compose http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:6005",
+    "selfMs": 284.33699999999993
+  },
+  {
+    "functionName": "setValue http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:35394",
+    "selfMs": 271.05400000000014
+  },
+  {
+    "functionName": "setValueM4 http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:34935",
+    "selfMs": 233.769
+  },
+  {
+    "functionName": "sort http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:36742",
+    "selfMs": 226.458
+  },
+  {
+    "functionName": "needsUpdate http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:32724",
+    "selfMs": 207.99899999999997
+  },
+  {
+    "functionName": "drawElements :0",
+    "selfMs": 195.6140000000001
+  },
+  {
+    "functionName": "intersectsObject http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:14415",
+    "selfMs": 195.22899999999998
+  },
+  {
+    "functionName": "renderObjects http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:42290",
+    "selfMs": 190.77499999999998
+  },
+  {
+    "functionName": "setValue http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:35451",
+    "selfMs": 190.42100000000008
+  },
+  {
+    "functionName": "update http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:34579",
+    "selfMs": 189.32399999999993
+  },
+  {
+    "functionName": "setValueV3f http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:34869",
+    "selfMs": 182.429
+  },
+  {
+    "functionName": "update http://127.0.0.1:8221/src/render/three/material-batches.ts:87",
+    "selfMs": 178.17099999999985
+  },
+  {
+    "functionName": "getBindingState http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:32677",
+    "selfMs": 169.98199999999997
+  },
+  {
+    "functionName": "render http://127.0.0.1:8221/src/render/three/battlefield-frame.ts:195",
+    "selfMs": 169.18699999999998
+  },
+  {
+    "functionName": "upload http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:35459",
+    "selfMs": 168.206
+  },
+  {
+    "functionName": "copyArray http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:34833",
+    "selfMs": 150.18499999999995
+  },
+  {
+    "functionName": "getProgramCacheKeyParameters http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:36418",
+    "selfMs": 145.52100000000002
+  },
+  {
+    "functionName": "multiDrawElementsWEBGL :0",
+    "selfMs": 144.21899999999997
+  },
+  {
+    "functionName": "dot http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:2558",
+    "selfMs": 140.70999999999992
+  },
+  {
+    "functionName": "onBeforeRender http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:15530",
+    "selfMs": 137.85299999999995
+  },
+  {
+    "functionName": "arraysEqual http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:34826",
+    "selfMs": 134.44499999999996
+  },
+  {
+    "functionName": "bindTexture :0",
+    "selfMs": 131.31399999999996
+  },
+  {
+    "functionName": "update http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:31717",
+    "selfMs": 130.54199999999997
+  },
+  {
+    "functionName": "refreshMaterialUniforms http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:40380",
+    "selfMs": 127.82100000000007
+  },
+  {
+    "functionName": "anonymous http://127.0.0.1:8221/node_modules/.vite/deps/three_addons_postprocessing_GTAOPass__js.js?v=93da7efa:1420",
+    "selfMs": 127.37999999999997
+  },
+  {
+    "functionName": "setup http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:32648",
+    "selfMs": 127.13499999999996
+  },
+  {
+    "functionName": "refreshUniformsCommon http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:40431",
+    "selfMs": 124.24099999999999
+  },
+  {
+    "functionName": "intersectsSphere http://127.0.0.1:8221/node_modules/.vite/deps/chunk-VGGYCQJ7.js?v=722ec770:14445",
+    "selfMs": 121.478
+  }
+]

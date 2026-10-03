@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/final-live-normal/frame.png",
+  "current": "docs/performance/evidence/final-type-confirm-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.0,
+  "max_channel_error": 0,
+  "changed_pixel_fraction": 0.0,
+  "pixel_fraction_above_8": 0.0,
+  "pixel_fraction_above_32": 0.0,
+  "rmse": 0.0
+}

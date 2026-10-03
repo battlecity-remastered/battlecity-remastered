@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import type { LoadedMap } from "../../world/map-loader.js";
+import { createTerrainChunks } from "./terrain-chunks.js";
 import { materialPatch1, materialPatch2, materialPatch3, materialPatch4, materialPatch5, materialPatch6 } from "./terrain-shaders.js";
 // One render world unit is one 48px legacy tile. Surface decoration follows
 // the original cells; collision continues to use the decoded map.
 const CENTER = 256;
 const CHUNK = 32;
+const LAVA_CHUNK = 8;
 const LAVA_DEPTH = 1.05;
 const bankDisplacementGLSL = `
     float bankDistance = min(shoreDistance(position.xz,1.0),max(0.0,lakeOpening(position.xz)-0.54)*0.85);
@@ -78,6 +80,12 @@ const makeSurface = (lava: boolean, time: {
 };
 type TerrainVertices = { positions: number[]; indices: number[]; lookup: Map<string, number> };
 const createVertices = (): TerrainVertices => ({ positions: [], indices: [], lookup: new Map() });
+const lavaVerticesFor = (chunks: Map<string, TerrainVertices>, x: number, z: number): TerrainVertices => {
+    const key = `${Math.floor(x / LAVA_CHUNK)},${Math.floor(z / LAVA_CHUNK)}`;
+    let vertices = chunks.get(key);
+    if (!vertices) { vertices = createVertices(); chunks.set(key, vertices); }
+    return vertices;
+};
 const addVertex = (vertices: TerrainVertices, x: number, y: number, z: number): number => {
     const key = `${x},${y},${z}`;
     const existing = vertices.lookup.get(key);
@@ -100,7 +108,10 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
     update: (seconds: number) => void;
     dispose: () => void;
     configureDepthMaterial: (material: THREE.MeshNormalMaterial) => void;
+    updateVisibility: (camera: THREE.Frustum, shadow: THREE.Frustum) => void;
+    colliders: THREE.InstancedMesh[];
 } => {
+    const chunks = createTerrainChunks(scene), colliders: THREE.InstancedMesh[] = [];
     const time = { value: 0 };
     const size = data.map.length;
     const pixels = new Uint8Array(size * size);
@@ -119,7 +130,7 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
         rockVertices.setXYZ(i, x * erosion, y * erosion, z * erosion);
     }
     rockGeometry.computeVertexNormals();
-    const addTerrainMeshes = (solidVertices: ReturnType<typeof createVertices>, moltenVertices: ReturnType<typeof createVertices>) => {
+    const addTerrainMeshes = (root: THREE.Group, solidVertices: ReturnType<typeof createVertices>, moltenVertices: ReturnType<typeof createVertices>) => {
         for (const [vertices, material, surface] of [[solidVertices, earth, "ground"], [moltenVertices, lava, "lava"]] as const) {
             if (!vertices.indices.length)
                 continue;
@@ -138,17 +149,18 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
             mesh.userData.terrainSurface = surface;
             mesh.receiveShadow = true;
             mesh.updateMatrix(); mesh.matrixAutoUpdate = false;
-            scene.add(mesh);
+            root.add(mesh);
         }
     };
     const isLava = (x: number, z: number): boolean => data.map[x]?.[z] === 1;
     for (let cx = 0; cx < size; cx += CHUNK)
         for (let cz = 0; cz < size; cz += CHUNK) {
+            const root = chunks.add(cx, cz, CHUNK);
             const rockPositions: Array<[
                 number,
                 number
             ]> = [];
-            const solidVertices = createVertices(), moltenVertices = createVertices();
+            const solidVertices = createVertices(), moltenChunks = new Map<string, TerrainVertices>();
             for (let z = cz; z < Math.min(size, cz + CHUNK); z++) {
                 // A masked ground underlay fills rounded-off lava corners. The
                 // opening is cut in the shader, using the same cell field as lava.
@@ -158,6 +170,7 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
                         rockPositions.push([x, z]);
                     if (!isLava(x, z))
                         continue;
+                    const moltenVertices = lavaVerticesFor(moltenChunks, x, z);
                     // Tessellation gives the recessed basin a real sloping bank,
                     // rather than a flat image with a dark border.
                     const shoreline = [-1, 0, 1].some(dx => [-1, 0, 1].some(dz => !isLava(x + dx, z + dz)));
@@ -166,10 +179,13 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
                         addQuad(moltenVertices, x + rx / divisions, z + rz / divisions, 1 / divisions, 1 / divisions, -LAVA_DEPTH);
                 }
             }
-            addTerrainMeshes(solidVertices, moltenVertices);
-            addDecorations(scene, rockPositions, rockGeometry, rockMaterial);
+            addTerrainMeshes(root, solidVertices, createVertices());
+            for (const moltenVertices of moltenChunks.values()) addTerrainMeshes(root, createVertices(), moltenVertices);
+            addDecorations(root, rockPositions, rockGeometry, rockMaterial, colliders);
         }
+    chunks.prepare();
     return {
+        colliders, updateVisibility: chunks.updateVisibility,
         update: (seconds) => { time.value = seconds; },
         dispose: () => mask.dispose(),
         // AO's override material must see the same holes and bank displacement
@@ -200,8 +216,8 @@ export const createTerrain = (data: LoadedMap, scene: THREE.Scene, groundTexture
     };
 };
 // Bound each instance batch to its own chunk so distant rocks are culled.
-const addDecorations = (scene: THREE.Scene, rockPositions: Array<[number, number]>,
-    rockGeometry: THREE.BufferGeometry, rockMaterial: THREE.Material): void => {
+const addDecorations = (root: THREE.Group, rockPositions: Array<[number, number]>,
+    rockGeometry: THREE.BufferGeometry, rockMaterial: THREE.Material, colliders: THREE.InstancedMesh[]): void => {
     // Keep the identical rocks, but cull small batches rather than drawing all
     // 32x32-tile instances when a single corner of their chunk is visible.
     const batches = new Map<string, Array<[number, number]>>();
@@ -226,6 +242,6 @@ const addDecorations = (scene: THREE.Scene, rockPositions: Array<[number, number
         rocks.castShadow = true;
         rocks.receiveShadow = true;
         rocks.updateMatrix(); rocks.matrixAutoUpdate = false;
-        scene.add(rocks);
+        root.add(rocks); colliders.push(rocks);
     }
 };

@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-combat-live-normal/frame.png",
+  "current": "docs/performance/evidence/final-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.10256835937500001,
+  "max_channel_error": 75,
+  "changed_pixel_fraction": 0.16663845486111112,
+  "pixel_fraction_above_8": 0.00042860243055555555,
+  "pixel_fraction_above_32": 3.146701388888889e-05,
+  "rmse": 0.4705616995450264
+}

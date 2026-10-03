@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-wide/frame.png",
+  "current": "docs/performance/evidence/final-demo-wide/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.07627025462962962,
+  "max_channel_error": 152,
+  "changed_pixel_fraction": 0.11878255208333334,
+  "pixel_fraction_above_8": 0.0003515625,
+  "pixel_fraction_above_32": 1.0850694444444445e-05,
+  "rmse": 0.42988326769321067
+}

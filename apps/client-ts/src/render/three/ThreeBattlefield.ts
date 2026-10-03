@@ -1,4 +1,3 @@
-import type { KnownTypedEventEnvelope } from "@battlecity/protocol";
 import { LEGACY_BOMB_FUSE_MS } from "@battlecity/sim-core";
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -13,7 +12,10 @@ import { createBattlefieldFrame } from "./battlefield-frame.js";
 import { createBattlefieldRenderer, createProductNameplates, loadBattlefieldAssets } from "./battlefield-setup.js";
 import { createBombFuse } from "./bomb-fuse.js";
 import { createBuildingBatches } from "./building-batches.js";
-import { createBattlefieldCamera, resizeBattlefieldCamera } from "./camera.js";
+import { createMaterialBatches } from "./material-batches.js";
+import { createBuildingMaterialPool } from "./material-pool.js";
+import { freezeBuildingTransforms, thawBuildingTransforms } from "./building-transforms.js";
+import { createBattlefieldCamera, positionBattlefieldCamera, resizeBattlefieldCamera } from "./camera.js";
 import { createCannonEffects } from "./cannon-effects.js";
 import { createDefenseTurrets } from "./defense-turrets.js";
 import { createDeployedDefense } from "./deployed-defense.js";
@@ -29,7 +31,9 @@ import { createOrbVictoryEffects } from "./orb-victory-effects.js";
 import { createPlacementPreviews } from "./placement-previews.js";
 import { createPopulationDisplay } from "./population-display.js";
 import { configurePostprocessTargets } from "./postprocess-targets.js";
+import { specialiseOrthographicAO } from "./orthographic-ao.js";
 import { prepareCityModels } from "./prepare-city-models.js";
+import { prepareRenderPasses } from "./prepare-render-passes.js";
 import { createProjectileCollider } from "./projectile-collider.js";
 import { createResearchDisplays } from "./research-display.js";
 import { createSupportBuilding, setSupportBuildingTemplate } from "./support-buildings.js";
@@ -39,27 +43,16 @@ import { createTankNameplates } from "./tank-nameplates.js";
 import { resolveTankDropTarget } from "./tank-drop-target.js";
 import { createRoleTank } from "./tank-role.js";
 import { createTerrain } from "./terrain.js";
-export type ThreeBattlefield = {
-    canvas: HTMLCanvasElement;
-    render: (state: ClientState) => void;
-    prepare: (state: ClientState) => Promise<void>;
-    observeServerEvent: (event: KnownTypedEventEnvelope, state: ClientState) => void;
-    pickBuilding: (clientX: number, clientY: number, state: ClientState) => ClientState["buildings"] extends Map<string, infer B> ? B | null : never;
-    pickGround: (clientX: number, clientY: number) => { tileX: number; tileY: number } | null;
-    resize: () => void;
-    previewBuild: (type: number, tileX: number, tileY: number) => void;
-    previewRemove: (tileX: number, tileY: number) => void;
-    previewOrb: (state: ClientState) => boolean;
-    dispose: () => void;
-};
-export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuildings: ReadonlyArray<IndustrialBuilding> = [], defenses: ReadonlyArray<DemoDefense> = [], actions?: ReturnType<typeof createThreeGameActions>): Promise<ThreeBattlefield> => {
+import type { ThreeBattlefield } from "./battlefield-types.js";
+export type { ThreeBattlefield } from "./battlefield-types.js";
+export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuildings: ReadonlyArray<IndustrialBuilding> = [], defenses: ReadonlyArray<DemoDefense> = [], actions?: ReturnType<typeof createThreeGameActions>, inspect?: (resources: { renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.OrthographicCamera; composer: EffectComposer; cannon: ReturnType<typeof createCannonEffects> }) => void): Promise<ThreeBattlefield> => {
     const demoMode = isThreeDemoMode();
     const { scene, renderer, setDiagnostic, environment, sun } = createBattlefieldRenderer();
     const { tankAsset, centerAsset, groundTexture, industrialAssets, mayorAsset } = await loadBattlefieldAssets(renderer);
     const terrain = createTerrain(mapData, scene, groundTexture);
     const ballisticFloor = (x: number, z: number): number => mapData.map[Math.floor(x + 256)]?.[Math.floor(z + 256)] === 1 ? -1.05 : 0.005;
     const projectileCollider = createProjectileCollider(ballisticFloor);
-    for (const child of scene.children) if (child.userData.ballisticSurface === "rock") projectileCollider.register(child, "rock");
+    for (const child of terrain.colliders) projectileCollider.register(child, "rock");
     const lavaEffects = createLavaEffects(mapData, scene);
     const buildingEffects = createBuildingEffects(centerAsset.scene, centerAsset.animations);
     const industrialEffects = createIndustrialEffects();
@@ -91,6 +84,8 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         industrialAssets.get("housing")!.scene.traverse(part => { if (part instanceof THREE.Mesh) { const materials = Array.isArray(part.material) ? part.material : [part.material]; for (const material of materials) if (material instanceof THREE.MeshStandardMaterial && !/glow/i.test(material.name)) { material.envMapIntensity = .55; material.roughness = Math.max(.52, material.roughness); } } });
         addProductNameplate(industrialAssets.get("housing")!.scene, "HOUSING", new THREE.Vector3(0, .92, 1.20));
         setSupportBuildingTemplate(300, industrialAssets.get("housing")!.scene);
+        const poolMaterial = createBuildingMaterialPool();
+        for (const asset of [centerAsset, ...industrialAssets.values()]) poolMaterial(asset.scene);
     };
     const tank = createRoleTank(tankAsset.scene, mayorAsset.scene);
     const remoteTankTemplate = tank.clone(true);
@@ -112,6 +107,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
                 center.userData.commandCenter = true; center.userData.renderTileX = x; center.userData.renderTileY = z; batchableBuildings.push(center);
                 buildingEffects.register(center);
                 projectileCollider.register(center, "metal");
+                freezeBuildingTransforms(center);
             }
     };
     let buildingBatches: ReturnType<typeof createBuildingBatches> | undefined;
@@ -159,6 +155,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
             machinery.get(itemName)?.register(assembly);
         }
         if (demoMode) projectileCollider.register(model, "metal");
+        freezeBuildingTransforms(model);
         buildingBatches?.register(model);
         return model;
     };
@@ -210,15 +207,18 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         addDroppedCargo(type, state, template, placement);
         return true;
     }, (type, model) => machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model), { map: mapData.map, buildings: industrialBuildings, defenses }, !demoMode, type => actions?.deploy(type, true) ?? false);
-    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy, model => buildingBatches?.register(model));
-    buildingBatches = createBuildingBatches(scene, batchableBuildings);
+    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { thawBuildingTransforms(model); buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy, model => { freezeBuildingTransforms(model); buildingBatches?.register(model); });
+    buildingBatches = renderer.extensions.has("WEBGL_multi_draw") ? createMaterialBatches(scene, batchableBuildings) : createBuildingBatches(scene, batchableBuildings);
     // The color, AO and shadow passes consume the same prepared transforms.
     scene.matrixWorldAutoUpdate = false; scene.matrixAutoUpdate = false;
     const { ghost, dropReticle } = createPlacementPreviews(scene);
     const camera = createBattlefieldCamera(window.innerWidth, window.innerHeight); camera.layers.enable(1);
     const createPostprocessing = () => {
-        const renderTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
+        const renderTarget = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4, depthBuffer: true, resolveDepthBuffer: false });
         const composer = new EffectComposer(renderer, renderTarget);
+        // Scene -> MSAA read buffer -> AO writes plain buffer -> bloom -> screen.
+        // AO and OutputPass swap twice, returning to the same scene buffer.
+        composer.writeBuffer.samples = 0; composer.writeBuffer.depthBuffer = false;
         composer.addPass(new MultisampleScenePass(scene, camera));
         const ambientOcclusion = new GTAOPass(scene, camera, 1, 1);
         terrain.configureDepthMaterial(ambientOcclusion.normalMaterial);
@@ -228,6 +228,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         ambientOcclusion.updateGtaoMaterial({ radius: 0.48, thickness: 0.35, distanceExponent: 2, distanceFallOff: 1, scale: 1 });
         ambientOcclusion.blendIntensity = 0.72;
         ambientOcclusion.updatePdMaterial({ radius: 2 });
+        specialiseOrthographicAO(ambientOcclusion);
         composer.addPass(ambientOcclusion);
         const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.30, 0.18, 0.72);
         configurePostprocessTargets(ambientOcclusion, bloom);
@@ -246,11 +247,12 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
             sun.shadow.camera.right = sun.shadow.camera.top = shadowRadius;
             sun.shadow.camera.updateProjectionMatrix();
         };
-        return { composer, heatPass, resize };
+        return { composer, heatPass, resize, ambientOcclusion };
     };
     const displayFrustum = new THREE.Frustum(), displayProjection = new THREE.Matrix4();
-    const { composer, heatPass, resize } = createPostprocessing();
+    const { composer, heatPass, resize, ambientOcclusion } = createPostprocessing();
     resize();
+    inspect?.({ renderer, scene, camera, composer, cannon });
     await cannon.prepareDestruction(renderer, camera);
     const render = createBattlefieldFrame({
         demoMode, scene, renderer, setDiagnostic, heatPass, terrain, deployedPreview,
@@ -264,9 +266,14 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         canvas: renderer.domElement, render, resize,
         prepare: async state => {
             const start = performance.now();
+            const x = (state.local.x + 24) / 48 - 256, z = (state.local.y + 24) / 48 - 256;
+            positionBattlefieldCamera(camera, x, z); tank.position.set(x, 0, z);
+            sun.position.set(x - 9, 25, z - 8); sun.target.position.set(x, 0, z);
             liveWorld?.update(state, 0); scene.updateMatrixWorld(); buildingBatches!.update(true);
             await prepareCityModels(renderer, scene, camera, [tank, centerAsset.scene, ...[...industrialAssets.values()].map(asset => asset.scene), ...scene.children.filter(root => root.userData.renderTileX !== undefined)]);
             await researchDisplays.prepare();
+            await inventory.prepare();
+            await prepareRenderPasses(renderer, scene, camera, ambientOcclusion.normalMaterial, composer);
             setDiagnostic("cityPrepareMs", (performance.now() - start).toFixed(0));
         },
         previewBuild: (type, tileX, tileY) => { if (!demoMode) return; if (type >= 400 || (type >= 100 && type <= 112)) { createIndustrialVisual({ type, tileX, tileY, kind: type >= 400 ? "research" : type === 105 ? "orb-factory" : "factory" }); } else { const model = createSupportBuilding(type); model.position.set(tileX - 256 + 1.5, 0, tileY - 256 + (type === 200 ? 1 : 1.5)); model.userData.renderTileX = tileX; model.userData.renderTileY = tileY; scene.add(model); projectileCollider.register(model, "metal"); } },

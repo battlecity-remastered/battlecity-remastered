@@ -1,0 +1,5 @@
+
+> rewrite:unused
+> npx tsc --noEmit -p packages/protocol/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p packages/sim-core/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p apps/server-ts/tsconfig.json --noUnusedLocals --noUnusedParameters && npx tsc --noEmit -p apps/client-ts/tsconfig.json --noUnusedLocals --noUnusedParameters
+
+apps/client-ts/src/render/three/ThreeBattlefield.ts(188,51): error TS2304: Cannot find name 'ClientState'.

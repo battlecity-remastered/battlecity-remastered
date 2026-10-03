@@ -12,8 +12,9 @@ export const createProjectileCollider = (groundHeight?: (x: number, z: number) =
     raycaster.firstHitOnly = true;
     let target: Collider | undefined;
     let cacheTarget = false, targetPrepared = false;
+    const candidates = new Set<Collider>(), intersections: THREE.Intersection[] = [];
     const collectCandidates = (from: CombatPoint, to: CombatPoint, owner: import("./demo-combat.js").ShellOwner | undefined): Set<Collider> => {
-        const candidates = new Set<Collider>();
+        candidates.clear();
         if (owner === "turret" && target) {
             if (!cacheTarget || !targetPrepared) {
                 target.root!.updateWorldMatrix(true, true);
@@ -64,7 +65,8 @@ export const createProjectileCollider = (groundHeight?: (x: number, z: number) =
                 if (collider.root && !collider.root.visible) continue;
                 if (!raycaster.ray.intersectsBox(collider.bounds)) continue;
                 raycaster.far = Math.min(length, nearest);
-                const hit = raycaster.intersectObjects(collider.meshes, false)[0];
+                intersections.length = 0;
+                const hit = raycaster.intersectObjects(collider.meshes, false, intersections)[0];
                 if (!hit || hit.distance >= nearest) continue;
                 nearest = hit.distance;
                 matrix.copy(hit.object.matrixWorld);

@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-normal/frame.png",
+  "current": "docs/performance/evidence/shader-math-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.10141818576388888,
+  "max_channel_error": 145,
+  "changed_pixel_fraction": 0.15915798611111112,
+  "pixel_fraction_above_8": 0.0005696614583333334,
+  "pixel_fraction_above_32": 3.0381944444444444e-05,
+  "rmse": 0.5280058215298808
+}

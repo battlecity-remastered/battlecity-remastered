@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-lava/frame.png",
+  "current": "docs/performance/evidence/final-demo-lava/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.014144603587962963,
+  "max_channel_error": 50,
+  "changed_pixel_fraction": 0.033081597222222224,
+  "pixel_fraction_above_8": 0.00010199652777777778,
+  "pixel_fraction_above_32": 3.2552083333333335e-06,
+  "rmse": 0.1788807877522118
+}

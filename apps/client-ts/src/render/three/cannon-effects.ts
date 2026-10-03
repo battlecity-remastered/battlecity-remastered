@@ -8,6 +8,20 @@ import type { NetworkCombatFrame } from "./network-combat.js";
 const PARTICLES = 512, PROJECTILES = 16;
 type Particle = { active: boolean; position: THREE.Vector3; velocity: THREE.Vector3; age: number; life: number; size: number; kind: number; color: THREE.Color };
 
+const createProjectileMeshes = (scene: THREE.Scene) => {
+    const shellGeometry = new THREE.CapsuleGeometry(0.017, 0.18, 2, 6);
+    const shellMaterial = new THREE.MeshStandardMaterial({ color: 0xffcf86, metalness: 0.65, roughness: 0.25, emissive: new THREE.Color(2.6, 0.8, 0.12), emissiveIntensity: 1 });
+    const shells = new THREE.InstancedMesh(shellGeometry, shellMaterial, PROJECTILES);
+    const laserTrails = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 1, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.3, 3, 4), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }), PROJECTILES);
+    laserTrails.count = 0; laserTrails.frustumCulled = false; scene.add(laserTrails);
+    shells.count = 0; shells.frustumCulled = false;
+    // The first shot needs the instance-colour shader variant. Allocate its
+    // attribute before loading-time compilation, rather than on first fire.
+    shells.setColorAt(0, new THREE.Color(0xffffff));
+    scene.add(shells);
+    return { shells, laserTrails };
+};
+
 export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sweep: ShellSweep, audioEnabled: () => boolean, groundHeight: (x: number, z: number) => number) => {
     const combat = createDemoCombat(sweep), audio = createCannonAudio(audioEnabled);
     const destruction = createDestructionEffects(scene, groundHeight);
@@ -21,13 +35,7 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
     const pendingShots: CannonShot[] = [];
     let lastSimulationTime = performance.now() / 1000;
 
-    const shellGeometry = new THREE.CapsuleGeometry(0.017, 0.18, 2, 6);
-    const shellMaterial = new THREE.MeshStandardMaterial({ color: 0xffcf86, metalness: 0.65, roughness: 0.25, emissive: new THREE.Color(2.6, 0.8, 0.12), emissiveIntensity: 1 });
-    const shells = new THREE.InstancedMesh(shellGeometry, shellMaterial, PROJECTILES);
-    const laserTrails = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 1, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.3, 3, 4), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }), PROJECTILES);
-    laserTrails.count = 0; laserTrails.frustumCulled = false; scene.add(laserTrails);
-    shells.count = 0; shells.frustumCulled = false;
-    scene.add(shells);
+    const { shells, laserTrails } = createProjectileMeshes(scene);
     const dummy = new THREE.Object3D(), up = new THREE.Vector3(0, 1, 0);
 
     const positions = new Float32Array(PARTICLES * 3), colors = new Float32Array(PARTICLES * 3), sizes = new Float32Array(PARTICLES), opacities = new Float32Array(PARTICLES), kinds = new Float32Array(PARTICLES);
@@ -89,7 +97,9 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
         particle.age = 0; particle.life = life; particle.size = size; particle.kind = kind; particle.color.copy(color);
         kinds[(particleCursor - 1) % PARTICLES] = kind;
     };
-    const randomDirection = (): THREE.Vector3 => new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
+    const randomVelocity = new THREE.Vector3(), impactOrigin = new THREE.Vector3(), forwardNormal = new THREE.Vector3(0, 0, 1);
+    const exhaust = new THREE.Vector3(), exhaustVelocity = new THREE.Vector3();
+    const randomDirection = (): THREE.Vector3 => randomVelocity.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1).normalize();
     const smokeColor = new THREE.Color(0.30, 0.33, 0.34), dustColor = new THREE.Color(0.27, 0.20, 0.13), sparkColor = new THREE.Color(3.4, 1.25, 0.18);
     const cyanSpark = new THREE.Color(0.25, 2.5, 3.8), shellColor = new THREE.Color();
     const emitImpactDust = (origin: THREE.Vector3, blast: number, metal: boolean) => {
@@ -110,7 +120,7 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
     const impact = (hit: ShellHit): void => {
         impactCount++; if (hit.surface === "metal") metalImpacts++; if (hit.surface === "rock") rockImpacts++;
         normal.set(hit.normal.x, hit.normal.y, hit.normal.z);
-        const origin = new THREE.Vector3(hit.point.x, hit.point.y, hit.point.z).addScaledVector(normal, 0.012);
+        const origin = impactOrigin.set(hit.point.x, hit.point.y, hit.point.z).addScaledVector(normal, 0.012);
         const blast = hit.blastScale ?? 0;
         if (blast) destruction.burst(origin, blast);
         const metal = hit.surface === "metal" || hit.surface === "tank";
@@ -118,7 +128,7 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
         emitImpactParticles(hit, origin, blast, metal);
         if (hit.surface !== "tank") {
             const mark = marks[markCursor++ % marks.length]!; mark.age = 0; mark.mesh.visible = true;
-            mark.mesh.position.copy(origin); mark.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+            mark.mesh.position.copy(origin); mark.mesh.quaternion.setFromUnitVectors(forwardNormal, normal);
             mark.mesh.scale.setScalar(blast ? blast * 5 : metal ? .8 : 1.2);
         }
         impactLightAge = 0; impactIsBlast = blast > 0; impactLight.position.copy(origin); impactLight.color.set(hit.weapon === "laser" ? 0x65ddff : 0xffab5b);
@@ -148,7 +158,7 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
             }
             const casing = casings[(shot.id - 1) % casings.length]!;
             casing.age = laser ? 10 : 0; casing.bounced = false; casing.mesh.visible = !laser;
-            casing.mesh.position.set(shot.muzzle.x, shot.muzzle.y - 0.06, shot.muzzle.z).addScaledVector(direction, -0.25).add(new THREE.Vector3(direction.z * 0.15, 0, -direction.x * 0.15));
+            casing.mesh.position.set(shot.muzzle.x + direction.z * .15, shot.muzzle.y - .06, shot.muzzle.z - direction.x * .15).addScaledVector(direction, -.25);
             casing.velocity.set(direction.z * 1.6, 1.2, -direction.x * 1.6);
             casing.spin.set(7 + Math.random() * 8, 6, 11);
             const distance = Math.hypot(shot.muzzle.x - tank.position.x, shot.muzzle.z - tank.position.z);
@@ -203,9 +213,10 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
                 dummy.position.addScaledVector(direction, -length * 0.5); dummy.scale.set(1, length, 1); dummy.updateMatrix();
                 laserTrails.setMatrixAt(laserTrails.count++, dummy.matrix);
             } else if (shell.weapon === "rocket") {
-                const exhaust = dummy.position.clone().addScaledVector(direction, -0.18);
-                emit(exhaust, direction.clone().multiplyScalar(-0.5).add(new THREE.Vector3(0, 0.08, 0)), 0, 0.10, 0.9, smokeColor);
-                emit(exhaust, direction.clone().multiplyScalar(-0.7), 1, 0.035, 0.18, sparkColor);
+                exhaust.copy(dummy.position).addScaledVector(direction, -0.18);
+                exhaustVelocity.copy(direction).multiplyScalar(-.5); exhaustVelocity.y += .08;
+                emit(exhaust, exhaustVelocity, 0, 0.10, 0.9, smokeColor);
+                emit(exhaust, exhaustVelocity.copy(direction).multiplyScalar(-.7), 1, 0.035, 0.18, sparkColor);
             }
         }
         shells.instanceMatrix.needsUpdate = true;
@@ -246,16 +257,18 @@ export const createCannonEffects = (scene: THREE.Scene, tank: THREE.Object3D, sw
             const events = external ?? combat.step(now - lastSimulationTime, firing, muzzle, heading32, now, weapon);
             const activeShells = external?.shells ?? combat.shells;
             lastSimulationTime = now;
-            showShots([...events.shots, ...pendingShots.splice(0)]);
+            showShots(events.shots); showShots(pendingShots); pendingShots.length = 0;
             for (const hit of events.impacts) impact(hit);
             destruction.update(dt);
             updateFlashes(dt);
             updateParticles(dt);
             updateShells(activeShells);
             updateCasings(dt);
+            let projectileTravel = 0;
+            for (const shell of activeShells) if (shell.owner === "player") projectileTravel = Math.max(projectileTravel, shell.age * WEAPON_PROFILES[shell.weapon].speed);
             return {
                 shotsFired, turretShots, tankHits, impacts: impactCount, metalImpacts, rockImpacts, projectiles: activeShells.length,
-                projectileTravel: Math.max(0, ...activeShells.filter(shell => shell.owner === "player").map(shell => shell.age * WEAPON_PROFILES[shell.weapon].speed))
+                projectileTravel
             };
         },
         dispose: (): void => { audio.dispose(); destruction.dispose(); }

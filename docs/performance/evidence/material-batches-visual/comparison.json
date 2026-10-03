@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-normal/frame.png",
+  "current": "docs/performance/evidence/material-batches-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.6958980758101853,
+  "max_channel_error": 146,
+  "changed_pixel_fraction": 0.2227560763888889,
+  "pixel_fraction_above_8": 0.030481770833333335,
+  "pixel_fraction_above_32": 0.0019509548611111112,
+  "rmse": 3.2871668984356877
+}

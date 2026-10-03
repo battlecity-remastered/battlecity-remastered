@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/baseline-demo-normal/frame.png",
+  "current": "docs/performance/evidence/static-merge-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.09597475405092593,
+  "max_channel_error": 145,
+  "changed_pixel_fraction": 0.15816840277777777,
+  "pixel_fraction_above_8": 0.0002712673611111111,
+  "pixel_fraction_above_32": 2.0616319444444445e-05,
+  "rmse": 0.4782354326594025
+}
