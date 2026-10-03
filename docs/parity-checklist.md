@@ -10,7 +10,7 @@ Last updated: 2026-02-24
 - [x] Phase 4 - Ground + terrain tile parity
 - [x] Phase 5 - Building base + overlays parity
 - [x] Phase 6 - Population/research/smoke/digits parity
-- [ ] Phase 7 - Items/defense/bullets parity — reopened by the October 2026 [per-item audit](item-parity-review.md); orb eligibility and bounty remain different.
+- [ ] Phase 7 - Items/defense/bullets parity — reopened by the October 2026 [per-item audit](item-parity-review.md); remaining authority/cadence differences are documented.
 - [x] Phase 8 - Panel + radar + home arrow parity
 - [x] Phase 9 - Map modal parity
 - [x] Phase 10 - City spawn/layout parity
@@ -115,5 +115,6 @@ Last updated: 2026-02-24
 
 - [x] Correct full-hull medkits without waste, five-second cloak, 40 HP human hull, classic weapon damage/speed/range/cadence and bomb command-centre immunity.
 - [x] Compact, cloak-aware enemy hull meters and persistent themed guest callsigns.
-- [ ] Restore historical orb eligibility and variable bounty; fixed 250-point awards are not parity.
+- [x] Restore historical orb eligibility and variable bounty, team orb/assist credit, complete city reset and player eviction.
+- [x] Broadcast orb ground shake to all clients and use bomb destruction for buildings/towers, including the demo.
 - [ ] Restore builder JSON city imports through the live settings UI and authoritative server.

@@ -937,3 +937,6 @@ isolated credential-verifier fixture; real Google account consent is not automat
 
 Release verification: all 518 tests, strict type/complexity/import/maintainability
 checks, lint and the production build pass.
+
+### Orb follow-up — 3 October 2026
+Restored historic orb eligibility, variable bounty, team score/assist credit and city reset/eviction; the existing inventory navigation consumes the corrected finance flags. All clients receive the orb ground shake, respecting reduced motion. Orb destruction uses the bomb breakup effects for buildings and towers, including demo playback. City-import settings remain open.

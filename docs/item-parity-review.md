@@ -24,7 +24,7 @@ These rules now have shared constants plus regression tests for capacity, damage
 | 2 | Medkit | 5 | Consume one to restore full hull; do not waste at full health; **corrected**. Factory stock cap 20 is distinct from carried cap 5, as before. |
 | 3 | Bomb | 20 | Arm/disarm before dropping, 5 s fuse, 25 authoritative damage, radius 1 tile for players/structures, owner/team immunity; **traced matching defaults**. Command-centre exclusion **corrected**. Renderer shows the armed fuse and destruction effects. |
 | 4 | Mine | 10 | 19 damage on enemy padded-hitbox contact, hidden from enemies until triggered, visible to team; **traced matching**. Consumed on trigger. |
-| 5 | Orb | 1 | Apron detection, consumption, city destruction and persistent score writes exist; **parity gaps remain**, below. |
+| 5 | Orb | 1 | Apron detection, consumption, city destruction and persistent score writes exist; **eligibility, bounty, team credit and city reset corrected**, below. |
 | 6 | Flare | 4 | Reusable equipment, three rearward shots, ±4 heading steps, 500 ms burst cadence; **traced matching**. Damage, slow speed and short range **corrected**. |
 | 7 | DFG | 5 | Hidden enemy trap, team visibility, freezes for 5 s without damage; **traced matching**. Frozen firing **corrected**. |
 | 8 | Wall | 20 | One-tile deployed barricade, 40 HP, inventory consumption and emergence animation; **traced matching**. Bomb destruction and weapon damage now use corrected rules. |
@@ -37,11 +37,13 @@ All 13 carry capacities exactly match `shared/itemCaps.cjs` in the original. Pro
 
 ## Remaining discrepancies found by review
 
-### Orb eligibility and bounty — high priority
+### Orb rules restored in the follow-up
 
-The original `CityManager.updateOrbableState` makes a city orbable once it has ever built a bomb/orb factory or reached 21 buildings. It keeps the maximum-ever building count and factory history until the city resets. `getOrbValue` awards 10/20/30/40/50 points depending on that history, plus five points per target-city orb victory.
+A city becomes orbable after ever building a bomb/orb factory or reaching 21 buildings. Peak building count and factory history survive demolition until reset. The restored bounty is 10/20/30/40/50 points by history, plus five for each target-city orb victory. Finance updates drive the existing nearest-orbable inventory panel.
 
-The port currently marks any surviving command centre as orbable and awards the configured fixed **250 points**. The SQLite write is connected, but the amount and eligibility differ. Correct restoration requires city history, reset behaviour, finance updates and matching server/UI eligibility tests; this is not covered by the consumable/combat corrections above. Do not describe orb scoring as equivalent to the original.
+Each distinct attacking-team account receives the bounty once; the carrier receives an orb credit and teammates receive assists. SQLite profile updates and Discord notifications use the actual bounty. Existing historical account totals are preserved. The defeated city resets its local score/history, research and factory stock/timers, loses its structures/hazards/defenses and evicts its players. AI city respawn begins with fresh history.
+
+Every client receives a brief ground shake; reduced-motion preferences suppress it. Buildings and deployed towers use the bomb destruction callback, with the purple orb wave layered over it. Distant spectators receive the shake without an explosion incorrectly appearing at their own tank. Demo orbs also use the same breakup effects.
 
 ### Defense cadence
 
@@ -61,4 +63,4 @@ The old settings pasted a builder JSON export and replaced the current city on t
 
 - Unit/runtime coverage: all 13 caps, classic shot parameters, actual ranged projectile expiry, reusable weapons, cloak timing, frozen fire rejection, medkit healing/conservation, command-centre survival inside the blast.
 - Existing drop placement, inventory, hidden mine/DFG/sleeper and production suites retained.
-- Browser validation covers subtle unlabelled 76×3 px projected enemy health bars at 75%, 42% and critical 20%, healing, cloak/reveal, local medkit use, reconnect and resize. Final execution results are recorded in the release summary; this document is not a claim of production testing each individual item.
+- Browser validation covers subtle unlabelled 76×3 px projected enemy health bars at 75%, 42% and critical 20%, healing, cloak/reveal, local medkit use, reconnect and resize. Full strict verification and browser results are recorded with the release; this document is not a claim of production testing each individual item.
