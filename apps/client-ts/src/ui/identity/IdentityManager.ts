@@ -1,37 +1,55 @@
+import { generateGuestCallsign, isDefaultGuestCallsign } from "./guest-callsign.js";
 import type { ClientState } from "../../app/state.js";
 import { createDirtyFlagTracker } from "../../render/dirty-flags.js";
 
 const STORAGE_KEY = "battlecity.identity.v2";
 
-export const restoreIdentity = (state: ClientState, storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void => {
+const identityStorage = (): Storage | null => {
+    try { return typeof window === "undefined" ? null : window.localStorage; }
+    catch { return null; }
+};
+const hydrateStoredIdentity = (state: ClientState, parsed: Partial<ClientState["identity"]>): void => {
+    if (typeof parsed.authToken === "string" && typeof parsed.authExpiresAt === "number" && parsed.authExpiresAt > Date.now()) {
+        state.identity.authToken = parsed.authToken;
+        state.identity.authExpiresAt = parsed.authExpiresAt;
+    }
+    if (typeof parsed.userId === "string") {
+        state.identity.userId = parsed.userId;
+    }
+    if (typeof parsed.callsign === "string" && parsed.callsign.trim().length > 0) {
+        state.identity.callsign = parsed.callsign.trim().slice(0, 20);
+    }
+    if (parsed.provider === "google" || parsed.provider === "local") {
+        state.identity.provider = parsed.provider;
+    }
+};
+
+export const restoreIdentity = (state: ClientState, storage: Storage | null = identityStorage()): void => {
     if (!storage) {
+        if (isDefaultGuestCallsign(state.identity.callsign)) state.identity.callsign = generateGuestCallsign();
         return;
     }
     try {
         const raw = storage.getItem(STORAGE_KEY);
         if (!raw) {
+            state.identity.callsign = generateGuestCallsign();
+            persistIdentity(state, storage);
             return;
         }
         const parsed = JSON.parse(raw) as Partial<ClientState["identity"]>;
-        if (typeof parsed.authToken === "string" && typeof parsed.authExpiresAt === "number" && parsed.authExpiresAt > Date.now()) {
-            state.identity.authToken = parsed.authToken;
-            state.identity.authExpiresAt = parsed.authExpiresAt;
-        }
-        if (typeof parsed.userId === "string") {
-            state.identity.userId = parsed.userId;
-        }
-        if (typeof parsed.callsign === "string" && parsed.callsign.trim().length > 0) {
-            state.identity.callsign = parsed.callsign.trim().slice(0, 20);
-        }
-        if (parsed.provider === "google" || parsed.provider === "local") {
-            state.identity.provider = parsed.provider;
-        }
+        hydrateStoredIdentity(state, parsed);
     } catch {
-        storage.removeItem(STORAGE_KEY);
+        // Malformed or unavailable storage must not prevent guest play.
+        state.identity.callsign = generateGuestCallsign();
+        persistIdentity(state, storage);
+    }
+    if (state.identity.provider === "local" && !state.identity.authToken && isDefaultGuestCallsign(state.identity.callsign)) {
+        state.identity.callsign = generateGuestCallsign();
+        persistIdentity(state, storage);
     }
 };
 
-export const persistIdentity = (state: ClientState, storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void => {
+export const persistIdentity = (state: ClientState, storage: Storage | null = identityStorage()): void => {
     if (!storage) {
         return;
     }
