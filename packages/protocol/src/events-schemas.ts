@@ -307,3 +307,6 @@ export const DefenseRemove = Schema.Struct({
     id: Schema.String,
     reason: Schema.Literal("destroyed", "city_orbed", "cleared")
 });
+
+export const CityLayoutImportRequest = Schema.Struct({ json: Schema.String });
+export const CityLayoutResult = Schema.Struct({ cityId: Schema.Number, ok: Schema.Boolean, message: Schema.String });

@@ -20,6 +20,7 @@ const aliasToCanonicalType = {
     "chat:history": "chat.history",
     "chat:rate_limit": "chat.rate_limit",
     "city:finance": "city.finance",
+    "city:layout:import": "city.layout.import.request",
     "research:update": "research.update",
     "factory:collect": "factory.collect.request",
     "icon:pickup": "icon.pickup.request",

@@ -19,7 +19,7 @@ const TILE_SIZE = 48;
 const WORLD_TILE_MIN = 0;
 const WORLD_TILE_MAX = 512;
 
-const DEFENSE_MAX_HEALTH: Record<number, number> = {
+export const DEFENSE_MAX_HEALTH: Record<number, number> = {
     8: 40,
     9: 32,
     10: 16,

@@ -11,6 +11,7 @@ import { bindSocketIdentity, resolveSocketUserId, verifyIdentityToken } from "..
 import { addInventoryItem, emitInventoryState } from "../domain/inventory/InventoryService.js";
 import { useItem } from "../domain/items/ItemUseService.js";
 import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
+import { importCityLayout } from "../domain/map/CityImportService.js";
 import { dropOrb } from "../domain/orb/OrbService.js";
 import { emitResearchState, startResearch } from "../domain/research/ResearchService.js";
 import { lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
@@ -414,6 +415,9 @@ const handlers: HandlerMap = {
             eventType: "hazard.deploy.request",
             payload
         });
+    },
+    "city.layout.import.request": (socketId, payload, context) => {
+        context.emitter.emitTo(socketId, "city.layout.result", importCityLayout(context.state, socketId, payload.json, context.config, context.emitter));
     },
     "orb.drop.request": (socketId, payload, context) => {
         const city = context.state.socketCities.get(socketId);

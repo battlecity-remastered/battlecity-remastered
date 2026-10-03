@@ -33,6 +33,8 @@ export const EventPayloadSchemas = {
     "chat.history": Events.ChatHistory,
     "chat.rate_limit": Events.ChatRateLimit,
     "city.finance": Events.CityFinance,
+    "city.layout.import.request": Events.CityLayoutImportRequest,
+    "city.layout.result": Events.CityLayoutResult,
     "research.start.request": Events.ResearchStartRequest,
     "research.update": Events.ResearchUpdate,
     "factory.collect.request": Events.FactoryCollectRequest,

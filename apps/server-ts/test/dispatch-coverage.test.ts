@@ -20,7 +20,8 @@ const EXPECTED_RUNTIME_REQUEST_TYPES = [
     "item.use.request",
     "hazard.deploy.request",
     "orb.drop.request",
-    "defense.deploy.request"
+    "defense.deploy.request",
+    "city.layout.import.request"
 ] as const;
 
 test("runtime dispatch covers all authoritative inbound request/event types", () => {

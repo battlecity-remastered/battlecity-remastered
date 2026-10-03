@@ -22,6 +22,8 @@ export const EventType = Schema.Literal(
     "city:info",
     "city:inspect",
     "city:layout:import",
+    "city.layout.import.request",
+    "city.layout.result",
     "city:orbed",
     "city.orbed",
     "connect",
