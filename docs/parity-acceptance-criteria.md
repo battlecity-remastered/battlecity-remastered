@@ -84,3 +84,9 @@ custom name and score; forged credentials/raw IDs cannot claim them. An orb awar
 and a reconnect/server restart retain the updated score and provider on that one
 SQLite account. Gold follows #1 by the existing leaderboard ordering. Labels use
 that account's name/rank, hide with cloaked enemies and retain mayor identification.
+
+## Item-rule review (October 2026)
+
+Acceptance must compare authoritative values at v0.0.79, not merely the port’s own fixtures. See [per-item review](item-parity-review.md). Cover 40 HP humans, five-second cloak, full-hull medkits and conservation at full health, reusable weapons, 5/8/5 damage and 260/340/48 px ranges for laser/rocket/flare, five-second DFG freeze including firing, and a command centre inside a bomb blast. Enemy hull UI must use actual maxHealth, conceal with enemy cloak, handle damage/healing and add no battlefield draw calls. Guest callsigns must survive refreshes while custom/Google names remain intact.
+
+Orb acceptance remains open: historical factory/max-building eligibility and variable 10–50 point base bounty plus target victory bonus must agree between server, finance snapshots and navigation, reset on city destruction, and persist the actual awarded amount to SQLite. Legacy JSON city import also remains open; a client-only `.city` preview is insufficient.

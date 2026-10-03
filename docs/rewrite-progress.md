@@ -1,5 +1,9 @@
 # Visual Parity Rewrite Plan (LLM-Executable)
 
+## Item parity and enemy health — October 2026
+
+Added compact enemy hull telemetry to projected pilot labels, with segmented amber/red bars, damage feedback, critical warning and cloak visibility. Compared all thirteen items against v0.0.79; corrected medkits, cloak, human hull, weapon damage/speed/range/cadence, frozen fire and bomb command-centre protection. [Detailed review](item-parity-review.md) records remaining orb eligibility/bounty discrepancies and missing JSON city-import settings; these remain open rather than being counted as parity.
+
 ## Discord notification parity — October 2026
 
 Restored existing `DISCORD_BOT_TOKEN` / `DISCORD_CHANNEL_ID` configuration, alongside optional webhook support. Human joins announce persisted callsign, rank, city and role once per assignment; orb victories announce named cities and awarded points. HTTP sends run asynchronously with timeouts, minimum-interval throttling, Discord rate-limit backoff and disabled mentions. Production credentials/channel were verified with a read-only request; notification content and failure behaviour are tested with mocked HTTP.
