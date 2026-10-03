@@ -1,3 +1,4 @@
+import { CLASSIC_TANK_HEALTH } from "@battlecity/sim-core";
 import {
     advancePointByTankHeading32,
     clampToWorld,
@@ -112,8 +113,8 @@ const makeDefaultPlayer = (
         y: payload.offset.y,
         direction: normalizeHeading32(payload.direction),
         speed: config.playerSpeed,
-        health: 100,
-        maxHealth: 100,
+        health: CLASSIC_TANK_HEALTH,
+        maxHealth: CLASSIC_TANK_HEALTH,
         lastAcceptedUpdateAt: nowMs
     };
 };

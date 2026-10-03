@@ -1,3 +1,4 @@
+import { CLASSIC_TANK_HEALTH } from "@battlecity/sim-core";
 import { io, type Socket } from "socket.io-client";
 import {
     type KnownEventPayloadByType,
@@ -53,8 +54,8 @@ type SocketRuntimeContext = {
 export const clearClientWorldForReconnect = (state: ClientState): void => {
     state.local.id = null;
     state.local.isScoreLeader = false;
-    state.local.health = 100;
-    state.local.maxHealth = 100;
+    state.local.health = CLASSIC_TANK_HEALTH;
+    state.local.maxHealth = CLASSIC_TANK_HEALTH;
 
     state.remotePlayers.clear();
     state.cityFinance.clear();

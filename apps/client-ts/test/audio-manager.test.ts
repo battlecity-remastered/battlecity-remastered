@@ -21,7 +21,7 @@ test("music manager tick/dispose run without side effects", () => {
 test("detectAudioCues identifies orb and denial transitions", () => {
     const state = createClientState();
     const baseline = {
-        localHealth: 100,
+        localHealth: state.local.health,
         promotionCount: 0,
         lastShotAt: 10,
         lastOrbedCityId: null,

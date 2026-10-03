@@ -1,3 +1,4 @@
+import { classicBulletRange } from "@battlecity/sim-core";
 import citySpawns from "../../../data/citySpawns.json" with { type: "json" };
 import {
     advancePointByTankHeading32,
@@ -264,6 +265,7 @@ export const botFireAtTarget = (
         y: muzzleY,
         direction: bulletDirection,
         speed: config.bulletSpeed,
+        remainingRange: classicBulletRange(0),
         type: 0
     });
     emitter.emit("bullet.fired", {

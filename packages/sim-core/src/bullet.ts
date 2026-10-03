@@ -10,6 +10,8 @@ export type BulletState = {
     direction: number;
     speed: number;
     type: number;
+    remainingRange?: number;
+    damage?: number;
 };
 
 export const advanceBullet = (

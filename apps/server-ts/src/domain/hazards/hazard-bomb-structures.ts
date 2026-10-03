@@ -1,6 +1,6 @@
-import { isBombStructureInRange } from "@battlecity/sim-core";
+import { isBombStructureInRange, isCommandCenterType } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
-import type { RuntimeState } from "../../runtime/types.js";
+import type { RuntimeState, RuntimeBuilding } from "../../runtime/types.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "../../runtime/factory-destruction.js";
 import { unregisterBuildingPopulation } from "../population/PopulationService.js";
 import {
@@ -10,6 +10,9 @@ import {
     toTileCenter
 } from "./hazard-constants.js";
 
+const canBombDestroyBuilding = (building: RuntimeBuilding, tileX: number, tileY: number): boolean =>
+    !isCommandCenterType(building.type) && isBombStructureInRange(building.tileX, building.tileY, tileX, tileY, BUILDING_FOOTPRINT_TILES);
+
 export const removeStructuresInBombRadius = (
     state: RuntimeState,
     emitter: RuntimeEmitter,
@@ -17,7 +20,7 @@ export const removeStructuresInBombRadius = (
     centerTileY: number
 ): void => {
     for (const [buildingId, building] of Array.from(state.buildings.entries())) {
-        if (!isBombStructureInRange(building.tileX, building.tileY, centerTileX, centerTileY, BUILDING_FOOTPRINT_TILES)) {
+        if (!canBombDestroyBuilding(building, centerTileX, centerTileY)) {
             continue;
         }
         purgeFactoryOutputsForDestroyedBuilding(state, emitter, building);

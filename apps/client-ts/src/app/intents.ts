@@ -1,3 +1,4 @@
+import { CLASSIC_SHOT_INTERVAL_MS, CLASSIC_FLARE_INTERVAL_MS } from "@battlecity/sim-core";
 import type { EventEnvelope, KnownEventPayloadByType } from "@battlecity/protocol";
 import { normalizeHeading32, normalizeThrottle } from "@battlecity/sim-core";
 import { isThreeDemoMode, type ClientState } from "./state.js";
@@ -18,8 +19,8 @@ export type TypedIntent<TType extends EnvelopeType = EnvelopeType> = {
 };
 
 export const TURN_SPEED_STEPS_PER_SECOND = 12;
-const SHOT_COOLDOWN_MS = 1000;
-const FLARE_BURST_COOLDOWN_MS = 500;
+const SHOT_COOLDOWN_MS = CLASSIC_SHOT_INTERVAL_MS;
+const FLARE_BURST_COOLDOWN_MS = CLASSIC_FLARE_INTERVAL_MS;
 const BULLET_TYPE_FLARE = 3;
 const FLARE_BURST_SPREAD_OFFSETS = [4, 0, -4];
 
@@ -51,7 +52,7 @@ const appendFlareBurstIntents = (state: ClientState, nowMs: number, intents: Int
     state.local.pendingFlareBurst = false;
 
     const flareCount = state.inventory.get(ITEM_TYPE_FLARE) ?? 0;
-    if (flareCount <= 0) {
+    if (flareCount <= 0 || (state.local.frozenUntil ?? 0) > nowMs) {
         return false;
     }
     if (nowMs - state.local.lastFlareBurstAt <= FLARE_BURST_COOLDOWN_MS) {
@@ -146,7 +147,7 @@ export const buildTickPlan = (state: ClientState, nowMs: number, dtMs: number): 
         shouldShoot = true;
     }
     const shotBulletType = resolveShotBulletType(state, isMoving);
-    if (!isThreeDemoMode() && state.controls.shoot && shotBulletType !== null && nowMs - state.local.lastShotAt > SHOT_COOLDOWN_MS) {
+    if (!isThreeDemoMode() && state.controls.shoot && (state.local.frozenUntil ?? 0) <= nowMs && shotBulletType !== null && nowMs - state.local.lastShotAt > SHOT_COOLDOWN_MS) {
         state.local.lastShotAt = nowMs;
         intents.push(asBulletIntent(state, shotBulletType));
         shouldShoot = true;

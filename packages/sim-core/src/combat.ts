@@ -1,3 +1,4 @@
+import { classicBulletDamage } from "./item-rules.js";
 import type { BulletState } from "./bullet.js";
 import { advancePointByHeading32, normalizeHeading32 } from "./motion.js";
 
@@ -76,14 +77,6 @@ const resolveBulletRect = (bullet: BulletState): Rect => {
     };
 };
 
-const bulletDamage = (bulletType: number): number => {
-    switch (bulletType) {
-        case 2:
-            return 35;
-        default:
-            return 20;
-    }
-};
 
 const resolvePlayerHit = (
     nextBullet: BulletState,
@@ -96,7 +89,7 @@ const resolvePlayerHit = (
             continue;
         }
         if (distanceSquared(nextBullet.x, nextBullet.y, player.x, player.y) <= playerRadiusSq) {
-            const nextHealth = Math.max(0, player.health - bulletDamage(bullet.type));
+            const nextHealth = Math.max(0, player.health - (bullet.damage ?? classicBulletDamage(bullet.type)));
             return {
                 kind: "hit_player",
                 bulletId: bullet.id,
@@ -128,7 +121,7 @@ const resolveBuildingHit = (
         if (!intersectsRect(bulletRect, structureRect)) {
             continue;
         }
-        const nextHealth = Math.max(0, building.health - bulletDamage(bullet.type));
+        const nextHealth = Math.max(0, building.health - (bullet.damage ?? classicBulletDamage(bullet.type)));
         return {
             kind: "hit_building",
             bulletId: bullet.id,

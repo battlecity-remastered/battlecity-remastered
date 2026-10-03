@@ -1,3 +1,4 @@
+import { classicBulletSpeed, classicBulletRange } from "@battlecity/sim-core";
 import {
     normalizeHeading32,
     stepBulletAndResolve,
@@ -102,6 +103,7 @@ export const createBulletFromRequest = (
         return rejectResult("player_not_joined");
     }
     const bulletType = Number.isFinite(payload.type) ? Math.floor(payload.type) : BULLET_TYPE_LASER;
+    if (![BULLET_TYPE_LASER, BULLET_TYPE_ROCKET, BULLET_TYPE_FLARE].includes(bulletType) || (player.frozenUntil ?? 0) > Date.now()) return rejectResult("invalid_envelope");
     if (!hasRequiredInventoryForBullet(state, socketId, bulletType)) {
         return rejectResult("inventory_empty");
     }
@@ -114,7 +116,8 @@ export const createBulletFromRequest = (
         x: spawn.x,
         y: spawn.y,
         direction: normalizeHeading32(payload.direction),
-        speed: config.bulletSpeed,
+        speed: classicBulletSpeed(bulletType, config.bulletSpeed),
+        remainingRange: classicBulletRange(bulletType),
         type: bulletType
     };
 
@@ -367,8 +370,11 @@ const stepBulletWithSweep = (
     hazards: Iterable<CombatHazardState>,
     isBlockedTile: (tileX: number, tileY: number) => boolean
 ): LocatedBulletStepResult => {
-    const steps = resolveBulletSweepSteps(bullet, tickMs);
-    const stepMs = tickMs / steps;
+    const remainingRange = bullet.remainingRange;
+    const limitedTickMs = remainingRange === undefined ? tickMs : Math.min(tickMs, remainingRange / bullet.speed * 1000);
+    if (limitedTickMs <= 0) return { kind: "out_of_bounds", bulletId: bullet.id };
+    const steps = resolveBulletSweepSteps(bullet, limitedTickMs);
+    const stepMs = limitedTickMs / steps;
     let current = bullet;
     for (let step = 0; step < steps; step += 1) {
         const result = stepBulletAndResolve(
@@ -387,10 +393,11 @@ const stepBulletWithSweep = (
         }
         current = result.bullet;
     }
-    return {
-        kind: "none",
-        bullet: current
-    };
+    if (remainingRange !== undefined) {
+        current.remainingRange = Math.max(0, remainingRange - bullet.speed * limitedTickMs / 1000);
+        if (current.remainingRange <= .000001) return { kind: "out_of_bounds", bulletId: bullet.id };
+    }
+    return { kind: "none", bullet: current };
 };
 
 const resolveBulletStep = (

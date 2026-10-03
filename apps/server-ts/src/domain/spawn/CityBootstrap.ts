@@ -1,3 +1,4 @@
+import { CLASSIC_TANK_HEALTH } from "@battlecity/sim-core";
 import citySpawns from "../../../data/citySpawns.json" with { type: "json" };
 import type { RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 
@@ -13,5 +14,5 @@ export const initializeJoinedPlayer = (state: RuntimeState, city: number, player
     seedCommandCenter(state, city, config);
     const spawn = (citySpawns as Record<string, { tileX: number; tileY: number }>)[String(city)];
     if (!spawn) return;
-    state.players.set(playerId, { id: playerId, city, x: spawn.tileX * 48 + 72 - 24 - 6.5, y: spawn.tileY * 48 + 96 - 5.5, direction: 0, speed: config.playerSpeed, health: 100, maxHealth: 100, lastAcceptedUpdateAt: Date.now(), lastMovementInputSeq: 0 });
+    state.players.set(playerId, { id: playerId, city, x: spawn.tileX * 48 + 72 - 24 - 6.5, y: spawn.tileY * 48 + 96 - 5.5, direction: 0, speed: config.playerSpeed, health: CLASSIC_TANK_HEALTH, maxHealth: CLASSIC_TANK_HEALTH, lastAcceptedUpdateAt: Date.now(), lastMovementInputSeq: 0 });
 };

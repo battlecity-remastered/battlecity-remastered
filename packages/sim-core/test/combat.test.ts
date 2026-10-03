@@ -31,7 +31,7 @@ test("bullet hits enemy player and computes next health", () => {
     assert.equal(result.kind, "hit_player");
     if (result.kind === "hit_player") {
         assert.equal(result.playerId, "p2");
-        assert.equal(result.nextHealth, 80);
+        assert.equal(result.nextHealth, 95);
         assert.equal(result.isDead, false);
     }
 });

@@ -9,6 +9,7 @@ import { createRuntimeState, DEFAULT_RUNTIME_CONFIG, type RuntimeConfig } from "
 import { isBotTopLeftPositionValid } from "../src/domain/bots/BotShared.js";
 
 const ITEM_TYPE_LASER = 12;
+const ITEM_TYPE_ROCKET = 1;
 const ITEM_TYPE_BOMB = 3;
 const ITEM_TYPE_MINE = 4;
 const ITEM_TYPE_ORB = 5;
@@ -450,11 +451,13 @@ test("bullet tick resolves hits and emits health + death", () => {
         offset: { x: 600, y: 512 }
     }));
 
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ROCKET, 1);
+    runtime.getReadonlyState().players.get("target")!.health = 24;
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
 
     for (let i = 0; i < 6; i += 1) {
@@ -464,24 +467,24 @@ test("bullet tick resolves hits and emits health + death", () => {
     const healthEvents = broadcast.filter((event) => event.type === "player.health");
     assert.ok(healthEvents.length > 0);
 
-    // 3 heavy bullets should drop 100 health to 0.
+    // Three classic rockets remove the remaining 24 HP from this wounded tank.
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 7, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 8, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
 
     for (let i = 0; i < 20; i += 1) {
@@ -514,23 +517,25 @@ test("player death releases lobby assignment and blocks movement updates until r
     }));
     grantInventoryItem(runtime, "target", ITEM_TYPE_LASER, 1);
 
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ROCKET, 1);
+    runtime.getReadonlyState().players.get("target")!.health = 24;
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 7, {
         ownerId: "attacker",
         position: { x: 536, y: 536 },
         direction: 0,
-        type: 2
+        type: 1
     }));
 
     for (let i = 0; i < 20; i += 1) {
@@ -1650,7 +1655,7 @@ test("hospital repair strip heals players standing inside the bay", () => {
     assert.ok(targetBefore);
     runtime.getReadonlyState().players.set("target", {
         ...targetBefore,
-        health: 80
+        health: 20
     });
 
     runtime.tickBullets();
@@ -1665,7 +1670,7 @@ test("hospital repair strip heals players standing inside the bay", () => {
     assert.ok(hospitalHealth);
     const targetAfter = runtime.getReadonlyState().players.get("target");
     assert.ok(targetAfter);
-    assert.equal(targetAfter?.health, 82);
+    assert.equal(targetAfter?.health, 22);
 });
 
 test("hospital healing does not apply outside the repair strip", () => {
@@ -1694,7 +1699,7 @@ test("hospital healing does not apply outside the repair strip", () => {
     assert.ok(targetBefore);
     runtime.getReadonlyState().players.set("target", {
         ...targetBefore,
-        health: 80
+        health: 20
     });
 
     runtime.tickBullets();
@@ -1703,7 +1708,7 @@ test("hospital healing does not apply outside the repair strip", () => {
     assert.equal(healthEvents.some((event) => (event.payload as { source?: string }).source === "hospital"), false);
     const targetAfter = runtime.getReadonlyState().players.get("target");
     assert.ok(targetAfter);
-    assert.equal(targetAfter?.health, 80);
+    assert.equal(targetAfter?.health, 20);
 });
 
 test("hazard deploy detonates and damages nearby players", () => {
@@ -2273,7 +2278,7 @@ test("high-speed bullets do not tunnel through building footprints", () => {
     });
     assert.ok(hitBuilding);
     const building = runtime.getReadonlyState().buildings.get("target_building");
-    assert.equal(building?.health, 100);
+    assert.equal(building?.health, 115);
 });
 
 test("building collision from non-laser/rocket bullets does not damage structure health", () => {
@@ -2299,12 +2304,8 @@ test("building collision from non-laser/rocket bullets does not damage structure
         population: 0
     });
 
-    runtime.handleRawEvent("shooter", makeEnvelope("bullet.fire.request", 3, {
-        ownerId: "shooter",
-        position: { x: 100, y: 100 },
-        direction: 0,
-        type: 2
-    }));
+    // Plasma is generated by a defense; player requests cannot spoof it.
+    runtime.getReadonlyState().bullets.set("plasma-test", { id: "plasma-test", ownerId: "defense", city: 1, x: 100, y: 100, direction: 0, type: 2, speed: 1800, remainingRange: 340, damage: 8 });
     runtime.tickBullets();
 
     const hitBuilding = broadcast.find((event) => {
@@ -2796,17 +2797,18 @@ test("bullets can damage and remove defenses", () => {
         offset: { x: 420, y: 504 }
     }));
 
+    grantInventoryItem(runtime, "attacker", ITEM_TYPE_ROCKET, 1);
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 5, {
         ownerId: "attacker",
         position: { x: 420, y: 504 },
         direction: 0,
-        type: 2
+        type: 1
     }));
     runtime.handleRawEvent("attacker", makeEnvelope("bullet.fire.request", 6, {
         ownerId: "attacker",
         position: { x: 420, y: 504 },
         direction: 0,
-        type: 2
+        type: 1
     }));
 
     for (let i = 0; i < 8; i += 1) {
@@ -2864,7 +2866,7 @@ test("friendly bullets ignore same-city defenses and can continue to enemy defen
     const ally = state.defenses.get("ally_defense");
     const enemy = state.defenses.get("enemy_defense");
     assert.equal(ally?.health, 100);
-    assert.equal(enemy?.health, 80);
+    assert.equal(enemy?.health, 95);
     const hitEnemy = broadcast.find((event) => {
         if (event.type !== "bullet.resolved") {
             return false;
@@ -3441,7 +3443,7 @@ test("player:bot_damage classic alias applies authoritative health updates", () 
         .filter((event) => event.type === "player.health")
         .at(-1);
     assert.ok(healthEvent);
-    assert.equal((healthEvent.payload as { health: number }).health, 80);
+    assert.equal((healthEvent.payload as { health: number }).health, 20);
 });
 
 test("player.bot_damage fatal damage evicts player from active city", () => {

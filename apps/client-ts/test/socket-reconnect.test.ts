@@ -61,8 +61,8 @@ test("clearClientWorldForReconnect drops stale world entities and resets local a
 
     assert.equal(state.local.id, null);
     assert.equal(state.local.city, 6);
-    assert.equal(state.local.health, 100);
-    assert.equal(state.local.maxHealth, 100);
+    assert.equal(state.local.health, 40);
+    assert.equal(state.local.maxHealth, 40);
     assert.equal(state.remotePlayers.size, 0);
     assert.equal(state.cityFinance.size, 0);
     assert.equal(state.research.size, 0);

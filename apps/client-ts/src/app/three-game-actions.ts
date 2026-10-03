@@ -1,3 +1,4 @@
+import { CLASSIC_SHOT_INTERVAL_MS } from "@battlecity/sim-core";
 import type { ClientState } from "./state.js";
 import type { EventSender } from "../network/events.js";
 import { direction32ToBulletHeading, resolveTankMuzzlePosition } from "../gameplay/combat/shot-geometry.js";
@@ -15,7 +16,7 @@ export const createThreeGameActions = (state: ClientState, send: EventSender, fl
     };
     return {
         fire(weapon: DemoWeapon): void {
-            if (!ready() || performance.now() - lastShot < 1_000) return;
+            if (!ready() || (state.local.frozenUntil ?? 0) > Date.now() || performance.now() - lastShot < CLASSIC_SHOT_INTERVAL_MS) return;
             const type = weapon === "rocket" ? 1 : 0;
             if ((state.inventory.get(type === 1 ? 1 : 12) ?? 0) <= 0) return;
             lastShot = performance.now(); flushMovement();

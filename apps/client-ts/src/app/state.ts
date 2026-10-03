@@ -1,3 +1,4 @@
+import { CLASSIC_TANK_HEALTH } from "@battlecity/sim-core";
 import { resolveCitySpawn } from "../world/city-spawn.js";
 import { createMovementState } from "./movement-state.js";
 import type { ClientState, DebugState, LocalState } from "./state-types.js";
@@ -19,8 +20,8 @@ const createLocalDefaults = (): LocalState => ({
     x: DEFAULT_LOBBY_SPAWN?.x ?? 128,
     y: DEFAULT_LOBBY_SPAWN?.y ?? 128,
     speed: LEGACY_PLAYER_SPEED_PX_PER_SECOND,
-    health: 100,
-    maxHealth: 100,
+    health: CLASSIC_TANK_HEALTH,
+    maxHealth: CLASSIC_TANK_HEALTH,
     lastShotAt: 0,
     lastResearchAt: 0,
     lastFactoryCollectAt: 0,

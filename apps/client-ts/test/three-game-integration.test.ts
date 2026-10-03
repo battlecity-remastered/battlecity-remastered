@@ -24,8 +24,8 @@ test("live Three client consumes production, combat, orb victory and respawn eve
     createThreeGameActions(client,send).collect();assert.equal(client.inventory.get(12),1);
     const target=server.players.get("enemy")!;target.x=pilot.x+100;target.y=pilot.y;runtime.tickBullets();client.local.direction=pilot.direction=8;
     createThreeGameActions(client,send).fire("laser");assert.equal(client.bullets.size,1);assert.equal([...client.bullets.values()][0]!.speed,config.bulletSpeed);
-    for(let tick=0;tick<3;tick++)runtime.tickBullets();assert.ok(enemy.local.health<100);assert.equal(client.bullets.size,0);const presentation=combat.frame(client);assert.equal(presentation.shots.length,1);assert.equal(presentation.impacts.length,1);
+    for(let tick=0;tick<3;tick++)runtime.tickBullets();assert.ok(enemy.local.health<40);assert.equal(client.bullets.size,0);const presentation=combat.frame(client);assert.equal(presentation.shots.length,1);assert.equal(presentation.impacts.length,1);
     server.playerInventory.get("pilot")!.set(5,1);client.inventory.set(5,1);pilot.x=client.local.x=95*48+48;pilot.y=client.local.y=33*48;
     assert.equal(createThreeGameActions(client,send).deploy(5),true);assert.equal(client.inventory.get(5)??0,0);assert.equal(client.events.lastOrbEvent?.targetCityId,1);assert.equal([...client.buildings.values()].some(building=>building.cityId===1),false);assert.ok((client.cityFinance.get(0)?.score??0)>0);
-    send("lobby.leave.request",{});assert.equal(client.local.id,null);assert.equal(server.players.has("pilot"),false);send("lobby.join.request",{desiredCity:0});assert.equal(client.local.id,"pilot");assert.equal(client.local.health,100);assert.equal(client.inventory.size,0);
+    send("lobby.leave.request",{});assert.equal(client.local.id,null);assert.equal(server.players.has("pilot"),false);send("lobby.join.request",{desiredCity:0});assert.equal(client.local.id,"pilot");assert.equal(client.local.health,40);assert.equal(client.inventory.size,0);
 });

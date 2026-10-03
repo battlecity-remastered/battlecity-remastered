@@ -1,3 +1,4 @@
+import { CLASSIC_CLOAK_MS } from "@battlecity/sim-core";
 import { initializeDemoMayor, placeDemoBuilding, createDemoPopulation } from "./app/demo-mayor.js";
 import { createThreeGameActions } from "./app/three-game-actions.js";
 import { createGameConsole } from "./ui/three-game-console.js";
@@ -23,7 +24,7 @@ export const startThreeDemo = async (): Promise<void> => {
     let battlefield:Awaited<ReturnType<typeof createThreeBattlefield>>;
     const actions={...createThreeGameActions(state,()=>{}),deploy:(type:number,use=false)=>{
         if(type===5)return battlefield.previewOrb(state);
-        if(use&&(type===0||type===2)&&(state.inventory.get(type)??0)>0){state.inventory.set(type,(state.inventory.get(type)??0)-1);if(type===0)state.local.cloakedUntil=Date.now()+10000;else state.local.health=Math.min(100,state.local.health+35);return true;}
+        if(use&&(type===0||type===2)&&(state.inventory.get(type)??0)>0){if(type===2&&state.local.health>=state.local.maxHealth)return true;state.inventory.set(type,(state.inventory.get(type)??0)-1);if(type===0)state.local.cloakedUntil=Date.now()+CLASSIC_CLOAK_MS;else state.local.health=state.local.maxHealth;return true;}
         return false;
     }};
     battlefield=await createThreeBattlefield(map,buildings,defenses,actions);

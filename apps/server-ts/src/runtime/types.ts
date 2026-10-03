@@ -225,7 +225,7 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     bulletTickMs: 100,
     defaultBuildingHealth: 120,
     playerSpeed: LEGACY_PLAYER_SPEED_PX_PER_SECOND,
-    bulletSpeed: 900,
+    bulletSpeed: 800,
     maxPlayerUpdateDistancePerTick: 130,
     cityStartingCash: 95_000_000,
     cityBaseIncome: 15,

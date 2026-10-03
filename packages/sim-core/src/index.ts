@@ -10,3 +10,4 @@ export * from "./tile-occupancy.js";
 export * from "./input.js";
 export * from "./building-footprint.js";
 export * from "./bomb.js";
+export * from "./item-rules.js";

@@ -1,3 +1,4 @@
+import { classicBulletRange } from "@battlecity/sim-core";
 import { normalizeHeading32 } from "@battlecity/sim-core";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeConfig, RuntimeDefense, RuntimeState } from "../../runtime/types.js";
@@ -127,6 +128,8 @@ const fireFromDefense = (
         y: muzzleY,
         direction: bulletDirection,
         speed: config.bulletSpeed,
+        remainingRange: classicBulletRange(1),
+        damage: 8,
         type: bulletType
     });
     emitter.emit("bullet.fired", {
