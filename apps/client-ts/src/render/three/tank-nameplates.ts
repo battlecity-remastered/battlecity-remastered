@@ -3,15 +3,16 @@ import type { ClientState } from "../../app/state-types.js";
 import { isMayorTank } from "./tank-role.js";
 import { resolveWorldViewport } from "../../gameplay/world-viewport.js";
 import "./tank-nameplates.css";
+import { createTankHullMeter } from "./tank-hull-meter.js";
 import { isTankLabelVisible, tankLabelSignature, tankLabelText, type Pilot } from "./pilot-presentation.js";
 
-type Label = { root: HTMLDivElement; name: HTMLSpanElement; rank: HTMLSpanElement; signature: string; position: string };
+type Label = { root: HTMLDivElement; name: HTMLSpanElement; rank: HTMLSpanElement; signature: string; position: string; hull: ReturnType<typeof createTankHullMeter> };
 const makeLabel = (container: HTMLElement): Label => {
     const root = document.createElement("div"), body = document.createElement("div"), name = document.createElement("span"), rank = document.createElement("span");
     root.className = "bc-tank-label"; body.className = "bc-tank-label-body";
     name.className = "bc-tank-label-name"; rank.className = "bc-tank-label-rank";
     body.append(name, rank); root.append(body); container.append(root);
-    return { root, name, rank, signature: "", position: "" };
+    return { root, name, rank, signature: "", position: "", hull: createTankHullMeter(body) };
 };
 
 // Project the already-smoothed models, without querying layout or adding 3D text
@@ -37,6 +38,7 @@ export const createTankNameplates = () => {
             const text = tankLabelText(pilot, mayor); label.name.textContent = text.name; label.rank.textContent = text.rank;
             label.root.dataset.leader = String(pilot.isScoreLeader === true); label.root.dataset.team = enemy ? "enemy" : "friendly"; label.signature = signature;
         }
+        label.hull.update(pilot, enemy);
         const position = `translate3d(${projected.x}px,${projected.y}px,0)`;
         if (label.position !== position) { label.root.style.transform = position; label.position = position; }
     };

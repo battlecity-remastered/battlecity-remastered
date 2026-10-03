@@ -8,3 +8,15 @@
 .bc-tank-label[data-team="enemy"] { --tank-label-color:#f19c82; }
 .bc-tank-label[data-leader="true"] { --tank-label-color:#f2cb70; }
 .bc-tank-label[data-leader="true"] .bc-tank-label-name { color:#fff1cb; }
+
+/* A quiet, unlabelled hull strip keeps combat telemetry below the callsign. */
+.bc-tank-hull { --hull-color:#ddb17b;width:76px;margin:4px auto 1px; }
+.bc-tank-hull[hidden] { display:none; }
+.bc-tank-hull-track { position:relative;height:3px;background:rgba(5,11,14,.85);overflow:hidden;box-shadow:0 1px 0 rgba(145,155,151,.2); }
+.bc-tank-hull-track i { position:absolute;inset:0;transform-origin:left center; }
+.bc-tank-hull-fill { background:linear-gradient(0deg,color-mix(in srgb,var(--hull-color),#632715 40%),var(--hull-color)); }
+.bc-tank-hull-echo { background:#fff0cf;opacity:.65; }
+.bc-tank-hull-track::after { content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#0c1418 calc(10% - 1px),#0c1418 10%); }
+.bc-tank-hull[data-condition="damaged"] { --hull-color:#e59361; }
+.bc-tank-hull[data-condition="critical"] { --hull-color:#f16e5c; }
+@media (prefers-reduced-motion:reduce) { .bc-tank-hull-track i { transition:none !important; } }
