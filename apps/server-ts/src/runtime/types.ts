@@ -40,6 +40,10 @@ export type RuntimeCity = {
     score: number;
     researchLevel: number;
     orbCount: number;
+    maxBuildings?: number;
+    hadBombFactory?: boolean;
+    hadOrbFactory?: boolean;
+    orbVictories?: number;
 };
 
 export type RuntimeFakeCityState = {
@@ -157,7 +161,6 @@ export type RuntimeConfig = {
     hazardDefaultFuseMs: number;
     hazardDefaultRadius: number;
     hazardDefaultDamage: number;
-    orbScoreAward: number;
     chatHistoryLimit: number;
     inventoryPerItemCap: number;
     hospitalBuildingType: number;
@@ -238,7 +241,6 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     hazardDefaultFuseMs: 2000,
     hazardDefaultRadius: 96,
     hazardDefaultDamage: 35,
-    orbScoreAward: 250,
     chatHistoryLimit: 50,
     inventoryPerItemCap: 5,
     hospitalBuildingType: 200,

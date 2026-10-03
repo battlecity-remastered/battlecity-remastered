@@ -22,9 +22,10 @@ export const awardOrbProfileScore = (
     userStore: UserStoreAdapter,
     socketId: string,
     userId: string,
-    amount: number
+    amount: number,
+    assist = false
 ): Effect.Effect<KnownEventPayloadByType["score.profile"]> => {
-    return Effect.map(userStore.addScore(userId, amount), (profile) => {
+    return Effect.map(userStore.addScore(userId, amount, undefined, assist ? "assist" : "orb"), (profile) => {
         return {
             playerId: socketId,
             userId: profile.id,

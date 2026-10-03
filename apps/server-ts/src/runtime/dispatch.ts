@@ -13,7 +13,7 @@ import { useItem } from "../domain/items/ItemUseService.js";
 import { buildLobbySnapshot, joinLobby, leaveLobby } from "../domain/lobby/LobbyService.js";
 import { dropOrb } from "../domain/orb/OrbService.js";
 import { emitResearchState, startResearch } from "../domain/research/ResearchService.js";
-import { awardOrbProfileScore, lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
+import { lobbyHighScores, profileForSocket } from "../domain/score/ScoreService.js";
 import { validatePlayerUpdate } from "../domain/security/PlayerUpdateValidator.js";
 import { logRuntime } from "../observability/RuntimeLogger.js";
 import { demolishBuildingFromRequest, placeBuildingFromRequest } from "./building-runtime.js";
@@ -23,6 +23,7 @@ import type { DispatchContext } from "./dispatch-context.js";
 import { emitScopedChatMessage, handleCommandResult } from "./dispatch-support.js";
 import { purgeFactoryOutputsForDestroyedBuilding } from "./factory-destruction.js";
 import { emitJoinWorldHydration } from "./join-hydration.js";
+import { awardCityOrbProfiles, evictOrbedCityPlayers } from "./orb-city-outcome.js";
 import { eliminatePlayer } from "./player-elimination.js";
 import { upsertPlayerFromUpdate } from "./player-runtime.js";
 import { rejectSocket } from "./rejections.js";
@@ -433,6 +434,7 @@ const handlers: HandlerMap = {
             context.emitter.emit("city.orbed", cityOrbed);
             context.emitter.emit("score.promotion", scorePromotion);
             context.emitter.emitTo(socketId, "inventory.update", inventory);
+            evictOrbedCityPlayers(context, cityOrbed.targetCityId);
             markFakeCityCooldown(context.state, cityOrbed.targetCityId, Date.now(), context.config);
             emitPlayersSnapshot(context.state, context.emitter);
             emitCityFinance(context.state, cityOrbed.sourceCityId, context.config, context.emitter);
@@ -455,29 +457,14 @@ const handlers: HandlerMap = {
                     reason: "city_orbed"
                 });
             }
-            if (context.userStore) {
-                const userId = resolveSocketUserId(context.state, socketId);
-                const profile = Effect.runSync(awardOrbProfileScore(
-                    context.userStore,
-                    socketId,
-                    userId,
-                    context.config.orbScoreAward
-                ));
-                context.emitter.emitTo(socketId, "score.profile", profile);
-                emitLobbyHighScoreSnapshot(context);
-                for (const [id, identity] of context.state.socketUserIds) {
-                    if (identity === userId) {
-                        const label = context.state.playerProfiles.get(id);
-                        if (label) label.rankTitle = profile.rank;
-                    }
-                }
-            }
+            awardCityOrbProfiles(context, socketId, cityOrbed);
+            emitLobbyHighScoreSnapshot(context);
             if (context.notifyOrbVictory) {
                 const userId = resolveSocketUserId(context.state, socketId);
                 Effect.runFork(context.notifyOrbVictory(userId, cityOrbed.sourceCityId, cityOrbed.targetCityId, {
                     callsign: context.state.playerProfiles.get(socketId)?.callsign ?? "Unknown player",
                     rankTitle: context.state.playerProfiles.get(socketId)?.rankTitle ?? "Unranked",
-                    points: context.config.orbScoreAward
+                    points: cityOrbed.awardedScore
                 }));
             }
         }, {

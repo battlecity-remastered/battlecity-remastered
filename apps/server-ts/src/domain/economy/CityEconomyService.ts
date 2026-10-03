@@ -1,5 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
-import { hasCommandCenterBuilding } from "@battlecity/sim-core";
+import { isCityOrbable } from "../orb/CityOrbRules.js";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
 import type { RuntimeCity, RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import { resolveCityBuildStates } from "../buildings/BuildPermissionsService.js";
@@ -15,7 +15,11 @@ const ensureCity = (state: RuntimeState, cityId: number, config: RuntimeConfig):
         income: config.cityBaseIncome,
         score: 0,
         researchLevel: 0,
-        orbCount: 1
+        orbCount: 1,
+        maxBuildings: 1,
+        hadBombFactory: false,
+        hadOrbFactory: false,
+        orbVictories: 0
     };
     state.cities.set(cityId, city);
     return city;
@@ -28,7 +32,7 @@ const toFinancePayload = (state: RuntimeState, city: RuntimeCity): KnownEventPay
         income: city.income,
         score: city.score,
         researchLevel: city.researchLevel,
-        isOrbable: hasCommandCenterBuilding(state.buildings.values(), city.cityId),
+        isOrbable: isCityOrbable(state, city),
         canBuildStates: resolveCityBuildStates(state, city.cityId)
     };
 };

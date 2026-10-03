@@ -8,7 +8,8 @@ import {
     type RuntimeState
 } from "./types.js";
 import { canBuildInCity, resolveBuildTypeDenial } from "../domain/buildings/BuildingRulesService.js";
-import { spendCityCash } from "../domain/economy/CityEconomyService.js";
+import { refreshCityOrbHistory } from "../domain/orb/CityOrbRules.js";
+import { getOrCreateCity, spendCityCash } from "../domain/economy/CityEconomyService.js";
 import { registerBuildingPopulation, unregisterBuildingPopulation } from "../domain/population/PopulationService.js";
 
 export const placeBuildingFromRequest = (
@@ -62,6 +63,7 @@ export const placeBuildingFromRequest = (
     };
 
     state.buildings.set(building.id, building);
+    refreshCityOrbHistory(state, getOrCreateCity(state, city, config));
     return okResult({
         building,
         populationUpdates: registerBuildingPopulation(state, building)

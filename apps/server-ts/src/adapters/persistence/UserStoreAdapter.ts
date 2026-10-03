@@ -92,7 +92,7 @@ export class UserStoreAdapter {
         });
     }
 
-    public addScore(userId: string, amount: number, displayName?: string): Effect.Effect<RuntimeUserProfile> {
+    public addScore(userId: string, amount: number, displayName?: string, credit: "orb" | "assist" = "orb"): Effect.Effect<RuntimeUserProfile> {
         return Effect.sync(() => {
             const normalizedUserId = sanitizeUserId(userId);
             const now = Date.now();
@@ -115,8 +115,8 @@ export class UserStoreAdapter {
                 name: nextName,
                 score: nextScore,
                 rank: resolveRankTitle(nextScore),
-                orbs: existing.orbs + (amount > 0 ? 1 : 0),
-                assists: existing.assists,
+                orbs: existing.orbs + (amount > 0 && credit === "orb" ? 1 : 0),
+                assists: existing.assists + (amount > 0 && credit === "assist" ? 1 : 0),
                 updatedAt: now
             };
             this.users.set(normalizedUserId, updated);

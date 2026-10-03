@@ -83,17 +83,18 @@ test("an authenticated orb victory adds to the original SQLite score and survive
         const spawn = citySpawns["2"];
         state.buildings.set("target-cc", { id: "target-cc", ownerId: "opponent", cityId: 2, type: 0,
             tileX: spawn.tileX, tileY: spawn.tileY, health: 100, maxHealth: 100, population: 0 });
+        state.cities.get(2)!.hadOrbFactory = true;
         state.playerInventory.set("pilot", new Map([[5, 1]]));
         runtime.handleRawEvent("pilot", makeEnvelope("orb.drop.request", 2, { sourceCityId: 1, targetCityId: 2,
             position: { x: spawn.tileX * 48, y: (spawn.tileY + 2) * 48 } }));
         assert.deepEqual(rejected, []);
-        assert.equal(profiles.at(-1), 20190);
+        assert.equal(profiles.at(-1), 19960);
         const reopened = new UserStoreAdapter({ dbPath: db, useSqlStorage: true });
         const persisted = Effect.runSync(reopened.getOrCreate("original-uuid"));
-        assert.equal(persisted.score, 20190); assert.equal(persisted.orbs, 2); assert.equal(persisted.provider, "google");
+        assert.equal(persisted.score, 19960); assert.equal(persisted.orbs, 2); assert.equal(persisted.provider, "google");
         const restarted = new GameRuntime(broadcaster, {}, createRuntimeState(), { userStore: reopened });
         restarted.handleRawEvent("new-socket", makeEnvelope("lobby.join.request", 1, { desiredCity: 1, authToken }));
-        assert.equal(profiles.at(-1), 20190);
+        assert.equal(profiles.at(-1), 19960);
         assert.equal(Effect.runSync(reopened.listTop()).length, 1, "reconnect creates no second score account");
     } finally { rmSync(dir, { recursive: true, force: true }); }
 });

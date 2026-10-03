@@ -1,3 +1,4 @@
+import { refreshCityOrbHistory, resetCityAfterOrb } from "../orb/CityOrbRules.js";
 import { isCommandCenterType } from "@battlecity/sim-core";
 import type { RuntimeBuilding, RuntimeConfig, RuntimeState } from "../../runtime/types.js";
 import type { RuntimeEmitter } from "../../runtime/emitter.js";
@@ -141,6 +142,7 @@ const spawnFakeCity = (
         removeBots: false
     });
 
+    resetCityAfterOrb(state, getOrCreateCity(state, cityId, runtimeConfig), runtimeConfig);
     const ownerId = `${FAKE_OWNER_PREFIX}${cityId}`;
     const buildingIds = spawnFakeCityBuildings(
         state,
@@ -173,7 +175,7 @@ const spawnFakeCity = (
         allDefenses
     );
 
-    getOrCreateCity(state, cityId, runtimeConfig);
+    refreshCityOrbHistory(state, getOrCreateCity(state, cityId, runtimeConfig));
     state.fakeCities.set(cityId, {
         cityId,
         active: true,
@@ -211,6 +213,7 @@ const despawnFakeCity = (
         defenseIds: [],
         hazardIds: []
     });
+    resetCityAfterOrb(state, getOrCreateCity(state, cityId, runtimeConfig), runtimeConfig);
     emitter.emit("city.finance", buildCityFinancePayload(state, cityId, runtimeConfig));
     return true;
 };

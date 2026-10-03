@@ -81,6 +81,7 @@ test("behavior: orb attack emits city.orbed and promotion events", () => {
         maxHealth: 120,
         population: 0
     });
+    runtime.getReadonlyState().cities.get(3)!.hadOrbFactory = true;
     const targetSpawn = CITY_SPAWNS["3"];
     assert.ok(targetSpawn && Number.isFinite(targetSpawn.tileX) && Number.isFinite(targetSpawn.tileY));
     runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, {

@@ -1,5 +1,5 @@
 import type { KnownEventPayloadByType } from "@battlecity/protocol";
-import { hasCommandCenterBuilding } from "@battlecity/sim-core";
+import { cityOrbBounty, isCityOrbable, resetCityAfterOrb } from "./CityOrbRules.js";
 import { okResult, rejectResult, type CommandResult, type RuntimeConfig, type RuntimeState } from "../../runtime/types.js";
 import { addCityScore, getOrCreateCity } from "../economy/CityEconomyService.js";
 import { clearCityDefenses } from "../defense/DefenseService.js";
@@ -150,7 +150,8 @@ export const dropOrb = (
     if (resolvedTargetCityId === null || resolvedTargetCityId !== payload.targetCityId) {
         return rejectResult("orb_invalid");
     }
-    if (!hasCommandCenterBuilding(state.buildings.values(), resolvedTargetCityId)) {
+    const target = getOrCreateCity(state, resolvedTargetCityId, config);
+    if (!isCityOrbable(state, target)) {
         return rejectResult("orb_invalid");
     }
 
@@ -160,17 +161,15 @@ export const dropOrb = (
     }
 
     const source = getOrCreateCity(state, payload.sourceCityId, config);
-    const target = getOrCreateCity(state, resolvedTargetCityId, config);
-
-    target.cash = config.cityStartingCash;
-    target.researchLevel = 0;
-    target.orbCount = 0;
+    const awardedScore = cityOrbBounty(target);
+    resetCityAfterOrb(state, target, config);
     state.cities.set(target.cityId, target);
 
     const removedBuildingIds: string[] = [];
     for (const [buildingId, building] of state.buildings.entries()) {
         if (building.cityId === target.cityId) {
             state.buildings.delete(buildingId);
+            state.factoryProductionNextAtMs.delete(buildingId);
             removedBuildingIds.push(buildingId);
         }
     }
@@ -184,7 +183,8 @@ export const dropOrb = (
     const removedDefenseIds = clearCityDefenses(state, target.cityId);
 
     source.orbCount = Math.max(0, source.orbCount - 1);
-    const sourceAfterScore = addCityScore(state, source.cityId, config.orbScoreAward, config);
+    source.orbVictories = (source.orbVictories ?? 0) + 1;
+    const sourceAfterScore = addCityScore(state, source.cityId, awardedScore, config);
     const score = sourceAfterScore.score;
     const rank = resolveRank(score);
 
@@ -193,7 +193,7 @@ export const dropOrb = (
             sourceCityId: source.cityId,
             targetCityId: target.cityId,
             by: actorId,
-            awardedScore: config.orbScoreAward
+            awardedScore
         },
         scorePromotion: {
             cityId: source.cityId,

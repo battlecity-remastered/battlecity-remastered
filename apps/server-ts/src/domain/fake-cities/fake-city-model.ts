@@ -1,6 +1,7 @@
 import fakeCityConfigJson from "../../../data/fakeCities.json" with { type: "json" };
 import citySpawnsJson from "../../../data/citySpawns.json" with { type: "json" };
-import { hasCommandCenterBuilding, toFiniteNumber as parseFiniteNumber } from "@battlecity/sim-core";
+import { toFiniteNumber as parseFiniteNumber } from "@battlecity/sim-core";
+import { isCityOrbable } from "../orb/CityOrbRules.js";
 import type { RuntimeConfig, RuntimeFakeCityState, RuntimeState } from "../../runtime/types.js";
 import { loadCityLayoutsFromDirectory, type RelativeLayoutEntry } from "../map/CityLayoutService.js";
 
@@ -214,7 +215,8 @@ export const activeOrbableFakeCityCount = (state: RuntimeState): number => {
         if (!fakeCity.active) {
             continue;
         }
-        if (hasCommandCenterBuilding(state.buildings.values(), fakeCity.cityId)) {
+        const city = state.cities.get(fakeCity.cityId);
+        if (city && isCityOrbable(state, city)) {
             total += 1;
         }
     }

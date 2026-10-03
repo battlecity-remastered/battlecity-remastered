@@ -267,6 +267,7 @@ test("join hydration includes fake-city finance payloads outside configured city
     const state = runtime.getReadonlyState();
     state.cities.set(17, {
         cityId: 17,
+        hadOrbFactory: true,
         cash: 777,
         income: 33,
         score: 12,
@@ -2416,6 +2417,7 @@ test("orb drop emits city.orbed and score.promotion", () => {
         maxHealth: 120,
         population: 0
     });
+    runtime.getReadonlyState().cities.get(2)!.hadOrbFactory = true;
     runtime.handleRawEvent("p1", makeEnvelope("orb.drop.request", 2, makeOrbDropPayload(1, 2)));
 
     const orbed = broadcast.find((event) => event.type === "city.orbed");
@@ -3099,6 +3101,7 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         fuseMs: 5000
     }));
 
+    runtime.getReadonlyState().cities.get(2)!.hadOrbFactory = true;
     runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 6, makeOrbDropPayload(1, 2)));
 
     const defenseRemoved = broadcast.find((event) => event.type === "defense.remove");
@@ -3109,7 +3112,7 @@ test("orb drop clears target defenses and updates actor score profile", () => {
         .filter((entry) => entry.socketId === "attacker" && entry.event.type === "score.profile")
         .map((entry) => entry.event.payload as { score: number });
     assert.ok(profileUpdates.length >= 2);
-    assert.equal(profileUpdates.at(-1)?.score, 250);
+    assert.equal(profileUpdates.at(-1)?.score, 20);
 
     const buildingRemoved = broadcast.find((event) => event.type === "building.demolished");
     assert.ok(buildingRemoved);
@@ -3147,6 +3150,7 @@ test("orb drop invokes notifier adapter with authoritative payload", async () =>
         maxHealth: 120,
         population: 0
     });
+    runtime.getReadonlyState().cities.get(2)!.hadOrbFactory = true;
     runtime.handleRawEvent("attacker", makeEnvelope("orb.drop.request", 2, makeOrbDropPayload(1, 2)));
 
     await new Promise<void>((resolve) => {
