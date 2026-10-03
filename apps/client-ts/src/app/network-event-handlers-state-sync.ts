@@ -22,6 +22,10 @@ export const auxHandlers: {
         state.chat.rateLimitedUntil = payload.retryAt;
         state.chat.rateLimitedScope = payload.scope;
     },
+    "city.layout.result": (state, payload) => {
+        state.ui.optionsCityImportApplying = false;
+        state.ui.optionsCityImportStatus = payload.message;
+    },
     "city.finance": (state, payload) => {
         const canBuildStates = new Map<number, number>();
         for (const entry of payload.canBuildStates ?? []) {

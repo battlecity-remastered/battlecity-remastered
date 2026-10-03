@@ -25,6 +25,7 @@ const EXPECTED_APPLIED_EVENT_TYPES = [
     "chat.message",
     "chat.rate_limit",
     "city.finance",
+    "city.layout.result",
     "research.update",
     "factory.stock",
     "inventory.update",

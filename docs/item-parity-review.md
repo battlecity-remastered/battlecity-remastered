@@ -57,7 +57,7 @@ Hidden hazards, sleepers and cloaked players are visually hidden but their world
 
 ### City-import settings
 
-The old settings pasted a builder JSON export and replaced the current city on the server. The remaining TS `OptionsModal` ignores pasted JSON and loads `demo.city` into local state; the Three.js live entry does not instantiate it. The actual settings import did **not** make it over.
+The old settings pasted a builder JSON export and replaced the current city on the server. The remaining TS `OptionsModal` ignores pasted JSON and loads `demo.city` into local state; the Three.js live entry does not instantiate it. Restored in v1.1.5 through the Three.js Settings/F2 dialog and an authoritative, mayor-only server import. Invalid exports are rejected before replacement; existing builder JSON aliases, command-centre placement, population links and installations are supported.
 
 ## Validation evidence
 

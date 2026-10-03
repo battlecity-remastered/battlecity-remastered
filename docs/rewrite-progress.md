@@ -940,3 +940,7 @@ checks, lint and the production build pass.
 
 ### Orb follow-up — 3 October 2026
 Restored historic orb eligibility, variable bounty, team score/assist credit and city reset/eviction; the existing inventory navigation consumes the corrected finance flags. All clients receive the orb ground shake, respecting reduced motion. Orb destruction uses the bomb breakup effects for buildings and towers, including demo playback. City-import settings remain open.
+
+## Live city builder import (2026-10-03)
+
+Restored mayor-only builder JSON import through Settings/F2. Server checks all entries, map bounds, terrain, overlaps and duplicate non-housing types before replacing the current city. The export city ID is ignored; offsets follow the current command centre. Buildings, population links, defenses and hazards synchronize to every client. Imported bombs are unarmed; mines and DFGs retain their original active behavior. Replacement clears obsolete research/stock/products but preserves cash, scores and orb history. Tests cover rejected imports without mutation, authority, legacy aliases, installation state and live event/schema delivery.

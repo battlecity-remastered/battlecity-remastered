@@ -84,3 +84,7 @@ clear the client's gold appearance; older snapshots remain valid. Nameplates
 follow the existing enemy-cloak visibility rules. Envelope version stays at 1.
 The existing optional `lobby.join.request.authToken` now carries the signed
 session returned by `/api/auth/google`; a raw user ID grants no account access.
+
+### Live city import (2026-10-03)
+
+Additive `city.layout.import.request` carries `{json: string}`; the legacy `city:layout:import` name normalizes to it. `city.layout.result` replies only to the requester with `{cityId, ok, message}`. Successful replacements broadcast existing building, population, defense, hazard, research, stock and finance events. Invalid layouts do not mutate state. Envelope version remains 1.

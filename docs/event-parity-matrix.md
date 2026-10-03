@@ -43,3 +43,5 @@ Pilot presentation extension: `players.snapshot` optionally includes server-owne
 `callsign`, `rankTitle` and `isScoreLeader`. `lobby.join.request.authToken` now
 connects the lobby's verified Google session to original SQLite score identities;
 `score.profile` and `lobby.high_scores` retain their existing payload semantics.
+
+| builder JSON import | `city.layout.import.request` / `city.layout.result` | mayor-only validation and authoritative replacement; normal entity/population/finance broadcasts hydrate peers | implemented; import tests |

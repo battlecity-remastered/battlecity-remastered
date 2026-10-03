@@ -4,6 +4,7 @@ import { isInteractiveKeyboardTarget } from "../input/interactive-target.js";
 import type { EventSender } from "../network/events.js";
 import { getCityDisplayName, resolveCitySpawn } from "../world/city-spawn.js";
 import { applyBuildMenuHotkey, BUILD_TREE, canOpenBuildMenu, resolveBuildMenuEntries } from "./build-menu/BuildMenu.js";
+import { createCityImportPanel } from "./options/city-import-panel.js";
 import "./three-game.css";
 
 const ignoresConsoleShortcut = (event: KeyboardEvent): boolean => event.repeat || isInteractiveKeyboardTarget(event) || event.altKey || event.metaKey;
@@ -13,10 +14,11 @@ const buildingActivity = (building: CityBuilding, cityStock: Map<number, number>
 
 export const createGameConsole = (state: ClientState, send: EventSender, root: HTMLElement, sandbox = false) => {
     const hud = document.createElement("section"); hud.className = "bc-game-command"; hud.dataset.ui = "game-command";
-    hud.innerHTML = `<div class="bc-game-title"><strong>BATTLECITY</strong><span data-field="city"></span></div><div class="bc-game-finance"></div><nav><button data-action="build">BUILD <kbd>F4</kbd></button><button data-action="city">CITY</button><button data-action="population" aria-pressed="false">POPULATION</button><button data-action="help">FIELD MANUAL</button><button data-action="leave">LEAVE CITY</button></nav><div class="bc-game-status" role="status"></div>`;
+    hud.innerHTML = `<div class="bc-game-title"><strong>BATTLECITY</strong><span data-field="city"></span><button class="bc-settings-toggle" data-action="settings" title="Settings · F2">SETTINGS</button></div><div class="bc-game-finance"></div><nav><button data-action="build">BUILD <kbd>F4</kbd></button><button data-action="city">CITY</button><button data-action="population" aria-pressed="false">POPULATION</button><button data-action="help">FIELD MANUAL</button><button data-action="leave">LEAVE CITY</button></nav><div class="bc-game-status" role="status"></div>`;
+    const settings = createCityImportPanel(state, send, root, sandbox);
     const panel = document.createElement("section"); panel.className = "bc-construction"; panel.dataset.ui = "construction"; panel.hidden = true;
     panel.innerHTML = `<header><div><h2>Construction <kbd>F4</kbd></h2></div><button data-action="close" aria-label="Close construction">×</button></header><div class="bc-build-grid"></div><div class="bc-research-status"></div><button data-action="demolish"><kbd>0</kbd> Demolish</button>`;
-    const help = document.createElement("section"); help.className = "bc-field-manual"; help.hidden = true; help.innerHTML = `<header><h2>Field manual</h2><button aria-label="Close field manual">×</button></header><p><b>Arrow keys</b> drive · <b>Space / click</b> fire · <b>Q / E</b> select cargo · <b>U</b> collect · <b>D / G</b> drop cargo · <b>Ctrl</b> flares · <b>M</b> tactical map · <b>Right-click / F4</b> construction · <b>F</b> fullscreen · <b>F3</b> diagnostics.</p><p>Mayors build their city. Housing supports two buildings; research unlocks factories and factories produce cargo. Collect lasers or rockets to arm your tank. D (or G) drops selected cargo on the original tile beneath your tank. B drops an armed bomb; V toggles bomb arming; O deploys an orb. Shift+X also drops cargo. Shift fires, Ctrl launches flares. C activates cloak; H uses a medkit. W/A/S remain movement aliases; D retains its classic drop action. The USE and ARM buttons perform those actions directly. A blocked drop stays blocked; it never moves to a neighbouring tile.</p><p>Carry an orb into an enemy command centre’s NO PARKING apron and deploy it to destroy that city. Defend your own apron with walls, turrets, mines and teammates. The radar points you home.</p><p>Chat supports team and global channels. Scores and city assignments are available in the lobby. L leaves the city and returns there.</p>`;
+    const help = document.createElement("section"); help.className = "bc-field-manual"; help.hidden = true; help.innerHTML = `<header><h2>Field manual</h2><button aria-label="Close field manual">×</button></header><p><b>Arrow keys</b> drive · <b>Space / click</b> fire · <b>Q / E</b> select cargo · <b>U</b> collect · <b>D / G</b> drop cargo · <b>Ctrl</b> flares · <b>M</b> tactical map · <b>Right-click / F4</b> construction · <b>F</b> fullscreen · <b>F3</b> diagnostics · <b>F2</b> city import settings.</p><p>Mayors build their city. Housing supports two buildings; research unlocks factories and factories produce cargo. Collect lasers or rockets to arm your tank. D (or G) drops selected cargo on the original tile beneath your tank. B drops an armed bomb; V toggles bomb arming; O deploys an orb. Shift+X also drops cargo. Shift fires, Ctrl launches flares. C activates cloak; H uses a medkit. W/A/S remain movement aliases; D retains its classic drop action. The USE and ARM buttons perform those actions directly. A blocked drop stays blocked; it never moves to a neighbouring tile.</p><p>Carry an orb into an enemy command centre’s NO PARKING apron and deploy it to destroy that city. Defend your own apron with walls, turrets, mines and teammates. The radar points you home.</p><p>Chat supports team and global channels. Scores and city assignments are available in the lobby. L leaves the city and returns there.</p>`;
     const infrastructure = document.createElement("section"); infrastructure.className = "bc-city-infrastructure"; infrastructure.hidden = true; infrastructure.dataset.ui = "city-infrastructure"; infrastructure.innerHTML = '<header><h2>City systems</h2><button aria-label="Close city systems">×</button></header><p>Population supplies production. Each home supports two buildings.</p><div class="bc-city-buildings"></div>';
     root.append(hud, panel, help, infrastructure); let activeResearch: object | undefined, researchEndsAt = 0, citySignature = "", signature = "", statusUntil = 0, previousReason = "", lastRejectionCount = 0;
     const status = (message: string): void => { hud.querySelector(".bc-game-status")!.textContent = message; statusUntil = performance.now() + 6000; };
@@ -48,6 +50,7 @@ export const createGameConsole = (state: ClientState, send: EventSender, root: H
         let handled = true;
         if (isBuildShortcut(event)) toggleBuild();
         else if (event.key.toLowerCase() === "l" && !event.ctrlKey && state.local.id) { send("lobby.leave.request", {}); close(); }
+        else if (event.key === "F2") settings.toggle();
         else if (event.key === "F1") { help.hidden = !help.hidden; state.controls.shoot = false; }
         else if (!panel.hidden && !event.ctrlKey && event.key === "0") demolish();
         else if (!panel.hidden && !event.ctrlKey) { const entry = resolveBuildMenuEntries(state).find(entry => entry.hotkey === event.key && entry.state === "available"); if (entry) chooseBuild(entry.type); else handled = false; }
@@ -56,7 +59,8 @@ export const createGameConsole = (state: ClientState, send: EventSender, root: H
     };
     const outside = (event: PointerEvent): void => { if (event.button === 0 && !panel.hidden && !panel.contains(event.target as Node)) hideBuild(); };
     window.addEventListener("keydown", onKey, true); window.addEventListener("resize", positionBuild); document.addEventListener("pointerdown", outside);
-    const close = (): void => { panel.hidden = true; state.ui.showBuildMenu = false; help.hidden = true; infrastructure.hidden = true; state.ui.buildGhostMode = state.ui.buildDemolishMode = false; state.ui.pendingBuildPlacement = null; };
+    const close = (): void => { settings.close(); panel.hidden = true; state.ui.showBuildMenu = false; help.hidden = true; infrastructure.hidden = true; state.ui.buildGhostMode = state.ui.buildDemolishMode = false; state.ui.pendingBuildPlacement = null; };
+    hud.querySelector('[data-action="settings"]')!.addEventListener("click", settings.toggle);
     hud.querySelector('[data-action="build"]')!.addEventListener("click", () => toggleBuild());
     hud.querySelector('[data-action="population"]')!.addEventListener("click", () => { state.ui.selectedPopulationHouseId = null; state.ui.showPopulationLinks = !state.ui.showPopulationLinks; hud.querySelector('[data-action="population"]')!.setAttribute("aria-pressed", String(state.ui.showPopulationLinks)); status("Each home supports two buildings · links follow actual staffing assignments."); });
     infrastructure.querySelector("button")!.addEventListener("click", () => { infrastructure.hidden = true; });
@@ -91,7 +95,7 @@ export const createGameConsole = (state: ClientState, send: EventSender, root: H
     };
     return {
         toggleBuild, close, status, render(): void {
-            hud.hidden = state.local.id === null;
+            hud.hidden = state.local.id === null; settings.render();
             if (!canOpenBuildMenu(state)) hideBuild();
             panel.hidden = !state.ui.showBuildMenu;
             if (!state.local.id) { hideBuild(); state.ui.buildGhostMode = state.ui.buildDemolishMode = false; return; }
@@ -103,6 +107,6 @@ export const createGameConsole = (state: ClientState, send: EventSender, root: H
             renderConstruction();
             panel.querySelector(".bc-research-status")!.textContent = research?.active ? `RESEARCH: ${BUILD_TREE.find(entry => entry.type === research.active!.researchType)?.label ?? research.active.researchType} · ${Math.max(0, Math.ceil((researchEndsAt - Date.now()) / 1000))}s` : `${research?.completed.length ?? 0} research projects complete`;
             renderCommandStatus();
-        }, dispose(): void { window.removeEventListener("keydown", onKey, true); window.removeEventListener("resize", positionBuild); document.removeEventListener("pointerdown", outside); hud.remove(); panel.remove(); help.remove(); infrastructure.remove(); }
+        }, dispose(): void { window.removeEventListener("keydown", onKey, true); window.removeEventListener("resize", positionBuild); document.removeEventListener("pointerdown", outside); settings.dispose(); hud.remove(); panel.remove(); help.remove(); infrastructure.remove(); }
     };
 };

@@ -117,4 +117,4 @@ Last updated: 2026-02-24
 - [x] Compact, cloak-aware enemy hull meters and persistent themed guest callsigns.
 - [x] Restore historical orb eligibility and variable bounty, team orb/assist credit, complete city reset and player eviction.
 - [x] Broadcast orb ground shake to all clients and use bomb destruction for buildings/towers, including the demo.
-- [ ] Restore builder JSON city imports through the live settings UI and authoritative server.
+- [x] Restore builder JSON city imports through the live settings UI and authoritative server.
