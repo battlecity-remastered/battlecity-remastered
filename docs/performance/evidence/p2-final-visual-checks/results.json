@@ -1,0 +1,163 @@
+[
+  {
+    "name": "capture-demo-close",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "demo",
+      "720",
+      "close"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-demo-close",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-demo-close/frame.png",
+      "docs/performance/evidence/p2-final-demo-close/frame.png",
+      "docs/performance/evidence/p2-final-demo-close-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-demo-normal",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "demo",
+      "720",
+      "normal"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-demo-normal",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-demo-normal/frame.png",
+      "docs/performance/evidence/p2-final-demo-normal/frame.png",
+      "docs/performance/evidence/p2-final-demo-normal-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-demo-wide",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "demo",
+      "720",
+      "wide"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-demo-wide",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-demo-wide/frame.png",
+      "docs/performance/evidence/p2-final-demo-wide/frame.png",
+      "docs/performance/evidence/p2-final-demo-wide-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-demo-lava",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "demo",
+      "720",
+      "lava"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-demo-lava",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-demo-lava/frame.png",
+      "docs/performance/evidence/p2-final-demo-lava/frame.png",
+      "docs/performance/evidence/p2-final-demo-lava-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-live-normal",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "live",
+      "720",
+      "normal"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-live-normal",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-live-normal/frame.png",
+      "docs/performance/evidence/p2-final-live-normal/frame.png",
+      "docs/performance/evidence/p2-final-live-normal-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-live-defenders",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "live",
+      "720",
+      "defenders"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-live-defenders",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-live-defenders/frame.png",
+      "docs/performance/evidence/p2-final-live-defenders/frame.png",
+      "docs/performance/evidence/p2-final-live-defenders-comparison"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "capture-live-pickup",
+    "command": [
+      "node",
+      "scripts/performance/run.mjs",
+      "p2-final",
+      "live",
+      "720",
+      "pickup"
+    ],
+    "exitCode": 0
+  },
+  {
+    "name": "compare-live-pickup",
+    "command": [
+      ".venv/bin/python",
+      "scripts/performance/compare.py",
+      "docs/performance/evidence/gameplay-final-live-pickup/frame.png",
+      "docs/performance/evidence/p2-final-live-pickup/frame.png",
+      "docs/performance/evidence/p2-final-live-pickup-comparison"
+    ],
+    "exitCode": 0
+  }
+]

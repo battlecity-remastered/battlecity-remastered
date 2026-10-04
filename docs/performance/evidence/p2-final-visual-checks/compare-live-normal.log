@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-final-live-normal/frame.png",
+  "current": "docs/performance/evidence/p2-final-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.023123914930555555,
+  "max_channel_error": 134,
+  "changed_pixel_fraction": 0.03452799479166667,
+  "pixel_fraction_above_8": 0.00032877604166666667,
+  "pixel_fraction_above_32": 7.486979166666666e-05,
+  "rmse": 0.5055540054539728
+}

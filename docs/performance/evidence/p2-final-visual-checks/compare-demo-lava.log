@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-final-demo-lava/frame.png",
+  "current": "docs/performance/evidence/p2-final-demo-lava/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.012305049189814815,
+  "max_channel_error": 22,
+  "changed_pixel_fraction": 0.03031467013888889,
+  "pixel_fraction_above_8": 4.340277777777778e-05,
+  "pixel_fraction_above_32": 0.0,
+  "rmse": 0.13523893250739868
+}

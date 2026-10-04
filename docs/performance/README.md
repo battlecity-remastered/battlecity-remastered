@@ -2,6 +2,8 @@
 
 Read [REPORT.md](REPORT.md) for conclusions and [EXPERIMENTS.md](EXPERIMENTS.md) for every attempted optimisation, diagnostic, rejection and measurement correction. [experiment-inventory.json](experiment-inventory.json) indexes raw artifacts; [summary.json](summary.json) contains pooled original/final statistics. The repository's `AGENTS.md` points here so future agents can find this work.
 
+The subsequent cycle is recorded separately in [FOLLOWUP-2026-10-04.md](FOLLOWUP-2026-10-04.md). Use fresh labels for its visual suite (`node scripts/performance/run-followup-validation.mjs my-new-label`) and larger city-arrival diagnostic (`PERF_TRANSITION=city node scripts/performance/run.mjs my-new-label live 360`). Loading preparation now has a separate real-wall-clock `preparationMs` field; the older `cityPrepareMs` diagnostic uses the replay's frozen simulation clock and is not a valid loading timer.
+
 ## Workload
 
 `apps/client-ts/performance.html` is a separate development entry. It calls the production Three.js battlefield, movement/collision, turret simulation, live-world interpolation and cannon effects. It does not replace the renderer with a synthetic scene.

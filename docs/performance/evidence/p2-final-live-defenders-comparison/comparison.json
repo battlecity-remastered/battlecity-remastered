@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-final-live-defenders/frame.png",
+  "current": "docs/performance/evidence/p2-final-live-defenders/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.026511863425925927,
+  "max_channel_error": 204,
+  "changed_pixel_fraction": 0.04422417534722222,
+  "pixel_fraction_above_8": 0.0003461371527777778,
+  "pixel_fraction_above_32": 7.595486111111111e-05,
+  "rmse": 0.5073233933724749
+}

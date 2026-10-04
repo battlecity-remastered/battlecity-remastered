@@ -2,11 +2,13 @@ import * as THREE from "three";
 import type { ClientState } from "../../app/state.js";
 import { fragmentShader1, fragmentShader2 } from "./research-display-shaders.js";
 import { createResearchStatus, demoResearchStatus } from "./research-status.js";
+import { createResearchEdgeCache } from "./research-edge-cache.js";
 
 // Render the actual item model into the laboratory screen. Two small offscreen
 // views share the scene clock, while their glass/scan effects run every frame.
 export const createResearchDisplays = (renderer: THREE.WebGLRenderer, environment: THREE.Texture) => {
     const clock = { value: 0 };
+    const edgeCache = createResearchEdgeCache();
     const statusClock = createResearchStatus();
     let showroomStart: number | undefined;
     let statusSignature = "[]";
@@ -78,8 +80,8 @@ export const createResearchDisplays = (renderer: THREE.WebGLRenderer, environmen
                 resources.push(hologram);
                 child.material = hologram;
                 // Fine edge light keeps the weapon recognizable against dark glass.
-                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(child.geometry, 32), new THREE.LineBasicMaterial({ color: 0x72e8ff, transparent: true, opacity: 0.34 }));
-                resources.push(edges.geometry, edges.material as THREE.Material);
+                const edges = new THREE.LineSegments(edgeCache.get(child.geometry), new THREE.LineBasicMaterial({ color: 0x72e8ff, transparent: true, opacity: 0.34 }));
+                resources.push(edges.material as THREE.Material);
                 child.add(edges);
             });
             const turntable = new THREE.Group();
@@ -160,7 +162,8 @@ export const createResearchDisplays = (renderer: THREE.WebGLRenderer, environmen
             renderer.setRenderTarget(previousTarget);
             renderer.setClearColor(savedColor, previousAlpha);
         },
-        async prepare(): Promise<void> {
+        async prepare(templates: Iterable<THREE.Object3D> = []): Promise<void> {
+            edgeCache.prepare(templates);
             for (const display of displays) {
                 const previous = renderer.getRenderTarget();
                 try { renderer.setRenderTarget(display.target); await renderer.compileAsync(display.scene, display.camera); renderer.render(display.scene, display.camera); }
@@ -174,6 +177,7 @@ export const createResearchDisplays = (renderer: THREE.WebGLRenderer, environmen
                 display.resources.forEach(resource => resource.dispose());
             }
             displays.length = 0;
+            edgeCache.dispose();
         }
     };
 };

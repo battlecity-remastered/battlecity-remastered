@@ -1,0 +1,2273 @@
+{
+  "before": {
+    "labels": [
+      "p2-city-control-1-live",
+      "p2-city-control-2-live",
+      "p2-city-control-3-live"
+    ],
+    "fps": 24.39514717281311,
+    "frameMs": {
+      "samples": 1080,
+      "mean": 40.991759259170955,
+      "p50": 39.299999952316284,
+      "p95": 52.200000047683716,
+      "p99": 58.60000014305115,
+      "worst": 306.10000014305115
+    },
+    "cpuMs": {
+      "samples": 1080,
+      "mean": 24.010000002825702,
+      "p50": 22.5,
+      "p95": 33.40000009536743,
+      "p99": 42.200000047683716,
+      "worst": 301.19999980926514
+    },
+    "gpuMs": {
+      "samples": 1080,
+      "mean": 35.43324565833336,
+      "p50": 34.514166,
+      "p95": 42.726916,
+      "p99": 52.541333,
+      "worst": 65.713166
+    },
+    "calls": {
+      "samples": 1080,
+      "mean": 877.1972222222222,
+      "p50": 889,
+      "p95": 927,
+      "p99": 932,
+      "worst": 934
+    },
+    "triangles": {
+      "samples": 1080,
+      "mean": 1592293.8277777778,
+      "p50": 1636290,
+      "p95": 1659972,
+      "p99": 1661362,
+      "worst": 1661410
+    },
+    "visible": {
+      "samples": 1080,
+      "mean": 242.46944444444443,
+      "p50": 244,
+      "p95": 256,
+      "p99": 257,
+      "worst": 257
+    },
+    "programs": [
+      118,
+      118,
+      118
+    ],
+    "memory": [
+      {
+        "geometries": 216,
+        "textures": 81
+      },
+      {
+        "geometries": 216,
+        "textures": 81
+      },
+      {
+        "geometries": 216,
+        "textures": 81
+      }
+    ],
+    "gc": [
+      {
+        "events": 37,
+        "totalMs": 38.272,
+        "worstMs": 10.69
+      },
+      {
+        "events": 37,
+        "totalMs": 36.86399999999999,
+        "worstMs": 8.693
+      },
+      {
+        "events": 37,
+        "totalMs": 34.771,
+        "worstMs": 8.04
+      }
+    ],
+    "arrivalCpuMs": {
+      "samples": 3,
+      "mean": 279.0333333015442,
+      "p50": 285.2000000476837,
+      "p95": 301.19999980926514,
+      "p99": 301.19999980926514,
+      "worst": 301.19999980926514
+    }
+  },
+  "after": {
+    "labels": [
+      "p2-city-edge-cache-1-live",
+      "p2-city-edge-cache-2-live",
+      "p2-city-edge-cache-3-live"
+    ],
+    "fps": 24.133538915331503,
+    "frameMs": {
+      "samples": 1080,
+      "mean": 41.43611111111111,
+      "p50": 39.200000047683716,
+      "p95": 56.59999990463257,
+      "p99": 68.29999995231628,
+      "worst": 139.40000009536743
+    },
+    "cpuMs": {
+      "samples": 1080,
+      "mean": 25.189537033328303,
+      "p50": 22.59999990463257,
+      "p95": 41.5,
+      "p99": 56.10000014305115,
+      "worst": 134.5
+    },
+    "gpuMs": {
+      "samples": 1080,
+      "mean": 35.77410102870369,
+      "p50": 34.445999,
+      "p95": 44.721999,
+      "p99": 55.208749,
+      "worst": 64.578666
+    },
+    "calls": {
+      "samples": 1080,
+      "mean": 877.1972222222222,
+      "p50": 889,
+      "p95": 927,
+      "p99": 932,
+      "worst": 934
+    },
+    "triangles": {
+      "samples": 1080,
+      "mean": 1592293.8277777778,
+      "p50": 1636290,
+      "p95": 1659972,
+      "p99": 1661362,
+      "worst": 1661410
+    },
+    "visible": {
+      "samples": 1080,
+      "mean": 242.46944444444443,
+      "p50": 244,
+      "p95": 256,
+      "p99": 257,
+      "worst": 257
+    },
+    "programs": [
+      118,
+      118,
+      118
+    ],
+    "memory": [
+      {
+        "geometries": 216,
+        "textures": 81
+      },
+      {
+        "geometries": 216,
+        "textures": 81
+      },
+      {
+        "geometries": 216,
+        "textures": 81
+      }
+    ],
+    "gc": [
+      {
+        "events": 36,
+        "totalMs": 41.86200000000001,
+        "worstMs": 11.875
+      },
+      {
+        "events": 36,
+        "totalMs": 37.73900000000002,
+        "worstMs": 9.258
+      },
+      {
+        "events": 36,
+        "totalMs": 76.284,
+        "worstMs": 42.937
+      }
+    ],
+    "arrivalCpuMs": {
+      "samples": 3,
+      "mean": 128.83333333333334,
+      "p50": 126.09999990463257,
+      "p95": 134.5,
+      "p99": 134.5,
+      "worst": 134.5
+    }
+  },
+  "fpsChangePercent": -1.0723782710897245,
+  "arrivalCpuReductionPercent": 53.82869429649595,
+  "worstFrameReductionPercent": 54.45932700744169,
+  "long": {
+    "before": {
+      "labels": [
+        "p2-long-control-1-live",
+        "p2-long-control-2-live"
+      ],
+      "fps": 24.729903089530257,
+      "frameMs": {
+        "samples": 1440,
+        "mean": 40.43687500026491,
+        "p50": 39,
+        "p95": 51.299999952316284,
+        "p99": 59.200000047683716,
+        "worst": 275.7000000476837
+      },
+      "cpuMs": {
+        "samples": 1440,
+        "mean": 23.51333333104849,
+        "p50": 21.699999809265137,
+        "p95": 35.700000047683716,
+        "p99": 43.299999952316284,
+        "worst": 269.5
+      },
+      "gpuMs": {
+        "samples": 1440,
+        "mean": 35.17136681249998,
+        "p50": 34.445833,
+        "p95": 41.325666,
+        "p99": 47.136583,
+        "worst": 60.953
+      },
+      "calls": {
+        "samples": 1440,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 1440,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 1440,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "programs": [
+        118,
+        118
+      ],
+      "memory": [
+        {
+          "geometries": 216,
+          "textures": 81
+        },
+        {
+          "geometries": 216,
+          "textures": 81
+        }
+      ],
+      "gc": [
+        {
+          "events": 64,
+          "totalMs": 50.855000000000004,
+          "worstMs": 8.07
+        },
+        {
+          "events": 64,
+          "totalMs": 69.78899999999997,
+          "worstMs": 25.025
+        }
+      ],
+      "arrivalCpuMs": {
+        "samples": 2,
+        "mean": 266.0500000715256,
+        "p50": 262.60000014305115,
+        "p95": 269.5,
+        "p99": 269.5,
+        "worst": 269.5
+      }
+    },
+    "after": {
+      "labels": [
+        "p2-long-final-1-live",
+        "p2-long-final-2-live"
+      ],
+      "fps": 24.55351814398692,
+      "frameMs": {
+        "samples": 1440,
+        "mean": 40.72736111117734,
+        "p50": 39.19999980926514,
+        "p95": 52.60000014305115,
+        "p99": 58.299999952316284,
+        "worst": 142.79999995231628
+      },
+      "cpuMs": {
+        "samples": 1440,
+        "mean": 25.638611116343075,
+        "p50": 22,
+        "p95": 40.799999952316284,
+        "p99": 46.60000014305115,
+        "worst": 136.60000014305115
+      },
+      "gpuMs": {
+        "samples": 1440,
+        "mean": 35.33667855972216,
+        "p50": 34.530583,
+        "p95": 42.035416,
+        "p99": 45.730833,
+        "worst": 59.076666
+      },
+      "calls": {
+        "samples": 1440,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 1440,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 1440,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "programs": [
+        118,
+        118
+      ],
+      "memory": [
+        {
+          "geometries": 216,
+          "textures": 81
+        },
+        {
+          "geometries": 216,
+          "textures": 81
+        }
+      ],
+      "gc": [
+        {
+          "events": 63,
+          "totalMs": 75.04499999999999,
+          "worstMs": 23.011
+        },
+        {
+          "events": 62,
+          "totalMs": 63.52199999999999,
+          "worstMs": 12.105
+        }
+      ],
+      "arrivalCpuMs": {
+        "samples": 2,
+        "mean": 122.85000014305115,
+        "p50": 109.10000014305115,
+        "p95": 136.60000014305115,
+        "p99": 136.60000014305115,
+        "worst": 136.60000014305115
+      }
+    },
+    "fpsChangePercent": -0.7132455994864451,
+    "arrivalCpuReductionPercent": 53.82446904340393,
+    "worstFrameReductionPercent": 48.204570211237474
+  },
+  "inventory": [
+    {
+      "label": "p2-baseline-1-demo",
+      "fps": 20.148483127017695,
+      "frameMs": {
+        "samples": 720,
+        "mean": 49.631527777844006,
+        "p50": 46.5,
+        "p95": 73.80000019073486,
+        "p99": 87.70000004768372,
+        "worst": 99
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 20.620833330021963,
+        "p50": 19.200000047683716,
+        "p95": 30.09999990463257,
+        "p99": 36.10000014305115,
+        "worst": 57.59999990463257
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 42.90650403750003,
+        "p50": 39.87975,
+        "p95": 63.616666,
+        "p99": 78.496833,
+        "worst": 83.003166
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 40.039,
+        "worstMs": 10.115
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 29.100000143051147,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-baseline-2-demo",
+      "fps": 23.15522037659393,
+      "frameMs": {
+        "samples": 720,
+        "mean": 43.18680555555556,
+        "p50": 42.40000009536743,
+        "p95": 55.5,
+        "p99": 62.10000014305115,
+        "worst": 97
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 18.537500003642506,
+        "p50": 17.5,
+        "p95": 25.700000047683716,
+        "p99": 33.30000019073486,
+        "worst": 66.19999980926514
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 37.50380079722225,
+        "p50": 36.968666,
+        "p95": 47.756833,
+        "p99": 50.904833,
+        "worst": 60.0185
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 50.757999999999996,
+        "worstMs": 20.577
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 23.699999809265137,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-coalesced-live",
+      "fps": 24.635767027602363,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.5913888891538,
+        "p50": 39,
+        "p95": 53.39999985694885,
+        "p99": 58.700000047683716,
+        "worst": 244.59999990463257
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 23.406111114554935,
+        "p50": 22,
+        "p95": 30.700000047683716,
+        "p99": 44.299999952316284,
+        "worst": 239.39999985694885
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.17073431111113,
+        "p50": 34.206583,
+        "p95": 40.474332,
+        "p99": 53.650333,
+        "worst": 55.547999
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 37,
+        "totalMs": 37.111,
+        "worstMs": 9.772
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 239.39999985694885,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-control-1-live",
+      "fps": 24.28756476668311,
+      "frameMs": {
+        "samples": 360,
+        "mean": 41.173333333598244,
+        "p50": 39.200000047683716,
+        "p95": 53.700000047683716,
+        "p99": 59.799999952316284,
+        "worst": 255.40000009536743
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 24.00611111521721,
+        "p50": 22.299999952316284,
+        "p95": 35.299999952316284,
+        "p99": 44.69999980926514,
+        "worst": 250.70000004768372
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.589077619444446,
+        "p50": 34.445833,
+        "p95": 43.862832,
+        "p99": 53.492,
+        "worst": 65.713166
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 37,
+        "totalMs": 38.272,
+        "worstMs": 10.69
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 250.70000004768372,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-control-2-live",
+      "fps": 24.474145784566403,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.85944444404708,
+        "p50": 39.299999952316284,
+        "p95": 46.60000014305115,
+        "p99": 57.799999952316284,
+        "worst": 306.10000014305115
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 23.740277777115505,
+        "p50": 22.5,
+        "p95": 29,
+        "p99": 36.5,
+        "worst": 301.19999980926514
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.42295375555557,
+        "p50": 34.486666,
+        "p95": 40.522416,
+        "p99": 52.305416,
+        "worst": 57.36425
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 37,
+        "totalMs": 36.86399999999999,
+        "worstMs": 8.693
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 301.19999980926514,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-control-3-live",
+      "fps": 24.424497771343596,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.94249999986754,
+        "p50": 39.30000019073486,
+        "p95": 49,
+        "p99": 58.60000014305115,
+        "worst": 290.09999990463257
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 24.283611116144392,
+        "p50": 22.700000047683716,
+        "p95": 33.700000047683716,
+        "p99": 38.700000047683716,
+        "worst": 285.2000000476837
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.28770559999998,
+        "p50": 34.566416,
+        "p95": 40.586166,
+        "p99": 51.525166,
+        "worst": 54.1495
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 37,
+        "totalMs": 34.771,
+        "worstMs": 8.04
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 2062.2999999523163,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 285.2000000476837,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-control-visual-live-normal",
+      "preparationMs": 1942.2000000476837,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-edge-cache-1-live",
+      "fps": 24.431625381744144,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.93055555555556,
+        "p50": 39.200000047683716,
+        "p95": 55.09999990463257,
+        "p99": 64.79999995231628,
+        "worst": 139.40000009536743
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 23.84083333346579,
+        "p50": 22.40000009536743,
+        "p95": 34.799999952316284,
+        "p99": 41.700000047683716,
+        "worst": 134.5
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.44885557222223,
+        "p50": 34.320833,
+        "p95": 43.392249,
+        "p99": 52.752082,
+        "worst": 57.252249
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 41.86200000000001,
+        "worstMs": 11.875
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 134.5,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-edge-cache-2-live",
+      "fps": 24.62161367328309,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.61472222208977,
+        "p50": 39,
+        "p95": 54.39999985694885,
+        "p99": 61,
+        "worst": 130.69999980926514
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 23.45305554734336,
+        "p50": 21.90000009536743,
+        "p95": 33.39999985694885,
+        "p99": 46.299999952316284,
+        "worst": 125.90000009536743
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.40867918055557,
+        "p50": 34.231583,
+        "p95": 44.721999,
+        "p99": 53.497833,
+        "worst": 55.752416
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 37.73900000000002,
+        "worstMs": 9.258
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 125.90000009536743,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-edge-cache-3-live",
+      "fps": 23.384671347858998,
+      "frameMs": {
+        "samples": 360,
+        "mean": 42.76305555568801,
+        "p50": 39.90000009536743,
+        "p95": 59,
+        "p99": 79.70000004768372,
+        "worst": 132.39999985694885
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 28.274722219175764,
+        "p50": 24.799999952316284,
+        "p95": 48.5,
+        "p99": 63.90000009536743,
+        "worst": 126.09999990463257
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 36.464768333333346,
+        "p50": 35.144082,
+        "p95": 47.93375,
+        "p99": 60.609249,
+        "worst": 64.578666
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 76.284,
+        "worstMs": 42.937
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 1994.5,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 126.09999990463257,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-final-visual-live-normal",
+      "preparationMs": 1967.0999999046326,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-city-single-merge-live",
+      "fps": 24.440914090028727,
+      "frameMs": {
+        "samples": 360,
+        "mean": 40.91500000026491,
+        "p50": 39.09999990463257,
+        "p95": 53.5,
+        "p99": 60.60000014305115,
+        "worst": 228.40000009536743
+      },
+      "cpuMs": {
+        "samples": 360,
+        "mean": 23.800555549727545,
+        "p50": 22.40000009536743,
+        "p95": 33.39999985694885,
+        "p99": 42.10000014305115,
+        "worst": 222.60000014305115
+      },
+      "gpuMs": {
+        "samples": 360,
+        "mean": 35.308906994444484,
+        "p50": 34.227582,
+        "p95": 42.046833,
+        "p99": 52.105166,
+        "worst": 59.097416
+      },
+      "calls": {
+        "samples": 360,
+        "mean": 877.1972222222222,
+        "p50": 889,
+        "p95": 927,
+        "p99": 932,
+        "worst": 934
+      },
+      "triangles": {
+        "samples": 360,
+        "mean": 1592293.8277777778,
+        "p50": 1636290,
+        "p95": 1659972,
+        "p99": 1661362,
+        "worst": 1661410
+      },
+      "visible": {
+        "samples": 360,
+        "mean": 242.46944444444443,
+        "p50": 244,
+        "p95": 256,
+        "p99": 257,
+        "worst": 257
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 40.291000000000004,
+        "worstMs": 11.809
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 222.60000014305115,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-control-current-demo",
+      "fps": 10.079078772213677,
+      "frameMs": {
+        "samples": 720,
+        "mean": 99.21541666653421,
+        "p50": 94.5,
+        "p95": 170.29999995231628,
+        "p99": 209.79999995231628,
+        "worst": 272.90000009536743
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 62.44694444735845,
+        "p50": 51.799999952316284,
+        "p95": 130.70000004768372,
+        "p99": 198.20000004768372,
+        "worst": 255.10000014305115
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 73.16865897916665,
+        "p50": 69.64525,
+        "p95": 118.520166,
+        "p99": 147.847833,
+        "worst": 180.747416
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 96.429,
+        "worstMs": 11.829
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 26.5,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-control-visual-demo-normal",
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-demo-close",
+      "preparationMs": 1805.7000000476837,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-demo-lava",
+      "preparationMs": 1709.7000000476837,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-demo-normal",
+      "preparationMs": 1780.2999999523163,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-demo-wide",
+      "preparationMs": 1684.5999999046326,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-live-defenders",
+      "preparationMs": 1826.0999999046326,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-live-normal",
+      "preparationMs": 2810.9000000953674,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-final-live-pickup",
+      "preparationMs": 1812,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-long-control-1-live",
+      "fps": 24.459180345531266,
+      "frameMs": {
+        "samples": 720,
+        "mean": 40.88444444470935,
+        "p50": 39.19999980926514,
+        "p95": 52.39999985694885,
+        "p99": 59.200000047683716,
+        "worst": 267.2999999523163
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 23.800138886769613,
+        "p50": 21.699999809265137,
+        "p95": 37.799999952316284,
+        "p99": 43.299999952316284,
+        "worst": 262.60000014305115
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 35.49917341944445,
+        "p50": 34.608916,
+        "p95": 42.407999,
+        "p99": 47.169166,
+        "worst": 60.953
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 64,
+        "totalMs": 50.855000000000004,
+        "worstMs": 8.07
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 1748.5999999046326,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 262.60000014305115,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-long-control-2-live",
+      "fps": 25.00668581513913,
+      "frameMs": {
+        "samples": 720,
+        "mean": 39.989305555820465,
+        "p50": 38.89999985694885,
+        "p95": 47.5,
+        "p99": 58.90000009536743,
+        "worst": 275.7000000476837
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 23.226527775327366,
+        "p50": 21.600000143051147,
+        "p95": 33.39999985694885,
+        "p99": 42,
+        "worst": 269.5
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 34.84356020555556,
+        "p50": 34.326666,
+        "p95": 39.128916,
+        "p99": 46.918666,
+        "worst": 50.927416
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 64,
+        "totalMs": 69.78899999999997,
+        "worstMs": 25.025
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 1879.7999999523163,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 269.5,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-long-final-1-live",
+      "fps": 24.484715756135547,
+      "frameMs": {
+        "samples": 720,
+        "mean": 40.841805555754235,
+        "p50": 38.799999952316284,
+        "p95": 54.10000014305115,
+        "p99": 59.80000019073486,
+        "worst": 113.60000014305115
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 23.92569445239173,
+        "p50": 21,
+        "p95": 41.09999990463257,
+        "p99": 49.700000047683716,
+        "worst": 109.10000014305115
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 35.28623975138888,
+        "p50": 34.207582,
+        "p95": 42.819499,
+        "p99": 46.524582,
+        "worst": 59.076666
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 63,
+        "totalMs": 75.04499999999999,
+        "worstMs": 23.011
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 1778.1999998092651,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 109.10000014305115,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-long-final-2-live",
+      "fps": 24.622708292763114,
+      "frameMs": {
+        "samples": 720,
+        "mean": 40.61291666660044,
+        "p50": 39.5,
+        "p95": 49.09999990463257,
+        "p99": 55.90000009536743,
+        "worst": 142.79999995231628
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 27.35152778029442,
+        "p50": 23.5,
+        "p95": 40,
+        "p99": 44.19999980926514,
+        "worst": 136.60000014305115
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 35.38711736805557,
+        "p50": 34.7685,
+        "p95": 40.988249,
+        "p99": 44.807916,
+        "worst": 47.239083
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 885.3319444444444,
+        "p50": 884,
+        "p95": 927,
+        "p99": 934,
+        "worst": 937
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1598801.3527777777,
+        "p50": 1618260,
+        "p95": 1659876,
+        "p99": 1661362,
+        "worst": 1661474
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 244.65277777777777,
+        "p50": 243,
+        "p95": 257,
+        "p99": 258,
+        "worst": 259
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 62,
+        "totalMs": 63.52199999999999,
+        "worstMs": 12.105
+      },
+      "graph": {
+        "nodes": 7571,
+        "meshes": 6407,
+        "materials": 550,
+        "shadowCasters": 3670,
+        "shadowLights": 1,
+        "staticMatrices": 6461
+      },
+      "preparationMs": 1825.3000001907349,
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 136.60000014305115,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "0",
+          "prepare": "1",
+          "transition": "city"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-quiet-control-1-demo",
+      "fps": 21.675582756980567,
+      "frameMs": {
+        "samples": 720,
+        "mean": 46.134861111309796,
+        "p50": 43.299999952316284,
+        "p95": 65.19999980926514,
+        "p99": 77.90000009536743,
+        "worst": 101.70000004768372
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 18.56083333061801,
+        "p50": 17.600000143051147,
+        "p95": 27.700000047683716,
+        "p99": 34.59999990463257,
+        "worst": 37.700000047683716
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 40.34108843194444,
+        "p50": 37.950666,
+        "p95": 57.00475,
+        "p99": 66.660166,
+        "worst": 93.883
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 30.46900000000001,
+        "worstMs": 1.992
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 18.40000009536743,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-quiet-control-2-demo",
+      "fps": 16.56341371958577,
+      "frameMs": {
+        "samples": 720,
+        "mean": 60.374027777711554,
+        "p50": 54.200000047683716,
+        "p95": 103.70000004768372,
+        "p99": 130.59999990463257,
+        "worst": 201.70000004768372
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 38.508749996622406,
+        "p50": 32.19999980926514,
+        "p95": 81.29999995231628,
+        "p99": 119.79999995231628,
+        "worst": 198.70000004768372
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 47.09548712222218,
+        "p50": 43.161916,
+        "p95": 81.339166,
+        "p99": 94.907166,
+        "worst": 132.8405
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 62.40899999999999,
+        "worstMs": 6.623
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 53.700000047683716,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-quiet-control-3-demo",
+      "fps": 26.943486037890988,
+      "frameMs": {
+        "samples": 720,
+        "mean": 37.1147222224209,
+        "p50": 36.200000047683716,
+        "p95": 43.90000009536743,
+        "p99": 55.799999952316284,
+        "worst": 72.89999985694885
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 16.689166664414934,
+        "p50": 15.800000190734863,
+        "p95": 22.5,
+        "p99": 29.5,
+        "worst": 42.299999952316284
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 32.14340692500006,
+        "p50": 31.688333,
+        "p95": 34.977916,
+        "p99": 50.179916,
+        "worst": 56.982666
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 26.578999999999994,
+        "worstMs": 1.659
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 2,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 19.90000009536743,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-zero-light-1-demo",
+      "fps": 26.058726234894618,
+      "frameMs": {
+        "samples": 720,
+        "mean": 38.37486111124357,
+        "p50": 36.700000047683716,
+        "p95": 46.5,
+        "p99": 54.60000014305115,
+        "worst": 73
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 17.882777777645323,
+        "p50": 16,
+        "p95": 34.299999952316284,
+        "p99": 38.39999985694885,
+        "worst": 42.59999990463257
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 32.55570994166666,
+        "p50": 31.878666,
+        "p95": 39.619166,
+        "p99": 42.718333,
+        "worst": 50.979
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 193,
+        "totalMs": 143.32400000000004,
+        "worstMs": 31.844
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 3,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 20.5,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-zero-light-2-demo",
+      "fps": 21.568897649681723,
+      "frameMs": {
+        "samples": 720,
+        "mean": 46.36305555535687,
+        "p50": 43.200000047683716,
+        "p95": 68.40000009536743,
+        "p99": 88.70000004768372,
+        "worst": 107.70000004768372
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 18.546666669183306,
+        "p50": 17.5,
+        "p95": 26.200000047683716,
+        "p99": 36.10000014305115,
+        "worst": 46.10000014305115
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 40.27151895972221,
+        "p50": 37.54025,
+        "p95": 61.939583,
+        "p99": 78.88075,
+        "worst": 98.027832
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 28.415999999999997,
+        "worstMs": 1.947
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 2,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 20.59999990463257,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-zero-light-3-demo",
+      "fps": 26.886940415600478,
+      "frameMs": {
+        "samples": 720,
+        "mean": 37.19277777771155,
+        "p50": 36.10000014305115,
+        "p95": 45.40000009536743,
+        "p99": 54.90000009536743,
+        "worst": 64.59999990463257
+      },
+      "cpuMs": {
+        "samples": 720,
+        "mean": 17.17097222076522,
+        "p50": 16.100000143051147,
+        "p95": 25,
+        "p99": 35.700000047683716,
+        "worst": 44.299999952316284
+      },
+      "gpuMs": {
+        "samples": 720,
+        "mean": 31.86301908750005,
+        "p50": 31.437165,
+        "p95": 34.883083,
+        "p99": 48.91075,
+        "worst": 52.57675
+      },
+      "calls": {
+        "samples": 720,
+        "mean": 743.6027777777778,
+        "p50": 757,
+        "p95": 802,
+        "p99": 811,
+        "worst": 820
+      },
+      "triangles": {
+        "samples": 720,
+        "mean": 1165596.286111111,
+        "p50": 1191890,
+        "p95": 1215316,
+        "p99": 1216770,
+        "worst": 1217266
+      },
+      "visible": {
+        "samples": 720,
+        "mean": 225.0222222222222,
+        "p50": 231,
+        "p95": 250,
+        "p99": 252,
+        "worst": 253
+      },
+      "memory": {
+        "geometries": 216,
+        "textures": 81
+      },
+      "programs": 118,
+      "gc": {
+        "events": 36,
+        "totalMs": 26.696000000000005,
+        "worstMs": 1.881
+      },
+      "graph": {
+        "nodes": 6254,
+        "meshes": 5507,
+        "materials": 238,
+        "shadowCasters": 2843,
+        "shadowLights": 1,
+        "staticMatrices": 5585
+      },
+      "shaderEvents": 2,
+      "shaderEventsAfterWarmup": 0,
+      "arrivalCpuMs": 18.100000143051147,
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    },
+    {
+      "label": "p2-zero-light-visual-demo-normal",
+      "configuration": {
+        "url": "http://127.0.0.1:8221",
+        "parameters": {
+          "demo": "1",
+          "prepare": "1"
+        },
+        "simulationHz": 60,
+        "seed": 1729
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/gameplay-final-demo-normal/frame.png",
+  "current": "docs/performance/evidence/p2-final-demo-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.09497214988425927,
+  "max_channel_error": 122,
+  "changed_pixel_fraction": 0.15351128472222222,
+  "pixel_fraction_above_8": 0.0003374565972222222,
+  "pixel_fraction_above_32": 4.6657986111111113e-05,
+  "rmse": 0.484870564892399
+}

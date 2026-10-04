@@ -1,0 +1,34 @@
+diff --git a/apps/client-ts/src/render/three/point-light-cutoff.ts b/apps/client-ts/src/render/three/point-light-cutoff.ts
+index 5ee9eb3a..d44679c1 100644
+--- a/apps/client-ts/src/render/three/point-light-cutoff.ts
++++ b/apps/client-ts/src/render/three/point-light-cutoff.ts
+@@ -3,6 +3,7 @@ import { ShaderChunk } from "three";
+ // Three's PBR loop evaluates every point light, even beyond its finite range.
+ // Outside that range its attenuation is exactly zero: skip the normalization,
+ // attenuation and BRDF work without changing a contributing light's shading.
++// Reserved zero-colour slots also skip the range calculation altogether.
+ export const withPointLightCutoff = (source: string): string => {
+     if (source.includes("bcPointLightDelta")) return source;
+     const begin = "\tPointLight pointLight;";
+@@ -10,8 +11,9 @@ export const withPointLightCutoff = (source: string): string => {
+     const end = "\n\t}\n\t#pragma unroll_loop_end";
+     const sampleAt = source.indexOf(sample), endAt = source.indexOf(end, sampleAt);
+     if (!source.includes(begin) || sampleAt < 0 || endAt < 0) return source;
+-    const guarded = source.slice(0, endAt) + "\n\t\t}" + source.slice(endAt);
++    const guarded = source.slice(0, endAt) + "\n\t\t}\n\t\t}" + source.slice(endAt);
+     return guarded.replace(begin, `${begin}\n\tvec3 bcPointLightDelta;`).replace(sample, `
++        if ( any( notEqual( pointLight.color, vec3( 0.0 ) ) ) ) {
+         bcPointLightDelta = pointLight.position - geometryPosition;
+         if ( pointLight.distance <= 0.0 || dot( bcPointLightDelta, bcPointLightDelta ) < pointLight.distance * pointLight.distance ) {
+ ${sample}`);
+diff --git a/apps/client-ts/test/three-point-light-cutoff.test.ts b/apps/client-ts/test/three-point-light-cutoff.test.ts
+index 675ddfce..56dbfc36 100644
+--- a/apps/client-ts/test/three-point-light-cutoff.test.ts
++++ b/apps/client-ts/test/three-point-light-cutoff.test.ts
+@@ -11,5 +11,6 @@ test("finite-light cutoff guards only the point-light loop and retains the origi
+     const tail = "#if ( NUM_SPOT_LIGHTS > 0 )";
+     assert.equal(patched.slice(patched.indexOf(tail)), source.slice(source.indexOf(tail)), "spot, sun and indirect lighting remain byte-for-byte unchanged");
+     assert.ok(patched.indexOf("dot( bcPointLightDelta") < patched.indexOf("getPointLightInfo( pointLight"));
++    assert.ok(patched.indexOf("any( notEqual( pointLight.color, vec3( 0.0 ) ) )") < patched.indexOf("bcPointLightDelta ="), "zero-colour reserve slots skip even the range arithmetic");
+     assert.equal((patched.match(/RE_Direct\( directLight/g) ?? []).length, (source.match(/RE_Direct\( directLight/g) ?? []).length);
+ });

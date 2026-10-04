@@ -17,7 +17,9 @@ const createMesh = (batch: Batch, materialFor: (source: THREE.Material, kind: st
         return mesh;
     }
     if (batch.sources.every(source => !source.matrixAutoUpdate)) {
-        return new THREE.Mesh(mergeStaticBuildingGeometry(batch.sources), materialFor(first.material as THREE.Material, "merged"));
+        // update() builds this once from final matrices/visibility below. A
+        // provisional merge here would immediately be discarded and rebuilt.
+        return new THREE.Mesh(new THREE.BufferGeometry(), materialFor(first.material as THREE.Material, "merged"));
     }
     let vertices = 0, indices = 0;
     for (const geometry of geometries) { vertices += geometry.attributes.position!.count; indices += geometry.index?.count ?? 0; }
@@ -52,6 +54,7 @@ const refreshBounds = (mesh: THREE.Mesh, sources: THREE.Mesh[], previous: Float6
 // mixed geometry uses native multi-draw with per-object frustum culling.
 export const createMaterialBatches = (scene: THREE.Scene, initialRoots: ReadonlyArray<THREE.Object3D>, multiDraw = true) => {
     const roots = new Set<THREE.Object3D>(), groups = new Map<string, Batch>();
+    const pending = new Set<Batch>();
     const variants = new Map<string, THREE.Material>();
     const materialFor = (source: THREE.Material, kind: string): THREE.Material => {
         if (!source.userData.sharedBuildingFinish && kind !== "merged") return source;
@@ -66,6 +69,7 @@ export const createMaterialBatches = (scene: THREE.Scene, initialRoots: Readonly
     };
     const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
     const resize = (batch: Batch): void => {
+        pending.delete(batch);
         releaseMesh(batch.mesh);
         delete batch.mesh; delete batch.previous; delete batch.ids;
         if (batch.sources.length < 2) { for (const source of batch.sources) source.visible = true; return; }
@@ -77,7 +81,7 @@ export const createMaterialBatches = (scene: THREE.Scene, initialRoots: Readonly
         batch.previous = new Float64Array(batch.sources.length * 16).fill(NaN);
         for (const source of batch.sources) source.visible = false;
     };
-    const register = (root: THREE.Object3D): void => {
+    const register = (root: THREE.Object3D, deferResize = false): void => {
         if (roots.has(root)) return;
         roots.add(root);
         const cell = `${Math.floor((root.userData.renderTileX ?? root.position.x + 256) / 8)},${Math.floor((root.userData.renderTileY ?? root.position.z + 256) / 8)}`;
@@ -90,7 +94,7 @@ export const createMaterialBatches = (scene: THREE.Scene, initialRoots: Readonly
             if (!batch) { batch = { sources: [] }; groups.set(key, batch); }
             batch.sources.push(object); changed.add(batch);
         });
-        for (const batch of changed) resize(batch);
+        for (const batch of changed) { if (deferResize) pending.add(batch); else resize(batch); }
     };
     const unregister = (root: THREE.Object3D): void => {
         if (!roots.delete(root)) return;
@@ -109,6 +113,7 @@ export const createMaterialBatches = (scene: THREE.Scene, initialRoots: Readonly
     };
     const update = (worldMatricesReady = false): void => {
         if (!worldMatricesReady) for (const root of roots) root.updateWorldMatrix(true, true);
+        for (const batch of pending) resize(batch);
         for (const batch of groups.values()) {
             const { mesh, previous } = batch; if (!mesh || !previous) continue;
             let changed = false;
@@ -124,11 +129,11 @@ export const createMaterialBatches = (scene: THREE.Scene, initialRoots: Readonly
             if (changed) refreshBounds(mesh, batch.sources, previous);
         }
     };
-    for (const root of initialRoots) register(root);
+    for (const root of initialRoots) register(root, true);
     update();
     return { register, unregister, update, get count(): number { return [...groups.values()].filter(batch => batch.mesh).length; }, dispose(): void {
         for (const batch of groups.values()) { releaseMesh(batch.mesh); for (const source of batch.sources) source.visible = true; }
-        groups.clear(); roots.clear();
+        groups.clear(); roots.clear(); pending.clear();
         for (const material of variants.values()) material.dispose(); variants.clear();
     } };
 };

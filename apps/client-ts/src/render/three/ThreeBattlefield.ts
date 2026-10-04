@@ -152,7 +152,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         }
         if (demoMode) projectileCollider.register(model, "metal");
         freezeBuildingTransforms(model);
-        buildingBatches?.register(model);
+        buildingBatches?.register(model, true);
         return model;
     };
     for (const building of industrialBuildings) createIndustrialVisual(building);
@@ -204,7 +204,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
         addDroppedCargo(type, state, template, placement);
         return true;
     }, (type, model) => machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model), { map: mapData.map, buildings: industrialBuildings, defenses }, !demoMode, type => actions?.deploy(type, true) ?? false);
-    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { thawBuildingTransforms(model); buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy, model => { freezeBuildingTransforms(model); buildingBatches?.register(model); });
+    const liveWorld = demoMode ? null : createLiveWorld(scene, remoteTankTemplate, inventoryTemplates, industrialAssets.get("defense-turret")!.scene, createIndustrialVisual, (type, model) => { machinery.get(`${FACTORY_PRODUCTS[type]}-item`)?.register(model); if (type === 5) industrialEffects.registerOrb(model); }, model => { thawBuildingTransforms(model); buildingBatches?.unregister(model); for (const effects of machinery.values()) effects.unregister(model); industrialEffects.unregister(model); researchDisplays.unregister(model); }, cannon.destroy, model => { freezeBuildingTransforms(model); buildingBatches?.register(model, true); });
     buildingBatches = renderer.extensions.has("WEBGL_multi_draw") ? createMaterialBatches(scene, batchableBuildings) : createBuildingBatches(scene, batchableBuildings);
     // The color, AO and shadow passes consume the same prepared transforms.
     scene.matrixWorldAutoUpdate = false; scene.matrixAutoUpdate = false;
@@ -233,7 +233,7 @@ export const createThreeBattlefield = async (mapData: LoadedMap, industrialBuild
             sun.position.set(x - 9, 25, z - 8); sun.target.position.set(x, 0, z);
             liveWorld?.update(state, 0); lightWarmup.update(); scene.updateMatrixWorld(); buildingBatches!.update(true);
             await prepareCityModels(renderer, scene, camera, [tank, mayorAsset.scene, centerAsset.scene, ...[...industrialAssets.values()].map(asset => asset.scene), ...scene.children.filter(root => root.userData.renderTileX !== undefined)]);
-            await researchDisplays.prepare();
+            await researchDisplays.prepare(inventoryTemplates.values());
             await inventory.prepare();
             await prepareRenderPasses(renderer, scene, camera, ambientOcclusion.normalMaterial, composer);
             setDiagnostic("cityPrepareMs", (performance.now() - start).toFixed(0));

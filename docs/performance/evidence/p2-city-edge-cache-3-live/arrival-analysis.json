@@ -1,0 +1,166 @@
+{
+  "arrival": {
+    "frame": 180,
+    "intervalMs": 38.30000019073486,
+    "cpuMs": 126.09999990463257,
+    "calls": 916,
+    "triangles": 1657272,
+    "objects": 255,
+    "geometries": 216,
+    "textures": 81,
+    "programs": 118,
+    "heap": 254945178,
+    "x": 1477.9999999999927,
+    "y": 1392,
+    "projectiles": 5
+  },
+  "worst": {
+    "frame": 180,
+    "intervalMs": 38.30000019073486,
+    "cpuMs": 126.09999990463257,
+    "calls": 916,
+    "triangles": 1657272,
+    "objects": 255,
+    "geometries": 216,
+    "textures": 81,
+    "programs": 118,
+    "heap": 254945178,
+    "x": 1477.9999999999927,
+    "y": 1392,
+    "projectiles": 5
+  },
+  "inclusiveProfileMs": [
+    [
+      "update",
+      1126.3409999999992
+    ],
+    [
+      "updateMatrixWorld",
+      471.02599999999984
+    ],
+    [
+      "scene.updateMatrixWorld",
+      430.87599999999986
+    ],
+    [
+      "updateCombat",
+      123.30799999999992
+    ],
+    [
+      "updateMatrix",
+      119.06899999999989
+    ],
+    [
+      "updateTexture",
+      94.57699999999994
+    ],
+    [
+      "updateParticles",
+      51.25
+    ],
+    [
+      "_update",
+      50.273999999999994
+    ],
+    [
+      "mergeStaticBuildingGeometry",
+      48.42700000000001
+    ],
+    [
+      "updateVisibility",
+      36.049
+    ],
+    [
+      "updatePilot",
+      27.732000000000003
+    ],
+    [
+      "createIndustrialVisual",
+      23.494
+    ],
+    [
+      "updateCommonMaterialProperties",
+      22.198
+    ],
+    [
+      "updateBuffer",
+      17.804
+    ],
+    [
+      "updateWorldMatrix",
+      17.794
+    ],
+    [
+      "resize",
+      14.012999999999998
+    ],
+    [
+      "updatePlayers",
+      13.052999999999997
+    ],
+    [
+      "createMesh",
+      12.936999999999998
+    ],
+    [
+      "updatePlacement",
+      12.225999999999999
+    ],
+    [
+      "updateInputs",
+      11.525
+    ],
+    [
+      "updateFlashes",
+      9.669
+    ],
+    [
+      "updateMatrices",
+      7.72
+    ],
+    [
+      "resizeImage",
+      7.502000000000001
+    ],
+    [
+      "registerResearch",
+      7.352
+    ],
+    [
+      "updateTankRole",
+      5.568999999999999
+    ],
+    [
+      "updateMultisampleRenderTarget",
+      5.364000000000001
+    ],
+    [
+      "_updateTime",
+      4.196
+    ],
+    [
+      "updateShells",
+      3.76
+    ],
+    [
+      "updateCasings",
+      3.4800000000000004
+    ],
+    [
+      "updateDefenses",
+      2.159
+    ],
+    [
+      "updateCollapse",
+      1.105
+    ],
+    [
+      "updateStatus",
+      1.098
+    ],
+    [
+      "updateCargo",
+      1.057
+    ]
+  ]
+}

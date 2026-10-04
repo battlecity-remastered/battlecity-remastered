@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { writeFile } from "node:fs/promises";
+
+const output = new URL(".", import.meta.url), origin = "https://playbattlecity.com";
+const publicFile = path => execFileSync("curl", ["--fail", "--silent", "--show-error", `${origin}${path}`]);
+const imageFile = path => execFileSync("ssh", ["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "ubuntu@3.10.140.175", `sudo docker exec battlecity-server cat /app/apps/client-ts/dist${path}`]);
+const digest = bytes => createHash("sha256").update(bytes).digest("hex");
+const health = JSON.parse(publicFile("/health").toString());
+assert.deepEqual(health, { ok: true, service: "server-ts" });
+const actual = publicFile("/"), expected = imageFile("/index.html");
+await writeFile(new URL("public-index.html", output), actual);
+await writeFile(new URL("image-index.html", output), expected);
+assert.equal(digest(actual), digest(expected), "Public HTML differs from released image");
+const asset = expected.toString().match(/<script[^>]*src="(\/assets\/[A-Za-z0-9_-]+\.js)"/)[1];
+assert.ok(asset);
+const actualScript = publicFile(asset), expectedScript = imageFile(asset);
+assert.equal(digest(actualScript), digest(expectedScript), "Public entry script differs from released image");
+await writeFile(new URL("public-verification.json", output), JSON.stringify({ status: "passed", timestamp: new Date().toISOString(), health, htmlSha256: digest(actual), entry: asset, entrySha256: digest(actualScript), entryBytes: actualScript.length }, null, 2));
+console.log("Public health, HTML and entry bundle match the released image");

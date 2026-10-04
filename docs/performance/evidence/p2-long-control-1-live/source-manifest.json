@@ -1,0 +1,325 @@
+{
+  "revision": "49580404b2b627d7290bdfb1e35c1b0d31281bbd",
+  "files": [
+    {
+      "path": "apps/client-ts/src/render/three/ThreeBattlefield.ts",
+      "sha256": "972dea62d41a721ff22f6bb398e54dbfac25fea4dd1de2aa5077283eba9cb38c"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/battlefield-frame.ts",
+      "sha256": "5401b70e1cba2b7c2914060d578cb5cdfe345a140ae55e0aacd680e3ab668ed5"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/battlefield-postprocessing.ts",
+      "sha256": "7ae3fdbad8e79980f5061b146b86640e0791f4544b9c6b329ab183ac0c1546a4"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/battlefield-setup.ts",
+      "sha256": "5f06886c384dfdc0b69b34361b45772ac066834df2517055a2e453c389f5c38d"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/battlefield-types.ts",
+      "sha256": "4b0e37162aa9a6e314e8bcbf7172ee7e8fb471a4183e182bba68386efaaaf481"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/bomb-fuse.ts",
+      "sha256": "a491259008441de4139a8b041d82223634c4f4047f8cef759e0071081f8306e6"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/building-batches.ts",
+      "sha256": "adb15a6ed00aa5b201af82389d105827790a78bf7282f30c88cd053f1db9382f"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/building-transforms.ts",
+      "sha256": "e40b0693d2851883d181291acca109a62187a6d48e81aa2a57c2bb58391e192a"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/camera.ts",
+      "sha256": "486686e86abba338579a45c101f6a5adcd8c337134430cefdb91d1ca091df2d8"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/cannon-audio.ts",
+      "sha256": "7569d03a93cc41ef41e20c66deef0e869e189f79195cffc22b739ff820ae2516"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/cannon-effects-shaders.ts",
+      "sha256": "cd35f80ec40eed5588b3303ee195f7eff9285204d76a2e0ea6b8c735980e3252"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/cannon-effects.ts",
+      "sha256": "243c96c402d28147fced430362c123f223bbed8aa9dd45260489ad5cb1e44b69"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/collision-acceleration.ts",
+      "sha256": "0db94dfc7afbf3a74b0bbf6a46c82966c503ccdbe8fc6b1a64557641fa1c7d92"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/defense-turrets.ts",
+      "sha256": "a50e8963749ff04e81b9d7b4822c6a9f5e1ee5d7a9606274ea95939d4dccbc96"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/demo-combat.ts",
+      "sha256": "0ff9637777cf514c560d837fed30b061ff24fc8070471cbd44a298412331ffdd"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/deployed-defense.ts",
+      "sha256": "9de22651f01f09ad69ab42d16a8efcc2a0af486ec194b977111ccd73dd2c3ffd"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/destruction-effects.ts",
+      "sha256": "f0e34e98538e4ec99a220a8fff44271157ac3cee6fbb28817bb3b9194e595b0b"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/effects-shaders.ts",
+      "sha256": "78683a4c6b814003740f4440f3685a10b70e404e4a22a4670fbdeaa8723c308a"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/effects.ts",
+      "sha256": "1f7147dd340eb372e838860ebca354997c371fcb9babc3f42f1eaf55adc64988"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/ground-pickup-layer.ts",
+      "sha256": "cb21af629d650f16a1ee158c46d9a34a7104bc349d6a1cd1dd600e12cda152e7"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/heat-pass.ts",
+      "sha256": "80cf5668bbee69f29378fa7c069649023cc9c6f14e0f6c9f95e67c163f73d235"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/industrial-demo.ts",
+      "sha256": "1ccdfe5ad13bce8ad515f3f9adb45b7383a74afe23c4f92e4ac6bdf7be7a6e5b"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/inventory-model.ts",
+      "sha256": "83efbb645173416d17e64fd4383443ccd266b580b2e5fee716907a855b9b8112"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/inventory-orb-target.ts",
+      "sha256": "463f1d89c6a13bc0a03e0ee2714caca37668078d063aa731e8280695cd2e2c64"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/inventory-panel.ts",
+      "sha256": "ccadfc5663965cb870d6e2e9517c6c1babd6582774d915392af13cb9dd1b8a9a"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/inventory-radar.ts",
+      "sha256": "bce0449467ddd3f6fa4b76e9a34e8a2c53d43f5b367d8ae58d8aec6f63a28ea1"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/light-variant-warmup.ts",
+      "sha256": "0b84f70f786f5c20f5e3130a9d95a0889ad35daeb46e45134e815933afe5ea07"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/live-world.ts",
+      "sha256": "38484a861df2b534151978af4c7d2e507f01c039b419c13be225339516109299"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/material-batches.ts",
+      "sha256": "16bb7d745d1778d730af2b41050191f709774d406421ae4cdae335afb2991e16"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/material-pool.ts",
+      "sha256": "1bd0ed1804e38964ad5a57712e5b99919087f1e46868676645a3b82c4ad45453"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/multisample-scene-pass.ts",
+      "sha256": "1ab549234290565a46fde51f7ee482b189c8aae605c0574ea30713f19d124178"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/network-combat.ts",
+      "sha256": "6bba9db131926f55344eee988a321464e5bc8344c94b54fa023359cce1b62725"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/orb-ground-shake.ts",
+      "sha256": "8f7793ca544b13f4873fc3c293d5521a3ba896cf72f800ea98bf4b3ea8df8fd4"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/orb-victory-effects.ts",
+      "sha256": "dcd4ed17b4c091b32ba22c409074dd947968f75113058295de72978b0609b990"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/orthographic-ao.ts",
+      "sha256": "a7d3c99c69bddab424e7e97cb0cebaa6fbc0aadc280b6ba2bcbc2af245f562b1"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/pilot-presentation.ts",
+      "sha256": "895eb3e328588583cc39fe4edb532953ee42eb4016ee91a55b57b43c1f9680c8"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/placement-previews.ts",
+      "sha256": "437677d2f58db12cdd3142c2ea547375d044298849101e7f45a7c5a3f752675b"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/point-light-cutoff.ts",
+      "sha256": "e818eb68950f919ae8d86d354cdb25bb60a130d2d03c605a75a08dcab72a3005"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/population-display.ts",
+      "sha256": "366ae49317d526802556677e7a4f455d2856e582efc79096359428c3f7376892"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/postprocess-targets.ts",
+      "sha256": "e49c3a4021191606f08ebf9e68df5c6d857a5f89d0799837ab9c3fd427c69b0e"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/prepare-city-models.ts",
+      "sha256": "b1e74d04d8d7feb1fab4d80597278364a1f123e8bc6e1397274b87b306aad722"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/prepare-render-passes.ts",
+      "sha256": "864ed1f9ab194db0c44e636d1477c80d950044c9ba7b69f02929dc8bb46cdee5"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/projectile-collider.ts",
+      "sha256": "a9ef46436f9814d331fee0b7d16039a94b53cbfd909d2ba3b06a56a5da8f25fc"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/radar-model.ts",
+      "sha256": "2a9474214b13ba173a20a2816e995c8c549456369bef730eee1218960ca7da8d"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/research-display-shaders.ts",
+      "sha256": "d08482fa4dececd74170573375399a926503c71d738cd2e059ed51b82b43cd1e"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/research-display.ts",
+      "sha256": "54965e7d587fd5476f96fcb898d14d8b71ff32564a3134e2c0b7a5fd85db9cc8"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/research-edge-cache.ts",
+      "sha256": "0bae087a8117a14209a78d6a96688f87c2a3ff3443bb8f008571c422a9916f9f"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/research-status.ts",
+      "sha256": "6ee1f65e79db7c6712eb51722c96b3d4d37b916cc037bd8fc6c723af84420bee"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/shader-warmup-scene.ts",
+      "sha256": "f340bb65463055dcca8d5a29311ba8917a73c532d13bcc5e57316b940cd2ffd5"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/static-building-geometry.ts",
+      "sha256": "fbc53182f5463b7b952b5adeda0762e514c07d303add58c0dd1d55a766b9847a"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/support-buildings.ts",
+      "sha256": "3f19c64fb26cc5417875631c9958dc1e669477dc3cac43beac9d06d86471f60e"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/surface-finish.ts",
+      "sha256": "42f4c177b56ec2ee712a67bc66fa87eca676ac8e2da9331485874179a716f5e6"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/tank-cloak.ts",
+      "sha256": "b6f25015b0d29499c43fc8cc6bd087ac78491549cf7099bb2fee52fb5118e748"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/tank-drop-target.ts",
+      "sha256": "f3b1a300db26cc28791116d8b5dff3312b4328ad6c5c25b1cf1644be162a4c62"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/tank-hull-meter.ts",
+      "sha256": "43af9926a34ec639a984bbb4f6032d3d8e87de33eb4d7022797f7d90dbfc6c7d"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/tank-nameplates.ts",
+      "sha256": "6e36020f0dfa57b9bda246c5020d0b9f4a4dd80f19ba6dbd83e764daf9b40f93"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/tank-role.ts",
+      "sha256": "f8d5a3eb47857cc0f6b269c1b822a70c6f71bda2ca0cdadb3dc8b35975dd78da"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/terrain-chunks.ts",
+      "sha256": "674ba3024ca133e810045d6823927e97a7ef637b478bf2514ac05131c67527e4"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/terrain-shaders.ts",
+      "sha256": "cb1e41dfcdbd56cd9545d803051f1ceaf9e207ae59cc5fb5b0b84bccef91f2a8"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/terrain.ts",
+      "sha256": "58da736ed9e1c3d0531001e89d447daa1f2efbcca8e777fb2338c82fa9be9803"
+    },
+    {
+      "path": "apps/client-ts/src/render/three/turret-tracking.ts",
+      "sha256": "93c3c028c14560ca9eb2632b94d6fe03a720f3b2c915c802e885929fe7893a9c"
+    },
+    {
+      "path": "apps/client-ts/src/performance/arrival-transitions.ts",
+      "sha256": "e1d229cb38f9302d0c7b0a2615e21768444fa2436ac23fee571fc07dd243e134"
+    },
+    {
+      "path": "apps/client-ts/src/performance/city-arrival.ts",
+      "sha256": "131e1bcb6f572cf63f3a8278a14e6572af840bbc6d54a92e73819f037ad412c4"
+    },
+    {
+      "path": "apps/client-ts/src/performance/main.ts",
+      "sha256": "1263481ef84e9842110193d737daaf84e8d8a4004c9f535b33eb87a8456f209d"
+    },
+    {
+      "path": "apps/client-ts/src/performance/replay-combat.ts",
+      "sha256": "331af6ec882ba6491dbfde73cd3093af79b5287d5ca96cea4e381cd4416fcb68"
+    },
+    {
+      "path": "apps/client-ts/src/performance/statistics.ts",
+      "sha256": "07fa10b3e1bad57c2095b25d4a2ea91b0d56bcd407dd5e0cefcdb8fd6d9f2b5d"
+    },
+    {
+      "path": "scripts/performance/cdp.mjs",
+      "sha256": "699cfddbd6def50a1b0cce917df6abcbe312785c5f40621038c5f7a4bc14a61f"
+    },
+    {
+      "path": "scripts/performance/checks.mjs",
+      "sha256": "85b1ef3f3f5693c5668eef5eb1fd47ebe25c9081505c2acfadd24c8e308fcd52"
+    },
+    {
+      "path": "scripts/performance/compare.py",
+      "sha256": "c10030aafe56ea0f3cd5fec09264257f0f8a01bd480f5b6f0270e18c9833f9cb"
+    },
+    {
+      "path": "scripts/performance/profile.mjs",
+      "sha256": "622b2697d9f56ac0f8731a51323a26340edef844a10afc73e1d0df2d4811521a"
+    },
+    {
+      "path": "scripts/performance/report-followup.mjs",
+      "sha256": "7f6bfc00cdc40715852751ea2824f5460092115fbd279e325306db762cd511ab"
+    },
+    {
+      "path": "scripts/performance/report.mjs",
+      "sha256": "9ca9c603805e788332d494314af4b255b915fca2951d768e1fed454f396a7e2d"
+    },
+    {
+      "path": "scripts/performance/run-baseline.mjs",
+      "sha256": "ff0a2cce779de6a377b000ec817696e3294a84f7389b6d5abc6f4d5b7b1697f1"
+    },
+    {
+      "path": "scripts/performance/run-final.mjs",
+      "sha256": "91e878eceff2b8301253eba2ccb9865a1c184663813e3b2978ed6d4768f32613"
+    },
+    {
+      "path": "scripts/performance/run-followup-validation.mjs",
+      "sha256": "73b22eebaa99c19f74c61917741271f5d3bd712d2a7dc0b40d5f1ed6b03e2419"
+    },
+    {
+      "path": "scripts/performance/run-gameplay-validation.mjs",
+      "sha256": "e83323f937446935a0dbea47c305be3c99eba1c4a55e5880c069379793858fe6"
+    },
+    {
+      "path": "scripts/performance/run.mjs",
+      "sha256": "899f188eabbca3ce97fb349e614f97b74391d1b2cb9980f5198815aacf84003f"
+    },
+    {
+      "path": "scripts/performance/source.mjs",
+      "sha256": "c1fe443c68e4ce0dffe1fcbd3d7cef8b5fa05dee717f8fe828f62d3e37bad579"
+    },
+    {
+      "path": "apps/client-ts/src/three-demo.ts",
+      "sha256": "09924ea1e956b3e4dec94611bb6d715bc485e8046f4d88dae4b57d41c4fceaff"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "e628d6b5ad3c92328b0a4909ab500c93d7a32197dfae5a960e762c47e8414676"
+    }
+  ]
+}

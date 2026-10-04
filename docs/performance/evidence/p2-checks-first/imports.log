@@ -1,0 +1,21 @@
+
+> rewrite:imports:strict
+> node scripts/rewrite-import-extension-report.mjs --strict
+
+{
+    "generatedAt": "2026-10-04T10:46:17.935Z",
+    "summary": {
+        "filesScanned": 280,
+        "relativeImportsWithoutAllowedExtensions": 0
+    },
+    "rules": {
+        "allowedRelativeImportExtensions": [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".json",
+            ".css"
+        ]
+    },
+    "violations": []
+}

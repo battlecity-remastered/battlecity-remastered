@@ -9,6 +9,7 @@ import { createThreeBattlefield } from "../render/three/ThreeBattlefield.js";
 import { createIndustrialDemoLayout, createDefenseDemoLayout } from "../render/three/industrial-demo.js";
 import { summarize } from "./statistics.js";
 import { createCombatReplay } from "./replay-combat.js";
+import { applyArrivalTransition } from "./arrival-transitions.js";
 
 // This separate entry drives production movement, collision, AI and rendering.
 // A fixed simulation clock/seed makes workload and screenshots repeatable;
@@ -99,17 +100,7 @@ const pollQueries = (): void => {
     }
 };
 const updateInputs = (frame: number): void => {
-    if (live && parameters.get("transition") === "ai" && frame === 180) {
-        for (let i = 6; i < 10; i++) state.remotePlayers.set(`enemy-${i}`, { id: `enemy-${i}`, city: 2, botRole: "shooter", x: (28 + i) * 48, y: 29 * 48, direction: 8, health: 20, maxHealth: 20 });
-        state.buildings.set("arrival-orb-factory", { id: "arrival-orb-factory", ownerId: "ai", cityId: 2, type: 105, tileX: 41, tileY: 35, health: 120, maxHealth: 120, population: 50 });
-        state.factoryStock.set(2, new Map([[5, 1]]));
-    }
-    if (live && parameters.get("transition") === "overflow" && frame === 180) {
-        for (let city = 10; city < 20; city++) {
-            state.buildings.set(`overflow-${city}`, { id: `overflow-${city}`, ownerId: "ai", cityId: city, type: 105, tileX: 41 + city, tileY: 35, health: 120, maxHealth: 120, population: 50 });
-            state.factoryStock.set(city, new Map([[5, 1]]));
-        }
-    }
+    if (live) applyArrivalTransition(state, parameters.get("transition"), frame);
     state.controls.moveForward = true;
     state.local.direction = Math.floor(frame / 120) % 2 === 0 ? 8 : 24;
     state.controls.shoot = !live;
@@ -153,7 +144,7 @@ const graphStats = (): Record<string, number> => {
     stats.materials = materials.size; return stats;
 };
 const bench = {
-    ready: true, done: false, error: "", result: {} as Record<string, unknown>,
+    ready: true, done: false, error: "", preparationMs: 0, result: {} as Record<string, unknown>,
     async run(frames = 720, warmup = 120): Promise<void> {
         rows.length = 0;
         const shaderStart = shaderEvents.length, start = realNow();
@@ -200,5 +191,7 @@ const bench = {
     }
 };
 let previous = realNow();
+const preparationStart = realNow();
 if (parameters.get("prepare") !== "0") await battlefield.prepare(state);
+bench.preparationMs = realNow() - preparationStart;
 (window as Window & { benchmark?: typeof bench }).benchmark = bench;

@@ -1,0 +1,178 @@
+{
+  "arrival": {
+    "frame": 180,
+    "intervalMs": 38.299999952316284,
+    "cpuMs": 222.60000014305115,
+    "calls": 916,
+    "triangles": 1657272,
+    "objects": 255,
+    "geometries": 216,
+    "textures": 81,
+    "programs": 118,
+    "heap": 258983333,
+    "x": 1477.9999999999927,
+    "y": 1392,
+    "projectiles": 5
+  },
+  "worst": {
+    "frame": 180,
+    "intervalMs": 38.299999952316284,
+    "cpuMs": 222.60000014305115,
+    "calls": 916,
+    "triangles": 1657272,
+    "objects": 255,
+    "geometries": 216,
+    "textures": 81,
+    "programs": 118,
+    "heap": 258983333,
+    "x": 1477.9999999999927,
+    "y": 1392,
+    "projectiles": 5
+  },
+  "inclusiveProfileMs": [
+    [
+      "update",
+      1083.9200000000014
+    ],
+    [
+      "updateMatrixWorld",
+      435.62599999999964
+    ],
+    [
+      "scene.updateMatrixWorld",
+      409.6489999999997
+    ],
+    [
+      "createIndustrialVisual",
+      125.78099999999996
+    ],
+    [
+      "updateMatrix",
+      125.70400000000002
+    ],
+    [
+      "registerResearch",
+      108.71499999999999
+    ],
+    [
+      "updateTexture",
+      103.90699999999995
+    ],
+    [
+      "EdgesGeometry",
+      93.872
+    ],
+    [
+      "updateCombat",
+      79.26799999999999
+    ],
+    [
+      "mergeStaticBuildingGeometry",
+      37.62100000000001
+    ],
+    [
+      "updateParticles",
+      32.02100000000001
+    ],
+    [
+      "_update",
+      31.624000000000002
+    ],
+    [
+      "updatePilot",
+      26.938
+    ],
+    [
+      "updateVisibility",
+      22.335
+    ],
+    [
+      "updatePlayers",
+      18.014000000000003
+    ],
+    [
+      "updatePlacement",
+      15.902000000000001
+    ],
+    [
+      "updateCommonMaterialProperties",
+      14.833
+    ],
+    [
+      "updateBuffer",
+      14.027000000000001
+    ],
+    [
+      "updateWorldMatrix",
+      12.892
+    ],
+    [
+      "updateInputs",
+      12.222000000000001
+    ],
+    [
+      "updateShells",
+      9.761000000000001
+    ],
+    [
+      "updateMatrices",
+      8.58
+    ],
+    [
+      "createMesh",
+      8.318999999999999
+    ],
+    [
+      "resize",
+      8.318999999999999
+    ],
+    [
+      "updateMultisampleRenderTarget",
+      7.42
+    ],
+    [
+      "updateFlashes",
+      5.2620000000000005
+    ],
+    [
+      "resizeImage",
+      4.2989999999999995
+    ],
+    [
+      "_updateTime",
+      4.188
+    ],
+    [
+      "updateCargo",
+      3.1740000000000004
+    ],
+    [
+      "updateProjectionMatrix",
+      2.125
+    ],
+    [
+      "updateStatus",
+      2.122
+    ],
+    [
+      "_updateTimeScale",
+      2.1109999999999998
+    ],
+    [
+      "updateDemoDestruction",
+      2.068
+    ],
+    [
+      "updateCollapse",
+      1.832
+    ],
+    [
+      "updateCasings",
+      1.556
+    ],
+    [
+      "updateTankTeam",
+      0.147
+    ]
+  ]
+}

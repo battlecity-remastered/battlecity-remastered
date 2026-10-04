@@ -2,3 +2,6 @@
 docs/gameplay/evidence/*.log -whitespace
 docs/gameplay/evidence/**/*.log -whitespace
 docs/gameplay/deployment/**/*.log -whitespace
+docs/performance/evidence/*.log -whitespace
+docs/performance/evidence/**/*.log -whitespace
+docs/performance/deployment/**/*.log -whitespace

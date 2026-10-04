@@ -50,6 +50,7 @@ if (capture) {
     result.gc = { events: gc.length, totalMs: gc.reduce((sum, event) => sum + (event.dur ?? 0) / 1000, 0), worstMs: Math.max(0, ...gc.map(event => (event.dur ?? 0) / 1000)) };
 }
 result.browser = (await (await fetch(`${debugging}/json/version`)).json()).Browser;
+result.preparationMs = await evaluate(cdp, "window.benchmark.preparationMs");
 result.errors = errors;
 result.configuration = { url, parameters: Object.fromEntries(parameters), simulationHz: 60, seed: 1729 };
 result.geometry = await evaluate(cdp, "window.benchmark.inspect()");

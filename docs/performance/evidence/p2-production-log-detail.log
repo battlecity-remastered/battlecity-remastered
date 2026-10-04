@@ -1,0 +1,41 @@
+battlecity-server ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.7
+64241 /var/lib/docker/containers/f575cf119a139611bad13370fd692015c8d0f6cb2490fee598ca2204bdfe3f06/f575cf119a139611bad13370fd692015c8d0f6cb2490fee598ca2204bdfe3f06-json.log
+Archived and active journals take up 277.2M in the file system.
+300M	/var/lib/snapd/snaps
+4.0K	/var/lib/snapd/cache
+4.0K	/var/lib/snapd/firstboot
+104K	/var/lib/snapd/apparmor
+236K	/var/lib/snapd/pki
+4.0K	/var/lib/snapd/auto-import
+20K	/var/lib/snapd/sequence
+312K	/var/lib/snapd/assertions
+16K	/var/lib/snapd/cgroup
+20K	/var/lib/snapd/lib
+12K	/var/lib/snapd/dbus-1
+4.0K	/var/lib/snapd/hostfs
+12K	/var/lib/snapd/device
+20K	/var/lib/snapd/desktop
+4.0K	/var/lib/snapd/void
+8.0K	/var/lib/snapd/ssl
+4.0K	/var/lib/snapd/mount
+48K	/var/lib/snapd/seccomp
+4.0K	/var/lib/snapd/inhibit
+16K	/var/lib/snapd/cookie
+153M	/var/lib/snapd/seed
+4.0K	/var/lib/snapd/environment
+4.0K	/var/lib/snapd/features
+453M	/var/lib/snapd
+48K	/var/cache/apt/archives
+115M	/var/cache/apt
+128M	/home/ubuntu/battlecity-js-remake/client
+40M	/home/ubuntu/battlecity-js-remake/.git
+13M	/home/ubuntu/battlecity-js-remake/server
+12K	/home/ubuntu/battlecity-js-remake/.devcontainer
+44K	/home/ubuntu/battlecity-js-remake/shared
+16K	/home/ubuntu/battlecity-js-remake/.github
+4.0K	/home/ubuntu/battlecity-js-remake/.direnv
+3.5M	/home/ubuntu/battlecity-js-remake/bot
+73M	/home/ubuntu/battlecity-js-remake/node_modules
+258M	/home/ubuntu/battlecity-js-remake
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       6.8G  5.9G  847M  88% /

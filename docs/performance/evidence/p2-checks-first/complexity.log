@@ -1,0 +1,146 @@
+
+> rewrite:complexity:strict
+> node scripts/rewrite-complexity-report.mjs --strict
+
+{
+    "generatedAt": "2026-10-04T10:46:15.901Z",
+    "summary": {
+        "files": 280,
+        "maxOverall": 17,
+        "avgOverall": 3.08
+    },
+    "thresholds": {
+        "maxFunctionComplexity": 15,
+        "averageFileComplexity": 8
+    },
+    "worstFiles": [
+        {
+            "file": "apps/client-ts/src/performance/main.ts",
+            "functionCount": 41,
+            "maxComplexity": 17,
+            "averageComplexity": 2.61
+        },
+        {
+            "file": "apps/client-ts/src/app/snapshot-reconciliation.ts",
+            "functionCount": 9,
+            "maxComplexity": 15,
+            "averageComplexity": 6.44
+        },
+        {
+            "file": "apps/server-ts/src/domain/map/MapService.ts",
+            "functionCount": 9,
+            "maxComplexity": 15,
+            "averageComplexity": 5.56
+        },
+        {
+            "file": "apps/client-ts/src/render/three/projectile-collider.ts",
+            "functionCount": 9,
+            "maxComplexity": 15,
+            "averageComplexity": 4.67
+        },
+        {
+            "file": "apps/server-ts/src/domain/bots/BotShared.ts",
+            "functionCount": 22,
+            "maxComplexity": 15,
+            "averageComplexity": 4.18
+        },
+        {
+            "file": "apps/server-ts/src/domain/map/CityImportValidation.ts",
+            "functionCount": 11,
+            "maxComplexity": 15,
+            "averageComplexity": 4
+        },
+        {
+            "file": "apps/client-ts/src/render/three/support-buildings.ts",
+            "functionCount": 7,
+            "maxComplexity": 15,
+            "averageComplexity": 3.86
+        },
+        {
+            "file": "apps/client-ts/src/render/three/ThreeBattlefield.ts",
+            "functionCount": 40,
+            "maxComplexity": 15,
+            "averageComplexity": 3.85
+        },
+        {
+            "file": "apps/client-ts/src/render/three/network-combat.ts",
+            "functionCount": 10,
+            "maxComplexity": 15,
+            "averageComplexity": 3.8
+        },
+        {
+            "file": "apps/client-ts/src/app/input.ts",
+            "functionCount": 11,
+            "maxComplexity": 15,
+            "averageComplexity": 3.73
+        },
+        {
+            "file": "apps/server-ts/src/domain/bots/DefenderBotActivities.ts",
+            "functionCount": 17,
+            "maxComplexity": 15,
+            "averageComplexity": 3.59
+        },
+        {
+            "file": "apps/client-ts/src/ui/three-game-console.ts",
+            "functionCount": 34,
+            "maxComplexity": 15,
+            "averageComplexity": 3.38
+        },
+        {
+            "file": "apps/client-ts/src/render/three/inventory-panel.ts",
+            "functionCount": 35,
+            "maxComplexity": 15,
+            "averageComplexity": 3.26
+        },
+        {
+            "file": "apps/server-ts/src/domain/fake-cities/fake-city-model.ts",
+            "functionCount": 23,
+            "maxComplexity": 15,
+            "averageComplexity": 3.04
+        },
+        {
+            "file": "apps/client-ts/src/render/three/terrain.ts",
+            "functionCount": 19,
+            "maxComplexity": 15,
+            "averageComplexity": 2.89
+        },
+        {
+            "file": "apps/client-ts/src/render/layers/tile-layer-state.ts",
+            "functionCount": 3,
+            "maxComplexity": 14,
+            "averageComplexity": 6.67
+        },
+        {
+            "file": "apps/client-ts/src/world/map-loader.ts",
+            "functionCount": 8,
+            "maxComplexity": 14,
+            "averageComplexity": 5.13
+        },
+        {
+            "file": "apps/server-ts/src/domain/map/CityImportParser.ts",
+            "functionCount": 9,
+            "maxComplexity": 14,
+            "averageComplexity": 4.89
+        },
+        {
+            "file": "apps/client-ts/src/render/three/demo-combat.ts",
+            "functionCount": 5,
+            "maxComplexity": 14,
+            "averageComplexity": 4
+        },
+        {
+            "file": "apps/client-ts/src/render/three/effects.ts",
+            "functionCount": 25,
+            "maxComplexity": 14,
+            "averageComplexity": 3.48
+        }
+    ],
+    "violations": [
+        {
+            "file": "apps/client-ts/src/performance/main.ts",
+            "functionCount": 41,
+            "maxComplexity": 17,
+            "averageComplexity": 2.61
+        }
+    ]
+}

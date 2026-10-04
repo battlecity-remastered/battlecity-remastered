@@ -53,6 +53,7 @@
 - Read `docs/performance/REPORT.md`, `docs/performance/EXPERIMENTS.md`, and `docs/performance/README.md` before revisiting renderer performance work.
 - They record the moving gameplay benchmark, original/final measurements, visual comparisons, rejected experiments and reasons, hardware limitations, and reproduction commands. Keep visual fidelity as a constraint and compare warmed runs on the same hardware.
 - `docs/performance/DEPLOYMENT.md` records the v1.1.6 production release, verification evidence, data preservation and rollback location.
+- `docs/performance/FOLLOWUP-2026-10-04.md` records host-contention controls, the rejected zero-colour light guard, batch rebuild coalescing and research-outline preparation. Read it before retrying those ideas.
 
 ## Gameplay Follow-up Evidence
 - Read `docs/gameplay/REPORT.md` before changing weapon selection, projectile terrain, rogue waves, AI factory hazards, pickup/tank layering or light-count preparation.

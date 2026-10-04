@@ -1,0 +1,12 @@
+
+> rewrite:cycles:strict
+> node scripts/rewrite-dependency-cycles.mjs --strict
+
+{
+    "generatedAt": "2026-10-04T11:03:14.061Z",
+    "summary": {
+        "filesScanned": 281,
+        "cycles": 0
+    },
+    "cycles": []
+}

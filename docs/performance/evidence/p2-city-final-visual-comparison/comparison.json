@@ -1,0 +1,14 @@
+{
+  "baseline": "docs/performance/evidence/p2-city-control-visual-live-normal/frame.png",
+  "current": "docs/performance/evidence/p2-city-final-visual-live-normal/frame.png",
+  "dimensions": [
+    1280,
+    720
+  ],
+  "mean_absolute_channel_error": 0.026016710069444445,
+  "max_channel_error": 134,
+  "changed_pixel_fraction": 0.03959418402777778,
+  "pixel_fraction_above_8": 0.0003363715277777778,
+  "pixel_fraction_above_32": 7.486979166666666e-05,
+  "rmse": 0.5110458848401355
+}
