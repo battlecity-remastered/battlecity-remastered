@@ -1,0 +1,9 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       6.8G  5.9G  847M  88% /
+REPOSITORY                                            TAG            IMAGE ID       CREATED             SIZE
+ghcr.io/battlecity-remastered/battlecity-remastered   v1.1.8         4cfe129c5f6f   About an hour ago   395MB
+ghcr.io/battlecity-remastered/battlecity-remastered   v1.1.7         faac1beb6d12   18 hours ago        395MB
+battlecity-rollback                                   pre-three-v1   b473c35fcdf8   9 months ago        289MB
+ghcr.io/battlecity-remastered/battlecity-remastered   latest         b473c35fcdf8   9 months ago        289MB
+ghcr.io/alan01252/battlecity-js-remake                latest         4c15888c3020   10 months ago       264MB
+{"ok":true,"service":"server-ts"}

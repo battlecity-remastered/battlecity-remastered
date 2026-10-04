@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "matched_files": 79,
+  "differences": [
+    {
+      "path": "scripts/performance/report-followup.mjs",
+      "benchmark_sha256": "7f6bfc00cdc40715852751ea2824f5460092115fbd279e325306db762cd511ab",
+      "release_sha256": "a1e3ee649b294ae2e2342c60db9bf419b9cad280fa50ee804d004e2145b7fef7"
+    }
+  ],
+  "explanation": "Initial whole-manifest comparison failed on report-followup.mjs: this result aggregation utility was extended after timed captures to include both long pairs. Every runtime and benchmark driver source matches; the report utility is separately linted.",
+  "release_commit": "ea166c49cf9c2b1f1be680f6d284cf5606c77a4c"
+}

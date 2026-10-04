@@ -1,0 +1,18 @@
+{"recoverable": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.6", "manifest": {"schemaVersion": 2, "mediaType": "application/vnd.oci.image.index.v1+json", "manifests": [{"mediaType": "application/vnd.oci.image.manifest.v1+json", "size": 3140, "digest": "sha256:68df571eed22c69cef895024f733a6161a874698d73843cce5b0b86f7428c772", "platform": {"architecture": "amd64", "os": "linux"}}, {"mediaType": "application/vnd.oci.image.manifest.v1+json", "size": 838, "digest": "sha256:dc265d8b9cdcd8dbdf90ebec7de23a93b23c2286db15ca01903336cb7cf079b1", "platform": {"architecture": "unknown", "os": "unknown"}}]}}
+Untagged: ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.6
+Untagged: ghcr.io/battlecity-remastered/battlecity-remastered@sha256:866d35e790e90db18634708a98dc5b05c3947043bd647bda45e84e6d50581b8c
+Deleted: sha256:a1690e330af1abac587aa7f6052169a9ba1d1249b7b479217f7929c27d1c0f1a
+Deleted: sha256:6f0000b46c60164ea58cb9159dc25d485c4457701744ee52272ee871cf86b373
+Deleted: sha256:9d0a6f9c5c80acf8cbdf071e28a7e303c35a3ae6baec4bd5972979bf53de69df
+Deleted: sha256:ed5e9ae3517e76cae7e77a4f1f5c6a2a0f9696ec71ab23de782c1688062781f1
+Deleted: sha256:5551446c1702fa32066e8ac9202c584883519debe7b7d126ec89171ed667bdda
+Deleted: sha256:a132bec9601de716cd98498d0ed6834ed12c3597caec2026e4f8fdc20c3a24b3
+Deleted: sha256:8bd63c0944bf787158f60188c2222a5d713164a689b4ccf9ed4ee2961488cf8b
+Deleted: sha256:3e6a9ae9f1dedb67efdc10618f9d67abeb3c54eaf9635f89dbadf59506978368
+Deleted: sha256:2c568419823880d45c7ed9a6ab71ca0762a4af49493461eec518825641210253
+Deleted: sha256:09708ab39a158dc6d07302a081a4dcb4f1092b794fca372bb9692a113ff9ddc2
+Deleted: sha256:6f9a910ffc337bc5e8ad21a201fe05cdbb31505fb389309de3608aa191224357
+Deleted: sha256:56f13397f75088a53416cd72713c58559c8bb7a05fa9decd009f68febe35a642
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       6.8G  5.9G  847M  88% /
+{"removed": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.6", "running_retained": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.8", "rollback_retained": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.7"}

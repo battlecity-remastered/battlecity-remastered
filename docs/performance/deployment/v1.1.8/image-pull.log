@@ -1,0 +1,60 @@
+v1.1.8: Pulling from battlecity-remastered/battlecity-remastered
+6a0ac1617861: Already exists
+4feea04c1543: Already exists
+b2cbbfe903b0: Already exists
+fff4e2c1b189: Already exists
+26c6b8714a4c: Pulling fs layer
+8856e164ff06: Pulling fs layer
+c1a8efe511cf: Pulling fs layer
+de85827d7001: Pulling fs layer
+f7c6b4032d47: Pulling fs layer
+69a5be3f6bc3: Pulling fs layer
+8d09433ee175: Pulling fs layer
+483da46a96f1: Pulling fs layer
+1e0fd8aa9228: Pulling fs layer
+07c70d8acca0: Pulling fs layer
+ca3fa96715af: Pulling fs layer
+de85827d7001: Waiting
+f7c6b4032d47: Waiting
+69a5be3f6bc3: Waiting
+8d09433ee175: Waiting
+483da46a96f1: Waiting
+1e0fd8aa9228: Waiting
+07c70d8acca0: Waiting
+ca3fa96715af: Waiting
+26c6b8714a4c: Verifying Checksum
+26c6b8714a4c: Download complete
+c1a8efe511cf: Verifying Checksum
+c1a8efe511cf: Download complete
+8856e164ff06: Verifying Checksum
+8856e164ff06: Download complete
+26c6b8714a4c: Pull complete
+8856e164ff06: Pull complete
+de85827d7001: Verifying Checksum
+de85827d7001: Download complete
+f7c6b4032d47: Verifying Checksum
+f7c6b4032d47: Download complete
+c1a8efe511cf: Pull complete
+de85827d7001: Pull complete
+69a5be3f6bc3: Verifying Checksum
+69a5be3f6bc3: Download complete
+f7c6b4032d47: Pull complete
+69a5be3f6bc3: Pull complete
+8d09433ee175: Verifying Checksum
+8d09433ee175: Download complete
+483da46a96f1: Verifying Checksum
+483da46a96f1: Download complete
+8d09433ee175: Pull complete
+483da46a96f1: Pull complete
+ca3fa96715af: Verifying Checksum
+ca3fa96715af: Download complete
+1e0fd8aa9228: Verifying Checksum
+1e0fd8aa9228: Download complete
+07c70d8acca0: Verifying Checksum
+07c70d8acca0: Download complete
+1e0fd8aa9228: Pull complete
+07c70d8acca0: Pull complete
+ca3fa96715af: Pull complete
+Digest: sha256:ca30a6138773cf4dc615aa039b0a96057de67ff88c98f6bd45136cd44da19dcb
+Status: Downloaded newer image for ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.8
+ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.8

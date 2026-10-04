@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "timestamp": "2026-10-04T14:23:47.004Z",
+  "health": {
+    "ok": true,
+    "service": "server-ts"
+  },
+  "htmlSha256": "ec74b2499442e2dc0545f1569b3efbe4096c42583b1629df865d4dc00ef899b7",
+  "entry": "/assets/index-1C8rUc8X.js",
+  "entrySha256": "d482a1cded29e770a24d2112d6b11d75cbe8cca9683aa50fd2ed59564cc3f9ae",
+  "entryBytes": 2635
+}

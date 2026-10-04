@@ -1,0 +1,14 @@
+{
+  "deployed": "ghcr.io/battlecity-remastered/battlecity-remastered:v1.1.8",
+  "database_integrity": "ok",
+  "existing_records_preserved": {
+    "users": 42,
+    "player_scores": 89
+  },
+  "rollback": "/home/ubuntu/battlecity-backups/20261004-v1-1-8/rollback.sh",
+  "revision": "ea166c49cf9c2b1f1be680f6d284cf5606c77a4c",
+  "image_digest": [
+    "ghcr.io/battlecity-remastered/battlecity-remastered@sha256:ca30a6138773cf4dc615aa039b0a96057de67ff88c98f6bd45136cd44da19dcb"
+  ],
+  "volume": "battlecity-js-remake_battlecity_data"
+}
